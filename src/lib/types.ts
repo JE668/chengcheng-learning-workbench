@@ -37,14 +37,27 @@ export interface Redemption {
   createdAt: string;
 }
 
+export type MokoCategoryKey =
+  | 'royal'     // 皇室萌可
+  | 'key'       // 钥匙萌可
+  | 'jewel'     // 闪亮宝石萌可
+  | 'sweetie'   // 魔法甜心萌可
+  | 'star'      // 闪耀流星萌可
+  | 'princess'  // 闪亮公主萌可
+  | 'guide'     // 引导萌可
+  | 'subject'   // 学科萌可（兼容旧分类）
+  | 'bonus'     // 奖励萌可（兼容旧分类）
+  | 'trouble';  // 捣蛋萌可
+
 export interface MokoChar {
   key: string;
   name: string;
   color: string;
-  img: string;
+  img?: string;     // 有图片时用图片，缺图时用 emoji 兜底
+  emoji: string;    // 无图片时的头像
   season: string;
   item: string;
   line: string;
-  category?: 'subject' | 'bonus' | 'guide' | 'trouble';
+  category: MokoCategoryKey;
   subject?: Subject;
 }

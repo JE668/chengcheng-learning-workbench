@@ -80,6 +80,7 @@ export interface ResidentMoko {
   key: string;
   name: string;
   img: string;
+  emoji: string;
   color: string;
   stage: MokoStage;
   mood: number;
@@ -98,7 +99,7 @@ export interface CastleStateView {
   skin: string;
   checkins: Record<Subject, 'pending' | 'child_done' | 'confirmed'>;
   residents: ResidentMoko[];
-  gallery: { key: string; name: string; img: string; color: string; category?: string; subject?: string; owned: boolean }[];
+  gallery: { key: string; name: string; img: string; emoji: string; color: string; category?: string; subject?: string; owned: boolean }[];
   troublemakers: { key: string; name: string; img: string }[];
   inventory: Record<string, number>;
   missedDays: { day: string; missed: Subject[]; hasTrouble: boolean }[];
@@ -499,6 +500,7 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
         key,
         name: mc?.name ?? key,
         img: mc?.img ?? '',
+        emoji: mc?.emoji ?? '✨',
         color: mc?.color ?? 'text-slate-500',
         stage,
         mood: Number(r.mood),
@@ -516,7 +518,8 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
     .map((m) => ({
       key: m.key,
       name: m.name,
-      img: m.img,
+      img: m.img ?? '',
+      emoji: m.emoji,
       color: m.color,
       category: m.category,
       subject: m.subject,

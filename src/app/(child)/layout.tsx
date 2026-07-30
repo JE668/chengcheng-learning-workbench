@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import Nav from '@/components/Nav';
 import EyeRest from '@/components/EyeRest';
+import Clock from '@/components/Clock';
 
 export default async function ChildLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -14,6 +15,7 @@ export default async function ChildLayout({ children }: { children: React.ReactN
         {children}
       </main>
       <EyeRest />
+      <Clock />
     </div>
   );
 }

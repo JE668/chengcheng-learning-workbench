@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { magicShop, starShop } from '@/lib/moko';
+import { magicShop, starShop, MOko_CATEGORIES } from '@/lib/moko';
+import { MokoAvatar } from '@/components/MokoAvatar';
 
 type Stage = 'obtained' | 'settled' | 'playing' | 'friend';
 interface Resident {
-  key: string; name: string; img: string; color: string;
+  key: string; name: string; img: string; emoji: string; color: string;
   stage: Stage; mood: number; status: 'resident' | 'fled';
   progress: number; nextStage: Stage | null;
 }
@@ -15,7 +16,7 @@ interface StateView {
   streakDays: number; shieldEquipped: number; skin: string;
   checkins: Record<string, string>;
   residents: Resident[];
-  gallery: { key: string; name: string; img: string; color: string; category?: string; subject?: string; owned: boolean }[];
+  gallery: { key: string; name: string; img: string; emoji: string; color: string; category?: string; subject?: string; owned: boolean }[];
   troublemakers: { key: string; name: string; img: string }[];
   inventory: Record<string, number>;
   missedDays: { day: string; missed: string[]; hasTrouble: boolean }[];
@@ -127,7 +128,7 @@ export default function CastlePage() {
               {state.residents.map((r) => (
                 <div key={r.key} className={`w-28 text-center ${r.mood < 3 ? 'moko-sad' : 'moko-enter'}`}>
                   <div className="relative">
-                    <img src={r.img} alt={r.name} className="w-24 h-24 mx-auto rounded-2xl border-4 border-white shadow object-cover" />
+                    <MokoAvatar img={r.img} emoji={r.emoji} name={r.name} size={96} className="mx-auto" />
                     <div className="absolute -top-2 -right-2 text-lg">{'❤️'.repeat(r.mood)}{'🖤'.repeat(3 - r.mood)}</div>
                   </div>
                   <div className="font-bold text-moko-violet text-sm mt-1">{r.name}</div>
@@ -149,16 +150,31 @@ export default function CastlePage() {
         </div>
       )}
 
-      {/* ===== 图鉴 ===== */}
+      {/* ===== 图鉴（按系列分类） ===== */}
       {tab === 'gallery' && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {state.gallery.map((g) => (
-            <div key={g.key} className={`card-moko text-center ${g.owned ? '' : 'opacity-70'}`}>
-              <img src={g.img} alt={g.name} className={`w-20 h-20 mx-auto rounded-2xl border-4 border-white shadow object-cover ${g.owned ? '' : 'grayscale'}`} />
-              <div className="font-bold text-moko-violet text-sm mt-1">{g.name}</div>
-              <div className="text-xs text-gray-500">{g.owned ? '已收集 ✅' : '未解锁 🔒'}</div>
-            </div>
-          ))}
+        <div className="space-y-6">
+          {MOko_CATEGORIES.filter((c) => c.key !== 'trouble').map((cat) => {
+            const items = state.gallery.filter((g) => g.category === cat.key);
+            if (!items.length) return null;
+            return (
+              <div key={cat.key}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">{cat.emoji}</span>
+                  <h2 className="font-black text-moko-violet text-lg">{cat.label}</h2>
+                  <span className="text-xs text-gray-400 hidden sm:inline">{cat.desc}</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {items.map((g) => (
+                    <div key={g.key} className={`card-moko text-center ${g.owned ? '' : 'opacity-70'}`}>
+                      <MokoAvatar img={g.img} emoji={g.emoji} name={g.name} size={80} owned={g.owned} className="mx-auto" />
+                      <div className="font-bold text-moko-violet text-sm mt-1">{g.name}</div>
+                      <div className="text-xs text-gray-500">{g.owned ? '已收集 ✅' : '未解锁 🔒'}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import Nav from '@/components/Nav';
+import Clock from '@/components/Clock';
 
 export default async function ParentLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -12,6 +13,7 @@ export default async function ParentLayout({ children }: { children: React.React
       <main className="flex-1 p-4 md:p-8 pb-28 md:pb-8 safe-bottom">
         {children}
       </main>
+      <Clock />
     </div>
   );
 }

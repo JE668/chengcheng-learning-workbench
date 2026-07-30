@@ -50,8 +50,8 @@ export default function Nav({ user }: { user: User }) {
         <div className="flex items-center gap-3 mb-8 px-2">
           <img src="/moko/lemei.jpg" alt="logo" className="w-12 h-12 rounded-full border-4 border-white shadow" />
           <div>
-            <h1 className="font-bold text-xl leading-tight">程程学习</h1>
-            <p className="text-xs opacity-80">{user.displayName} · {user.role === 'parent' ? '家长' : '小朋友'}</p>
+            <h1 className="font-bold text-xl leading-tight">程程学习工作台</h1>
+            <p className="text-xs opacity-80">{user.displayName} · {user.role === 'parent' ? '爸爸妈妈' : '小朋友'}</p>
           </div>
         </div>
         <nav className="flex-1 space-y-2">

@@ -12,7 +12,7 @@ const SUBJECTS: { key: Subject; label: string; grad: string; icon: string }[] = 
 
 const STATUS_TEXT: Record<string, string> = {
   pending: '我完成了',
-  child_done: '已提交，等家长确认 ✅',
+  child_done: '已提交，等爸爸妈妈确认 ✅',
   confirmed: '今天已完成 🌟',
 };
 

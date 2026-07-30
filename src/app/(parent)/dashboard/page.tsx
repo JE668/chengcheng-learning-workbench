@@ -12,7 +12,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-black text-moko-violet mb-6">家长看板 📊</h1>
+      <h1 className="text-3xl font-black text-moko-violet mb-6">爸爸妈妈看板 📊</h1>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
           { label: '孩子积分', value: points, color: 'bg-moko-rose' },

@@ -4,6 +4,7 @@ import { getCastleState } from '@/lib/castle';
 import Link from 'next/link';
 import { CheckinPanel, HarvestBtn } from '@/components/castle-client';
 import { MokoGroupBg } from '@/components/moko-bg';
+import { MokoAvatar } from '@/components/MokoAvatar';
 
 export default async function HomePage() {
   const user = await getCurrentUser();
@@ -70,7 +71,7 @@ export default async function HomePage() {
           </div>
           <div className="flex flex-wrap gap-2 mb-3">
             {castle.residents.slice(0, 6).map((r) => (
-              <img key={r.key} src={r.img} alt={r.name} title={r.name} className="w-12 h-12 rounded-full border-2 border-white shadow object-cover" />
+              <MokoAvatar key={r.key} img={r.img} emoji={r.emoji} name={r.name} size={48} className="rounded-full" />
             ))}
             {castle.residents.length === 0 && <span className="text-sm text-gray-500">还没有萌可入驻，快去打卡吧！</span>}
           </div>

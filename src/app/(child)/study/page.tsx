@@ -54,7 +54,7 @@ export default function StudyPage() {
         <h3 className="text-lg font-black text-moko-violet mb-2">💡 给程程的小提示</h3>
         <ul className="text-gray-600 text-sm space-y-1 list-disc list-inside">
           <li>自主学习内容每天都可以点开来玩，不消耗积分。</li>
-          <li>完成家长布置的「学习任务」打卡，才能解锁对应学科的萌可哦。</li>
+          <li>完成爸爸妈妈布置的「学习任务」打卡，才能解锁对应学科的萌可哦。</li>
           <li>英语点读和录音需要开启设备声音与麦克风权限。</li>
         </ul>
       </div>
