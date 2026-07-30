@@ -51,7 +51,6 @@ export default function LoginPage() {
             {loading ? '登录中...' : '进入工作台'}
           </button>
         </form>
-        <p className="text-xs text-gray-400 mt-6">默认家长 parent / 12345678，孩子 cheng / 12345678</p>
       </div>
     </div>
   );

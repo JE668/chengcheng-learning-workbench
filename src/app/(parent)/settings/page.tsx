@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 export default function SettingsPage() {
-  const [childUsername, setChildUsername] = useState('cheng');
+  const [childUsername, setChildUsername] = useState('cara');
   const [newPassword, setNewPassword] = useState('');
   const [msg, setMsg] = useState('');
 

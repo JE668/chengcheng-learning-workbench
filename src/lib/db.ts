@@ -1,4 +1,5 @@
 import { createClient, Client } from '@libsql/client';
+import bcrypt from 'bcryptjs';
 
 const url = process.env.TURSO_URL || 'file:local.db';
 const authToken = process.env.TURSO_AUTH_TOKEN;
@@ -140,6 +141,24 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
   ], 'write');
+
+  // 账号迁移：确保 child 用户为 cara / 0000。
+  // 遗留的 cheng 自动改名并重置密码，users.id 不变，城堡/打卡等关联数据全部保留。
+  const cara = await db.execute({ sql: "SELECT id FROM users WHERE username = 'cara'", args: [] });
+  if (cara.rows.length === 0) {
+    const cheng = await db.execute({ sql: "SELECT id FROM users WHERE username = 'cheng'", args: [] });
+    if (cheng.rows.length > 0) {
+      await db.execute({
+        sql: "UPDATE users SET username = 'cara', password_hash = ?, display_name = '程程' WHERE username = 'cheng'",
+        args: [bcrypt.hashSync('0000', 10)],
+      });
+    } else {
+      await db.execute({
+        sql: 'INSERT INTO users (username, password_hash, role, display_name) VALUES (?, ?, ?, ?)',
+        args: ['cara', bcrypt.hashSync('0000', 10), 'child', '程程'],
+      });
+    }
+  }
 }
 
 /** 取第一个孩子 id（本工作台默认单孩子） */

@@ -102,8 +102,8 @@ async function run() {
     console.log('Created parent / 12345678');
   } catch { console.log('Parent already exists'); }
   try {
-    await db.execute({ sql: 'INSERT INTO users (username, password_hash, role, display_name) VALUES (?, ?, ?, ?)', args: ['cheng', hash('12345678'), 'child', '程程'] });
-    console.log('Created child cheng / 12345678');
+    await db.execute({ sql: 'INSERT INTO users (username, password_hash, role, display_name) VALUES (?, ?, ?, ?)', args: ['cara', hash('0000'), 'child', '程程'] });
+    console.log('Created child cara / 0000');
   } catch { console.log('Child already exists'); }
 
   // 🏰 初始化城堡状态 + 引导萌可（乐美公主）
