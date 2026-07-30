@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { clearSessionCookie } from '@/lib/auth';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   await clearSessionCookie();
-  return NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'));
+  // 使用当前部署域名的 origin，避免回退到 localhost
+  return NextResponse.redirect(new URL('/login', request.nextUrl.origin));
 }
