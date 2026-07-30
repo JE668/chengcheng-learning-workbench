@@ -175,6 +175,134 @@ function WordCard({ item }: { item: WordItem }) {
   );
 }
 
+/* ---------- 听音选词（难度自适应） ---------- */
+type DiffLevel = 'easy' | 'medium' | 'hard';
+const LEVEL_META: Record<DiffLevel, { label: string; emoji: string }> = {
+  easy: { label: '入门', emoji: '🌱' },
+  medium: { label: '进阶', emoji: '🌿' },
+  hard: { label: '挑战', emoji: '🚀' },
+};
+const LEVEL_ORDER: DiffLevel[] = ['easy', 'medium', 'hard'];
+
+const ALL_EN_WORDS = [...RAZ_AA_WORDS, ...COLORS_WORDS, ...BODY_WORDS];
+const EN_WORD_MAP: Record<string, WordItem> = Object.fromEntries(ALL_EN_WORDS.map((w) => [w.word, w]));
+const EN_EASY_WORDS = ['apple', 'dog', 'cat', 'sun', 'red', 'blue', 'eye', 'ear', 'book']
+  .map((w) => EN_WORD_MAP[w])
+  .filter(Boolean) as WordItem[];
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildQuestion(level: DiffLevel): { target: WordItem; options: WordItem[] } {
+  const pool = level === 'easy' ? EN_EASY_WORDS : level === 'medium' ? RAZ_AA_WORDS : ALL_EN_WORDS;
+  const k = level === 'easy' ? 3 : 4;
+  const target = pool[Math.floor(Math.random() * pool.length)];
+  const distractors = shuffle(pool.filter((w) => w.word !== target.word)).slice(0, k - 1);
+  return { target, options: shuffle([target, ...distractors]) };
+}
+
+function EnListenQuiz() {
+  const [level, setLevel] = useState<DiffLevel>('easy');
+  const [q, setQ] = useState<{ target: WordItem; options: WordItem[] }>(() => buildQuestion('easy'));
+  const [picked, setPicked] = useState<string | null>(null);
+  const [streak, setStreak] = useState({ right: 0, wrong: 0 });
+
+  useEffect(() => {
+    const saved = localStorage.getItem('englishDiffLevel') as DiffLevel | null;
+    if (saved && LEVEL_ORDER.includes(saved)) {
+      setLevel(saved);
+      setQ(buildQuestion(saved));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('englishDiffLevel', level);
+  }, [level]);
+
+  // 出题即朗读（挑战档语速更快）
+  useEffect(() => {
+    speakEn(q.target.word, level === 'hard' ? 0.95 : 0.75);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
+
+  function nextRound(newLevel: DiffLevel) {
+    setLevel(newLevel);
+    setPicked(null);
+    setQ(buildQuestion(newLevel));
+  }
+
+  function choose(opt: WordItem) {
+    if (picked) return;
+    setPicked(opt.word);
+    const ok = opt.word === q.target.word;
+    speakEn(ok ? 'Great job!' : `No, it is ${q.target.word}`);
+    let nl = level;
+    if (ok) {
+      const nr = streak.right + 1;
+      setStreak({ right: nr, wrong: 0 });
+      if (nr >= 3 && level !== 'hard') nl = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) + 1];
+    } else {
+      const nw = streak.wrong + 1;
+      setStreak({ right: 0, wrong: nw });
+      if (nw >= 2 && level !== 'easy') nl = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) - 1];
+      logMistake({ subject: '英语', kind: '听音选词', prompt: q.target.word, answer: q.target.word, wrong: opt.word });
+    }
+    setTimeout(() => nextRound(nl), ok ? 1400 : 1700);
+  }
+
+  const meta = LEVEL_META[level];
+
+  return (
+    <div className="rounded-2xl p-5 bg-gradient-to-br from-moko-yellow to-amber-300 text-white shadow-lg">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-bold bg-white/25 rounded-full px-3 py-1">难度：{meta.emoji} {meta.label}</span>
+        <span className="text-xs opacity-90">连对 {streak.right} · 自动调整中</span>
+      </div>
+
+      <div className="text-center mb-4">
+        <button
+          onClick={() => speakEn(q.target.word, level === 'hard' ? 0.95 : 0.75)}
+          className="w-24 h-24 mx-auto rounded-full bg-white text-moko-yellow text-5xl shadow-lg active:scale-95 transition flex items-center justify-center"
+        >
+          🔊
+        </button>
+        <div className="text-sm mt-2 opacity-95">听一听，选出正确的单词～</div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        {q.options.map((opt) => {
+          const isAnswer = opt.word === q.target.word;
+          const isPicked = opt.word === picked;
+          let cls = 'bg-white text-moko-violet border-2 border-moko-yellow';
+          if (picked) {
+            if (isAnswer) cls = 'bg-green-100 text-green-700 border-2 border-green-500';
+            else if (isPicked) cls = 'bg-red-100 text-red-600 border-2 border-red-500';
+            else cls = 'bg-white text-moko-violet border-2 border-moko-yellow opacity-60';
+          }
+          return (
+            <button
+              key={opt.word}
+              disabled={!!picked}
+              onClick={() => choose(opt)}
+              className={`py-3 rounded-xl font-black shadow active:scale-95 transition disabled:cursor-default ${cls}`}
+            >
+              <div className="text-3xl">{opt.emoji}</div>
+              <div className="text-lg">{opt.word}</div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function EnglishStudyPage() {
   return (
     <div className="max-w-4xl mx-auto pb-28">
@@ -222,6 +350,12 @@ export default function EnglishStudyPage() {
             <WordCard key={w.word} item={w} />
           ))}
         </div>
+      </section>
+
+      {/* 听音选词（难度自适应） */}
+      <section className="mb-8">
+        <h2 className="text-xl font-black text-moko-violet mb-3">🎧 听音选词（难度会自己调整哦）</h2>
+        <EnListenQuiz />
       </section>
     </div>
   );

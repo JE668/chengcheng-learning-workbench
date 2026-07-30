@@ -11,6 +11,7 @@ import {
   type CharacterItem,
   type PoemItem,
 } from '@/lib/study-data';
+import { logMistake } from '@/lib/mistake-log';
 
 function speak(text: string, rate = 0.85) {
   if (typeof window === 'undefined') return;
@@ -182,6 +183,146 @@ function TracingCard({ char }: { char: string }) {
   );
 }
 
+/* ---------- 识字闯关（难度自适应） ---------- */
+type DiffLevel = 'easy' | 'medium' | 'hard';
+const LEVEL_META: Record<DiffLevel, { label: string; emoji: string }> = {
+  easy: { label: '入门', emoji: '🌱' },
+  medium: { label: '进阶', emoji: '🌿' },
+  hard: { label: '挑战', emoji: '🚀' },
+};
+const LEVEL_ORDER: DiffLevel[] = ['easy', 'medium', 'hard'];
+
+const EASY_CHARS = CHARACTERS_L1.slice(0, 10); // 天 地 人 你 我 他 一 二 三 口
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+interface CharQ {
+  mode: 'char2mean' | 'mean2char';
+  target: CharacterItem;
+  options: string[];
+  answer: string;
+}
+
+function buildQuestion(level: DiffLevel): CharQ {
+  const pool = level === 'easy' ? EASY_CHARS : CHARACTERS_L1;
+  const target = pool[Math.floor(Math.random() * pool.length)];
+  if (level === 'hard') {
+    // 挑战档：看释义选汉字（反转，更烧脑）
+    const distractors = shuffle(pool.filter((c) => c.char !== target.char))
+      .slice(0, 3)
+      .map((c) => c.char);
+    return { mode: 'mean2char', target, options: shuffle([target.char, ...distractors]), answer: target.char };
+  }
+  const distractors = shuffle(pool.filter((c) => c.char !== target.char))
+    .slice(0, 3)
+    .map((c) => c.meaning);
+  return { mode: 'char2mean', target, options: shuffle([target.meaning, ...distractors]), answer: target.meaning };
+}
+
+function CharacterQuiz() {
+  const [level, setLevel] = useState<DiffLevel>('easy');
+  const [q, setQ] = useState<CharQ>(() => buildQuestion('easy'));
+  const [picked, setPicked] = useState<string | null>(null);
+  const [streak, setStreak] = useState({ right: 0, wrong: 0 });
+
+  useEffect(() => {
+    const saved = localStorage.getItem('chineseDiffLevel') as DiffLevel | null;
+    if (saved && LEVEL_ORDER.includes(saved)) {
+      setLevel(saved);
+      setQ(buildQuestion(saved));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('chineseDiffLevel', level);
+  }, [level]);
+
+  function nextRound(newLevel: DiffLevel) {
+    setLevel(newLevel);
+    setPicked(null);
+    setQ(buildQuestion(newLevel));
+  }
+
+  function choose(opt: string) {
+    if (picked) return;
+    setPicked(opt);
+    const ok = opt === q.answer;
+    speak(ok ? '答对啦！' : `不对哦，${q.target.char} 是 ${q.target.meaning}`);
+    let nl = level;
+    if (ok) {
+      const nr = streak.right + 1;
+      setStreak({ right: nr, wrong: 0 });
+      if (nr >= 3 && level !== 'hard') nl = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) + 1];
+    } else {
+      const nw = streak.wrong + 1;
+      setStreak({ right: 0, wrong: nw });
+      if (nw >= 2 && level !== 'easy') nl = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) - 1];
+      logMistake({ subject: '语文', kind: '识字', prompt: `${q.target.char} 是什么意思？`, answer: q.target.meaning, wrong: opt });
+    }
+    setTimeout(() => nextRound(nl), ok ? 1400 : 1700);
+  }
+
+  const meta = LEVEL_META[level];
+
+  return (
+    <div className="rounded-2xl p-5 bg-gradient-to-br from-moko-pink to-rose-300 text-white shadow-lg">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-bold bg-white/25 rounded-full px-3 py-1">难度：{meta.emoji} {meta.label}</span>
+        <span className="text-xs opacity-90">连对 {streak.right} · 自动调整中</span>
+      </div>
+
+      <div className="text-center mb-4">
+        {q.mode === 'char2mean' ? (
+          <>
+            <div className="text-6xl font-black mb-1">{q.target.char}</div>
+            <button
+              onClick={() => speak(q.target.char)}
+              className="text-xs px-3 py-1 rounded-full bg-white/30 font-bold active:scale-95 transition"
+            >
+              🔊 读一读
+            </button>
+            <div className="text-sm mt-2 opacity-95">这个字是什么意思？</div>
+          </>
+        ) : (
+          <div className="text-base font-bold">哪个字的意思是「{q.target.meaning}」？</div>
+        )}
+      </div>
+
+      <div className={`grid gap-2 ${q.mode === 'mean2char' ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'}`}>
+        {q.options.map((opt) => {
+          const isAnswer = opt === q.answer;
+          const isPicked = opt === picked;
+          let cls = 'bg-white text-moko-rose border-2 border-moko-rose';
+          if (picked) {
+            if (isAnswer) cls = 'bg-green-100 text-green-700 border-2 border-green-500';
+            else if (isPicked) cls = 'bg-red-100 text-red-600 border-2 border-red-500';
+            else cls = 'bg-white text-moko-rose border-2 border-moko-rose opacity-60';
+          }
+          return (
+            <button
+              key={opt}
+              disabled={!!picked}
+              onClick={() => choose(opt)}
+              className={`py-3 rounded-xl font-black shadow active:scale-95 transition disabled:cursor-default ${
+                q.mode === 'mean2char' ? 'text-3xl' : 'text-lg'
+              } ${cls}`}
+            >
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function ChineseStudyPage() {
   const [traceChar, setTraceChar] = useState('人');
   const traceChars = ['人', '口', '日', '月', '水', '火', '大', '小', '上', '下'];
@@ -251,6 +392,12 @@ export default function ChineseStudyPage() {
           ))}
         </div>
         <TracingCard char={traceChar} />
+      </section>
+
+      {/* 识字闯关（难度自适应） */}
+      <section className="mb-8">
+        <h2 className="text-xl font-black text-moko-violet mb-3">🎯 识字闯关（难度会自己调整哦）</h2>
+        <CharacterQuiz />
       </section>
     </div>
   );

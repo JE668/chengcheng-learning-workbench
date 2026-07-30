@@ -1,6 +1,7 @@
 import { getDb } from '@/lib/db';
 import { getBadges } from '@/lib/castle';
 import PrintButton from '@/components/PrintButton';
+import { HeartMoko, StarMoko, PrincessMoko, CertSeal } from '@/components/MokoArt';
 
 function fmt(d: Date): string {
   const y = d.getFullYear();
@@ -116,7 +117,11 @@ export default async function ReportsPage() {
 
       {/* 🏆 可打印奖状 */}
       <div id="print-cert" className="rounded-3xl p-8 border-8 border-double border-moko-violet bg-gradient-to-br from-moko-cream to-white text-center shadow-2xl">
-        <div className="text-5xl mb-2">🏆</div>
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <HeartMoko className="w-16 h-16" />
+          <CertSeal className="w-20 h-20" />
+          <StarMoko className="w-16 h-16" />
+        </div>
         <h2 className="text-2xl font-black text-moko-violet">学 习 之 星 奖 状</h2>
         <div className="text-sm text-gray-500 mb-6">Certificate of Achievement</div>
         <p className="text-lg text-gray-700 leading-relaxed mb-4">
@@ -131,7 +136,8 @@ export default async function ReportsPage() {
           你用努力换来了城堡的繁荣，乐美公主为你骄傲！🌟
         </p>
         <div className="flex items-end justify-between mt-10 text-sm text-gray-600">
-          <div className="text-left">
+          <div className="text-left flex items-end gap-1">
+            <PrincessMoko className="w-14 h-16" />
             <div className="border-t border-gray-400 pt-1 px-2">萌可导师：乐美公主</div>
           </div>
           <div className="text-right">
