@@ -513,8 +513,15 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
 
   // 图鉴（全部萌可 + 是否已拥有）
   const ownedKeys = new Set(owned.rows.map((r) => String(r.moko_key)));
+  const seenName = new Set<string>();
   const gallery = Object.values(mokoChars)
     .filter((m) => m.category !== 'trouble')
+    // 同名去重：核心萌可（含学科/游戏）优先，真实图片集的同名变体折叠掉，避免图鉴重复
+    .filter((m) => {
+      if (seenName.has(m.name)) return false;
+      seenName.add(m.name);
+      return true;
+    })
     .map((m) => ({
       key: m.key,
       name: m.name,
@@ -523,7 +530,8 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
       color: m.color,
       category: m.category,
       subject: m.subject,
-      owned: ownedKeys.has(m.key),
+      // col_ 前缀的真实图片集属于「图鉴资料」，直接展示为已收集
+      owned: m.key.startsWith('col_') ? true : ownedKeys.has(m.key),
     }));
 
   // 活跃捣蛋萌可

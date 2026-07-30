@@ -25,7 +25,18 @@ const THEMES: Theme[] = [
 ];
 
 // 可选萌可：优先用有真实图片的（真实萌可图案），其余用 emoji 兜底
-const CHOICES = ['heartping', 'keyping', 'gemsping', 'courageping', 'singping', 'auroraping', 'moonping', 'hopeping', 'sweetsping', 'lemei'];
+// 奖状可选萌可：用真实图片集的全部萌可（按名字去重，排除捣蛋萌可），孩子可自由挑选
+const CHOICES = (() => {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const m of Object.values(mokoChars)) {
+    if (m.category === 'trouble') continue;
+    if (seen.has(m.name)) continue;
+    seen.add(m.name);
+    out.push(m.key);
+  }
+  return out;
+})();
 
 const PREF_KEY = 'certPref';
 
@@ -82,7 +93,7 @@ export default function Certificate({
         <div className="no-print mb-6 rounded-3xl p-5 bg-white shadow-lg space-y-5">
           <div>
             <div className="font-bold text-moko-violet mb-2">🎨 选一只萌可站在你的奖状上</div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto pr-1">
               {CHOICES.map((k) => {
                 const mc = mokoChars[k];
                 const active = pref.mokoKey === k;

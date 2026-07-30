@@ -39,11 +39,15 @@ export interface Redemption {
 
 export type MokoCategoryKey =
   | 'royal'     // 皇室萌可
+  | 'mo'        // 魔方萌可（第一、二季）
   | 'key'       // 钥匙萌可
   | 'jewel'     // 闪亮宝石萌可
   | 'sweetie'   // 魔法甜心萌可
   | 'star'      // 闪耀流星萌可
   | 'princess'  // 闪亮公主萌可
+  | 'prince'    // 王子萌可
+  | 'villain'   // 反派萌可
+  | 'legend'    // 传奇萌可
   | 'guide'     // 引导萌可
   | 'subject'   // 学科萌可（兼容旧分类）
   | 'bonus'     // 奖励萌可（兼容旧分类）

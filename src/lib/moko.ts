@@ -1,4 +1,5 @@
 import { MokoChar, MokoCategoryKey, Subject } from './types';
+import { mokoCollection, mokoCollectionByName } from './moko-collection';
 
 export const appName = process.env.NEXT_PUBLIC_APP_NAME || '程程学习工作台';
 
@@ -21,11 +22,15 @@ export const subjects: { key: Subject; label: string; color: string; img: string
  */
 export const MOko_CATEGORIES: { key: MokoCategoryKey; label: string; emoji: string; color: string; desc: string }[] = [
   { key: 'royal', label: '皇室萌可', emoji: '👑', color: 'text-moko-rose', desc: '守护魔法萌可王国的小公主们' },
+  { key: 'mo', label: '魔方萌可', emoji: '🧊', color: 'text-moko-cyan', desc: '第一、二季的魔法萌可' },
   { key: 'key', label: '钥匙萌可', emoji: '🔑', color: 'text-moko-violet', desc: '掌管知识宝盒的钥匙精灵' },
   { key: 'jewel', label: '闪亮宝石萌可', emoji: '💎', color: 'text-moko-purple', desc: '住在宝石矿洞里的闪亮一族' },
   { key: 'sweetie', label: '魔法甜心萌可', emoji: '🍬', color: 'text-moko-pink', desc: '甜甜圈工厂里的糖果精灵' },
   { key: 'star', label: '闪耀流星萌可', emoji: '☄️', color: 'text-moko-cyan', desc: '追逐流星的天文萌可' },
   { key: 'princess', label: '闪亮公主萌可', emoji: '🌟', color: 'text-moko-gold', desc: '王国里最受宠爱的小公主' },
+  { key: 'prince', label: '王子萌可', emoji: '🤴', color: 'text-moko-blue', desc: '守护王国的王子们' },
+  { key: 'villain', label: '反派萌可', emoji: '😈', color: 'text-slate-500', desc: '搞怪的反派与神秘角色' },
+  { key: 'legend', label: '传奇萌可', emoji: '🌟', color: 'text-moko-gold', desc: '传说中的特别萌可' },
   { key: 'guide', label: '引导萌可', emoji: '🧭', color: 'text-moko-rose', desc: '带着爱心魔杖的领航员' },
   { key: 'trouble', label: '捣蛋萌可', emoji: '😈', color: 'text-slate-500', desc: '最爱搞恶作剧的小淘气' },
 ];
@@ -77,6 +82,15 @@ export const mokoChars: Record<string, MokoChar> = {
   lulu: { key: 'lulu', name: '噜噜萌可', color: 'text-slate-500', img: '/moko/transform_music.jpg', emoji: '🫧', season: '捣蛋萌可', item: '噜噜泡泡', line: '噜噜噜~ 偷走啦！', category: 'trouble' },
   taopiping: { key: 'taopiping', name: '淘气萌可', color: 'text-slate-500', img: '/moko/transform_love.jpg', emoji: '😈', season: '捣蛋萌可', item: '捣蛋锤', line: '嘿嘿，看我的！', category: 'trouble' },
 };
+
+// 把核心萌可的图片重映射到真实图片集（同名首图更清晰、风格统一）
+for (const k of Object.keys(mokoChars)) {
+  const hit = mokoCollectionByName[mokoChars[k].name];
+  if (hit?.img) mokoChars[k] = { ...mokoChars[k], img: hit.img };
+}
+
+// 并入真实图片集（170 张，key 以 col_ 前缀），图鉴/奖状均可直接使用
+for (const c of mokoCollection) mokoChars[c.key] = c;
 
 /** 捣蛋萌可池（结算时随机挑选入侵） */
 export const troubleMokoKeys = ['naonao', 'mihu', 'lulu'];
