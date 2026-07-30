@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     }));
     return NextResponse.json({ tasks });
   }
-  const all = await db.execute({ sql: 'SELECT * FROM tasks ORDER BY created_at DESC' });
+  const all = await db.execute({ sql: 'SELECT * FROM tasks ORDER BY created_at DESC', args: [] });
   return NextResponse.json({ tasks: all.rows });
 }
 

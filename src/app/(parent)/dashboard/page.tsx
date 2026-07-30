@@ -5,7 +5,7 @@ export default async function DashboardPage() {
   const child = await db.execute({ sql: 'SELECT * FROM users WHERE role = ? LIMIT 1', args: ['child'] });
   const c = child.rows[0];
   const points = c ? await getChildPoints(Number(c.id)) : 0;
-  const tasks = await db.execute({ sql: 'SELECT COUNT(*) as n FROM tasks' });
+  const tasks = await db.execute({ sql: 'SELECT COUNT(*) as n FROM tasks', args: [] });
   const comps = await db.execute({ sql: 'SELECT COUNT(*) as n FROM completions WHERE child_id = ?', args: [c?.id] });
   const pending = await db.execute({ sql: 'SELECT COUNT(*) as n FROM redemptions WHERE status = ?', args: ['pending'] });
 

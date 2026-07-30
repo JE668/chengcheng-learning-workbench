@@ -10,6 +10,7 @@ export async function GET() {
   if (user.role === 'parent') {
     rows = await db.execute({
       sql: `SELECT r.*, u.display_name as child_name FROM redemptions r JOIN users u ON r.child_id = u.id ORDER BY r.created_at DESC`,
+      args: [],
     });
   } else {
     rows = await db.execute({ sql: 'SELECT * FROM redemptions WHERE child_id = ? ORDER BY created_at DESC', args: [user.id] });
