@@ -195,6 +195,16 @@ export async function ensureSchema() {
       });
     }
   }
+
+  // 全新部署兜底：确保家长账号 parent / 12345678 存在（幂等，已有则跳过）。
+  // 避免未执行 seed 脚本时家长端无法登录、被锁死。
+  const parent = await db.execute({ sql: "SELECT id FROM users WHERE username = 'parent'", args: [] });
+  if (parent.rows.length === 0) {
+    await db.execute({
+      sql: 'INSERT INTO users (username, password_hash, role, display_name) VALUES (?, ?, ?, ?)',
+      args: ['parent', bcrypt.hashSync('12345678', 10), 'parent', '爸爸妈妈'],
+    });
+  }
 }
 
 /** 取第一个孩子 id（本工作台默认单孩子） */

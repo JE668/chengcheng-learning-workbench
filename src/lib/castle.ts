@@ -305,7 +305,10 @@ export async function checkin(childId: number, subject: Subject) {
 /** 家长端：确认（今天）或补作业（过去某天） */
 export async function confirm(childId: number, day: string, subject: Subject) {
   const db = getDb();
+  await ensureCastle(childId);
   const today = dateStr();
+  // 防御：未传/非法 day 时默认今天，避免写出 day="undefined" 的假行
+  if (!day || day === 'undefined') day = today;
   const existing = await db.execute({
     sql: 'SELECT status FROM daily_checkins WHERE child_id = ? AND day = ? AND subject = ?',
     args: [childId, day, subject],
@@ -363,6 +366,7 @@ export async function confirm(childId: number, day: string, subject: Subject) {
 /* ----------------------------- 道具：购买 / 使用 ----------------------------- */
 export async function buy(childId: number, itemKey: string) {
   const db = getDb();
+  await ensureCastle(childId);
   const row = await getRow(childId);
   if (itemKey === 'spray') {
     const cost = 5;
@@ -408,6 +412,7 @@ export async function setSkin(childId: number, skin: string): Promise<{ ok: bool
 /** 使用魔法喷雾：修复城堡 */
 export async function useSpray(childId: number) {
   const db = getDb();
+  await ensureCastle(childId);
   const inv = await db.execute({ sql: 'SELECT qty FROM inventory WHERE child_id = ? AND item_key = ?', args: [childId, 'spray'] });
   if (!inv.rows.length || Number(inv.rows[0].qty) <= 0) return { ok: false, message: '没有魔法喷雾' };
   const row = await getRow(childId);
@@ -427,6 +432,7 @@ export async function useSpray(childId: number) {
 /** 收获星星币（好朋友阶段萌可每日产出） */
 export async function harvest(childId: number) {
   const db = getDb();
+  await ensureCastle(childId);
   const today = dateStr();
   const friends = (
     await db.execute({
