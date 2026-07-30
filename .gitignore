@@ -4,6 +4,8 @@
 /out
 /dist
 /dist2
+/dist-verify
+*.tsbuildinfo
 .env*.local
 *.log
 local.db
