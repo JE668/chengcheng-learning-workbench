@@ -107,3 +107,18 @@ body {
 .dashboard-bg {
   background: linear-gradient(180deg, rgba(255,247,237,0.92) 0%, rgba(255,247,237,0.7) 100%);
 }
+
+/* ============ 🖨️ 可打印奖状（打印时只显示奖状） ============ */
+@media print {
+  body * { visibility: hidden; }
+  #print-cert, #print-cert * { visibility: visible; }
+  #print-cert {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border-width: 8px;
+    box-shadow: none;
+  }
+  .no-print { display: none !important; }
+}

@@ -132,15 +132,18 @@ export interface MathQuestion {
 }
 
 export function makeMathQuestions(level: 'easy' | 'medium' | 'hard' = 'easy'): MathQuestion[] {
+  // 🎚️ 难度自适应：不同等级使用不同数字范围
+  const range = level === 'easy' ? 10 : level === 'medium' ? 20 : 30;
+  const maxSum = level === 'easy' ? 10 : level === 'medium' ? 20 : 30;
   const qs: MathQuestion[] = [];
   for (let i = 0; i < 10; i++) {
     const op = Math.random() > 0.5 ? '+' : '-';
-    let a = Math.floor(Math.random() * 8) + 1;
-    let b = Math.floor(Math.random() * 8) + 1;
+    let a = Math.floor(Math.random() * range) + 1;
+    let b = Math.floor(Math.random() * range) + 1;
     if (op === '-') {
       if (a < b) [a, b] = [b, a];
     } else {
-      if (a + b > 10) a = 10 - b;
+      if (a + b > maxSum) a = Math.max(1, maxSum - b);
     }
     qs.push({ a, b, op });
   }

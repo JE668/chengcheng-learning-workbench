@@ -106,29 +106,87 @@ function AngleCard({ item }: { item: AngleItem }) {
   );
 }
 
-/* ---------- 加减法练习 ---------- */
+/* ---------- 加减法练习（难度自适应） ---------- */
+type DiffLevel = 'easy' | 'medium' | 'hard';
+const LEVEL_META: Record<DiffLevel, { label: string; emoji: string }> = {
+  easy: { label: '入门', emoji: '🌱' },
+  medium: { label: '进阶', emoji: '🌿' },
+  hard: { label: '挑战', emoji: '🚀' },
+};
+const LEVEL_ORDER: DiffLevel[] = ['easy', 'medium', 'hard'];
+
 function MathQuiz() {
-  const [qs] = useState(() => makeMathQuestions('easy'));
+  const [level, setLevel] = useState<DiffLevel>('easy');
+  const [qs, setQs] = useState<ReturnType<typeof makeMathQuestions>>(() => makeMathQuestions('easy'));
   const [idx, setIdx] = useState(0);
   const [input, setInput] = useState('');
   const [result, setResult] = useState<'idle' | 'right' | 'wrong'>('idle');
+  const [streak, setStreak] = useState({ right: 0, wrong: 0 });
   const q = qs[idx];
+
+  // 读取/恢复上次难度（localStorage，按浏览器记忆）
+  useEffect(() => {
+    const saved = localStorage.getItem('mathDiffLevel') as DiffLevel | null;
+    if (saved && LEVEL_ORDER.includes(saved)) {
+      setLevel(saved);
+      setQs(makeMathQuestions(saved));
+    }
+  }, []);
+
+  // 难度变化 → 重新出题
+  useEffect(() => {
+    localStorage.setItem('mathDiffLevel', level);
+    setQs(makeMathQuestions(level));
+    setIdx(0);
+    setInput('');
+    setResult('idle');
+  }, [level]);
+
+  function adjust(next: DiffLevel) {
+    if (next !== level) setLevel(next);
+    setStreak({ right: 0, wrong: 0 });
+  }
 
   function check() {
     const ans = q.op === '+' ? q.a + q.b : q.a - q.b;
     const ok = Number(input) === ans;
     setResult(ok ? 'right' : 'wrong');
     speak(ok ? '正确！' : `不对哦，${q.a}${q.op}${q.b}等于${ans}`);
-    if (ok) setTimeout(() => {
-      setResult('idle');
-      setInput('');
-      setIdx((i) => (i + 1) % qs.length);
-    }, 1500);
-    else logMistake({ subject: '数学', kind: '加减法', prompt: `${q.a} ${q.op} ${q.b} = ?`, answer: String(ans), wrong: input || '' });
+    if (ok) {
+      const nr = streak.right + 1;
+      setStreak({ right: nr, wrong: 0 });
+      // 连续答对 3 题 → 升一档
+      if (nr >= 3 && level !== 'hard') {
+        const ni = LEVEL_ORDER.indexOf(level) + 1;
+        adjust(LEVEL_ORDER[ni]);
+        speak('太厉害了，难度升级！');
+      }
+      setTimeout(() => {
+        setResult('idle');
+        setInput('');
+        setIdx((i) => (i + 1) % qs.length);
+      }, 1500);
+    } else {
+      const nw = streak.wrong + 1;
+      setStreak({ right: 0, wrong: nw });
+      // 连续答错 2 题 → 降一档，避免受挫
+      if (nw >= 2 && level !== 'easy') {
+        const ni = LEVEL_ORDER.indexOf(level) - 1;
+        adjust(LEVEL_ORDER[ni]);
+        speak('没关系，换简单一点的～');
+      }
+      logMistake({ subject: '数学', kind: '加减法', prompt: `${q.a} ${q.op} ${q.b} = ?`, answer: String(ans), wrong: input || '' });
+    }
   }
+
+  const meta = LEVEL_META[level];
 
   return (
     <div className="rounded-2xl p-5 bg-gradient-to-br from-moko-cyan to-sky-300 text-white shadow-lg">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-bold bg-white/25 rounded-full px-3 py-1">难度：{meta.emoji} {meta.label}</span>
+        <span className="text-xs opacity-90">连对 {streak.right} · 自动调整中</span>
+      </div>
       <div className="text-center text-5xl font-black mb-4">
         {q.a} {q.op} {q.b} = ?
       </div>
@@ -183,7 +241,7 @@ export default function MathStudyPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-xl font-black text-moko-violet mb-3">➕➖ 10 以内加减法</h2>
+        <h2 className="text-xl font-black text-moko-violet mb-3">➕➖ 加减法（难度会自己调整哦）</h2>
         <MathQuiz />
       </section>
     </div>
