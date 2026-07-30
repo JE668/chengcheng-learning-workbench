@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildPoints } from '@/lib/db';
+import { getGrowthDiary } from '@/lib/castle';
 
 export default async function RecordPage() {
   const user = await getCurrentUser();
@@ -12,6 +13,7 @@ export default async function RecordPage() {
     args: [user.id],
   });
   const redeems = await db.execute({ sql: 'SELECT * FROM redemptions WHERE child_id = ? ORDER BY created_at DESC LIMIT 10', args: [user.id] });
+  const diary = await getGrowthDiary(user.id, 20);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -25,6 +27,25 @@ export default async function RecordPage() {
           <div className="text-4xl font-black text-moko-blue">{comps.rows.length}</div>
           <div className="text-gray-500">完成次数</div>
         </div>
+      </div>
+
+      {/* 📔 萌可成长日记 */}
+      <h2 className="text-2xl font-black text-moko-violet mb-3">📔 萌可成长日记</h2>
+      <div className="card-moko mb-8">
+        {diary.length === 0 ? (
+          <p className="text-gray-500 text-center py-4">还没有日记，快去完成打卡，和萌可们一起写故事吧！</p>
+        ) : (
+          <ol className="relative border-l-4 border-moko-pink/40 ml-3 space-y-4">
+            {diary.map((e) => (
+              <li key={e.id} className="ml-5">
+                <span className="absolute -left-[14px] flex items-center justify-center w-7 h-7 bg-white rounded-full border-2 border-moko-pink shadow text-lg">{e.emoji}</span>
+                <div className="font-bold text-moko-violet">{e.title}</div>
+                {e.desc && <div className="text-sm text-gray-500">{e.desc}</div>}
+                <div className="text-xs text-gray-400 mt-0.5">{e.created_at?.slice(0, 16)?.replace('T', ' ')}</div>
+              </li>
+            ))}
+          </ol>
+        )}
       </div>
 
       <h2 className="text-2xl font-black text-moko-violet mb-3">积分明细</h2>

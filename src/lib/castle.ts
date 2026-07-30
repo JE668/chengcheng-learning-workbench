@@ -11,6 +11,48 @@ import {
 } from './moko';
 import type { Subject } from './types';
 
+/* 📔 萌可成长日记：把联动中的高光时刻写入事件流 */
+export interface GrowthEvent {
+  id: number;
+  day: string;
+  type: string;
+  emoji: string;
+  title: string;
+  desc: string | null;
+  created_at: string;
+}
+
+export async function logGrowthEvent(
+  childId: number,
+  type: string,
+  emoji: string,
+  title: string,
+  desc: string,
+): Promise<void> {
+  const db = getDb();
+  await db.execute({
+    sql: 'INSERT INTO growth_events (child_id, day, type, emoji, title, desc) VALUES (?, ?, ?, ?, ?, ?)',
+    args: [childId, dateStr(), type, emoji, title, desc],
+  });
+}
+
+export async function getGrowthDiary(childId: number, limit = 24): Promise<GrowthEvent[]> {
+  const db = getDb();
+  const res = await db.execute({
+    sql: 'SELECT * FROM growth_events WHERE child_id = ? ORDER BY created_at DESC, id DESC LIMIT ?',
+    args: [childId, limit],
+  });
+  return res.rows.map((r) => ({
+    id: Number(r.id),
+    day: String(r.day),
+    type: String(r.type),
+    emoji: String(r.emoji),
+    title: String(r.title),
+    desc: r.desc != null ? String(r.desc) : null,
+    created_at: String(r.created_at),
+  }));
+}
+
 const SUBJECTS: Subject[] = ['语文', '数学', '英语'];
 
 /* ----------------------------- 时间工具 ----------------------------- */
@@ -53,6 +95,7 @@ export interface CastleStateView {
   prosperity: number;
   streakDays: number;
   shieldEquipped: number;
+  skin: string;
   checkins: Record<Subject, 'pending' | 'child_done' | 'confirmed'>;
   residents: ResidentMoko[];
   gallery: { key: string; name: string; img: string; color: string; category?: string; subject?: string; owned: boolean }[];
@@ -280,6 +323,10 @@ export async function confirm(childId: number, day: string, subject: Subject) {
   // 🌟 学习-城堡联动：完成单科 → 1 阳光能量 + 1 对应学科萌可
   await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight + ? WHERE child_id = ?', args: [SUN_PER_SUBJECT, childId] });
   await awardSubjectMoko(childId, subject);
+  const mokoName = mokoChars[subjectMokoKey[subject]]?.name ?? '萌可';
+  const subjectEmoji: Record<Subject, string> = { 语文: '❤️', 数学: '💪', 英语: '🎵' };
+  await logGrowthEvent(childId, 'checkin', subjectEmoji[subject] ?? '🌟', `「${subject}」打卡成功`,
+    `阳光能量 +${SUN_PER_SUBJECT}，召唤 ${mokoName} 入驻城堡`);
 
   // 当天三科全部确认 → 城堡繁荣度提升
   if (day === today) {
@@ -289,6 +336,7 @@ export async function confirm(childId: number, day: string, subject: Subject) {
     });
     if (Number(c.rows[0]?.n) === 3) {
       await db.execute({ sql: 'UPDATE castle_state SET prosperity = prosperity + ? WHERE child_id = ?', args: [PROSPERITY_BONUS, childId] });
+      await logGrowthEvent(childId, 'prosperity', '🏰', '三科全勤！城堡升级', `繁荣度 +${PROSPERITY_BONUS}，萌可们更开心啦`);
     }
   } else {
     // 补作业：若该过去日期现已三科全确认且仍有未驱散捣蛋萌可 → 可领取魔法喷雾
@@ -305,6 +353,7 @@ export async function confirm(childId: number, day: string, subject: Subject) {
         sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1',
         args: [childId, 'spray'],
       });
+      await logGrowthEvent(childId, 'rescue', '🧴', '补作业完成，获救！', '城堡被捣蛋萌可攻击，已获得魔法喷雾准备修复');
       return { ok: true, message: '补作业完成！获得 1 瓶魔法喷雾，去背包使用修复城堡吧～' };
     }
   }
@@ -337,7 +386,23 @@ export async function buy(childId: number, itemKey: string) {
   if (Number(row?.star_coins ?? 0) < starItem.cost) return { ok: false, message: '星星币不足' };
   await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins - ? WHERE child_id = ?', args: [starItem.cost, childId] });
   await db.execute({ sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1', args: [childId, itemKey] });
+  // 🏰 城堡皮肤：购买后自动换上
+  if (itemKey.startsWith('skin_')) {
+    await db.execute({ sql: 'UPDATE castle_state SET skin = ? WHERE child_id = ?', args: [itemKey, childId] });
+    return { ok: true, message: `兑换「${starItem.name}」成功，城堡已换上新皮肤！` };
+  }
   return { ok: true, message: `兑换「${starItem.name}」成功！` };
+}
+
+/** 切换城堡皮肤（仅限已拥有的皮肤或默认皮肤） */
+export async function setSkin(childId: number, skin: string): Promise<{ ok: boolean; message: string }> {
+  const db = getDb();
+  const owned = skin === 'default' || Number(
+    (await db.execute({ sql: 'SELECT qty FROM inventory WHERE child_id = ? AND item_key = ?', args: [childId, skin] })).rows[0]?.qty ?? 0,
+  ) > 0;
+  if (!owned) return { ok: false, message: '还没有这个皮肤哦，去星星币商城兑换吧！' };
+  await db.execute({ sql: 'UPDATE castle_state SET skin = ? WHERE child_id = ?', args: [skin, childId] });
+  return { ok: true, message: '城堡皮肤已更新！' };
 }
 
 /** 使用魔法喷雾：修复城堡 */
@@ -355,6 +420,7 @@ export async function useSpray(childId: number) {
     args: [returnCoins, childId],
   });
   await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'spray'] });
+  await logGrowthEvent(childId, 'repair', '🧼', '城堡修复完成！', `驱散捣蛋萌可，心情全满，返还 ${returnCoins} 星星币`);
   return { ok: true, message: `城堡已修复！驱散捣蛋萌可，返还 ${returnCoins} 星星币。` };
 }
 
@@ -374,6 +440,7 @@ export async function harvest(childId: number) {
   for (const r of friends) {
     await db.execute({ sql: 'UPDATE moko_owned SET last_harvest_day = ? WHERE id = ?', args: [today, Number(r.id)] });
   }
+  await logGrowthEvent(childId, 'harvest', '⭐', '收获星星币', `萌可朋友们产出了 ${gained} 星星币`);
   return { ok: true, gained, message: `收获 ${gained} 星星币！` };
 }
 
@@ -392,6 +459,7 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
   const streakDays = Number(row?.streak_days ?? 0);
   const shieldEquipped = Number(row?.shield_equipped ?? 0);
   const lastStolen = Number(row?.last_stolen ?? 0);
+  const skin = String(row?.skin ?? 'default');
 
   // 今日三科打卡状态
   const checkRows = await db.execute({
@@ -494,6 +562,7 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
     prosperity,
     streakDays,
     shieldEquipped,
+    skin,
     checkins,
     residents,
     gallery,

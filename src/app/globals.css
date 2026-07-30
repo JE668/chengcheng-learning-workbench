@@ -40,6 +40,24 @@ body {
   box-shadow: inset 0 0 40px rgba(192,132,252,.25);
 }
 
+/* 🏰 城堡皮肤：星空 / 糖果 */
+.castle-skin-star {
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255,255,255,.85), transparent 6%),
+    radial-gradient(circle at 72% 30%, rgba(255,255,255,.7), transparent 5%),
+    radial-gradient(circle at 45% 70%, rgba(255,255,255,.6), transparent 4%),
+    radial-gradient(circle at 85% 80%, rgba(255,255,255,.7), transparent 5%),
+    linear-gradient(160deg, #0b1026 0%, #1e1b4b 50%, #312e81 100%);
+  box-shadow: inset 0 0 60px rgba(99,102,241,.5);
+}
+.castle-skin-candy {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,.5), transparent 40%),
+    radial-gradient(circle at 80% 30%, rgba(255,182,255,.6), transparent 45%),
+    linear-gradient(160deg, #ffe4f3 0%, #ffd6e8 45%, #fff1c9 100%);
+  box-shadow: inset 0 0 40px rgba(244,114,182,.3);
+}
+
 /* 萌可入驻：从精灵球飞出 */
 @keyframes mokoPop {
   0% { transform: scale(0) rotate(-30deg); opacity: 0; }

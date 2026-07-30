@@ -12,7 +12,7 @@ interface Resident {
 }
 interface StateView {
   today: string; sunlight: number; starCoins: number; prosperity: number;
-  streakDays: number; shieldEquipped: number;
+  streakDays: number; shieldEquipped: number; skin: string;
   checkins: Record<string, string>;
   residents: Resident[];
   gallery: { key: string; name: string; img: string; color: string; category?: string; subject?: string; owned: boolean }[];
@@ -23,6 +23,11 @@ interface StateView {
 }
 const STAGE_LABEL: Record<Stage, string> = { obtained: '刚解锁', settled: '入驻城堡', playing: '开心玩耍', friend: '好朋友' };
 const TABS = [['hall', '🏰 大厅'], ['gallery', '📖 图鉴'], ['shop', '🛍️ 商店'], ['bag', '🎒 背包'], ['achv', '🏅 成就']] as const;
+const SKINS = [
+  { key: 'default', name: '梦幻城堡', emoji: '🏰' },
+  { key: 'skin_star', name: '星空城堡', emoji: '🌌' },
+  { key: 'skin_candy', name: '糖果城堡', emoji: '🍬' },
+];
 
 export default function CastlePage() {
   const router = useRouter();
@@ -76,6 +81,28 @@ export default function CastlePage() {
         </div>
       </div>
 
+      {/* 城堡皮肤切换 */}
+      <div className="card-moko mb-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-bold text-moko-violet mr-1">🎨 城堡皮肤：</span>
+          {SKINS.map((s) => {
+            const owned = s.key === 'default' || Number(state.inventory[s.key] || 0) > 0;
+            const active = state.skin === s.key;
+            return (
+              <button
+                key={s.key}
+                onClick={() => owned && act('/api/castle/skin', { skin: s.key })}
+                disabled={busy || !owned}
+                title={owned ? `换成${s.name}` : '去星星币商城兑换'}
+                className={`px-3 py-1.5 rounded-full font-bold text-sm transition ${active ? 'bg-moko-violet text-white' : owned ? 'bg-white text-moko-violet shadow' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+              >
+                {s.emoji} {s.name}{!owned && ' 🔒'}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Tabs */}
       <div className="flex gap-2 mb-4 overflow-x-auto">
         {TABS.map(([k, label]) => (
@@ -88,7 +115,7 @@ export default function CastlePage() {
       {/* ===== 大厅 ===== */}
       {tab === 'hall' && (
         <div className={`card-moko relative overflow-hidden ${state.shieldEquipped > 0 ? 'shield-glow' : ''}`}>
-          <div className="castle-bg rounded-2xl p-4 min-h-[260px]">
+          <div className={`castle-bg rounded-2xl p-4 min-h-[260px] ${state.skin === 'skin_star' ? 'castle-skin-star' : state.skin === 'skin_candy' ? 'castle-skin-candy' : ''}`}>
             {state.troublemakers.length > 0 && (
               <div className="absolute inset-0 pointer-events-none">
                 {state.troublemakers.map((t, i) => (

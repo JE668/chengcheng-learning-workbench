@@ -157,7 +157,26 @@ export async function ensureSchema() {
       resolved INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
+
+    // 📔 萌可成长日记（里程碑事件流，由联动动作埋点写入）
+    `CREATE TABLE IF NOT EXISTS growth_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      day TEXT NOT NULL,
+      type TEXT NOT NULL,
+      emoji TEXT NOT NULL,
+      title TEXT NOT NULL,
+      desc TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
   ], 'write');
+
+  // 迁移：castle_state 增加 skin 字段（城堡皮肤切换）
+  // 幂等：列已存在时 ALTER 抛 "duplicate column"，直接忽略。
+  try {
+    await db.execute({ sql: "ALTER TABLE castle_state ADD COLUMN skin TEXT NOT NULL DEFAULT 'default'", args: [] });
+  } catch { /* 列已存在或不可迁移时忽略，不影响主流程 */ }
 
   // 账号迁移：确保 child 用户为 cara / 0000。
   // 遗留的 cheng 自动改名并重置密码，users.id 不变，城堡/打卡等关联数据全部保留。

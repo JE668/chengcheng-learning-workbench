@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import Nav from '@/components/Nav';
+import EyeRest from '@/components/EyeRest';
 
 export default async function ChildLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -12,6 +13,7 @@ export default async function ChildLayout({ children }: { children: React.ReactN
       <main className="flex-1 p-4 md:p-8 pb-28 md:pb-8 safe-bottom">
         {children}
       </main>
+      <EyeRest />
     </div>
   );
 }
