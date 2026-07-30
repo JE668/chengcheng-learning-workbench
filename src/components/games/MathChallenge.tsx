@@ -2,27 +2,32 @@
 
 import { useEffect, useState } from 'react';
 
-function makeProblem(level: number) {
-  const ops = level > 2 ? ['+', '-'] : ['+'];
+function makeProblem(lv: number) {
+  const range = [10, 20, 50][Math.min(2, Math.max(0, lv - 1))];
+  const ops = lv >= 2 ? ['+', '-'] : ['+'];
   const op = ops[Math.floor(Math.random() * ops.length)];
-  let a = Math.floor(Math.random() * 12) + 1;
-  let b = Math.floor(Math.random() * 12) + 1;
-  if (op === '-') { if (a < b) [a, b] = [b, a]; }
+  let a = Math.floor(Math.random() * range) + 1;
+  let b = Math.floor(Math.random() * range) + 1;
+  if (op === '-') {
+    if (a < b) [a, b] = [b, a];
+  }
   const ans = op === '+' ? a + b : a - b;
   const text = `${a} ${op} ${b} = ?`;
-  const choices = new Set<number>([ans]);
-  while (choices.size < 4) {
-    const d = Math.floor(Math.random() * 25) - 5;
-    if (d !== ans && d >= 0) choices.add(d);
+  const choices: number[] = [ans];
+  const max = range * 2;
+  while (choices.length < 4) {
+    const d = Math.floor(Math.random() * (max + 5)) - 2;
+    if (d !== ans && d >= 0 && !choices.includes(d)) choices.push(d);
   }
-  return { text, answer: ans, choices: [...choices].sort(() => 0.5 - Math.random()) };
+  return { text, answer: ans, choices: choices.sort(() => 0.5 - Math.random()) };
 }
 
-export default function MathChallenge({ onFinish }: { onFinish: (score: number) => void }) {
-  const [level, setLevel] = useState(1);
-  const [prob, setProb] = useState(makeProblem(1));
+export default function MathChallenge({ onFinish, level = 1 }: { onFinish: (score: number) => void; level?: number }) {
+  const lv = Math.min(3, Math.max(1, level));
+  const timeLimit = [70, 60, 50][lv - 1];
+  const [prob, setProb] = useState(makeProblem(lv));
   const [score, setScore] = useState(0);
-  const [time, setTime] = useState(60);
+  const [time, setTime] = useState(timeLimit);
   const [done, setDone] = useState(false);
   const [streak, setStreak] = useState(0);
 
@@ -33,7 +38,10 @@ export default function MathChallenge({ onFinish }: { onFinish: (score: number) 
   }, [done]);
 
   useEffect(() => {
-    if (time === 0 && !done) { setDone(true); onFinish(score); }
+    if (time === 0 && !done) {
+      setDone(true);
+      onFinish(score);
+    }
   }, [time, done, score, onFinish]);
 
   function pick(n: number) {
@@ -45,9 +53,7 @@ export default function MathChallenge({ onFinish }: { onFinish: (score: number) 
     } else {
       setStreak(0);
     }
-    const nextLevel = Math.min(4, level + 1);
-    setLevel(nextLevel);
-    setProb(makeProblem(nextLevel));
+    setProb(makeProblem(lv));
   }
 
   return (

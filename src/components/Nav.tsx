@@ -9,6 +9,7 @@ const childLinks = [
   { href: '/study', label: '学习', icon: '📚' },
   { href: '/games', label: '游戏', icon: '🎮' },
   { href: '/record', label: '记录', icon: '🏆' },
+  { href: '/cert', label: '奖状', icon: '🎖️' },
   { href: '/castle', label: '城堡', icon: '🏰' },
   { href: '/shop', label: '商店', icon: '🛍️' },
 ];

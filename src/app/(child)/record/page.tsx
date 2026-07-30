@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildPoints } from '@/lib/db';
 import { getGrowthDiary } from '@/lib/castle';
+import Link from 'next/link';
 
 export default async function RecordPage() {
   const user = await getCurrentUser();
@@ -18,6 +19,15 @@ export default async function RecordPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-3xl font-black text-moko-violet mb-4">学习记录 🏆</h1>
+      <Link href="/cert" className="block mb-6 rounded-2xl p-4 bg-gradient-to-r from-moko-gold to-moko-rose text-white shadow-lg hover:scale-[1.01] transition">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-lg font-black">🎖️ 我的奖状</div>
+            <div className="text-sm opacity-90">选喜欢的萌可和颜色，做专属奖状～</div>
+          </div>
+          <div className="text-3xl">➡️</div>
+        </div>
+      </Link>
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="card-moko text-center">
           <div className="text-4xl font-black text-moko-rose">{points}</div>
@@ -52,8 +62,8 @@ export default async function RecordPage() {
       <div className="space-y-2 mb-8">
         {comps.rows.map((c, i) => (
           <div key={i} className="card-moko flex justify-between">
-            <span className="font-medium">{c.task_title || (c.source ? `游戏/课程：${String(c.source).replace('lesson-', '').replace('task-', '').replace(/-/g, ' ')}` : '学习奖励')}</span>
-            <span className="font-bold text-moko-rose">+{c.points}</span>
+            <span className="font-medium">{(c.task_title ? String(c.task_title) : c.source ? `游戏/课程：${String(c.source).replace('lesson-', '').replace('task-', '').replace(/-/g, ' ')}` : '学习奖励')}</span>
+            <span className="font-bold text-moko-rose">+{Number(c.points)}</span>
           </div>
         ))}
         {comps.rows.length === 0 && <div className="card-moko text-gray-500">还没有记录，快去学习吧！</div>}
@@ -62,10 +72,10 @@ export default async function RecordPage() {
       <h2 className="text-2xl font-black text-moko-violet mb-3">兑换记录</h2>
       <div className="space-y-2">
         {redeems.rows.map((r) => (
-          <div key={r.id} className="card-moko flex justify-between">
-            <span>{r.reward_name}</span>
-            <span className={`font-bold ${r.status === 'approved' ? 'text-moko-mint' : r.status === 'rejected' ? 'text-red-400' : 'text-moko-yellow'}`}>
-              -{r.cost} {r.status === 'pending' ? '审核中' : r.status === 'approved' ? '已兑换' : '已拒绝'}
+          <div key={String(r.id)} className="card-moko flex justify-between">
+            <span>{String(r.reward_name)}</span>
+            <span className={`font-bold ${String(r.status) === 'approved' ? 'text-moko-mint' : String(r.status) === 'rejected' ? 'text-red-400' : 'text-moko-yellow'}`}>
+              -{Number(r.cost)} {String(r.status) === 'pending' ? '审核中' : String(r.status) === 'approved' ? '已兑换' : '已拒绝'}
             </span>
           </div>
         ))}

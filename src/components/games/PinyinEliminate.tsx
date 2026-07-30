@@ -2,22 +2,30 @@
 
 import { useEffect, useState } from 'react';
 
-const pinyinPool = ['bā', 'mā', 'tā', 'dà', 'xiǎo', 'rén', 'kǒu', 'shǒu', 'mù', 'rì', 'yuè', 'shuǐ'];
+const POOLS: Record<number, string[]> = {
+  1: ['bā', 'mā', 'tā', 'dà', 'xiǎo', 'rén', 'kǒu', 'shǒu', 'mù', 'rì', 'yuè', 'shuǐ'],
+  2: ['bā', 'mā', 'tā', 'dà', 'xiǎo', 'rén', 'kǒu', 'shǒu', 'mù', 'rì', 'yuè', 'shuǐ', 'pā', 'fā', 'lái', 'hǎo', 'shàng', 'xià', 'shān', 'huǒ'],
+  3: ['bā', 'mā', 'tā', 'dà', 'xiǎo', 'rén', 'kǒu', 'shǒu', 'mù', 'rì', 'yuè', 'shuǐ', 'chuán', 'qiū', 'xuě', 'juān', 'zhōng', 'chē', 'shū', 'yǔ', 'fēng', 'yún', 'huā', 'niǎo'],
+};
+const PAIRS: Record<number, number> = { 1: 6, 2: 8, 3: 10 };
+const TIME: Record<number, number> = { 1: 90, 2: 75, 3: 60 };
 
-export default function PinyinEliminate({ onFinish }: { onFinish: (score: number) => void }) {
+export default function PinyinEliminate({ onFinish, level = 1 }: { onFinish: (score: number) => void; level?: number }) {
+  const lv = Math.min(3, Math.max(1, level));
+  const pairCount = PAIRS[lv];
   const [cards, setCards] = useState<{ id: number; text: string; flipped: boolean; matched: boolean }[]>([]);
   const [flipped, setFlipped] = useState<number[]>([]);
-  const [time, setTime] = useState(90);
+  const [time, setTime] = useState(TIME[lv]);
   const [startedAt] = useState(Date.now());
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    const pairs = [...pinyinPool].sort(() => 0.5 - Math.random()).slice(0, 8);
+    const pairs = [...(POOLS[lv] || POOLS[1])].sort(() => 0.5 - Math.random()).slice(0, pairCount);
     const deck = [...pairs, ...pairs]
       .map((text, i) => ({ id: i, text, flipped: false, matched: false }))
       .sort(() => 0.5 - Math.random());
     setCards(deck);
-  }, []);
+  }, [lv, pairCount]);
 
   useEffect(() => {
     if (done) return;
@@ -77,7 +85,7 @@ export default function PinyinEliminate({ onFinish }: { onFinish: (score: number
     <div className="bg-white rounded-3xl shadow-xl p-4 md:p-6">
       <div className="flex justify-between items-center mb-4">
         <span className="text-lg font-bold text-moko-violet">⏱️ 剩余 {time} 秒</span>
-        <span className="text-lg font-bold text-moko-rose">已消除 {cards.filter((c) => c.matched).length / 2}/8</span>
+        <span className="text-lg font-bold text-moko-rose">已消除 {cards.filter((c) => c.matched).length / 2}/{pairCount}</span>
       </div>
       <div className="grid grid-cols-4 gap-3 md:gap-4">
         {cards.map((c, i) => (

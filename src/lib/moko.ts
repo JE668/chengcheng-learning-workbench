@@ -75,21 +75,125 @@ export const mokoChars: Record<string, MokoChar> = {
   naonao: { key: 'naonao', name: '闹闹萌可', color: 'text-slate-500', img: '/moko/transform_courage.jpg', emoji: '🤪', season: '捣蛋萌可', item: '吵闹喇叭', line: '嘻嘻，我来捣乱啦！', category: 'trouble' },
   mihu: { key: 'mihu', name: '迷糊萌可', color: 'text-slate-500', img: '/moko/transform_gem.jpg', emoji: '😵', season: '捣蛋萌可', item: '迷糊口袋', line: '唔…我的币呢？', category: 'trouble' },
   lulu: { key: 'lulu', name: '噜噜萌可', color: 'text-slate-500', img: '/moko/transform_music.jpg', emoji: '🫧', season: '捣蛋萌可', item: '噜噜泡泡', line: '噜噜噜~ 偷走啦！', category: 'trouble' },
-  taopiping: { key: 'taopiping', name: '淘气萌可', color: 'text-slate-500', emoji: '😈', season: '捣蛋萌可', item: '捣蛋锤', line: '嘿嘿，看我的！', category: 'trouble' },
+  taopiping: { key: 'taopiping', name: '淘气萌可', color: 'text-slate-500', img: '/moko/transform_love.jpg', emoji: '😈', season: '捣蛋萌可', item: '捣蛋锤', line: '嘿嘿，看我的！', category: 'trouble' },
 };
 
 /** 捣蛋萌可池（结算时随机挑选入侵） */
 export const troubleMokoKeys = ['naonao', 'mihu', 'lulu'];
 
-export const games: { id: string; title: string; mokoKey: string; subject: string; desc: string; difficulty: string }[] = [
-  { id: 'pinyin-eliminate', title: '拼音消消乐', mokoKey: 'heartping', subject: '语文', desc: '把相同的拼音卡用爱心魔法配对消除', difficulty: '限时+连击' },
-  { id: 'character-match', title: '识字配对', mokoKey: 'heartping', subject: '语文', desc: '汉字和图卡配对，帮爱心萌可捕捉生字', difficulty: '卡池递增' },
-  { id: 'math-challenge', title: '计算挑战', mokoKey: 'courageping', subject: '数学', desc: '正正闯关，加减法越快分越高', difficulty: '速度与进位' },
-  { id: 'compare-balance', title: '大小比较天平', mokoKey: 'gemsping', subject: '数学', desc: '宝石天平比较数字与数量，找出轻重', difficulty: '多量比较' },
-  { id: 'word-match', title: '单词配对', mokoKey: 'keyping', subject: '英语', desc: '用万能钥匙解锁英文单词与中文意思', difficulty: '混淆项' },
-  { id: 'letter-adventure', title: '字母冒险', mokoKey: 'singping', subject: '英语', desc: '唱唱糖果收集字母，完成字母表', difficulty: '大小写混合' },
-  { id: 'angle-magic', title: '角度魔法', mokoKey: 'auroraping', subject: '数学', desc: '转动流星弓箭对准目标角度', difficulty: '限时精确' },
-  { id: 'count-challenge', title: '数数挑战', mokoKey: 'moonping', subject: '数学', desc: '跟着月光萌可数星星到 100', difficulty: '跳数与倒序' },
+export const games: {
+  id: string;
+  title: string;
+  mokoKey: string;
+  subject: string;
+  desc: string;
+  difficulty: string;
+  levels: { name: string; tag: string }[];
+}[] = [
+  {
+    id: 'pinyin-eliminate',
+    title: '拼音消消乐',
+    mokoKey: 'heartping',
+    subject: '语文',
+    desc: '把相同的拼音卡用爱心魔法配对消除',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '6 对 · 基础拼音' },
+      { name: '进阶', tag: '8 对 · 常见拼音' },
+      { name: '高手', tag: '10 对 · 易混拼音' },
+    ],
+  },
+  {
+    id: 'character-match',
+    title: '识字配对',
+    mokoKey: 'heartping',
+    subject: '语文',
+    desc: '汉字和图卡配对，帮爱心萌可捕捉生字',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '6 字 · 形象字' },
+      { name: '进阶', tag: '8 字 · 常用字' },
+      { name: '高手', tag: '10 字 · 易混字' },
+    ],
+  },
+  {
+    id: 'math-challenge',
+    title: '计算挑战',
+    mokoKey: 'courageping',
+    subject: '数学',
+    desc: '正正闯关，加减法越快分越高',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '1~10 加法' },
+      { name: '进阶', tag: '1~20 加减' },
+      { name: '高手', tag: '1~50 加减' },
+    ],
+  },
+  {
+    id: 'compare-balance',
+    title: '大小比较天平',
+    mokoKey: 'gemsping',
+    subject: '数学',
+    desc: '宝石天平比较数字与数量，找出轻重',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '1~20 比较' },
+      { name: '进阶', tag: '1~50 比较' },
+      { name: '高手', tag: '1~100 比较' },
+    ],
+  },
+  {
+    id: 'word-match',
+    title: '单词配对',
+    mokoKey: 'keyping',
+    subject: '英语',
+    desc: '用万能钥匙解锁英文单词与中文意思',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '6 对 · 基础词' },
+      { name: '进阶', tag: '7 对 · 常用词' },
+      { name: '高手', tag: '8 对 · 挑战词' },
+    ],
+  },
+  {
+    id: 'letter-adventure',
+    title: '字母冒险',
+    mokoKey: 'singping',
+    subject: '英语',
+    desc: '唱唱糖果收集字母，完成字母表',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '大写字母' },
+      { name: '进阶', tag: '小写字母' },
+      { name: '高手', tag: '大小写混合' },
+    ],
+  },
+  {
+    id: 'angle-magic',
+    title: '角度魔法',
+    mokoKey: 'auroraping',
+    subject: '数学',
+    desc: '转动流星弓箭对准目标角度',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '5 题 · 宽松' },
+      { name: '进阶', tag: '7 题 · 中等' },
+      { name: '高手', tag: '10 题 · 严格' },
+    ],
+  },
+  {
+    id: 'count-challenge',
+    title: '数数挑战',
+    mokoKey: 'moonping',
+    subject: '数学',
+    desc: '跟着月光萌可数星星到 100',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '1~20 数数' },
+      { name: '进阶', tag: '跳数练习' },
+      { name: '高手', tag: '1~70 数数' },
+    ],
+  },
 ];
 
 export const builtInLessons: Record<string, { title: string; points: number }[]> = {

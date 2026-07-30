@@ -1,7 +1,7 @@
 import { getDb } from '@/lib/db';
 import { getBadges } from '@/lib/castle';
 import PrintButton from '@/components/PrintButton';
-import { HeartMoko, StarMoko, PrincessMoko, CertSeal } from '@/components/MokoArt';
+import Certificate from '@/components/Certificate';
 
 function fmt(d: Date): string {
   const y = d.getFullYear();
@@ -115,37 +115,21 @@ export default async function ReportsPage() {
         </div>
       </div>
 
-      {/* 🏆 可打印奖状 */}
-      <div id="print-cert" className="rounded-3xl p-8 border-8 border-double border-moko-violet bg-gradient-to-br from-moko-cream to-white text-center shadow-2xl">
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <HeartMoko className="w-16 h-16" />
-          <CertSeal className="w-20 h-20" />
-          <StarMoko className="w-16 h-16" />
-        </div>
-        <h2 className="text-2xl font-black text-moko-violet">学 习 之 星 奖 状</h2>
-        <div className="text-sm text-gray-500 mb-6">Certificate of Achievement</div>
-        <p className="text-lg text-gray-700 leading-relaxed mb-4">
-          亲爱的 <span className="font-black text-moko-rose text-xl">{childName}</span> 小朋友：
-        </p>
-        <p className="text-base text-gray-700 leading-relaxed mb-6 text-left mx-auto max-w-md">
-          在 <span className="font-bold">{weekLabel}</span> 这一周里，你表现超棒！
-          本周获得 <span className="font-black text-moko-rose">{pointsWeek}</span> 积分，
-          全勤 <span className="font-black text-moko-blue">{fullDays}</span> 天，
-          攻克了 <span className="font-black text-moko-purple">{resolvedCount}</span> 道错题，
-          还收集了 <span className="font-black text-moko-cyan">{mokoCount}</span> 只萌可、点亮 <span className="font-black text-moko-gold">{earnedBadges.length}</span> 枚徽章！
-          你用努力换来了城堡的繁荣，乐美公主为你骄傲！🌟
-        </p>
-        <div className="flex items-end justify-between mt-10 text-sm text-gray-600">
-          <div className="text-left flex items-end gap-1">
-            <PrincessMoko className="w-14 h-16" />
-            <div className="border-t border-gray-400 pt-1 px-2">萌可导师：乐美公主</div>
-          </div>
-          <div className="text-right">
-            <div className="border-t border-gray-400 pt-1 px-2">爸爸妈妈见证</div>
-          </div>
-        </div>
-        <div className="mt-6 text-xs text-gray-400">程程学习工作台 · 奇妙萌可主题 · 颁发日期 {fmt(now)}</div>
-      </div>
+      {/* 🏆 可打印奖状（真实萌可图案 + 孩子自选定制，选择存于 localStorage） */}
+      <Certificate
+        data={{
+          childName,
+          weekLabel,
+          pointsWeek,
+          fullDays,
+          activeDays,
+          resolvedCount,
+          mokoCount,
+          earnedBadges: earnedBadges.map((b) => ({ emoji: b.emoji, name: b.name })),
+          date: fmt(now),
+        }}
+        editable={false}
+      />
     </div>
   );
 }

@@ -18,12 +18,16 @@ function makeRound(level: number) {
   }
 }
 
-export default function CountChallenge({ onFinish }: { onFinish: (score: number) => void }) {
-  const [level, setLevel] = useState(1);
-  const [round, setRound] = useState(makeRound(1));
+const TIME: Record<number, number> = { 1: 100, 2: 90, 3: 80 };
+
+export default function CountChallenge({ onFinish, level = 1 }: { onFinish: (score: number) => void; level?: number }) {
+  const lv = Math.min(3, Math.max(1, level));
+  const seed = lv * 3;
+  const [levelState, setLevelState] = useState(seed);
+  const [round, setRound] = useState(makeRound(seed));
   const [input, setInput] = useState('');
   const [score, setScore] = useState(0);
-  const [time, setTime] = useState(90);
+  const [time, setTime] = useState(TIME[lv]);
   const [done, setDone] = useState(false);
   const total = 10;
   const [idx, setIdx] = useState(0);
@@ -35,7 +39,10 @@ export default function CountChallenge({ onFinish }: { onFinish: (score: number)
   }, [done]);
 
   useEffect(() => {
-    if (time === 0 && !done) { setDone(true); onFinish(score); }
+    if (time === 0 && !done) {
+      setDone(true);
+      onFinish(score);
+    }
   }, [time, done, score, onFinish]);
 
   function submit() {
@@ -44,10 +51,12 @@ export default function CountChallenge({ onFinish }: { onFinish: (score: number)
     const ok = n === round.count;
     const ns = ok ? score + 12 : score;
     setScore(ns);
-    if (idx + 1 >= total) { setDone(true); onFinish(ns); }
-    else {
-      const nl = Math.min(9, level + 1);
-      setLevel(nl);
+    if (idx + 1 >= total) {
+      setDone(true);
+      onFinish(ns);
+    } else {
+      const nl = Math.min(9, levelState + 1);
+      setLevelState(nl);
       setRound(makeRound(nl));
       setInput('');
       setIdx(idx + 1);
@@ -71,7 +80,9 @@ export default function CountChallenge({ onFinish }: { onFinish: (score: number)
       )}
       {round.type === 'skip' && (
         <div className="text-3xl font-black text-moko-yellow mb-6 flex justify-center gap-3">
-          {round.seq.slice(0, -1).map((n, i) => <span key={i}>{n}</span>)}
+          {round.seq.slice(0, -1).map((n, i) => (
+            <span key={i}>{n}</span>
+          ))}
           <span className="text-moko-rose">?</span>
         </div>
       )}
@@ -84,7 +95,10 @@ export default function CountChallenge({ onFinish }: { onFinish: (score: number)
           className="w-32 text-center text-3xl font-black rounded-2xl border-4 border-moko-pink py-2"
           placeholder="?"
         />
-        <button onClick={submit} className="px-8 py-3 bg-gradient-to-r from-moko-purple to-moko-violet text-white text-xl font-extrabold rounded-full shadow hover:scale-105 transition">
+        <button
+          onClick={submit}
+          className="px-8 py-3 bg-gradient-to-r from-moko-purple to-moko-violet text-white text-xl font-extrabold rounded-full shadow hover:scale-105 transition"
+        >
           提交
         </button>
       </div>

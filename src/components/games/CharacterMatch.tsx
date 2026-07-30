@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-const rounds = [
+const ROUNDS = [
   { char: '大', options: ['大象', '小草', '太阳', '小河'], answer: '大象' },
   { char: '小', options: ['小猫', '大山', '天空', '森林'], answer: '小猫' },
   { char: '日', options: ['月亮', '太阳', '星星', '云朵'], answer: '太阳' },
@@ -11,13 +11,22 @@ const rounds = [
   { char: '木', options: ['树木', '汽车', '房屋', '书本'], answer: '树木' },
   { char: '口', options: ['嘴巴', '耳朵', '眼睛', '鼻子'], answer: '嘴巴' },
   { char: '手', options: ['手掌', '脚丫', '头发', '肚子'], answer: '手掌' },
+  { char: '火', options: ['火苗', '冰块', '雨水', '沙土'], answer: '火苗' },
+  { char: '山', options: ['高山', '小河', '云朵', '星星'], answer: '高山' },
+  { char: '人', options: ['小人', '大树', '月亮', '花朵'], answer: '小人' },
+  { char: '门', options: ['大门', '窗户', '书本', '苹果'], answer: '大门' },
 ];
 
-export default function CharacterMatch({ onFinish }: { onFinish: (score: number) => void }) {
-  const [order] = useState(() => [...rounds].sort(() => 0.5 - Math.random()));
+const COUNT: Record<number, number> = { 1: 6, 2: 8, 3: 10 };
+const TIME: Record<number, number> = { 1: 90, 2: 75, 3: 60 };
+
+export default function CharacterMatch({ onFinish, level = 1 }: { onFinish: (score: number) => void; level?: number }) {
+  const lv = Math.min(3, Math.max(1, level));
+  const count = COUNT[lv];
+  const [order] = useState(() => [...ROUNDS].sort(() => 0.5 - Math.random()).slice(0, count));
   const [index, setIndex] = useState(0);
   const [correct, setCorrect] = useState(0);
-  const [time, setTime] = useState(90);
+  const [time, setTime] = useState(TIME[lv]);
   const [done, setDone] = useState(false);
   const current = order[index];
 

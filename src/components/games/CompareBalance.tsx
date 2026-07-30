@@ -2,19 +2,22 @@
 
 import { useEffect, useState } from 'react';
 
-function makeRound() {
-  const a = Math.floor(Math.random() * 20) + 1;
-  const b = Math.floor(Math.random() * 20) + 1;
-  const ops = ['>', '<', '='] as const;
+function makeRound(lv: number) {
+  const range = [20, 50, 100][Math.min(2, Math.max(0, lv - 1))];
+  const a = Math.floor(Math.random() * range) + 1;
+  const b = Math.floor(Math.random() * range) + 1;
+  const ops: ('>' | '<' | '=')[] = ['>', '<', '='];
   const answer = a > b ? '>' : a < b ? '<' : '=';
   return { a, b, answer, choices: ops.sort(() => 0.5 - Math.random()) };
 }
 
-export default function CompareBalance({ onFinish }: { onFinish: (score: number) => void }) {
-  const [round, setRound] = useState(makeRound());
+export default function CompareBalance({ onFinish, level = 1 }: { onFinish: (score: number) => void; level?: number }) {
+  const lv = Math.min(3, Math.max(1, level));
+  const timeLimit = [60, 50, 45][lv - 1];
+  const [round, setRound] = useState(makeRound(lv));
   const [idx, setIdx] = useState(0);
   const [correct, setCorrect] = useState(0);
-  const [time, setTime] = useState(60);
+  const [time, setTime] = useState(timeLimit);
   const [done, setDone] = useState(false);
   const total = 12;
 
@@ -42,7 +45,7 @@ export default function CompareBalance({ onFinish }: { onFinish: (score: number)
       finish(nextCorrect);
     } else {
       setIdx(idx + 1);
-      setRound(makeRound());
+      setRound(makeRound(lv));
     }
   }
 

@@ -30,8 +30,8 @@ export default function GamePage() {
   if (!info || !Component) return <div className="text-center py-20 text-gray-500">游戏不存在</div>;
 
   return (
-    <GameShell gameId={info.id} title={info.title} mokoKey={info.mokoKey}>
-      {({ onFinish }) => <Component onFinish={onFinish} />}
+    <GameShell gameId={info.id} title={info.title} mokoKey={info.mokoKey} levels={info.levels}>
+      {({ onFinish, level }) => <Component onFinish={onFinish} level={level} />}
     </GameShell>
   );
 }

@@ -8,8 +8,18 @@ function makeRound() {
   return { target };
 }
 
-export default function AngleMagic({ onFinish }: { onFinish: (score: number) => void }) {
-  const [rounds] = useState(() => Array.from({ length: 5 }, makeRound));
+const ROUNDS: Record<number, number> = { 1: 5, 2: 7, 3: 10 };
+const TOL: Record<number, { great: number; good: number; ok: number }> = {
+  1: { great: 5, good: 10, ok: 18 },
+  2: { great: 4, good: 8, ok: 15 },
+  3: { great: 3, good: 6, ok: 12 },
+};
+
+export default function AngleMagic({ onFinish, level = 1 }: { onFinish: (score: number) => void; level?: number }) {
+  const lv = Math.min(3, Math.max(1, level));
+  const total = ROUNDS[lv];
+  const tol = TOL[lv];
+  const [rounds] = useState(() => Array.from({ length: total }, makeRound));
   const [idx, setIdx] = useState(0);
   const [angle, setAngle] = useState(90);
   const [score, setScore] = useState(0);
@@ -20,9 +30,9 @@ export default function AngleMagic({ onFinish }: { onFinish: (score: number) => 
     if (done) return;
     const diff = Math.abs(angle - target);
     let pts = 0;
-    if (diff <= 3) pts = 50;
-    else if (diff <= 8) pts = 30;
-    else if (diff <= 15) pts = 15;
+    if (diff <= tol.great) pts = 50;
+    else if (diff <= tol.good) pts = 30;
+    else if (diff <= tol.ok) pts = 15;
     else pts = 5;
     const newScore = score + pts;
     setScore(newScore);
@@ -43,10 +53,14 @@ export default function AngleMagic({ onFinish }: { onFinish: (score: number) => 
       </div>
       <div className="relative w-48 h-48 mx-auto mb-6">
         <div className="absolute inset-0 rounded-full border-4 border-moko-cyan"></div>
-        <div className="absolute top-1/2 left-1/2 w-1/2 h-1 origin-left bg-moko-rose transition-transform duration-300"
-             style={{ transform: `translateY(-50%) rotate(${angle}deg)` }}></div>
-        <div className="absolute top-1/2 left-1/2 w-1/2 h-1 origin-left bg-gray-300"
-             style={{ transform: 'translateY(-50%) rotate(0deg)' }}></div>
+        <div
+          className="absolute top-1/2 left-1/2 w-1/2 h-1 origin-left bg-moko-rose transition-transform duration-300"
+          style={{ transform: `translateY(-50%) rotate(${angle}deg)` }}
+        ></div>
+        <div
+          className="absolute top-1/2 left-1/2 w-1/2 h-1 origin-left bg-gray-300"
+          style={{ transform: 'translateY(-50%) rotate(0deg)' }}
+        ></div>
         <div className="absolute top-1/2 left-1/2 w-4 h-4 bg-moko-violet rounded-full -translate-x-1/2 -translate-y-1/2"></div>
       </div>
       <div className="text-4xl font-black text-moko-blue mb-4">{angle}°</div>
@@ -58,7 +72,10 @@ export default function AngleMagic({ onFinish }: { onFinish: (score: number) => 
         onChange={(e) => setAngle(Number(e.target.value))}
         className="w-full mb-6 accent-moko-rose"
       />
-      <button onClick={submit} className="px-10 py-3 bg-gradient-to-r from-moko-cyan to-moko-blue text-white text-xl font-extrabold rounded-full shadow hover:scale-105 transition">
+      <button
+        onClick={submit}
+        className="px-10 py-3 bg-gradient-to-r from-moko-cyan to-moko-blue text-white text-xl font-extrabold rounded-full shadow hover:scale-105 transition"
+      >
         发射流星箭 ✨
       </button>
     </div>
