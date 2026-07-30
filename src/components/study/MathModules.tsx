@@ -139,17 +139,18 @@ export function AngleModule() {
 }
 
 /* ---------- 加减法练习（难度自适应） ---------- */
-type DiffLevel = 'easy' | 'medium' | 'hard';
+type DiffLevel = 'easy' | 'medium' | 'hard' | 'carry';
 const LEVEL_META: Record<DiffLevel, { label: string; emoji: string }> = {
   easy: { label: '入门', emoji: '🌱' },
   medium: { label: '进阶', emoji: '🌿' },
   hard: { label: '挑战', emoji: '🚀' },
+  carry: { label: '进位', emoji: '➕' },
 };
 const LEVEL_ORDER: DiffLevel[] = ['easy', 'medium', 'hard'];
 
-export function MathQuizModule() {
-  const [level, setLevel] = useState<DiffLevel>('easy');
-  const [qs, setQs] = useState<MathQuestion[]>(() => makeMathQuestions('easy'));
+function MathQuizInner({ mode }: { mode: 'normal' | 'carry' }) {
+  const [level, setLevel] = useState<DiffLevel>(mode === 'carry' ? 'carry' : 'easy');
+  const [qs, setQs] = useState<MathQuestion[]>(() => makeMathQuestions(mode === 'carry' ? 'carry' : 'easy'));
   const [idx, setIdx] = useState(0);
   const [input, setInput] = useState('');
   const [result, setResult] = useState<'idle' | 'right' | 'wrong'>('idle');
@@ -157,23 +158,28 @@ export function MathQuizModule() {
   const q = qs[idx];
 
   useEffect(() => {
+    if (mode === 'carry') return;
     const saved = localStorage.getItem('mathDiffLevel') as DiffLevel | null;
     if (saved && LEVEL_ORDER.includes(saved)) {
       setLevel(saved);
       setQs(makeMathQuestions(saved));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
+    if (mode === 'carry') return;
     localStorage.setItem('mathDiffLevel', level);
     setQs(makeMathQuestions(level));
     setIdx(0);
     setInput('');
     setResult('idle');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level]);
 
   function adjust(next: DiffLevel) {
-    if (next !== level) setLevel(next);
+    if (mode === 'carry' || next === level) return;
+    setLevel(next);
     setStreak({ right: 0, wrong: 0 });
   }
 
@@ -185,7 +191,7 @@ export function MathQuizModule() {
     if (ok) {
       const nr = streak.right + 1;
       setStreak({ right: nr, wrong: 0 });
-      if (nr >= 3 && level !== 'hard') {
+      if (nr >= 3 && level !== 'hard' && mode !== 'carry') {
         const ni = LEVEL_ORDER.indexOf(level) + 1;
         adjust(LEVEL_ORDER[ni]);
         speakZh('太厉害了，难度升级！');
@@ -198,7 +204,7 @@ export function MathQuizModule() {
     } else {
       const nw = streak.wrong + 1;
       setStreak({ right: 0, wrong: nw });
-      if (nw >= 2 && level !== 'easy') {
+      if (nw >= 2 && level !== 'easy' && mode !== 'carry') {
         const ni = LEVEL_ORDER.indexOf(level) - 1;
         adjust(LEVEL_ORDER[ni]);
         speakZh('没关系，换简单一点的～');
@@ -238,4 +244,12 @@ export function MathQuizModule() {
       )}
     </div>
   );
+}
+
+export function MathQuizModule() {
+  return <MathQuizInner mode="normal" />;
+}
+
+export function CarryModule() {
+  return <MathQuizInner mode="carry" />;
 }

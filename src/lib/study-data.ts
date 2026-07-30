@@ -199,6 +199,55 @@ export const CHARACTERS: CharacterItem[] = [
   { char: '笔', strokeCount: 10, meaning: '笔', phrase: '铅笔写字', category: '物品' },
   { char: '刀', strokeCount: 2, meaning: '小刀', phrase: '水果刀', category: '物品' },
   { char: '门', strokeCount: 3, meaning: '门', phrase: '开门请进', category: '物品' },
+
+  // —— 一年级上册 识字课文补充 ——
+  { char: '你', strokeCount: 7, meaning: '你（第二人称）', phrase: '你们好', category: '家庭' },
+  { char: '我', strokeCount: 7, meaning: '我（自己）', phrase: '我们', category: '家庭' },
+  { char: '他', strokeCount: 5, meaning: '他（第三人称）', phrase: '他们', category: '家庭' },
+  { char: '金', strokeCount: 8, meaning: '金子 / 金属', phrase: '金子闪闪', category: '自然' },
+  { char: '木', strokeCount: 4, meaning: '树木', phrase: '木头桌子', category: '植物' },
+  { char: '川', strokeCount: 3, meaning: '河流 / 山川', phrase: '山川壮美', category: '自然' },
+  { char: '禾', strokeCount: 5, meaning: '禾苗（庄稼）', phrase: '禾苗青青', category: '植物' },
+  { char: '站', strokeCount: 10, meaning: '站立', phrase: '站如松', category: '动作' },
+  { char: '坐', strokeCount: 7, meaning: '坐下', phrase: '坐如钟', category: '动作' },
+  { char: '云', strokeCount: 4, meaning: '云朵', phrase: '白云飘飘', category: '自然' },
+  { char: '雨', strokeCount: 8, meaning: '雨水', phrase: '下雨啦', category: '自然' },
+  { char: '风', strokeCount: 4, meaning: '风', phrase: '大风呼呼', category: '自然' },
+  { char: '明', strokeCount: 8, meaning: '明亮 / 明白', phrase: '明亮灯光', category: '自然' },
+  { char: '男', strokeCount: 7, meaning: '男孩 / 男人', phrase: '男孩勇敢', category: '家庭' },
+  { char: '尖', strokeCount: 6, meaning: '尖锐 / 笔尖', phrase: '笔尖尖尖', category: '物品' },
+  { char: '尘', strokeCount: 6, meaning: '尘土', phrase: '尘土飞扬', category: '自然' },
+  { char: '从', strokeCount: 4, meaning: '跟从', phrase: '跟从老师', category: '家庭' },
+  { char: '众', strokeCount: 6, meaning: '众人 / 许多', phrase: '众人拾柴', category: '家庭' },
+  { char: '林', strokeCount: 8, meaning: '树林', phrase: '树林密密', category: '植物' },
+  { char: '森', strokeCount: 12, meaning: '森林', phrase: '森林深深', category: '植物' },
+  { char: '包', strokeCount: 5, meaning: '书包 / 包裹', phrase: '书包真神气', category: '物品' },
+  { char: '尺', strokeCount: 4, meaning: '尺子', phrase: '一把尺子', category: '物品' },
+  { char: '作', strokeCount: 7, meaning: '作业 / 工作', phrase: '做作业', category: '物品' },
+  { char: '业', strokeCount: 5, meaning: '作业 / 事业', phrase: '完成作业', category: '物品' },
+  { char: '本', strokeCount: 5, meaning: '本子 / 书本', phrase: '一本本子', category: '物品' },
+  { char: '课', strokeCount: 10, meaning: '上课 / 课程', phrase: '上课啦', category: '物品' },
+  { char: '早', strokeCount: 6, meaning: '早晨 / 早', phrase: '早上好', category: '自然' },
+  { char: '校', strokeCount: 10, meaning: '学校', phrase: '学校真漂亮', category: '物品' },
+  { char: '升', strokeCount: 4, meaning: '升起', phrase: '升旗', category: '动作' },
+  { char: '国', strokeCount: 8, meaning: '国家 / 中国', phrase: '我爱中国', category: '家庭' },
+  { char: '旗', strokeCount: 14, meaning: '旗帜', phrase: '五星红旗', category: '物品' },
+  { char: '起', strokeCount: 10, meaning: '起来 / 起立', phrase: '起立', category: '动作' },
+  { char: '立', strokeCount: 5, meaning: '站立 / 立正', phrase: '立正', category: '动作' },
+  { char: '美', strokeCount: 9, meaning: '美丽', phrase: '美丽中国', category: '自然' },
+  { char: '丽', strokeCount: 7, meaning: '美丽', phrase: '风和日丽', category: '自然' },
+  { char: '歌', strokeCount: 14, meaning: '歌曲 / 唱歌', phrase: '唱歌', category: '动作' },
+  { char: '中', strokeCount: 4, meaning: '中间 / 中国', phrase: '中国', category: '方位' },
+  { char: '午', strokeCount: 4, meaning: '中午 / 下午', phrase: '中午吃饭', category: '自然' },
+  { char: '晚', strokeCount: 11, meaning: '晚上', phrase: '晚上好', category: '自然' },
+  { char: '昨', strokeCount: 9, meaning: '昨天', phrase: '昨天的事', category: '自然' },
+  { char: '今', strokeCount: 4, meaning: '今天', phrase: '今天开心', category: '自然' },
+  { char: '年', strokeCount: 6, meaning: '年 / 新年', phrase: '过新年', category: '自然' },
+  { char: '开', strokeCount: 4, meaning: '打开 / 开心', phrase: '开门', category: '动作' },
+  { char: '关', strokeCount: 6, meaning: '关上', phrase: '关上门', category: '动作' },
+  { char: '牙', strokeCount: 4, meaning: '牙齿', phrase: '刷牙', category: '人体' },
+  { char: '少', strokeCount: 4, meaning: '多少 / 少', phrase: '不少', category: '数字' },
+  { char: '不', strokeCount: 4, meaning: '不（否定）', phrase: '不行', category: '动作' },
 ];
 
 /* -------------------- 语文 · 古诗词（小学必背） -------------------- */
@@ -221,6 +270,11 @@ export const POEMS: PoemItem[] = [
   { title: '池上', author: '白居易', lines: ['小娃撑小艇，', '偷采白莲回。', '不解藏踪迹，', '浮萍一道开。'] },
   { title: '小池', author: '杨万里', lines: ['泉眼无声惜细流，', '树阴照水爱晴柔。', '小荷才露尖尖角，', '早有蜻蜓立上头。'] },
   { title: '画', author: '王维', lines: ['远看山有色，', '近听水无声。', '春去花还在，', '人来鸟不惊。'] },
+  // —— 一年级上册 必背补充 ——
+  { title: '赠汪伦', author: '李白', lines: ['李白乘舟将欲行，', '忽闻岸上踏歌声。', '桃花潭水深千尺，', '不及汪伦送我情。'] },
+  { title: '寻隐者不遇', author: '贾岛', lines: ['松下问童子，', '言师采药去。', '只在此山中，', '云深不知处。'] },
+  { title: '风', author: '李峤', lines: ['解落三秋叶，', '能开二月花。', '过江千尺浪，', '入竹万竿斜。'] },
+  { title: '画鸡', author: '唐寅', lines: ['头上红冠不用裁，', '满身雪白走将来。', '平生不敢轻言语，', '一叫千门万户开。'] },
 ];
 
 /* -------------------- 数学 -------------------- */
@@ -287,8 +341,18 @@ export interface MathQuestion {
   op: '+' | '-';
 }
 
-export function makeMathQuestions(level: 'easy' | 'medium' | 'hard' = 'easy'): MathQuestion[] {
+export function makeMathQuestions(level: 'easy' | 'medium' | 'hard' | 'carry' = 'easy'): MathQuestion[] {
   // 🎚️ 难度自适应：不同等级使用不同数字范围
+  if (level === 'carry') {
+    // 20 以内进位加法：两个一位数，个位相加满十（和 10~18）
+    const qs: MathQuestion[] = [];
+    for (let i = 0; i < 10; i++) {
+      const a = Math.floor(Math.random() * 5) + 5; // 5~9
+      const b = Math.floor(Math.random() * (10 - a)) + (10 - a); // 使 a+b >= 10
+      qs.push({ a, b, op: '+' });
+    }
+    return qs;
+  }
   const range = level === 'easy' ? 10 : level === 'medium' ? 20 : 30;
   const maxSum = level === 'easy' ? 10 : level === 'medium' ? 20 : 30;
   const qs: MathQuestion[] = [];
@@ -451,7 +515,245 @@ export const EN_WORD_TOPICS: Record<string, WordItem[]> = {
     { word: 'shoe', cn: '鞋', emoji: '👟', sentence: 'I put on my shoe.' },
     { word: 'hat', cn: '帽子', emoji: '🧢', sentence: 'I wear a hat.' },
   ],
+  // —— 人教版（一年级起点）一年级上册 单元补充 ——
+  学校: [
+    { word: 'book', cn: '书', emoji: '📕', sentence: 'I have a book.' },
+    { word: 'bag', cn: '书包', emoji: '🎒', sentence: 'This is my bag.' },
+    { word: 'pen', cn: '钢笔', emoji: '🖊️', sentence: 'I have a pen.' },
+    { word: 'pencil', cn: '铅笔', emoji: '✏️', sentence: 'I have a pencil.' },
+    { word: 'ruler', cn: '尺子', emoji: '📏', sentence: 'I have a ruler.' },
+    { word: 'eraser', cn: '橡皮', emoji: '🧽', sentence: 'I have an eraser.' },
+    { word: 'school', cn: '学校', emoji: '🏫', sentence: 'This is my school.' },
+  ],
+  问候: [
+    { word: 'hello', cn: '你好', emoji: '👋', sentence: 'Hello! I am ...' },
+    { word: 'hi', cn: '嗨', emoji: '🙋', sentence: 'Hi! I am ...' },
+    { word: 'goodbye', cn: '再见', emoji: '👋', sentence: 'Goodbye!' },
+    { word: 'bye', cn: '拜拜', emoji: '✋', sentence: 'Bye!' },
+  ],
 };
 
 /** 全部英语单词（用于听音选词、口语练习） */
 export const ALL_EN_WORDS: WordItem[] = Object.values(EN_WORD_TOPICS).flat();
+
+/* ============================================================
+   人教版（部编版）小学一年级上册 · 拓展内容
+   ============================================================ */
+
+/* -------------------- 语文 · 识字课文（按课本单元） -------------------- */
+export interface CharacterLessonItem {
+  char: string;
+  phrase: string;
+}
+export interface CharacterLesson {
+  lesson: string;
+  emoji: string;
+  text: string;
+  items: CharacterLessonItem[];
+}
+export const CHARACTER_LESSONS: CharacterLesson[] = [
+  {
+    lesson: '识字 1《天地人》',
+    emoji: '🌍',
+    text: '天 地 人 你 我 他',
+    items: [
+      { char: '天', phrase: '天空' },
+      { char: '地', phrase: '大地' },
+      { char: '人', phrase: '人们' },
+      { char: '你', phrase: '你们' },
+      { char: '我', phrase: '我们' },
+      { char: '他', phrase: '他们' },
+    ],
+  },
+  {
+    lesson: '识字 2《金木水火土》',
+    emoji: '🔥',
+    text: '一二三四五，金木水火土。天地分上下，日月照今古。',
+    items: [
+      { char: '金', phrase: '金子' },
+      { char: '木', phrase: '木头' },
+      { char: '水', phrase: '喝水' },
+      { char: '火', phrase: '火苗' },
+      { char: '土', phrase: '泥土' },
+    ],
+  },
+  {
+    lesson: '识字 3《口耳目手足》',
+    emoji: '👀',
+    text: '口 耳 目 手 足 —— 站如松，坐如钟。',
+    items: [
+      { char: '口', phrase: '开口' },
+      { char: '耳', phrase: '耳朵' },
+      { char: '目', phrase: '眼目' },
+      { char: '手', phrase: '小手' },
+      { char: '足', phrase: '足球' },
+      { char: '站', phrase: '站直' },
+      { char: '坐', phrase: '坐好' },
+    ],
+  },
+  {
+    lesson: '识字 4《日月山川》',
+    emoji: '🏔️',
+    text: '日 月 山 川 水 火 田 禾',
+    items: [
+      { char: '川', phrase: '山川' },
+      { char: '禾', phrase: '禾苗' },
+    ],
+  },
+  {
+    lesson: '识字 5《对韵歌》',
+    emoji: '🌧️',
+    text: '云对雨，雪对风，花对树，鸟对虫。',
+    items: [
+      { char: '云', phrase: '白云' },
+      { char: '雨', phrase: '下雨' },
+      { char: '风', phrase: '大风' },
+      { char: '鸟', phrase: '小鸟' },
+      { char: '虫', phrase: '虫子' },
+    ],
+  },
+  {
+    lesson: '识字 6《日月明》',
+    emoji: '💡',
+    text: '日月明，田力男，小大尖，小土尘。二人从，三人众，双木林，三木森。',
+    items: [
+      { char: '明', phrase: '明亮' },
+      { char: '男', phrase: '男孩' },
+      { char: '尖', phrase: '笔尖' },
+      { char: '尘', phrase: '尘土' },
+      { char: '从', phrase: '跟从' },
+      { char: '众', phrase: '众人' },
+      { char: '林', phrase: '树林' },
+      { char: '森', phrase: '森林' },
+    ],
+  },
+  {
+    lesson: '识字 7《小书包》',
+    emoji: '🎒',
+    text: '书包 尺子 作业本 笔 橡皮',
+    items: [
+      { char: '包', phrase: '书包' },
+      { char: '尺', phrase: '尺子' },
+      { char: '作', phrase: '作业' },
+      { char: '业', phrase: '作业' },
+      { char: '本', phrase: '本子' },
+      { char: '课', phrase: '上课' },
+      { char: '早', phrase: '早上' },
+      { char: '校', phrase: '学校' },
+    ],
+  },
+  {
+    lesson: '识字 8《升国旗》',
+    emoji: '🚩',
+    text: '五星红旗，我们的国旗。国歌声中，徐徐升起。',
+    items: [
+      { char: '升', phrase: '升起' },
+      { char: '国', phrase: '国家' },
+      { char: '旗', phrase: '红旗' },
+      { char: '起', phrase: '起立' },
+      { char: '立', phrase: '立正' },
+      { char: '美', phrase: '美丽' },
+      { char: '丽', phrase: '美丽' },
+      { char: '歌', phrase: '唱歌' },
+      { char: '中', phrase: '中国' },
+    ],
+  },
+];
+
+/* -------------------- 语文 · 课文朗读（一年级上册） -------------------- */
+export interface TextItem {
+  title: string;
+  emoji: string;
+  lines: string[];
+}
+export const TEXTS: TextItem[] = [
+  { title: '秋天', emoji: '🍂', lines: ['天气凉了，树叶黄了。', '一片片叶子从树上落下来。', '天空那么蓝，那么高。', '一群大雁往南飞，一会儿排成个“人”字，一会儿排成个“一”字。', '啊！秋天来了！'] },
+  { title: '小小的船', emoji: '🌙', lines: ['弯弯的月儿小小的船，', '小小的船儿两头尖。', '我在小小的船里坐，', '只看见闪闪的星星蓝蓝的天。'] },
+  { title: '江南', emoji: '🪷', lines: ['江南可采莲，', '莲叶何田田。', '鱼戏莲叶间。', '鱼戏莲叶东，鱼戏莲叶西，', '鱼戏莲叶南，鱼戏莲叶北。'] },
+  { title: '四季', emoji: '🌸', lines: ['草芽尖尖，他对小鸟说：“我是春天。”', '荷叶圆圆，他对青蛙说：“我是夏天。”', '谷穗弯弯，他鞠着躬说：“我是秋天。”', '雪人大肚子一挺，他顽皮地说：“我就是冬天。”'] },
+  { title: '影子', emoji: '👤', lines: ['影子在前，影子在后，', '影子常常跟着我，就像一条小黑狗。', '影子在左，影子在右，', '影子常常陪着我，它是我的好朋友。'] },
+  { title: '比尾巴', emoji: '🐒', lines: ['谁的尾巴长？谁的尾巴短？谁的尾巴好像一把伞？', '猴子的尾巴长。兔子的尾巴短。松鼠的尾巴好像一把伞。', '谁的尾巴弯？谁的尾巴扁？谁的尾巴最好看？', '公鸡的尾巴弯。鸭子的尾巴扁。孔雀的尾巴最好看。'] },
+  { title: '青蛙写诗', emoji: '🐸', lines: ['下雨了，雨点儿淅沥沥，沙啦啦。', '青蛙说：“我要写诗啦！”', '小蝌蚪游过来说：“我要给你当个小逗号。”', '池塘里的水泡泡说：“我能当个小句号。”', '荷叶上的一串水珠说：“我们可以当省略号。”', '青蛙的诗写成了：“呱呱，呱呱，呱呱呱……”'] },
+  { title: '雨点儿', emoji: '🌧️', lines: ['数不清的雨点儿，从云彩里飘落下来。', '半空中，大雨点儿问小雨点儿：“你要到哪里去？”', '小雨点儿回答：“我要去有花有草的地方。”', '大雨点儿说：“我要去没有花没有草的地方。”'] },
+  { title: '明天要远足', emoji: '🎒', lines: ['翻过来，翻过去，唉——睡不着。', '那地方的海，真的像老师说的，那么多种颜色吗？', '那地方的云，真的像同学说的，那么洁白柔软吗？'] },
+  { title: '大还是小', emoji: '🤔', lines: ['有时候，我很大。', '我自己穿衣服的时候，我自己系鞋带的时候，我觉得自己很大。', '有时候，我很小。', '我够不到按钮的时候，我听到雷声喊妈妈的时候，我觉得自己很小。'] },
+  { title: '项链', emoji: '🐚', lines: ['大海，蓝蓝的，又宽又远。', '沙滩，黄黄的，又长又软。', '雪白雪白的浪花，悄悄撒下小小的海螺和贝壳。', '小娃娃捡起海螺和贝壳，穿成彩色的项链，挂在胸前。'] },
+  { title: '雪地里的小画家', emoji: '⛄', lines: ['下雪啦，下雪啦！', '雪地里来了一群小画家。', '小鸡画竹叶，小狗画梅花，', '小鸭画枫叶，小马画月牙。', '不用颜料不用笔，几步就成一幅画。', '青蛙为什么没参加？他在洞里睡着啦。'] },
+  { title: '乌鸦喝水', emoji: '🐦', lines: ['一只乌鸦口渴了，到处找水喝。', '乌鸦看见一个瓶子，瓶子里有水。可是瓶口小，喝不着。', '乌鸦看见旁边有许多小石子，想出办法来了。', '乌鸦把石子一颗一颗放进瓶子里。水渐渐升高，乌鸦就喝着水了。'] },
+  { title: '小蜗牛', emoji: '🐌', lines: ['蜗牛一家住在小树林旁边。', '春天来了，蜗牛妈妈对小蜗牛说：“到小树林里去玩吧，小树发芽了。”', '小蜗牛爬呀爬呀，好久才爬回来。他说：“妈妈，小树长满了叶子，地上还长着许多草莓呢。”', '蜗牛妈妈笑着说：“哦，已经是夏天了！”'] },
+];
+
+/* -------------------- 数学 · 位置（上下前后左右） -------------------- */
+export interface PositionItem {
+  word: string;
+  emoji: string;
+  desc: string;
+  example: string;
+}
+export const POSITIONS: PositionItem[] = [
+  { word: '上', emoji: '⬆️', desc: '在……的上面', example: '小鸟在树上' },
+  { word: '下', emoji: '⬇️', desc: '在……的下面', example: '小猫在桌下' },
+  { word: '前', emoji: '🙆', desc: '面对的方向', example: '小狗在前面' },
+  { word: '后', emoji: '🙅', desc: '背对的方向', example: '小兔在后面' },
+  { word: '左', emoji: '👈', desc: '写字手的另一边', example: '铅笔在左边' },
+  { word: '右', emoji: '👉', desc: '拿筷子的手那边', example: '杯子在右边' },
+];
+
+/* -------------------- 数学 · 认识图形（立体图形） -------------------- */
+export interface SolidShapeItem {
+  name: string;
+  emoji: string;
+  desc: string;
+  roll: string;
+}
+export const SOLID_SHAPES: SolidShapeItem[] = [
+  { name: '长方体', emoji: '📦', desc: '长长的，有 6 个平平的面（像纸巾盒）', roll: '不能滚' },
+  { name: '正方体', emoji: '⬛', desc: '6 个面都一样大（像骰子）', roll: '不能滚' },
+  { name: '圆柱', emoji: '🥫', desc: '上下两个圆圆的面，能立着（像罐头）', roll: '能躺着滚' },
+  { name: '球', emoji: '⚽', desc: '圆滚滚的，到处都能滚（像皮球）', roll: '到处滚' },
+];
+
+/* -------------------- 数学 · 11~20 各数的认识 -------------------- */
+export interface Number1120Item {
+  num: number;
+  tens: number;
+  ones: number;
+  compose: string;
+}
+export const NUMBERS_1120: Number1120Item[] = Array.from({ length: 10 }, (_, i) => {
+  const num = i + 11;
+  const ones = num % 10;
+  return { num, tens: 1, ones, compose: `10 + ${ones}` };
+});
+
+/* -------------------- 数学 · 认识钟表（整时） -------------------- */
+export interface ClockItem {
+  hour: number;
+  label: string;
+  emoji: string;
+}
+export const CLOCKS: ClockItem[] = [
+  { hour: 1, label: '1时', emoji: '🌙' },
+  { hour: 2, label: '2时', emoji: '🌙' },
+  { hour: 3, label: '3时', emoji: '🕒' },
+  { hour: 4, label: '4时', emoji: '🕓' },
+  { hour: 5, label: '5时', emoji: '🌅' },
+  { hour: 6, label: '6时', emoji: '🌅' },
+  { hour: 7, label: '7时', emoji: '🌞' },
+  { hour: 8, label: '8时', emoji: '🌞' },
+  { hour: 9, label: '9时', emoji: '🏫' },
+  { hour: 10, label: '10时', emoji: '🏫' },
+  { hour: 11, label: '11时', emoji: '🍱' },
+  { hour: 12, label: '12时', emoji: '🌞' },
+];
+
+/* -------------------- 英语 · 人教版（一年级起点）单元 -------------------- */
+export const EN_UNITS: { unit: string; title: string; emoji: string; topics: string[] }[] = [
+  { unit: 'Unit 1', title: 'Hello! 你好', emoji: '👋', topics: ['问候'] },
+  { unit: 'Unit 2', title: 'My school 我的学校', emoji: '🏫', topics: ['学校'] },
+  { unit: 'Unit 3', title: 'My face 我的脸', emoji: '😊', topics: ['身体'] },
+  { unit: 'Unit 4', title: 'Animals 动物', emoji: '🐾', topics: ['动物'] },
+  { unit: 'Unit 5', title: 'Numbers 数字', emoji: '🔢', topics: ['数字'] },
+  { unit: 'Unit 6', title: 'Colours 颜色', emoji: '🌈', topics: ['颜色'] },
+  { unit: 'Unit 7', title: 'Fruit 水果', emoji: '🍎', topics: ['食物'] },
+];
