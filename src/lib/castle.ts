@@ -505,4 +505,42 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
   };
 }
 
+/* ----------------------------- 🏅 成就徽章（由现有数据派生，无需额外埋点） ----------------------------- */
+export interface BadgeItem {
+  id: string;
+  name: string;
+  emoji: string;
+  desc: string;
+  earned: boolean;
+  hint: string;
+}
+
+export async function getBadges(childId: number): Promise<BadgeItem[]> {
+  const db = getDb();
+  const row = await getRow(childId);
+  const prosperity = Number(row?.prosperity ?? 0);
+  const streak = await computeStreak(childId, dateStr());
+  const moko = await db.execute({ sql: 'SELECT COUNT(*) n FROM moko_owned WHERE child_id = ?', args: [childId] });
+  const mokoCount = Number(moko.rows[0]?.n ?? 0);
+  const resolved = await db.execute({ sql: "SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND resolved = 1", args: [childId] });
+  const resolvedCount = Number(resolved.rows[0]?.n ?? 0);
+  const enResolved = await db.execute({ sql: "SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND subject = '英语' AND resolved = 1", args: [childId] });
+  const enCount = Number(enResolved.rows[0]?.n ?? 0);
+  const pts = await db.execute({ sql: 'SELECT COALESCE(SUM(points),0) n FROM completions WHERE child_id = ?', args: [childId] });
+  const points = Number(pts.rows[0]?.n ?? 0);
+  const trouble = await db.execute({ sql: "SELECT COUNT(*) n FROM troublemakers WHERE child_id = ? AND resolved = 0", args: [childId] });
+  const troubleCount = Number(trouble.rows[0]?.n ?? 0);
+
+  return [
+    { id: 'first', name: '萌可初遇', emoji: '🌱', desc: '召唤第一只萌可', earned: mokoCount >= 1, hint: '完成任意一科打卡召唤萌可' },
+    { id: 'castle', name: '城堡小主', emoji: '🏰', desc: '繁荣度达到 10', earned: prosperity >= 10, hint: '繁荣度达到 10' },
+    { id: 'streak', name: '三日之约', emoji: '🔥', desc: '连续打卡 3 天', earned: streak >= 3, hint: '连续 3 天三科全打卡' },
+    { id: 'mistake', name: '错题克星', emoji: '📝', desc: '复习解决 10 道错题', earned: resolvedCount >= 10, hint: '在复习本把 10 道错题练会' },
+    { id: 'star', name: '学习之星', emoji: '⭐', desc: '累计获得 50 积分', earned: points >= 50, hint: '累计获得 50 积分' },
+    { id: 'family', name: '萌可大家族', emoji: '👑', desc: '收集 5 只萌可', earned: mokoCount >= 5, hint: '收集 5 只萌可' },
+    { id: 'raz', name: 'RAZ 小学者', emoji: '🇬🇧', desc: '攻克 5 个英语易错词', earned: enCount >= 5, hint: '英语发音评测把 5 个词练到 3 星' },
+    { id: 'full', name: '满血城堡', emoji: '🌟', desc: '繁荣 20 且无捣蛋萌可', earned: prosperity >= 20 && troubleCount === 0, hint: '繁荣度 20 且城堡无捣蛋萌可' },
+  ];
+}
+
 export { STAGE_LABEL, dateStr };

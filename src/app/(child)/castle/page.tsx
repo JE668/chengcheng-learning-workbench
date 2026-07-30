@@ -22,12 +22,13 @@ interface StateView {
   canBuyShield: boolean; noStarToday: boolean;
 }
 const STAGE_LABEL: Record<Stage, string> = { obtained: '刚解锁', settled: '入驻城堡', playing: '开心玩耍', friend: '好朋友' };
-const TABS = [['hall', '🏰 大厅'], ['gallery', '📖 图鉴'], ['shop', '🛍️ 商店'], ['bag', '🎒 背包']] as const;
+const TABS = [['hall', '🏰 大厅'], ['gallery', '📖 图鉴'], ['shop', '🛍️ 商店'], ['bag', '🎒 背包'], ['achv', '🏅 成就']] as const;
 
 export default function CastlePage() {
   const router = useRouter();
   const [tab, setTab] = useState<typeof TABS[number][0]>('hall');
   const [state, setState] = useState<StateView | null>(null);
+  const [badges, setBadges] = useState<{ id: string; name: string; emoji: string; desc: string; earned: boolean; hint: string }[]>([]);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -35,6 +36,9 @@ export default function CastlePage() {
     const r = await fetch('/api/castle/state');
     const j = await r.json();
     setState(j);
+    const b = await fetch('/api/castle/badges');
+    const bj = await b.json();
+    setBadges(bj.badges || []);
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -168,6 +172,23 @@ export default function CastlePage() {
             <div key={s.key} className="card-moko flex items-center gap-3"><div className="text-4xl">{s.icon}</div><div className="flex-1"><div className="font-bold text-moko-violet">{s.name} ×{state.inventory[s.key]}</div><div className="text-xs text-gray-500">已拥有</div></div></div>
           ))}
           {Object.keys(state.inventory).length === 0 && <div className="card-moko text-gray-500 text-center">背包还是空的，去商店逛逛吧！</div>}
+        </div>
+      )}
+
+      {/* ===== 成就 ===== */}
+      {tab === 'achv' && (
+        <div>
+          <h2 className="font-black text-moko-violet text-lg mb-3">🏅 我的成就徽章</h2>
+          <p className="text-xs text-gray-500 mb-3">每解锁一只萌可、每次坚持打卡，都会点亮一枚徽章！</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {badges.map((b) => (
+              <div key={b.id} className={`rounded-2xl p-3 text-center shadow-lg border-2 ${b.earned ? 'bg-gradient-to-br from-moko-yellow to-moko-pink text-white border-white/40' : 'bg-white text-gray-400 border-gray-200'}`}>
+                <div className="text-4xl mb-1 grayscale-[0.3]">{b.emoji}</div>
+                <div className="font-black text-sm">{b.earned ? b.name : '??'}</div>
+                <div className="text-[11px] mt-1 leading-tight">{b.earned ? b.desc : `🔒 ${b.hint}`}</div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
