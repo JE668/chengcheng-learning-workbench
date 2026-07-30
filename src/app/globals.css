@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  @apply bg-moko-cream;
+}
+
+body {
+  @apply text-slate-800 antialiased;
+  font-family: ui-rounded, 'Hiragino Maru Gothic ProN', 'Quicksand', system-ui, sans-serif;
+}
+
+/* playful big buttons */
+.btn-magic {
+  @apply px-6 py-3 rounded-full font-extrabold shadow-lg transition transform hover:scale-105 active:scale-95;
+}
+
+.card-moko {
+  @apply bg-white rounded-3xl shadow-xl p-5 border-2 border-white/50;
+}
+
+/* custom scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #FFF7ED; }
+::-webkit-scrollbar-thumb { background: #FF8FC6; border-radius: 4px; }
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 80px);
+}
