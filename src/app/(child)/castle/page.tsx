@@ -153,6 +153,10 @@ export default function CastlePage() {
       {/* ===== 图鉴（按系列分类） ===== */}
       {tab === 'gallery' && (
         <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-black text-moko-violet text-lg">📖 萌可图鉴</h2>
+            <span className="text-sm text-gray-500">共 {state.gallery.length} 种　已收集 {state.gallery.filter((g) => g.owned).length}</span>
+          </div>
           {MOko_CATEGORIES.filter((c) => c.key !== 'trouble').map((cat) => {
             const items = state.gallery.filter((g) => g.category === cat.key);
             if (!items.length) return null;

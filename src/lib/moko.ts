@@ -89,6 +89,10 @@ for (const k of Object.keys(mokoChars)) {
   if (hit?.img) mokoChars[k] = { ...mokoChars[k], img: hit.img };
 }
 
+// 引导萌可：图片集里叫「乐美萌可」，把乐美公主的头像接到真实图片
+const lemeiHit = mokoCollectionByName['乐美萌可'];
+if (mokoChars.lemei && lemeiHit?.img) mokoChars.lemei = { ...mokoChars.lemei, img: lemeiHit.img };
+
 // 并入真实图片集（170 张，key 以 col_ 前缀），图鉴/奖状均可直接使用
 for (const c of mokoCollection) mokoChars[c.key] = c;
 

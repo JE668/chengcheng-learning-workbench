@@ -1,4 +1,5 @@
 import { getDb } from './db';
+import { mokoCollection } from './moko-collection';
 import {
   mokoChars,
   subjectMokoKey,
@@ -511,18 +512,21 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
     })
     .sort((a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage));
 
-  // 图鉴（全部萌可 + 是否已拥有）
-  const ownedKeys = new Set(owned.rows.map((r) => String(r.moko_key)));
+  // 图鉴：以真实图片集为正源（图片与名字一一对应，杜绝「图不对名」）
+  // - 同名只折叠「核心萌可 vs 图片集变体」（如爱心萌可出现两次只留 1 张）
+  // - 「其他萌可」整组保留：10 张都是独立图片，若按名字折叠会丢失 9 张（数量缺失）
+  // - 图片集没有的核心角色（宝石萌可/钥匙萌可/甜心萌可等）补进图鉴，避免缺角
+  const collectedNames = new Set(
+    owned.rows.map((r) => mokoChars[String(r.moko_key)]?.name).filter((n): n is string => !!n),
+  );
   const seenName = new Set<string>();
-  const gallery = Object.values(mokoChars)
-    .filter((m) => m.category !== 'trouble')
-    // 同名去重：核心萌可（含学科/游戏）优先，真实图片集的同名变体折叠掉，避免图鉴重复
-    .filter((m) => {
-      if (seenName.has(m.name)) return false;
-      seenName.add(m.name);
-      return true;
-    })
-    .map((m) => ({
+  const gallery: { key: string; name: string; img: string; emoji: string; color: string; category?: string; subject?: string; owned: boolean }[] = [];
+  for (const m of mokoCollection) {
+    if (m.category === 'trouble') continue;
+    const isOther = m.name === '其他萌可';
+    if (!isOther && seenName.has(m.name)) continue; // 普通同名折叠为 1 张
+    seenName.add(m.name);
+    gallery.push({
       key: m.key,
       name: m.name,
       img: m.img ?? '',
@@ -530,9 +534,26 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
       color: m.color,
       category: m.category,
       subject: m.subject,
-      // col_ 前缀的真实图片集属于「图鉴资料」，直接展示为已收集
-      owned: m.key.startsWith('col_') ? true : ownedKeys.has(m.key),
-    }));
+      // 是否「已收集」以孩子实际捕捉到的萌可为准（而非整组默认已收集）
+      owned: collectedNames.has(m.name),
+    });
+  }
+  // 补充：核心萌可里图片集没有的角色（宝石萌可/钥匙萌可/甜心萌可/星星萌可/乐美公主等）
+  for (const m of Object.values(mokoChars)) {
+    if (m.category === 'trouble') continue;
+    if (seenName.has(m.name)) continue; // 图片集已收录的角色不再重复
+    seenName.add(m.name);
+    gallery.push({
+      key: m.key,
+      name: m.name,
+      img: m.img ?? '',
+      emoji: m.emoji,
+      color: m.color,
+      category: m.category,
+      subject: m.subject,
+      owned: collectedNames.has(m.name),
+    });
+  }
 
   // 活跃捣蛋萌可
   const trouble = await db.execute({

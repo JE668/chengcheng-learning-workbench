@@ -18,7 +18,7 @@ export default async function HomePage() {
     { label: '我的积分', value: points, icon: '🏅', color: 'bg-moko-rose' },
     { label: '阳光能量', value: castle.sunlight, icon: '☀️', color: 'bg-moko-yellow' },
     { label: '星星币', value: castle.starCoins, icon: '⭐', color: 'bg-moko-gold' },
-    { label: '萌可图鉴', value: `${ownedCount}/${totalMoko}`, icon: '🧸', color: 'bg-moko-purple' },
+    { label: '萌可图鉴', value: `${totalMoko} 种`, icon: '🧸', color: 'bg-moko-purple' },
     { label: '城堡繁荣度', value: castle.prosperity, icon: '🏰', color: 'bg-moko-blue' },
   ];
 
