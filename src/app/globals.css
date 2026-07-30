@@ -79,3 +79,13 @@ body {
   100% { background-position: 200% 0; }
 }
 .prosperity-sparkle { background-size: 200% 100%; animation: sparkle 3s linear infinite; }
+
+/* ============ 🖼️ Dashboard 萌可大合照背景 ============ */
+@keyframes mokoFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-14px) rotate(2deg); }
+}
+.float-moko { animation: mokoFloat 5s ease-in-out infinite; }
+.dashboard-bg {
+  background: linear-gradient(180deg, rgba(255,247,237,0.92) 0%, rgba(255,247,237,0.7) 100%);
+}

@@ -3,6 +3,7 @@ import { getDb, getChildPoints } from '@/lib/db';
 import { getCastleState } from '@/lib/castle';
 import Link from 'next/link';
 import { CheckinPanel, HarvestBtn } from '@/components/castle-client';
+import { MokoGroupBg } from '@/components/moko-bg';
 
 export default async function HomePage() {
   const user = await getCurrentUser();
@@ -21,7 +22,8 @@ export default async function HomePage() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="relative max-w-4xl mx-auto min-h-screen">
+      <MokoGroupBg />
       {/* 顶部问候 */}
       <div className="card-moko flex items-center gap-5 mb-6 bg-gradient-to-r from-moko-pink to-moko-rose text-white">
         <img src="/moko/lemei.jpg" alt="乐美" className="w-24 h-24 rounded-full border-4 border-white shadow object-cover" />
@@ -35,7 +37,7 @@ export default async function HomePage() {
       <h2 className="text-2xl font-black text-moko-violet mb-3">我的成长看板 📊</h2>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
         {stats.map((s) => (
-          <div key={s.label} className={`card-moko text-center ${s.color} text-white`}>
+          <div key={s.label} className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}>
             <div className="text-3xl mb-1">{s.icon}</div>
             <div className="text-2xl font-black leading-tight">{s.value}</div>
             <div className="text-xs opacity-90 mt-1">{s.label}</div>
@@ -81,11 +83,11 @@ export default async function HomePage() {
         <div className="card-moko">
           <h2 className="text-xl font-black text-moko-violet mb-3">🚀 快捷入口</h2>
           <div className="grid grid-cols-2 gap-3">
-            <Link href="/study" className="card-moko text-center hover:scale-105 transition bg-moko-pink text-white font-black">📚 去学习</Link>
-            <Link href="/games" className="card-moko text-center hover:scale-105 transition bg-moko-blue text-white font-black">🎮 玩游戏</Link>
-            <Link href="/castle" className="card-moko text-center hover:scale-105 transition bg-moko-purple text-white font-black">🏰 城堡</Link>
-            <Link href="/shop" className="card-moko text-center hover:scale-105 transition bg-moko-gold text-white font-black">🛍️ 商城</Link>
-            <Link href="/record" className="card-moko text-center hover:scale-105 transition bg-moko-cyan text-white font-black col-span-2">🏆 看记录</Link>
+            <Link href="/study" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-pink text-white font-black">📚 去学习</Link>
+            <Link href="/games" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-blue text-white font-black">🎮 玩游戏</Link>
+            <Link href="/castle" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-purple text-white font-black">🏰 城堡</Link>
+            <Link href="/shop" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-gold text-white font-black">🛍️ 商城</Link>
+            <Link href="/record" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-cyan text-white font-black col-span-2">🏆 看记录</Link>
           </div>
         </div>
       </div>

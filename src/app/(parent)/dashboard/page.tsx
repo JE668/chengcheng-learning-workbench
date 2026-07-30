@@ -20,7 +20,7 @@ export default async function DashboardPage() {
           { label: '完成次数', value: comps.rows[0]?.n || 0, color: 'bg-moko-yellow' },
           { label: '待审核兑换', value: pending.rows[0]?.n || 0, color: 'bg-moko-purple' },
         ].map((s) => (
-          <div key={s.label} className={`card-moko text-center ${s.color} text-white`}>
+          <div key={s.label} className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}>
             <div className="text-4xl font-black">{s.value}</div>
             <div className="text-sm opacity-90">{s.label}</div>
           </div>

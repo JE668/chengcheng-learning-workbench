@@ -45,14 +45,14 @@ export default function ParentCastlePanel() {
           { label: '繁荣度', value: state.prosperity, c: 'bg-moko-blue' },
           { label: '入驻萌可', value: state.residents.length, c: 'bg-moko-purple' },
         ].map((s) => (
-          <div key={s.label} className={`card-moko text-center ${s.c} text-white`}>
+          <div key={s.label} className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.c} text-white`}>
             <div className="text-2xl font-black">{s.value}</div>
             <div className="text-xs opacity-90">{s.label}</div>
           </div>
         ))}
       </div>
       {state.troublemakers.length > 0 && (
-        <div className="card-moko bg-red-50 text-red-500 font-bold text-sm">⚠️ 有 {state.troublemakers.length} 只捣蛋萌可入侵城堡，可在孩子端背包用魔法喷雾修复，或下方补作业。</div>
+        <div className="rounded-3xl p-4 shadow-lg border-2 border-red-100 bg-red-50 text-red-500 font-bold text-sm">⚠️ 有 {state.troublemakers.length} 只捣蛋萌可入侵城堡，可在孩子端背包用魔法喷雾修复，或下方补作业。</div>
       )}
 
       {/* 今日打卡确认 */}

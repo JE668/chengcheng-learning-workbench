@@ -155,7 +155,7 @@ export default function CastlePage() {
           <h2 className="font-black text-moko-violet text-lg">🎒 魔法背包</h2>
           <div className="card-moko text-sm text-gray-600">星星币余额：⭐ {state.starCoins}　护盾已装备：🛡️ {state.shieldEquipped}</div>
           {Number(state.inventory.spray || 0) > 0 && (
-            <div className="card-moko flex items-center gap-3 bg-green-50">
+            <div className="rounded-3xl p-4 shadow-lg border-2 border-green-100 bg-green-50 flex items-center gap-3">
               <div className="text-4xl">🧴</div>
               <div className="flex-1"><div className="font-bold text-moko-violet">魔法喷雾 ×{state.inventory.spray}</div><div className="text-xs text-gray-500">驱散捣蛋萌可 + 恢复心情 + 返还星星币</div></div>
               <button onClick={() => act('/api/castle/use-item', { itemKey: 'spray' })} disabled={busy} className="btn-magic bg-green-500 text-white text-sm">使用修复</button>
