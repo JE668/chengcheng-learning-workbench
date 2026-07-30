@@ -1,63 +1,93 @@
 import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildPoints } from '@/lib/db';
+import { getCastleState } from '@/lib/castle';
 import Link from 'next/link';
+import { CheckinPanel, HarvestBtn } from '@/components/castle-client';
 
 export default async function HomePage() {
   const user = await getCurrentUser();
   if (!user || user.role !== 'child') return null;
   const points = await getChildPoints(user.id);
-  const db = getDb();
-  const tasks = await db.execute({
-    sql: `SELECT t.* FROM tasks t
-          WHERE t.id NOT IN (SELECT task_id FROM completions WHERE child_id = ?)
-          ORDER BY t.created_at DESC LIMIT 5`,
-    args: [user.id],
-  });
+  const castle = await getCastleState(user.id);
+  const ownedCount = castle.gallery.filter((g) => g.owned).length;
+  const totalMoko = castle.gallery.length;
+
+  const stats = [
+    { label: '我的积分', value: points, icon: '🏅', color: 'bg-moko-rose' },
+    { label: '阳光能量', value: castle.sunlight, icon: '☀️', color: 'bg-moko-yellow' },
+    { label: '星星币', value: castle.starCoins, icon: '⭐', color: 'bg-moko-gold' },
+    { label: '萌可图鉴', value: `${ownedCount}/${totalMoko}`, icon: '🧸', color: 'bg-moko-purple' },
+    { label: '城堡繁荣度', value: castle.prosperity, icon: '🏰', color: 'bg-moko-blue' },
+  ];
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* 顶部问候 */}
       <div className="card-moko flex items-center gap-5 mb-6 bg-gradient-to-r from-moko-pink to-moko-rose text-white">
         <img src="/moko/lemei.jpg" alt="乐美" className="w-24 h-24 rounded-full border-4 border-white shadow object-cover" />
         <div>
           <h1 className="text-3xl font-black">你好呀，{user.displayName}！</h1>
-          <p className="text-lg opacity-90">今天也要和萌可们一起加油学习哦！</p>
+          <p className="text-lg opacity-90">今天也要和萌可们一起加油学习哦～</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="card-moko text-center">
-          <div className="text-4xl mb-1">⭐</div>
-          <div className="text-3xl font-black text-moko-violet">{points}</div>
-          <div className="text-sm text-gray-500">我的积分</div>
-        </div>
-        <Link href="/study" className="card-moko text-center hover:scale-105 transition bg-moko-pink text-white">
-          <div className="text-4xl mb-1">📚</div>
-          <div className="text-xl font-black">去学习</div>
-        </Link>
-        <Link href="/games" className="card-moko text-center hover:scale-105 transition bg-moko-blue text-white">
-          <div className="text-4xl mb-1">🎮</div>
-          <div className="text-xl font-black">玩游戏</div>
-        </Link>
-        <Link href="/record" className="card-moko text-center hover:scale-105 transition bg-moko-yellow text-white">
-          <div className="text-4xl mb-1">🏆</div>
-          <div className="text-xl font-black">看记录</div>
-        </Link>
-      </div>
-
-      <h2 className="text-2xl font-black text-moko-violet mb-4">今日捕捉任务 🎯</h2>
-      <div className="space-y-3">
-        {tasks.rows.length === 0 && (
-          <div className="card-moko text-center text-gray-500">今天还没有新任务，去请爸爸妈妈发布吧！</div>
-        )}
-        {tasks.rows.map((t) => (
-          <Link key={t.id} href={`/study/${t.subject}`} className="card-moko flex justify-between items-center hover:shadow-2xl transition">
-            <div>
-              <div className="font-bold text-lg text-moko-violet">{t.title}</div>
-              <div className="text-sm text-gray-500">{t.subject} · {t.description}</div>
-            </div>
-            <span className="px-4 py-1 bg-moko-gold text-white rounded-full font-bold">+{t.points}</span>
-          </Link>
+      {/* 数据大板 */}
+      <h2 className="text-2xl font-black text-moko-violet mb-3">我的成长看板 📊</h2>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+        {stats.map((s) => (
+          <div key={s.label} className={`card-moko text-center ${s.color} text-white`}>
+            <div className="text-3xl mb-1">{s.icon}</div>
+            <div className="text-2xl font-black leading-tight">{s.value}</div>
+            <div className="text-xs opacity-90 mt-1">{s.label}</div>
+          </div>
         ))}
+      </div>
+
+      {/* 今日打卡 */}
+      <div className="card-moko mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-black text-moko-violet">🌟 今日学习打卡</h2>
+          <span className="text-sm text-gray-500">三科全完成 → 繁荣度飙升！</span>
+        </div>
+        <CheckinPanel initial={castle.checkins} />
+      </div>
+
+      {/* 城堡快览 + 快捷入口 */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="card-moko bg-gradient-to-br from-indigo-50 to-purple-50">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xl font-black text-moko-violet">🏰 萌可城堡</h2>
+            <Link href="/castle" className="text-sm font-bold text-moko-rose">进入 ›</Link>
+          </div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-sm text-gray-600">繁荣度</span>
+            <div className="flex-1 h-3 rounded-full bg-white/70 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-moko-yellow to-moko-rose" style={{ width: `${Math.min(100, castle.prosperity * 4)}%` }} />
+            </div>
+            <span className="text-sm font-bold text-moko-violet">{castle.prosperity}</span>
+          </div>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {castle.residents.slice(0, 6).map((r) => (
+              <img key={r.key} src={r.img} alt={r.name} title={r.name} className="w-12 h-12 rounded-full border-2 border-white shadow object-cover" />
+            ))}
+            {castle.residents.length === 0 && <span className="text-sm text-gray-500">还没有萌可入驻，快去打卡吧！</span>}
+          </div>
+          {castle.troublemakers.length > 0 && (
+            <p className="text-sm text-red-500 font-semibold mb-2">⚠️ {castle.troublemakers.length} 只捣蛋萌可正在捣乱！</p>
+          )}
+          <HarvestBtn />
+        </div>
+
+        <div className="card-moko">
+          <h2 className="text-xl font-black text-moko-violet mb-3">🚀 快捷入口</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <Link href="/study" className="card-moko text-center hover:scale-105 transition bg-moko-pink text-white font-black">📚 去学习</Link>
+            <Link href="/games" className="card-moko text-center hover:scale-105 transition bg-moko-blue text-white font-black">🎮 玩游戏</Link>
+            <Link href="/castle" className="card-moko text-center hover:scale-105 transition bg-moko-purple text-white font-black">🏰 城堡</Link>
+            <Link href="/shop" className="card-moko text-center hover:scale-105 transition bg-moko-gold text-white font-black">🛍️ 商城</Link>
+            <Link href="/record" className="card-moko text-center hover:scale-105 transition bg-moko-cyan text-white font-black col-span-2">🏆 看记录</Link>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,108 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+
+interface StateView {
+  today: string;
+  sunlight: number; starCoins: number; prosperity: number; streakDays: number; shieldEquipped: number;
+  checkins: Record<string, string>;
+  residents: { key: string }[];
+  troublemakers: { key: string }[];
+  missedDays: { day: string; missed: string[]; hasTrouble: boolean }[];
+}
+const SUBJECTS = ['语文', '数学', '英语'];
+
+export default function ParentCastlePanel() {
+  const router = useRouter();
+  const [state, setState] = useState<StateView | null>(null);
+  const [msg, setMsg] = useState('');
+
+  const load = useCallback(async () => {
+    const r = await fetch('/api/castle/state');
+    const j = await r.json();
+    setState(j);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  async function confirm(day: string, subject: string) {
+    setMsg('');
+    const r = await fetch('/api/castle/confirm', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ day, subject }) });
+    const j = await r.json();
+    setMsg(j.message || (j.ok ? '已确认' : (j.error || '')));
+    await load(); router.refresh();
+  }
+
+  if (!state) return <div className="card-moko text-center text-moko-violet">城堡数据加载中…</div>;
+
+  return (
+    <div className="space-y-4">
+      {/* 城堡总览 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: '阳光能量', value: state.sunlight, c: 'bg-moko-yellow' },
+          { label: '星星币', value: state.starCoins, c: 'bg-moko-gold' },
+          { label: '繁荣度', value: state.prosperity, c: 'bg-moko-blue' },
+          { label: '入驻萌可', value: state.residents.length, c: 'bg-moko-purple' },
+        ].map((s) => (
+          <div key={s.label} className={`card-moko text-center ${s.c} text-white`}>
+            <div className="text-2xl font-black">{s.value}</div>
+            <div className="text-xs opacity-90">{s.label}</div>
+          </div>
+        ))}
+      </div>
+      {state.troublemakers.length > 0 && (
+        <div className="card-moko bg-red-50 text-red-500 font-bold text-sm">⚠️ 有 {state.troublemakers.length} 只捣蛋萌可入侵城堡，可在孩子端背包用魔法喷雾修复，或下方补作业。</div>
+      )}
+
+      {/* 今日打卡确认 */}
+      <div className="card-moko">
+        <h2 className="text-lg font-black text-moko-violet mb-2">🌟 今日学习打卡（确认）</h2>
+        <div className="space-y-2">
+          {SUBJECTS.map((sub) => {
+            const st = state.checkins[sub] || 'pending';
+            return (
+              <div key={sub} className="flex items-center justify-between bg-moko-cream rounded-2xl px-4 py-2">
+                <span className="font-bold text-moko-violet">{sub}</span>
+                <span className="text-sm text-gray-500 mr-auto ml-3">
+                  {st === 'pending' ? '孩子未完成' : st === 'child_done' ? '已提交，待确认' : '已确认 ✓'}
+                </span>
+                {st !== 'confirmed' && (
+                  <button onClick={() => confirm(state.today, sub)} className="btn-magic bg-moko-rose text-white text-sm">确认完成</button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 补作业（过去未完成） */}
+      {state.missedDays.length > 0 && (
+        <div className="card-moko">
+          <h2 className="text-lg font-black text-moko-violet mb-2">🛠️ 补作业（过去未完成日期）</h2>
+          <p className="text-xs text-gray-500 mb-2">补完某天三科并确认后，孩子可获得魔法喷雾修复城堡。</p>
+          <div className="space-y-3">
+            {state.missedDays.map((d) => (
+              <div key={d.day} className="border rounded-2xl p-3 bg-moko-cream">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-moko-violet">{d.day}</span>
+                  {d.hasTrouble && <span className="text-xs text-red-500">⚠️ 有捣蛋萌可</span>}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {SUBJECTS.map((sub) =>
+                    d.missed.includes(sub) ? (
+                      <button key={sub} onClick={() => confirm(d.day, sub)} className="px-3 py-1 rounded-full bg-white shadow text-sm font-bold text-moko-rose">补 {sub}</button>
+                    ) : (
+                      <span key={sub} className="px-3 py-1 rounded-full bg-green-100 text-green-600 text-sm">✓ {sub}</span>
+                    )
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {msg && <p className="text-sm text-moko-violet font-semibold">{msg}</p>}
+    </div>
+  );
+}

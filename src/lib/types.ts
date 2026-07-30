@@ -45,4 +45,6 @@ export interface MokoChar {
   season: string;
   item: string;
   line: string;
+  category?: 'subject' | 'bonus' | 'guide' | 'trouble';
+  subject?: Subject;
 }

@@ -76,7 +76,77 @@ export async function ensureSchema() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
+
+    // 🏰 萌可城堡：单个孩子的城堡资源
+    `CREATE TABLE IF NOT EXISTS castle_state (
+      child_id INTEGER PRIMARY KEY,
+      sunlight INTEGER NOT NULL DEFAULT 0,
+      star_coins INTEGER NOT NULL DEFAULT 0,
+      prosperity INTEGER NOT NULL DEFAULT 0,
+      streak_days INTEGER NOT NULL DEFAULT 0,
+      last_settled_day TEXT,
+      shield_equipped INTEGER NOT NULL DEFAULT 0,
+      last_stolen INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
+
+    // 🏰 已入驻的萌可（含成长阶段与心情值）
+    `CREATE TABLE IF NOT EXISTS moko_owned (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      moko_key TEXT NOT NULL,
+      subject TEXT,
+      acquired_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      stage TEXT NOT NULL DEFAULT 'obtained',
+      stage_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      mood INTEGER NOT NULL DEFAULT 3,
+      status TEXT NOT NULL DEFAULT 'resident',
+      last_harvest_day TEXT DEFAULT '',
+      UNIQUE(child_id, moko_key),
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
+
+    // 🌟 学习↔城堡：每日三科打卡
+    `CREATE TABLE IF NOT EXISTS daily_checkins (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      day TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      child_done_at DATETIME,
+      confirmed_at DATETIME,
+      UNIQUE(child_id, day, subject),
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
+
+    // 🏰 道具背包
+    `CREATE TABLE IF NOT EXISTS inventory (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      item_key TEXT NOT NULL,
+      qty INTEGER NOT NULL DEFAULT 0,
+      UNIQUE(child_id, item_key),
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
+
+    // 🏰 捣蛋萌可入侵记录
+    `CREATE TABLE IF NOT EXISTS troublemakers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      moko_key TEXT NOT NULL,
+      day TEXT NOT NULL,
+      resolved INTEGER NOT NULL DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
   ], 'write');
+}
+
+/** 取第一个孩子 id（本工作台默认单孩子） */
+export async function getChildId(): Promise<number | null> {
+  const db = getDb();
+  const res = await db.execute({ sql: 'SELECT id FROM users WHERE role = ? LIMIT 1', args: ['child'] });
+  return res.rows.length ? Number(res.rows[0].id) : null;
 }
 
 export async function getChildPoints(childId: number): Promise<number> {
