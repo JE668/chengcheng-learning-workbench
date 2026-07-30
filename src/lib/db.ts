@@ -140,6 +140,23 @@ export async function ensureSchema() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
+
+    // 📝 错词本 / 错题本（间隔重复复习）
+    `CREATE TABLE IF NOT EXISTS mistakes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      subject TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      prompt TEXT NOT NULL,
+      answer TEXT NOT NULL,
+      wrong TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      next_review TEXT NOT NULL,
+      interval_days INTEGER NOT NULL DEFAULT 1,
+      reps INTEGER NOT NULL DEFAULT 0,
+      resolved INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
   ], 'write');
 
   // 账号迁移：确保 child 用户为 cara / 0000。

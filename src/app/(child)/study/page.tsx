@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ReviewBadge from '@/components/ReviewBadge';
 
 const cards = [
   {
@@ -31,7 +32,10 @@ export default function StudyPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl font-black text-moko-violet mb-2">学习城堡 📚</h1>
-      <p className="text-gray-600 mb-6">选择一个学科，开启今天的萌可学习冒险！</p>
+      <p className="text-gray-600 mb-4">选择一个学科，开启今天的萌可学习冒险！</p>
+      <div className="mb-6">
+        <ReviewBadge />
+      </div>
       <div className="grid md:grid-cols-3 gap-5">
         {cards.map((s) => (
           <Link

@@ -3,6 +3,21 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { LETTERS, RAZ_AA_WORDS, COLORS_WORDS, BODY_WORDS, type WordItem } from '@/lib/study-data';
+import { logMistake } from '@/lib/mistake-log';
+
+function lev(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+  return dp[m][n];
+}
 
 function speakEn(text: string, rate = 0.75) {
   if (typeof window === 'undefined') return;
@@ -32,6 +47,9 @@ function LetterCard({ item }: { item: (typeof LETTERS)[number] }) {
 function WordCard({ item }: { item: WordItem }) {
   const [recording, setRecording] = useState(false);
   const [recordUrl, setRecordUrl] = useState<string | null>(null);
+  const [scoring, setScoring] = useState(false);
+  const [score, setScore] = useState<number | null>(null);
+  const [heard, setHeard] = useState('');
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
 
@@ -61,6 +79,46 @@ function WordCard({ item }: { item: WordItem }) {
     }
   }
 
+  // 🎯 发音评测：用浏览器语音识别比对原词相似度给星级
+  function scorePronunciation() {
+    const SR = (window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).SpeechRecognition
+      || (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+    if (!SR) {
+      alert('当前浏览器不支持发音评测，可以继续用「跟读」录音哦～');
+      return;
+    }
+    setScoring(true);
+    setScore(null);
+    setHeard('');
+    const rec = new (SR as new () => any)();
+    rec.lang = 'en-US';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e: any) => {
+      const text = String(e.results[0][0].transcript).toLowerCase().trim();
+      setHeard(text);
+      const target = item.word.toLowerCase().trim();
+      let s = 0;
+      if (text && (text.includes(target) || target.includes(text))) s = 3;
+      else {
+        const dist = lev(text, target);
+        const ratio = 1 - dist / Math.max(text.length, target.length, 1);
+        s = ratio >= 0.8 ? 3 : ratio >= 0.5 ? 2 : 1;
+      }
+      setScore(s);
+      if (s < 2) logMistake({ subject: '英语', kind: '单词', prompt: item.word, answer: item.word, wrong: text });
+      setScoring(false);
+    };
+    rec.onerror = () => {
+      setScoring(false);
+      alert('没听清，再试一次吧～');
+    };
+    rec.onend = () => setScoring(false);
+    rec.start();
+  }
+
+  const stars = score === null ? '' : '⭐'.repeat(score) + '☆'.repeat(3 - score);
+
   return (
     <div className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-yellow/30 text-center">
       <div className="text-5xl mb-2">{item.emoji}</div>
@@ -88,13 +146,29 @@ function WordCard({ item }: { item: WordItem }) {
             recording ? 'bg-red-400 text-white' : 'bg-moko-pink text-white'
           }`}
         >
-          {recording ? '⏹ 录音中' : '🎙️ 跟读'}
+          {recording ? '⏹ 录音' : '🎙️ 跟读'}
+        </button>
+        <button
+          onClick={scorePronunciation}
+          disabled={scoring}
+          className="flex-1 py-2 rounded-full bg-moko-violet text-white font-bold text-sm active:scale-95 transition disabled:opacity-60"
+        >
+          {scoring ? '🎯 听…' : '🎯 评发音'}
         </button>
       </div>
       {recordUrl && (
         <div className="mt-3">
           <audio src={recordUrl} controls className="w-full h-8" />
           <p className="text-xs text-gray-400 mt-1">听听自己的发音吧～</p>
+        </div>
+      )}
+      {score !== null && (
+        <div className="mt-3 rounded-xl bg-moko-violet/5 p-2">
+          <div className="text-2xl">{stars}</div>
+          <p className="text-xs text-gray-500">
+            {score >= 3 ? '太棒了，发音很准！' : score === 2 ? '不错，再练习一下更标准～' : '加油，跟着点读多读几遍！'}
+            {heard && <span className="block">我听到：{heard}</span>}
+          </p>
         </div>
       )}
     </div>

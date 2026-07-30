@@ -11,6 +11,7 @@ import {
   type CompareItem,
   type MathQuestion,
 } from '@/lib/study-data';
+import { logMistake } from '@/lib/mistake-log';
 
 function speak(text: string, rate = 0.85) {
   if (typeof window === 'undefined') return;
@@ -54,6 +55,7 @@ function CompareGame() {
       setResult('idle');
       setIdx((i) => (i + 1) % COMPARE_QUESTIONS.length);
     }, 1200);
+    else logMistake({ subject: '数学', kind: '比较大小', prompt: `${q.left} ? ${q.right}`, answer: correct, wrong: ans });
   }
 
   return (
@@ -122,6 +124,7 @@ function MathQuiz() {
       setInput('');
       setIdx((i) => (i + 1) % qs.length);
     }, 1500);
+    else logMistake({ subject: '数学', kind: '加减法', prompt: `${q.a} ${q.op} ${q.b} = ?`, answer: String(ans), wrong: input || '' });
   }
 
   return (
