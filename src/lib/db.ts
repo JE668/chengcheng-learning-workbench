@@ -178,6 +178,12 @@ export async function ensureSchema() {
     await db.execute({ sql: "ALTER TABLE castle_state ADD COLUMN skin TEXT NOT NULL DEFAULT 'default'", args: [] });
   } catch { /* 列已存在或不可迁移时忽略，不影响主流程 */ }
 
+  // 迁移：users 增加 cert_pref（奖状自定义，JSON: {"mokoKey","theme"}）
+  // 孩子端存云端，家长端打印统一读取；幂等忽略 "duplicate column"。
+  try {
+    await db.execute({ sql: 'ALTER TABLE users ADD COLUMN cert_pref TEXT', args: [] });
+  } catch { /* 列已存在时忽略 */ }
+
   // 账号迁移：确保 child 用户为 cara / 0000。
   // 遗留的 cheng 自动改名并重置密码，users.id 不变，城堡/打卡等关联数据全部保留。
   const cara = await db.execute({ sql: "SELECT id FROM users WHERE username = 'cara'", args: [] });

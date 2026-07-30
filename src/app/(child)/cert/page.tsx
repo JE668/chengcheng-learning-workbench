@@ -20,6 +20,20 @@ function mondayOf(d: Date): Date {
   return m;
 }
 
+// 解析 users.cert_pref（JSON 字符串），非法/为空时返回 null
+function parsePref(raw: unknown): { mokoKey: string; theme: string } | null {
+  if (raw == null) return null;
+  try {
+    const o = JSON.parse(String(raw));
+    if (o && typeof o.mokoKey === 'string') {
+      return { mokoKey: o.mokoKey, theme: typeof o.theme === 'string' ? o.theme : 'violet' };
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
 export default async function ChildCertPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== 'child') return null;
@@ -27,6 +41,9 @@ export default async function ChildCertPage() {
   const db = getDb();
   const childId = user.id;
   const childName = user.displayName || '小朋友';
+
+  const prefRow = await db.execute({ sql: 'SELECT cert_pref FROM users WHERE id = ?', args: [childId] });
+  const initialPref = parsePref(prefRow.rows[0]?.cert_pref);
 
   const now = new Date();
   const weekStart = mondayOf(now);
@@ -80,7 +97,7 @@ export default async function ChildCertPage() {
     <div className="max-w-3xl mx-auto">
       <h1 className="text-3xl font-black text-moko-violet mb-2">我的奖状 🏆</h1>
       <p className="text-gray-600 mb-4">选你最喜欢的萌可和颜色，做成专属奖状！也可以让爸爸妈妈帮忙打印出来～</p>
-      <Certificate data={data} editable={true} />
+      <Certificate data={data} editable={true} initialPref={initialPref} persistUrl="/api/child/cert-pref" />
       <div className="no-print text-center mt-6 flex items-center justify-center gap-3">
         <PrintButton />
         <Link href="/record" className="text-moko-violet font-bold hover:underline">‹ 返回学习记录</Link>

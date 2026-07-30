@@ -29,24 +29,46 @@ const CHOICES = ['heartping', 'keyping', 'gemsping', 'courageping', 'singping', 
 
 const PREF_KEY = 'certPref';
 
-export default function Certificate({ data, editable = false }: { data: CertData; editable?: boolean }) {
-  const [pref, setPref] = useState<{ mokoKey: string; theme: string }>({ mokoKey: 'heartping', theme: 'violet' });
+type Pref = { mokoKey: string; theme: string };
+
+export default function Certificate({
+  data,
+  editable = false,
+  initialPref = null,
+  persistUrl,
+}: {
+  data: CertData;
+  editable?: boolean;
+  initialPref?: Pref | null;
+  persistUrl?: string;
+}) {
+  const [pref, setPref] = useState<Pref>(initialPref ?? { mokoKey: 'heartping', theme: 'violet' });
 
   useEffect(() => {
+    // 服务端未提供初始值（如纯本地兜底）时，回退到 localStorage
+    if (initialPref) return;
     try {
       const raw = localStorage.getItem(PREF_KEY);
       if (raw) setPref(JSON.parse(raw));
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [initialPref]);
 
-  function save(next: { mokoKey: string; theme: string }) {
+  function save(next: Pref) {
     setPref(next);
     try {
       localStorage.setItem(PREF_KEY, JSON.stringify(next));
     } catch {
       /* ignore */
+    }
+    // 云端持久化：家长端打印也能读到孩子的选择
+    if (persistUrl) {
+      fetch(persistUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      }).catch(() => {});
     }
   }
 
@@ -91,7 +113,7 @@ export default function Certificate({ data, editable = false }: { data: CertData
               ))}
             </div>
           </div>
-          <p className="text-xs text-gray-400">你的选择会自动保存，爸爸妈妈打印的奖状也会用这个样式～</p>
+          <p className="text-xs text-gray-400">你的选择已保存到云端，爸爸妈妈打印的奖状也会用这个样式～</p>
         </div>
       )}
 

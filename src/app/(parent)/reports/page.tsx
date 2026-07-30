@@ -18,12 +18,27 @@ function mondayOf(d: Date): Date {
   return m;
 }
 
+// 解析 users.cert_pref（JSON 字符串），非法/为空时返回 null
+function parsePref(raw: unknown): { mokoKey: string; theme: string } | null {
+  if (raw == null) return null;
+  try {
+    const o = JSON.parse(String(raw));
+    if (o && typeof o.mokoKey === 'string') {
+      return { mokoKey: o.mokoKey, theme: typeof o.theme === 'string' ? o.theme : 'violet' };
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
 export default async function ReportsPage() {
   const db = getDb();
   const child = await db.execute({ sql: 'SELECT * FROM users WHERE role = ? LIMIT 1', args: ['child'] });
   const c = child.rows[0];
   const childId = c ? Number(c.id) : 0;
   const childName = c ? String(c.display_name) : '小朋友';
+  const initialPref = parsePref(c?.cert_pref ?? null);
 
   const now = new Date();
   const weekStart = mondayOf(now);
@@ -115,7 +130,7 @@ export default async function ReportsPage() {
         </div>
       </div>
 
-      {/* 🏆 可打印奖状（真实萌可图案 + 孩子自选定制，选择存于 localStorage） */}
+      {/* 🏆 可打印奖状（真实萌可图案 + 孩子自选定制，选择存于云端 users.cert_pref） */}
       <Certificate
         data={{
           childName,
@@ -129,6 +144,7 @@ export default async function ReportsPage() {
           date: fmt(now),
         }}
         editable={false}
+        initialPref={initialPref}
       />
     </div>
   );
