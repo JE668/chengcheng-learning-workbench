@@ -124,9 +124,9 @@ export const games: {
   {
     id: 'character-match',
     title: '识字配对',
-    mokoKey: 'heartping',
+    mokoKey: 'curiousping',
     subject: '语文',
-    desc: '汉字和图卡配对，帮爱心萌可捕捉生字',
+    desc: '汉字和图卡配对，帮好奇萌可捕捉生字',
     difficulty: '3 关递进',
     levels: [
       { name: '入门', tag: '6 字 · 形象字' },
