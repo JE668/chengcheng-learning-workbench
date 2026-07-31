@@ -11,11 +11,30 @@ import { MokoAvatar } from '@/components/MokoAvatar';
 export default async function HomePage() {
   const user = await getCurrentUser();
   if (!user || user.role !== 'child') return null;
-  const points = await getChildPoints(user.id);
-  const castle = await getCastleState(user.id);
-  const practice = await getTodayPractice(user.id, false);
+  const db = getDb();
+
+  // 并行拉取，减少串行等待（首页加载提速）
+  const [points, castle, practice, taskRes] = await Promise.all([
+    getChildPoints(user.id),
+    getCastleState(user.id),
+    getTodayPractice(user.id, false),
+    db.execute({
+      sql: `SELECT t.id, t.title, t.subject, t.points
+            FROM tasks t
+            LEFT JOIN completions c ON c.task_id = t.id AND c.child_id = ?
+            WHERE c.task_id IS NULL
+            ORDER BY t.created_at DESC LIMIT 5`,
+      args: [user.id],
+    }),
+  ]);
   const ownedCount = castle.gallery.filter((g) => g.owned).length;
   const totalMoko = castle.gallery.length;
+  const pendingTasks = taskRes.rows.map((r) => ({
+    id: Number(r.id),
+    title: String(r.title),
+    subject: String(r.subject),
+    points: Number(r.points),
+  }));
 
   const stats = [
     { label: '我的积分', value: points, icon: '🏅', color: 'bg-moko-rose' },
@@ -77,6 +96,31 @@ export default async function HomePage() {
         <div className="mt-3 text-xs text-gray-500">再坚持 {practice.nextMilestone} 天，解锁一只新萌可入驻城堡 🧸</div>
       </div>
 
+      {/* 我的任务（家长布置，孩子端即时可见） */}
+      <div className="card-moko mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-black text-moko-violet">📝 我的任务</h2>
+          <Link href="/my-tasks" className="text-sm font-bold text-moko-rose">全部 ›</Link>
+        </div>
+        {pendingTasks.length === 0 ? (
+          <p className="text-gray-500 text-sm">暂时没有新任务，去「每日一练」练一练吧～</p>
+        ) : (
+          <ul className="space-y-2">
+            {pendingTasks.map((t) => (
+              <li key={t.id} className="flex items-center justify-between bg-white/60 rounded-2xl px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">
+                    {t.subject === '语文' ? '📕' : t.subject === '数学' ? '🔢' : t.subject === '英语' ? '🔤' : '📝'}
+                  </span>
+                  <span className="font-bold text-moko-violet">{t.title}</span>
+                </div>
+                <span className="text-sm text-moko-rose font-black">+{t.points} 🏅</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {/* 城堡快览 + 快捷入口 */}
       <div className="grid md:grid-cols-2 gap-6">
         <div className="card-moko bg-gradient-to-br from-indigo-50 to-purple-50">
@@ -112,7 +156,10 @@ export default async function HomePage() {
             <Link href="/shop" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-gold text-white font-black">🛍️ 商城</Link>
             <Link href="/record" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-cyan text-white font-black col-span-2">🏆 看记录</Link>
             <Link href="/story" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black col-span-2">📜 萌可剧情 · 捕捉萌可</Link>
-            <GuideModal trigger={<span className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-cyan text-white font-black col-span-2 cursor-pointer">📖 攻略说明 · 每日一练怎么玩</span>} />
+            <GuideModal
+              className="col-span-2 rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-cyan text-white font-black cursor-pointer"
+              trigger="📖 攻略说明 · 每日一练怎么玩"
+            />
           </div>
         </div>
       </div>

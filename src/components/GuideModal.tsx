@@ -40,11 +40,15 @@ const GUIDE_SECTIONS: { icon: string; title: string; text: string }[] = [
   },
 ];
 
-export function GuideModal({ trigger }: { trigger: React.ReactNode }) {
+export function GuideModal({ trigger, className }: { trigger: React.ReactNode; className?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={className ?? 'bg-transparent border-0 p-0 m-0 cursor-pointer'}
+      >
         {trigger}
       </button>
       {open && (
