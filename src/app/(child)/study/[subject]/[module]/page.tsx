@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { STUDY_MODULES, SUBJECT_META } from '@/lib/study-modules';
+import { StudyModuleProvider } from '@/lib/study-context';
 
 export default function StudyModulePage({ params }: { params: { subject: string; module: string } }) {
   const list = STUDY_MODULES[params.subject];
@@ -23,7 +24,9 @@ export default function StudyModulePage({ params }: { params: { subject: string;
         {mod.emoji} {mod.label}
       </h1>
       <p className="text-gray-600 mb-6">{mod.desc}</p>
-      <C />
+      <StudyModuleProvider subject={params.subject} moduleKey={params.module}>
+        <C />
+      </StudyModuleProvider>
     </div>
   );
 }

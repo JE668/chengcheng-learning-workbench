@@ -10,7 +10,7 @@ import {
   type PoemItem,
 } from '@/lib/study-data';
 import { speakZh } from '@/lib/speak';
-import { logMistake } from '@/lib/mistake-log';
+import { useMistakeLogger } from '@/lib/mistake-logger';
 
 /* ---------- 识字（按类别） ---------- */
 function CharacterCard({ item }: { item: CharacterItem }) {
@@ -251,6 +251,7 @@ export function CharacterQuizModule() {
   const [q, setQ] = useState<CharQ>(() => buildQuestion('easy'));
   const [picked, setPicked] = useState<string | null>(null);
   const [streak, setStreak] = useState({ right: 0, wrong: 0 });
+  const logM = useMistakeLogger();
 
   useEffect(() => {
     const saved = localStorage.getItem('chineseDiffLevel') as DiffLevel | null;
@@ -284,7 +285,7 @@ export function CharacterQuizModule() {
       const nw = streak.wrong + 1;
       setStreak({ right: 0, wrong: nw });
       if (nw >= 2 && level !== 'easy') nl = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) - 1];
-      logMistake({ subject: '语文', kind: '识字', prompt: `${q.target.char} 是什么意思？`, answer: q.target.meaning, wrong: opt });
+      logM({ subject: '语文', kind: '识字', prompt: `${q.target.char} 是什么意思？`, answer: q.target.meaning, wrong: opt });
     }
     setTimeout(() => nextRound(nl), ok ? 1400 : 1700);
   }

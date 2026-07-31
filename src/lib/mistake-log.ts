@@ -7,6 +7,8 @@ export async function logMistake(m: {
   prompt: string;
   answer: string;
   wrong: string;
+  sourceModule?: string;
+  chapter?: string;
 }) {
   try {
     await fetch('/api/mistakes', {

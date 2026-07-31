@@ -194,6 +194,15 @@ export async function ensureSchema() {
     await db.execute({ sql: 'ALTER TABLE users ADD COLUMN cert_pref TEXT', args: [] });
   } catch { /* 列已存在时忽略 */ }
 
+  // 迁移：mistakes 增加 source_module / chapter（错题来源模块与章节，便于家长端联动「去练习」）
+  // 幂等忽略 "duplicate column"。
+  try {
+    await db.execute({ sql: 'ALTER TABLE mistakes ADD COLUMN source_module TEXT', args: [] });
+  } catch { /* 列已存在时忽略 */ }
+  try {
+    await db.execute({ sql: 'ALTER TABLE mistakes ADD COLUMN chapter TEXT', args: [] });
+  } catch { /* 列已存在时忽略 */ }
+
   // 账号迁移：确保 child 用户为 cara / 0000。
   // 遗留的 cheng 自动改名并重置密码，users.id 不变，城堡/打卡等关联数据全部保留。
   const cara = await db.execute({ sql: "SELECT id FROM users WHERE username = 'cara'", args: [] });

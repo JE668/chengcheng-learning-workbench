@@ -11,7 +11,7 @@ import {
   type ClockItem,
 } from '@/lib/study-data';
 import { speakZh } from '@/lib/speak';
-import { logMistake } from '@/lib/mistake-log';
+import { useMistakeLogger } from '@/lib/mistake-logger';
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -29,6 +29,7 @@ export function PositionModule() {
   const item: PositionItem = POSITIONS[idx % POSITIONS.length];
   const blank = item.example.replace(item.word, '（　）');
   const options = shuffle(POSITIONS.map((p) => p.word));
+  const logM = useMistakeLogger();
 
   function choose(w: string) {
     if (picked) return;
@@ -41,7 +42,7 @@ export function PositionModule() {
         setIdx((i) => i + 1);
       }, 1200);
     } else {
-      logMistake({ subject: '数学', kind: '位置', prompt: blank, answer: item.word, wrong: w });
+      logM({ subject: '数学', kind: '位置', prompt: blank, answer: item.word, wrong: w });
       setTimeout(() => setPicked(null), 1500);
     }
   }
@@ -98,6 +99,7 @@ export function SolidShapeModule() {
   const [picked, setPicked] = useState<string | null>(null);
   const target = SOLID_SHAPES[idx % SOLID_SHAPES.length];
   const options = shuffle(SOLID_SHAPES.map((s) => s.name));
+  const logM = useMistakeLogger();
 
   function choose(name: string) {
     if (picked) return;
@@ -110,7 +112,7 @@ export function SolidShapeModule() {
         setIdx((i) => i + 1);
       }, 1200);
     } else {
-      logMistake({ subject: '数学', kind: '立体图形', prompt: '找出' + target.name, answer: target.name, wrong: name });
+      logM({ subject: '数学', kind: '立体图形', prompt: '找出' + target.name, answer: target.name, wrong: name });
       setTimeout(() => setPicked(null), 1500);
     }
   }
@@ -228,6 +230,7 @@ function ClockFace({ hour }: { hour: number }) {
 export function ClockModule() {
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
+  const logM = useMistakeLogger();
   const current: ClockItem = CLOCKS[idx % CLOCKS.length];
   const choices = shuffle(CLOCKS.map((c) => c.label)).slice(0, 4);
   if (!choices.includes(current.label)) choices[0] = current.label;
@@ -243,7 +246,7 @@ export function ClockModule() {
         setIdx((i) => i + 1);
       }, 1200);
     } else {
-      logMistake({ subject: '数学', kind: '认识钟表', prompt: '现在是几点？', answer: current.label, wrong: label });
+      logM({ subject: '数学', kind: '认识钟表', prompt: '现在是几点？', answer: current.label, wrong: label });
       setTimeout(() => setPicked(null), 1500);
     }
   }

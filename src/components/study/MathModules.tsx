@@ -12,7 +12,7 @@ import {
   type MathQuestion,
 } from '@/lib/study-data';
 import { speakZh } from '@/lib/speak';
-import { logMistake } from '@/lib/mistake-log';
+import { useMistakeLogger } from '@/lib/mistake-logger';
 
 /* ---------- 数感：1~10 ---------- */
 export function NumberSenseModule() {
@@ -37,6 +37,7 @@ export function CompareModule() {
   const [idx, setIdx] = useState(0);
   const [result, setResult] = useState<'idle' | 'right' | 'wrong'>('idle');
   const q: CompareItem = COMPARE_QUESTIONS[idx];
+  const logM = useMistakeLogger();
 
   function pick(ans: '>' | '<' | '=') {
     const correct: '>' | '<' | '=' = q.left > q.right ? '>' : q.left < q.right ? '<' : '=';
@@ -48,7 +49,7 @@ export function CompareModule() {
         setResult('idle');
         setIdx((i) => (i + 1) % COMPARE_QUESTIONS.length);
       }, 1200);
-    else logMistake({ subject: '数学', kind: '比较大小', prompt: `${q.left} ? ${q.right}`, answer: correct, wrong: ans });
+    else logM({ subject: '数学', kind: '比较大小', prompt: `${q.left} ? ${q.right}`, answer: correct, wrong: ans });
   }
 
   return (
@@ -156,6 +157,7 @@ function MathQuizInner({ mode }: { mode: 'normal' | 'carry' }) {
   const [result, setResult] = useState<'idle' | 'right' | 'wrong'>('idle');
   const [streak, setStreak] = useState({ right: 0, wrong: 0 });
   const q = qs[idx];
+  const logM = useMistakeLogger();
 
   useEffect(() => {
     if (mode === 'carry') return;
@@ -209,7 +211,7 @@ function MathQuizInner({ mode }: { mode: 'normal' | 'carry' }) {
         adjust(LEVEL_ORDER[ni]);
         speakZh('没关系，换简单一点的～');
       }
-      logMistake({ subject: '数学', kind: '加减法', prompt: `${q.a} ${q.op} ${q.b} = ?`, answer: String(ans), wrong: input || '' });
+      logM({ subject: '数学', kind: '加减法', prompt: `${q.a} ${q.op} ${q.b} = ?`, answer: String(ans), wrong: input || '' });
     }
   }
 

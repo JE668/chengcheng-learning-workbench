@@ -10,7 +10,7 @@ import {
   type LetterItem,
 } from '@/lib/study-data';
 import { speakEn } from '@/lib/speak';
-import { logMistake } from '@/lib/mistake-log';
+import { useMistakeLogger } from '@/lib/mistake-logger';
 
 function lev(a: string, b: string): number {
   const m = a.length,
@@ -56,6 +56,7 @@ function WordCard({ item }: { item: WordItem }) {
   const [heard, setHeard] = useState('');
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
+  const logM = useMistakeLogger();
 
   async function startRecord() {
     try {
@@ -110,7 +111,7 @@ function WordCard({ item }: { item: WordItem }) {
         s = ratio >= 0.8 ? 3 : ratio >= 0.5 ? 2 : 1;
       }
       setScore(s);
-      if (s < 2) logMistake({ subject: '英语', kind: '单词', prompt: item.word, answer: item.word, wrong: text });
+      if (s < 2) logM({ subject: '英语', kind: '单词', prompt: item.word, answer: item.word, wrong: text });
       setScoring(false);
     };
     rec.onerror = () => {
@@ -227,6 +228,7 @@ function EnListenQuiz() {
   const [q, setQ] = useState<{ target: WordItem; options: WordItem[] }>(() => buildQuestion('easy'));
   const [picked, setPicked] = useState<string | null>(null);
   const [streak, setStreak] = useState({ right: 0, wrong: 0 });
+  const logM = useMistakeLogger();
 
   useEffect(() => {
     const saved = localStorage.getItem('englishDiffLevel') as DiffLevel | null;
@@ -266,7 +268,7 @@ function EnListenQuiz() {
       const nw = streak.wrong + 1;
       setStreak({ right: 0, wrong: nw });
       if (nw >= 2 && level !== 'easy') nl = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) - 1];
-      logMistake({ subject: '英语', kind: '听音选词', prompt: q.target.word, answer: q.target.word, wrong: opt.word });
+      logM({ subject: '英语', kind: '听音选词', prompt: q.target.word, answer: q.target.word, wrong: opt.word });
     }
     setTimeout(() => nextRound(nl), ok ? 1400 : 1700);
   }
@@ -330,6 +332,7 @@ export function EnSpeakModule() {
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
   const item = practice[idx % practice.length];
+  const logM = useMistakeLogger();
 
   async function startRecord() {
     try {
@@ -380,7 +383,7 @@ export function EnSpeakModule() {
         s = ratio >= 0.8 ? 3 : ratio >= 0.5 ? 2 : 1;
       }
       setScore(s);
-      if (s < 2) logMistake({ subject: '英语', kind: '口语', prompt: item.word, answer: item.word, wrong: text });
+      if (s < 2) logM({ subject: '英语', kind: '口语', prompt: item.word, answer: item.word, wrong: text });
       setScoring(false);
     };
     rec.onerror = () => {

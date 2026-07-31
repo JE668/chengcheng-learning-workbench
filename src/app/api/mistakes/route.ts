@@ -34,8 +34,9 @@ export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'child') return NextResponse.json({ error: '只有孩子可以记录' }, { status: 403 });
   const body = await req.json();
-  const { subject, kind, prompt, answer, wrong } = body as {
+  const { subject, kind, prompt, answer, wrong, source_module, chapter } = body as {
     subject?: string; kind?: string; prompt?: string; answer?: string; wrong?: string;
+    source_module?: string; chapter?: string;
   };
   if (!subject || !prompt || answer === undefined) {
     return NextResponse.json({ error: '参数缺失' }, { status: 400 });
@@ -48,13 +49,13 @@ export async function POST(req: NextRequest) {
   });
   if (exist.rows.length) {
     await db.execute({
-      sql: 'UPDATE mistakes SET wrong = ?, next_review = ?, interval_days = 1, reps = 0 WHERE id = ?',
-      args: [wrong ?? null, localDate(1), Number(exist.rows[0].id)],
+      sql: 'UPDATE mistakes SET wrong = ?, next_review = ?, interval_days = 1, reps = 0, source_module = ?, chapter = ? WHERE id = ?',
+      args: [wrong ?? null, localDate(1), source_module ?? null, chapter ?? null, Number(exist.rows[0].id)],
     });
   } else {
     await db.execute({
-      sql: 'INSERT INTO mistakes (child_id, subject, kind, prompt, answer, wrong, next_review, interval_days) VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
-      args: [user.id, subject, kind || '', prompt, String(answer), wrong ?? null, localDate(1)],
+      sql: 'INSERT INTO mistakes (child_id, subject, kind, prompt, answer, wrong, source_module, chapter, next_review, interval_days) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
+      args: [user.id, subject, kind || '', prompt, String(answer), wrong ?? null, source_module ?? null, chapter ?? null, localDate(1)],
     });
   }
   return NextResponse.json({ ok: true });
