@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import MokoHelper from '@/components/MokoHelper';
+import { MokoHelper } from '@/components/MokoHelper';
 import TextbookViewer from '@/components/study/TextbookViewer';
 
 export default function TextbookPage() {

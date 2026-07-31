@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import ReviewBadge from '@/components/ReviewBadge';
-import MokoHelper from '@/components/MokoHelper';
+import { MokoHelper } from '@/components/MokoHelper';
 
 const cards = [
   {

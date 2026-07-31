@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { STUDY_MODULES, SUBJECT_META } from '@/lib/study-modules';
-import MokoHelper from '@/components/MokoHelper';
+import { MokoHelper } from '@/components/MokoHelper';
 
 export default function MathStudyPage() {
   const modules = STUDY_MODULES.math;
