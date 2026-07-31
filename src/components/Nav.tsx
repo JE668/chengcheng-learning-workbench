@@ -7,6 +7,7 @@ import { User } from '@/lib/types';
 const childLinks = [
   { href: '/home', label: '首页', icon: '🏠' },
   { href: '/study', label: '学习', icon: '📚' },
+  { href: '/textbook', label: '课本', icon: '📖' },
   { href: '/games', label: '游戏', icon: '🎮' },
   { href: '/record', label: '记录', icon: '🏆' },
   { href: '/cert', label: '奖状', icon: '🎖️' },

@@ -59,6 +59,18 @@ export default function StudyPage() {
         ))}
       </div>
 
+      <Link
+        href="/textbook"
+        className="mt-8 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-gold/40 bg-gradient-to-r from-moko-gold/20 to-moko-yellow/20 hover:scale-[1.02] transition block"
+      >
+        <span className="text-5xl">📖</span>
+        <div className="flex-1">
+          <h3 className="text-xl font-black text-moko-violet">电子课本（一年级上册）</h3>
+          <p className="text-sm text-gray-600">语文 · 数学 原版 PDF，随时翻开和萌可一起学</p>
+        </div>
+        <span className="text-moko-violet font-black text-lg">打开 ›</span>
+      </Link>
+
       <div className="mt-8 rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-purple/20">
         <h3 className="text-lg font-black text-moko-violet mb-2">💡 给程程的小提示</h3>
         <ul className="text-gray-600 text-sm space-y-1 list-disc list-inside">
