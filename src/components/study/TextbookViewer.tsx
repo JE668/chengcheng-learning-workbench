@@ -48,12 +48,6 @@ export default function TextbookViewer() {
     [remember],
   );
 
-  const openFull = useCallback((b: Textbook) => {
-    setOpenFile(b.full);
-    setOpenTitle('整本（全部 118 页）');
-    setOpenPages(118);
-  }, []);
-
   // 选择一本书：默认打开上次读到的章节（有则），否则打开第一章
   const selectBook = useCallback(
     (b: Textbook) => {
@@ -126,7 +120,7 @@ export default function TextbookViewer() {
           {book.emoji} {book.title}
         </h2>
         <a
-          href={openFile || book.full}
+          href={openFile || book.chapters[0].file}
           target="_blank"
           rel="noopener noreferrer"
           className="ml-auto px-4 py-2 rounded-2xl bg-moko-violet text-white font-bold shadow hover:opacity-90"
@@ -139,14 +133,6 @@ export default function TextbookViewer() {
         {/* 目录 */}
         <aside className="rounded-2xl bg-white shadow border-2 border-moko-purple/15 p-3 max-h-[80vh] overflow-auto">
           <div className="text-xs font-black text-gray-400 mb-2 px-1">目录（点击加载该章）</div>
-          <button
-            onClick={() => openFull(book)}
-            className={`w-full text-left text-sm rounded-xl px-3 py-2 mb-1 font-bold ${
-              openFile === book.full ? 'bg-moko-violet text-white' : 'hover:bg-moko-purple/10 text-moko-violet'
-            }`}
-          >
-            📖 整本（全部 118 页）
-          </button>
           {book.chapters.map((c) => {
             const active = openFile === c.file;
             const isLast = progress[book.key] === c.idx;

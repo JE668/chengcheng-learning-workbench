@@ -28,7 +28,7 @@ export default function TextbookPage() {
         <h3 className="text-lg font-black text-moko-violet mb-2">💡 小提示</h3>
         <ul className="text-gray-600 text-sm space-y-1 list-disc list-inside">
           <li>课本已按章节切成小册：点左侧目录的某一章，才加载那一章的 PDF，更省流量、打开更快。</li>
-          <li>读到哪一章会自动记住，下次打开这本书直接续上；想一口气看可点「整本」。</li>
+          <li>读到哪一章会自动记住，下次打开这本书直接续上；想连续读就把几章依次点开即可。</li>
           <li>每章都能在页面内翻页，也可「在新标签打开」用系统阅读器；建议在 Wi-Fi 下使用。</li>
           <li>课本内容仅用于家庭学习，请妥善保管账号、不要外传。</li>
         </ul>

@@ -17,7 +17,6 @@ export type Textbook = {
   color: string;
   border: string;
   img: string;
-  full: string;
   chapters: Chapter[];
 };
 
@@ -30,7 +29,6 @@ export const TEXTBOOKS: Textbook[] = [
     color: 'bg-moko-pink',
     border: 'border-moko-pink/40',
     img: '/moko/heartping.jpg',
-    full: '/textbooks/chinese-grade1-1.pdf',
     chapters: [
       {
         idx: 1,
@@ -114,7 +112,6 @@ export const TEXTBOOKS: Textbook[] = [
     color: 'bg-moko-blue',
     border: 'border-moko-blue/40',
     img: '/moko/courageping.jpg',
-    full: '/textbooks/math-grade1-1.pdf',
     chapters: [
       {
         idx: 1,
