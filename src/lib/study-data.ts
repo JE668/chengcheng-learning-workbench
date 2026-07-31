@@ -141,6 +141,74 @@ export const PINYIN_HAN: Record<string, string> = {
   yi: '衣', wu: '屋', yu: '鱼', ye: '叶', yue: '月', yuan: '圆', yin: '因', yun: '云', ying: '鹰',
 };
 
+/**
+ * 四声切换：每个「能整齐发四声的音节」配 4 个代表汉字（按 1/2/3/4 声顺序）。
+ * 空串 '' 表示该声调没有合适的零声母常用字（UI 会禁用该按钮）。
+ * 只收录零声母能完整发四声的音节（单韵母、ai/ao/ie/ing、整体认读等）；
+ * 声母、以及 ei/ui/ou/iu/üe/an/en/in/un/ün/ang/eng/ong 这类零声母无完整四声字的，
+ * 不在此表，保持读 PINYIN_HAN 单个代表字即可（卡片不显示声调切换）。
+ */
+export const PINYIN_TONES: Record<string, [string, string, string, string]> = {
+  // 单韵母
+  a: ['啊', '啊', '阿', '啊'],
+  o: ['喔', '哦', '噢', '哦'],
+  e: ['阿', '鹅', '恶', '饿'],
+  i: ['衣', '姨', '椅', '意'],
+  u: ['屋', '无', '五', '物'],
+  ü: ['迂', '鱼', '雨', '玉'],
+  // 复韵母（零声母能完整四声的）
+  ai: ['哀', '挨', '矮', '爱'],
+  ao: ['凹', '熬', '袄', '傲'],
+  ie: ['耶', '爷', '也', '叶'],
+  // 后鼻韵母
+  ing: ['英', '迎', '影', '硬'],
+  // 整体认读
+  zhi: ['知', '直', '纸', '制'],
+  chi: ['吃', '迟', '齿', '赤'],
+  shi: ['狮', '石', '史', '是'],
+  ri: ['', '', '', '日'],
+  zi: ['资', '', '子', '字'],
+  ci: ['', '词', '此', '次'],
+  si: ['丝', '', '死', '四'],
+  yi: ['衣', '姨', '椅', '意'],
+  wu: ['屋', '吴', '五', '物'],
+  yu: ['迂', '鱼', '雨', '玉'],
+  ye: ['耶', '爷', '也', '夜'],
+  yue: ['约', '', '', '月'],
+  yuan: ['冤', '圆', '远', '院'],
+  yin: ['音', '银', '引', '印'],
+  yun: ['晕', '云', '允', '运'],
+  ying: ['英', '迎', '影', '硬'],
+};
+
+/**
+ * 给一个拼音音节加上声调符号（用于「显示」带调拼音，如 a+4 → à）。
+ * 标调规则：有 a 标 a，无 a 找 o/e；iu 标在后(u)、ui 标在后(i)；其余标 i/u/ü。
+ */
+const TONE_MARKS: Record<string, [string, string, string, string]> = {
+  a: ['ā', 'á', 'ǎ', 'à'],
+  o: ['ō', 'ó', 'ǒ', 'ò'],
+  e: ['ē', 'é', 'ě', 'è'],
+  i: ['ī', 'í', 'ǐ', 'ì'],
+  u: ['ū', 'ú', 'ǔ', 'ù'],
+  ü: ['ǖ', 'ǘ', 'ǚ', 'ǜ'],
+};
+
+export function applyTone(syllable: string, tone: number): string {
+  if (tone < 1 || tone > 4) return syllable;
+  let target: string | undefined;
+  if (syllable.includes('a')) target = 'a';
+  else if (syllable.includes('o')) target = 'o';
+  else if (syllable.includes('e')) target = 'e';
+  else if (syllable.includes('iu')) target = 'u';
+  else if (syllable.includes('ui')) target = 'i';
+  else if (syllable.includes('i')) target = 'i';
+  else if (syllable.includes('u')) target = 'u';
+  else if (syllable.includes('ü')) target = 'ü';
+  if (!target || !TONE_MARKS[target]) return syllable;
+  return syllable.replace(target, TONE_MARKS[target][tone - 1]);
+}
+
 /* -------------------- 语文 · 识字（按类别） -------------------- */
 export interface CharacterItem {
   char: string;
