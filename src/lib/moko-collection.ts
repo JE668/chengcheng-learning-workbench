@@ -10,7 +10,7 @@ export interface MokoCollectionCat {
   desc: string;
 }
 
-/** 本次新增的季分类（需并入 MokoCategories） */
+/** 本次新增的季分类（需并入 MOko_CATEGORIES） */
 export const COLLECTION_CATEGORIES: MokoCollectionCat[] = [
   {
     "key": "mo",
@@ -1226,7 +1226,7 @@ export const mokoCollection: MokoChar[] = [
     "name": "乐美萌可",
     "category": "star",
     "season": "星星萌可_第六季",
-    "img": "/moko/collection/06_星星萌可_第六季/乐美萌可_render.webp",
+    "img": "/moko/lemei.jpg",
     "emoji": "☄️",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
@@ -2957,7 +2957,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "name": "乐美萌可",
     "category": "star",
     "season": "星星萌可_第六季",
-    "img": "/moko/collection/06_星星萌可_第六季/乐美萌可_render.webp",
+    "img": "/moko/lemei.jpg",
     "emoji": "☄️",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",

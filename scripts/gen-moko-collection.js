@@ -35,6 +35,13 @@ const CAT_META = {
 // 个别文件名修正
 const NAME_FIX = { extra: '神秘萌可' };
 
+// 个别图片覆盖：用指定图片替换扫描到的默认图。
+// 例：图片集里的「乐美萌可_render.webp」是一张全身照（显示成腿），
+// 改用乐美公主头像 /moko/lemei.jpg，图鉴/捕捉/入驻展示更一致。
+const IMG_OVERRIDE = {
+  '乐美萌可': '/moko/lemei.jpg',
+};
+
 function parseName(fileBase) {
   // 先剥离官网导出的 _render 标记（如 幸运萌可_render）
   let base = fileBase.replace(/_render$/i, '');
@@ -76,7 +83,7 @@ for (const folder of folders) {
       name,
       category: cat,
       season,
-      img: `/moko/collection/${folder}/${f}`,
+      img: IMG_OVERRIDE[name] || `/moko/collection/${folder}/${f}`,
       emoji: meta.emoji,
       color: meta.color,
       item: '✨ 魔法道具',
