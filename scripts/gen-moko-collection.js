@@ -60,8 +60,15 @@ for (const folder of folders) {
   const season = folder.replace(/^\d+_/, '');
   const fdir = path.join(ROOT, folder);
   const files = fs.readdirSync(fdir).filter((f) => /\.(jpe?g|png|webp)$/i.test(f)).sort();
-  for (const f of files) {
-    const base = f.replace(/\.(jpe?g|png|webp)$/i, '');
+  // 按文件名去重（一张图可能同时有 .png 与 .webp），优先用体积更小的 webp
+  const bases = [...new Set(files.map((f) => f.replace(/\.(jpe?g|png|webp)$/i, '')))];
+  for (const base of bases) {
+    const ext = fs.existsSync(path.join(fdir, `${base}.webp`))
+      ? '.webp'
+      : fs.existsSync(path.join(fdir, `${base}.png`))
+        ? '.png'
+        : '.jpg';
+    const f = `${base}${ext}`;
     const { name, suffix } = parseName(base);
     const key = `col_${digits}_${base}`;
     entries.push({

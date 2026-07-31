@@ -20,7 +20,7 @@ export const subjects: { key: Subject; label: string; color: string; img: string
  * 萌可图鉴（按系列分类，种类更丰富）
  * category 取值见 MokoCategoryKey：royal/key/jewel/sweetie/star/princess/guide/trouble
  */
-export const MOko_CATEGORIES: { key: MokoCategoryKey; label: string; emoji: string; color: string; desc: string }[] = [
+export const MokoCategories: { key: MokoCategoryKey; label: string; emoji: string; color: string; desc: string }[] = [
   { key: 'royal', label: '皇室萌可', emoji: '👑', color: 'text-moko-rose', desc: '守护魔法萌可王国的小公主们' },
   { key: 'mo', label: '魔方萌可', emoji: '🧊', color: 'text-moko-cyan', desc: '第一、二季的魔法萌可' },
   { key: 'key', label: '钥匙萌可', emoji: '🔑', color: 'text-moko-violet', desc: '掌管知识宝盒的钥匙精灵' },
@@ -213,30 +213,6 @@ export const games: {
     ],
   },
 ];
-
-export const builtInLessons: Record<string, { title: string; points: number }[]> = {
-  语文: [
-    { title: '认字：一、二、三', points: 3 },
-    { title: '认字：大、小、人', points: 3 },
-    { title: '拼音：a o e', points: 4 },
-    { title: '拼音：b p m f', points: 4 },
-    { title: '古诗：静夜思', points: 5 },
-  ],
-  数学: [
-    { title: '数数 1-20', points: 3 },
-    { title: '比大小', points: 3 },
-    { title: '10 以内加法', points: 4 },
-    { title: '10 以内减法', points: 4 },
-    { title: '认识形状', points: 3 },
-  ],
-  英语: [
-    { title: '字母 A-G', points: 3 },
-    { title: '字母 H-N', points: 3 },
-    { title: '常见动物单词', points: 4 },
-    { title: '常见水果单词', points: 4 },
-    { title: '颜色单词', points: 3 },
-  ],
-};
 
 /** 萌可成长时长（分钟级，便于孩子体验，可在设置里调整） */
 export const GROWTH_MIN = { settled: 10, playing: 30, friend: 60 };

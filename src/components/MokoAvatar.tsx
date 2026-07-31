@@ -21,6 +21,8 @@ export function MokoAvatar({ img, emoji, name, size = 80, owned = true, classNam
       <img
         src={img}
         alt={name}
+        loading="lazy"
+        decoding="async"
         className={`${base} ${owned ? '' : 'grayscale'}`}
         style={{ width: size, height: size }}
       />

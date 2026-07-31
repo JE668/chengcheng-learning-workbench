@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { PINYIN_GROUPS, type PinyinItem } from '@/lib/study-data';
-import { speakZh } from '@/lib/speak';
+import { speakPinyin } from '@/lib/speak';
 
 function PinyinCard({ item }: { item: PinyinItem }) {
   const [show, setShow] = useState(false);
@@ -10,7 +10,7 @@ function PinyinCard({ item }: { item: PinyinItem }) {
     <button
       onClick={() => {
         setShow(true);
-        speakZh(item.pinyin);
+        speakPinyin(item.pinyin, item.tone);
       }}
       className="rounded-2xl p-4 bg-gradient-to-br from-moko-pink to-moko-rose text-white shadow-lg active:scale-95 transition text-center"
     >

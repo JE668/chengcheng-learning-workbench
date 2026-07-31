@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { magicShop, starShop, MOko_CATEGORIES } from '@/lib/moko';
+import { magicShop, starShop, MokoCategories } from '@/lib/moko';
 import { MokoAvatar } from '@/components/MokoAvatar';
 
 type Stage = 'obtained' | 'settled' | 'playing' | 'friend';
@@ -157,7 +157,7 @@ export default function CastlePage() {
             <h2 className="font-black text-moko-violet text-lg">📖 萌可图鉴</h2>
             <span className="text-sm text-gray-500">共 {state.gallery.length} 种　已收集 {state.gallery.filter((g) => g.owned).length}</span>
           </div>
-          {MOko_CATEGORIES.filter((c) => c.key !== 'trouble').map((cat) => {
+          {MokoCategories.filter((c) => c.key !== 'trouble').map((cat) => {
             const items = state.gallery.filter((g) => g.category === cat.key);
             if (!items.length) return null;
             return (

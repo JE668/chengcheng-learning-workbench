@@ -412,7 +412,7 @@ export async function setSkin(childId: number, skin: string): Promise<{ ok: bool
 }
 
 /** 使用魔法喷雾：修复城堡 */
-export async function useSpray(childId: number) {
+export async function castSpray(childId: number) {
   const db = getDb();
   await ensureCastle(childId);
   const inv = await db.execute({ sql: 'SELECT qty FROM inventory WHERE child_id = ? AND item_key = ?', args: [childId, 'spray'] });
