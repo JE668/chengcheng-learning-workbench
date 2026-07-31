@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { GuideModal } from '@/components/GuideModal';
+import { playTts } from '@/lib/speak';
 import type { PracticeDayRecord, PracticeQuestion, PracticeSubmitResult } from '@/lib/daily-practice';
 
 const KIND_META: Record<string, { label: string; grad: string; icon: string }> = {
@@ -11,23 +12,10 @@ const KIND_META: Record<string, { label: string; grad: string; icon: string }> =
   english: { label: '英语 · 听音', grad: 'from-moko-yellow to-amber-300', icon: '🔤' },
 };
 
-async function playTts(text: string, lang: 'zh' | 'en') {
-  try {
-    const res = await fetch('/api/tts', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ text, lang }),
-    });
-    if (res.ok) {
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = new Audio(url);
-      a.onended = () => URL.revokeObjectURL(url);
-      await a.play();
-    }
-  } catch {
-    /* 降级：忽略 */
-  }
+async function autoPlay(q?: PracticeQuestion) {
+  if (!q) return;
+  if (q.kind === 'pinyin') void playTts(q.audioText, 'zh');
+  else if (q.kind === 'english') void playTts(q.word, 'en');
 }
 
 export default function DailyPracticePage() {
@@ -52,6 +40,12 @@ export default function DailyPracticePage() {
   }, []);
 
   const q: PracticeQuestion | undefined = data?.questions[idx];
+
+  // 切到新题时自动朗读（拼音/英语），不点也能听到
+  useEffect(() => {
+    if (q) autoPlay(q);
+  }, [q]);
+
   const allCorrect = !!data && data.questions.length > 0 && selected.length === data.questions.length && data.questions.every((qq, i) => selected[i] === qq.answer);
 
   const choose = useCallback(

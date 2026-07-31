@@ -78,7 +78,7 @@ export function speakEn(text: string, rate = 0.75) {
  * 2) 任意失败（离线 / 合成服务异常 / 网络错误）降级到浏览器原生 Web Speech。
  * wsRate 同时用于：(a) Web Speech 降级时的语速；(b) 推算 Edge 的 relative rate。
  */
-async function playTts(
+export async function playTts(
   text: string,
   lang: 'zh' | 'en',
   opts: { wsRate?: number; pitch?: number } = {},
