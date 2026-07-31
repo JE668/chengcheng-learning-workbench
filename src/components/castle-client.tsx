@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import type { Subject } from '@/lib/types';
 
 const SUBJECTS: { key: Subject; label: string; grad: string; icon: string }[] = [
@@ -10,65 +11,42 @@ const SUBJECTS: { key: Subject; label: string; grad: string; icon: string }[] = 
   { key: '英语', label: '英语', grad: 'from-moko-yellow to-amber-300', icon: '🔤' },
 ];
 
-const STATUS_TEXT: Record<string, string> = {
-  pending: '我完成了',
-  child_done: '已提交，等爸爸妈妈确认 ✅',
-  confirmed: '今天已完成 🌟',
-};
-
-/** 今日三科打卡面板（孩子端） */
+/**
+ * 今日三科打卡面板（孩子端）。
+ * 打卡由「每日一练」全对后自动完成（写 confirmed），不再由孩子手动逐科提交。
+ * 这里只展示三科真实状态，并在未完成时引导去做今日一练，避免「已提交却点不动」的困惑。
+ */
 export function CheckinPanel({ initial }: { initial: Record<Subject, string> }) {
-  const router = useRouter();
-  const [status, setStatus] = useState<Record<Subject, string>>(initial);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [msg, setMsg] = useState('');
-
-  async function done(s: Subject) {
-    if (status[s] !== 'pending') return;
-    setBusy(s);
-    setMsg('');
-    try {
-      const r = await fetch('/api/castle/checkin', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ subject: s }),
-      });
-      const j = await r.json();
-      if (j.ok) {
-        setStatus((p) => ({ ...p, [s]: 'child_done' }));
-        setMsg('提交成功，等爸爸妈妈确认就可以获得萌可啦～');
-        router.refresh();
-      } else setMsg(j.error || '出错了');
-    } catch {
-      setMsg('网络错误');
-    } finally {
-      setBusy(null);
-    }
-  }
-
+  const allDone = SUBJECTS.every((s) => initial[s.key] !== 'pending');
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {SUBJECTS.map((s) => {
-          const st = status[s.key];
+          const st = initial[s.key];
+          const done = st !== 'pending';
           return (
             <div key={s.key} className={`rounded-3xl p-4 bg-gradient-to-br ${s.grad} text-white shadow-lg`}>
               <div className="text-3xl mb-1">{s.icon}</div>
               <div className="font-black text-lg mb-2">{s.label}</div>
-              <button
-                disabled={st !== 'pending' || busy === s.key}
-                onClick={() => done(s.key)}
-                className={`w-full py-2 rounded-full font-bold text-sm transition transform active:scale-95 ${
-                  st === 'pending' ? 'bg-white text-moko-rose hover:scale-105' : 'bg-white/30 cursor-default'
-                }`}
-              >
-                {busy === s.key ? '提交中…' : STATUS_TEXT[st]}
-              </button>
+              <div className={`w-full py-2 rounded-full font-bold text-sm ${done ? 'bg-white/30' : 'bg-white text-moko-rose'}`}>
+                {done ? (st === 'confirmed' ? '今天已完成 🌟' : '已提交，今天完成 ✓') : '待完成'}
+              </div>
             </div>
           );
         })}
       </div>
-      {msg && <p className="text-sm text-moko-violet font-semibold mt-3">{msg}</p>}
+      <div className="mt-3">
+        {allDone ? (
+          <p className="text-center text-moko-rose font-black">🎉 今天三科打卡完成，萌可们超开心！</p>
+        ) : (
+          <Link
+            href="/daily-practice"
+            className="block text-center py-3 rounded-2xl bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black text-lg hover:scale-105 transition"
+          >
+            ▶ 去做今日一练，三科自动打卡（语文 3 + 数学 3 + 英语 3）
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

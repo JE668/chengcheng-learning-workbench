@@ -291,19 +291,6 @@ async function awardSubjectMoko(childId: number, subject: Subject) {
   });
 }
 
-/** 孩子端：标记今天某科“我完成了” */
-export async function checkin(childId: number, subject: Subject) {
-  const db = getDb();
-  const today = dateStr();
-  await db.execute({
-    sql: `INSERT INTO daily_checkins (child_id, day, subject, status, child_done_at)
-          VALUES (?, ?, ?, 'child_done', CURRENT_TIMESTAMP)
-          ON CONFLICT(child_id, day, subject) DO UPDATE SET status = 'child_done', child_done_at = CURRENT_TIMESTAMP`,
-    args: [childId, today, subject],
-  });
-  return { ok: true };
-}
-
 /** 家长端：确认（今天）或补作业（过去某天） */
 export async function confirm(childId: number, day: string, subject: Subject) {
   const db = getDb();
