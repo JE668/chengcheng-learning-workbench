@@ -26,7 +26,7 @@ const parentLinks = [
 ];
 
 export default function Nav({ user }: { user: User }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '';
   const links = user.role === 'parent' ? parentLinks : childLinks;
   const logoutAction = user.role === 'parent' ? '/api/auth/logout' : '/api/auth/logout';
 
