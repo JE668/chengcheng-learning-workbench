@@ -1,14 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { PINYIN_GROUPS, type PinyinItem } from '@/lib/study-data';
+import { PINYIN_GROUPS, PINYIN_HAN, type PinyinItem } from '@/lib/study-data';
 import { speakPinyin } from '@/lib/speak';
-
-/** 从例词里取第一个汉字，用来「代表」这个拼音音节的发音 */
-function firstHanChar(s: string): string {
-  const m = s.match(/[\u4e00-\u9fff]/);
-  return m ? m[0] : '';
-}
 
 function PinyinCard({ item }: { item: PinyinItem }) {
   const [show, setShow] = useState(false);
@@ -16,9 +10,9 @@ function PinyinCard({ item }: { item: PinyinItem }) {
     <button
       onClick={() => {
         setShow(true);
-        // 拼音的拉丁字母会被语音引擎当成英文念；读一个同音汉字（如 bà→爸），
-        // 中文神经嗓音就能发出正确的拼音音节与声调。
-        const han = firstHanChar(item.examples[0] ?? '');
+        // 用「代表汉字」朗读：它的读音正好等于该拼音（如 an→安、s→丝），
+        // 中文神经嗓音就能发出正确的音节与声调。例词首字并不可靠，故用 PINYIN_HAN。
+        const han = PINYIN_HAN[item.pinyin];
         speakPinyin(item.pinyin, item.tone, han);
       }}
       className="rounded-2xl p-4 bg-gradient-to-br from-moko-pink to-moko-rose text-white shadow-lg active:scale-95 transition text-center"

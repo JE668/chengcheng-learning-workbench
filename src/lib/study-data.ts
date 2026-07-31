@@ -116,6 +116,31 @@ export const PINYIN_GROUPS: { group: string; sub?: string; items: PinyinItem[] }
   },
 ];
 
+/**
+ * 每个拼音对应的「代表汉字」：用它来朗读，中文 TTS 才能发出正确的音节与声调。
+ * 例词（examples）的首字往往不是该拼音的音（如「天安门」首字是「天/tiān」，
+ * 但本音是「an」），所以单独维护这张表，确保朗读准确。
+ * 表中汉字的读音尽量等于该拼音（零声母/整体认读取常规代表字）。
+ */
+export const PINYIN_HAN: Record<string, string> = {
+  // 单韵母
+  a: '啊', o: '喔', e: '鹅', i: '衣', u: '屋', ü: '鱼',
+  // 声母
+  b: '爸', p: '坡', m: '妈', f: '佛', d: '大', t: '特', n: '拿', l: '拉',
+  g: '哥', k: '科', h: '喝', j: '鸡', q: '七', x: '西',
+  zh: '知', ch: '吃', sh: '师', r: '日', z: '字', c: '词', s: '丝',
+  y: '衣', w: '屋',
+  // 复韵母
+  ai: '爱', ei: '诶', ui: '威', ao: '奥', ou: '欧', iu: '优',
+  ie: '叶', üe: '月', er: '耳',
+  // 前后鼻韵母
+  an: '安', en: '恩', in: '因', un: '温', ün: '云',
+  ang: '昂', eng: '鞥', ing: '鹰', ong: '中',
+  // 整体认读
+  zhi: '知', chi: '吃', shi: '狮', ri: '日', zi: '字', ci: '词', si: '丝',
+  yi: '衣', wu: '屋', yu: '鱼', ye: '叶', yue: '月', yuan: '圆', yin: '因', yun: '云', ying: '鹰',
+};
+
 /* -------------------- 语文 · 识字（按类别） -------------------- */
 export interface CharacterItem {
   char: string;
