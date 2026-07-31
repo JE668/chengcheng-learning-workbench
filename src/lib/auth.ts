@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { randomBytes, timingSafeEqual } from 'crypto';
 import bcrypt from 'bcryptjs';
-import { getDb } from './db';
+import { getDb, getChildId } from './db';
 import { User } from './types';
 
 const COOKIE_NAME = 'session';
@@ -73,4 +73,26 @@ export function requireAuth(allowed?: ('parent' | 'child')[]) {
     if (allowed && !allowed.includes(user.role)) throw new Error('FORBIDDEN');
     return user;
   };
+}
+
+/**
+ * 解析「当前要操作的孩子 id」：
+ * - 孩子本人 → 自己；
+ * - 家长 → 其孩子（多娃后改为「选中的孩子」，目前恒为第一个）。
+ * 所有按孩子隔离的查询都应走这里，避免家长接口直接拿客户端传入的 childId，
+ * 也便于后续多娃扩展只改这一处。
+ */
+export async function resolveChildId(user: User): Promise<number | null> {
+  if (user.role === 'child') return user.id;
+  return getChildId();
+}
+
+/** 家长专用：非家长返回 null（调用方据此回 403）。 */
+export function requireParent(user: User | null): User | null {
+  return user && user.role === 'parent' ? user : null;
+}
+
+/** 孩子专用：非孩子返回 null。 */
+export function requireChild(user: User | null): User | null {
+  return user && user.role === 'child' ? user : null;
 }

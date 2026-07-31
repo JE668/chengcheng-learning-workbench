@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, getChildPoints } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, resolveChildId } from '@/lib/auth';
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -37,8 +37,15 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'parent') return NextResponse.json({ error: '无权限' }, { status: 403 });
+  const childId = await resolveChildId(user);
+  if (!childId) return NextResponse.json({ error: '没有孩子账号' }, { status: 404 });
   const { id, status } = await req.json();
   const db = getDb();
-  await db.execute({ sql: 'UPDATE redemptions SET status = ? WHERE id = ?', args: [status, Number(id)] });
+  // 越权防护：只能审批自己孩子的兑换申请（按 child_id 收敛，而非任意 id）
+  const res = await db.execute({
+    sql: 'UPDATE redemptions SET status = ? WHERE id = ? AND child_id = ?',
+    args: [status, Number(id), childId],
+  });
+  if (Number(res.rowsAffected ?? 0) === 0) return NextResponse.json({ error: '无权限或记录不存在' }, { status: 403 });
   return NextResponse.json({ ok: true });
 }
