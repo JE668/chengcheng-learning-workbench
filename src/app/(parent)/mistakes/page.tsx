@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildId } from '@/lib/db';
 import { STUDY_MODULES } from '@/lib/study-modules';
@@ -30,7 +31,7 @@ export default async function ParentMistakesPage({
   searchParams: { subject?: string; module?: string };
 }) {
   const user = await getCurrentUser();
-  if (!user) return null;
+  if (!user || user.role !== 'parent') redirect('/home');
   const db = getDb();
   const childId = (await getChildId(user)) ?? 0;
   const nameRow = childId ? (await db.execute({ sql: 'SELECT display_name FROM users WHERE id = ?', args: [childId] })).rows[0] : null;

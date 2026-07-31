@@ -29,6 +29,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: '请填写用户名、昵称，密码至少 4 位' }, { status: 400 });
   }
   const db = getDb();
+  const MAX_CHILDREN = 5;
+  const cur = await db.execute({ sql: 'SELECT COUNT(*) n FROM users WHERE parent_id = ?', args: [user.id] });
+  if (Number(cur.rows[0]?.n ?? 0) >= MAX_CHILDREN) {
+    return NextResponse.json({ error: `最多添加 ${MAX_CHILDREN} 个孩子` }, { status: 400 });
+  }
   const exist = await db.execute({ sql: 'SELECT id FROM users WHERE username = ?', args: [username] });
   if (exist.rows.length) return NextResponse.json({ error: '用户名已存在' }, { status: 409 });
 

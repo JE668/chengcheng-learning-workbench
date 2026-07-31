@@ -2,8 +2,15 @@
 
 import { useEffect, useState } from 'react';
 
+interface RedemptionItem {
+  id: number;
+  reward_name: string;
+  cost: number;
+  status: 'pending' | 'approved' | 'rejected';
+}
+
 export function RedeemClient({ childId }: { childId: number }) {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<RedemptionItem[]>([]);
   const [reward, setReward] = useState('萌可小玩具');
   const [cost, setCost] = useState(50);
   const [msg, setMsg] = useState('');
@@ -13,7 +20,7 @@ export function RedeemClient({ childId }: { childId: number }) {
     (async () => {
       const r = await fetch('/api/redeem');
       const d = await r.json();
-      setItems(d.redemptions || []);
+      setItems((d.redemptions || []) as RedemptionItem[]);
       setMsg('');
     })();
   }, [childId]);
@@ -29,7 +36,7 @@ export function RedeemClient({ childId }: { childId: number }) {
     if (d.ok) {
       const r = await fetch('/api/redeem');
       const dd = await r.json();
-      setItems(dd.redemptions || []);
+      setItems((dd.redemptions || []) as RedemptionItem[]);
     }
   }
 
@@ -37,7 +44,7 @@ export function RedeemClient({ childId }: { childId: number }) {
     await fetch('/api/redeem', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status }) });
     const r = await fetch('/api/redeem');
     const d = await r.json();
-    setItems(d.redemptions || []);
+    setItems((d.redemptions || []) as RedemptionItem[]);
   }
 
   return (

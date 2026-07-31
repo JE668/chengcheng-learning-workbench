@@ -1,11 +1,10 @@
 import { cookies } from 'next/headers';
-import { randomBytes, timingSafeEqual } from 'crypto';
+import { randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { getDb, getChildId } from './db';
 import { User } from './types';
 
 const COOKIE_NAME = 'session';
-const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-me';
 
 export function hashPassword(password: string): string {
   return bcrypt.hashSync(password, 10);

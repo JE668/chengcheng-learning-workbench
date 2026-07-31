@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildId } from '@/lib/db';
 import { getBadges } from '@/lib/castle';
@@ -36,7 +37,7 @@ function parsePref(raw: unknown): { mokoKey: string; theme: string } | null {
 
 export default async function ReportsPage() {
   const user = await getCurrentUser();
-  if (!user) return null;
+  if (!user || user.role !== 'parent') redirect('/home');
   const childId0 = await getChildId(user);
   const db = getDb();
   const childRows = await db.execute({ sql: 'SELECT * FROM users WHERE id = ?', args: [childId0 ?? -1] });
