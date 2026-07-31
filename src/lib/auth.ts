@@ -84,7 +84,7 @@ export function requireAuth(allowed?: ('parent' | 'child')[]) {
  */
 export async function resolveChildId(user: User): Promise<number | null> {
   if (user.role === 'child') return user.id;
-  return getChildId();
+  return getChildId(user);
 }
 
 /** 家长专用：非家长返回 null（调用方据此回 403）。 */

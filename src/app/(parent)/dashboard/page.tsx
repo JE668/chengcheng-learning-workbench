@@ -1,24 +1,33 @@
-import { getDb, getChildPoints } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
+import { getDb, getChildId, getChildPoints } from '@/lib/db';
 import ParentCastlePanel from '@/components/ParentCastlePanel';
+import { ChildSwitcher } from '@/components/ChildSwitcher';
 
 export default async function DashboardPage() {
+  const user = await getCurrentUser();
+  if (!user || user.role !== 'parent') return null;
+  const childId = await getChildId(user);
   const db = getDb();
-  const child = await db.execute({ sql: 'SELECT * FROM users WHERE role = ? LIMIT 1', args: ['child'] });
-  const c = child.rows[0];
-  const points = c ? await getChildPoints(Number(c.id)) : 0;
+  const childRows = await db.execute({ sql: 'SELECT * FROM users WHERE id = ?', args: [childId ?? -1] });
+  const c = childRows.rows[0];
+  const cId = c ? Number(c.id) : null;
+  const points = cId ? await getChildPoints(cId) : 0;
   const tasks = await db.execute({ sql: 'SELECT COUNT(*) as n FROM tasks', args: [] });
-  const comps = await db.execute({ sql: 'SELECT COUNT(*) as n FROM completions WHERE child_id = ?', args: [c?.id] });
+  const comps = await db.execute({ sql: 'SELECT COUNT(*) as n FROM completions WHERE child_id = ?', args: [cId ?? -1] });
   const pending = await db.execute({ sql: 'SELECT COUNT(*) as n FROM redemptions WHERE status = ?', args: ['pending'] });
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-black text-moko-violet mb-6">爸爸妈妈看板 📊</h1>
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-6">
+        <h1 className="text-3xl font-black text-moko-violet">爸爸妈妈看板 📊</h1>
+        <ChildSwitcher />
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
           { label: '孩子积分', value: points, color: 'bg-moko-rose' },
-          { label: '已发布任务', value: tasks.rows[0]?.n || 0, color: 'bg-moko-blue' },
-          { label: '完成次数', value: comps.rows[0]?.n || 0, color: 'bg-moko-yellow' },
-          { label: '待审核兑换', value: pending.rows[0]?.n || 0, color: 'bg-moko-purple' },
+          { label: '已发布任务', value: Number(tasks.rows[0]?.n || 0), color: 'bg-moko-blue' },
+          { label: '完成次数', value: Number(comps.rows[0]?.n || 0), color: 'bg-moko-yellow' },
+          { label: '待审核兑换', value: Number(pending.rows[0]?.n || 0), color: 'bg-moko-purple' },
         ].map((s) => (
           <div key={s.label} className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}>
             <div className="text-4xl font-black">{s.value}</div>

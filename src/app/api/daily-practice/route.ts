@@ -2,14 +2,15 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { getChildId } from '@/lib/db';
 import { getTodayPractice, submitPractice } from '@/lib/daily-practice';
+import { User } from '@/lib/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-async function resolveChildId(user: { role: string; id: number } | null): Promise<number | null> {
+async function resolveChildId(user: User | null): Promise<number | null> {
   if (!user) return null;
   if (user.role === 'child') return user.id;
-  return await getChildId();
+  return await getChildId(user);
 }
 
 export async function GET() {

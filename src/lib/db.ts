@@ -1,5 +1,6 @@
 import { createClient, Client } from '@libsql/client';
 import bcrypt from 'bcryptjs';
+import { User } from './types';
 
 const url = process.env.TURSO_URL || 'file:local.db';
 const authToken = process.env.TURSO_AUTH_TOKEN;
@@ -39,7 +40,11 @@ export async function ensureSchema() {
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL CHECK(role IN ('parent','child')),
       display_name TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      parent_id INTEGER,
+      selected_child_id INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(parent_id) REFERENCES users(id),
+      FOREIGN KEY(selected_child_id) REFERENCES users(id)
     );`,
     `CREATE TABLE IF NOT EXISTS sessions (
       token TEXT PRIMARY KEY,
@@ -217,6 +222,14 @@ export async function ensureSchema() {
     await db.execute({ sql: 'ALTER TABLE mistakes ADD COLUMN chapter TEXT', args: [] });
   } catch { /* 列已存在时忽略 */ }
 
+  // 迁移：users 增加 parent_id / selected_child_id（多娃扩展），幂等忽略 "duplicate column"。
+  try {
+    await db.execute({ sql: 'ALTER TABLE users ADD COLUMN parent_id INTEGER', args: [] });
+  } catch { /* 列已存在时忽略 */ }
+  try {
+    await db.execute({ sql: 'ALTER TABLE users ADD COLUMN selected_child_id INTEGER', args: [] });
+  } catch { /* 列已存在时忽略 */ }
+
   // 账号迁移：确保 child 用户为 cara / 0000。
   // 遗留的 cheng 自动改名并重置密码，users.id 不变，城堡/打卡等关联数据全部保留。
   const cara = await db.execute({ sql: "SELECT id FROM users WHERE username = 'cara'", args: [] });
@@ -244,10 +257,60 @@ export async function ensureSchema() {
       args: ['parent', bcrypt.hashSync('12345678', 10), 'parent', '爸爸妈妈'],
     });
   }
+
+  // 多娃关联：把现存的孩子(cara)与其家长(parent)关联起来，并把家长默认选中该孩子。
+  // 仅在尚未关联时执行，存量孩子的城堡/打卡等数据全部保留。
+  const linkCheck = await db.execute({
+    sql: "SELECT id FROM users WHERE username = 'cara' AND parent_id IS NULL LIMIT 1",
+    args: [],
+  });
+  if (linkCheck.rows.length) {
+    const childId = Number(linkCheck.rows[0].id);
+    const pRow = (await db.execute({ sql: "SELECT id FROM users WHERE username = 'parent' LIMIT 1", args: [] })).rows;
+    if (pRow.length) {
+      const parentId = Number(pRow[0].id);
+      await db.execute({ sql: 'UPDATE users SET parent_id = ? WHERE id = ?', args: [parentId, childId] });
+      await db.execute({ sql: 'UPDATE users SET selected_child_id = ? WHERE id = ?', args: [childId, parentId] });
+    }
+  }
 }
 
-/** 取第一个孩子 id（本工作台默认单孩子） */
-export async function getChildId(): Promise<number | null> {
+/** 取某个家长名下的所有孩子（按 id 升序）。 */
+export async function getChildrenOfParent(parentId: number): Promise<User[]> {
+  const db = getDb();
+  const res = await db.execute({
+    sql: 'SELECT id, username, role, display_name FROM users WHERE parent_id = ? ORDER BY id',
+    args: [parentId],
+  });
+  return res.rows.map((r) => ({
+    id: Number(r.id),
+    username: String(r.username),
+    role: 'child' as const,
+    displayName: String(r.display_name),
+  }));
+}
+
+/** 取家长当前选中的孩子 id；若无选中或选中无效，回退到名下第一个孩子。 */
+export async function getSelectedChildId(parentId: number): Promise<number | null> {
+  const db = getDb();
+  const p = await db.execute({ sql: 'SELECT selected_child_id FROM users WHERE id = ?', args: [parentId] });
+  const sel = p.rows.length ? p.rows[0].selected_child_id : null;
+  const children = await getChildrenOfParent(parentId);
+  if (!children.length) return null;
+  if (sel != null && children.some((c) => c.id === Number(sel))) return Number(sel);
+  return children[0].id;
+}
+
+/**
+ * 解析「当前要操作的孩子 id」：
+ * - 传入 child 用户 → 自己；
+ * - 传入 parent 用户 → 其选中的孩子（多娃切换支点）；
+ * - 未传用户（旧调用兜底）→ 全局第一个孩子。
+ * 所有按孩子隔离的查询都应走这里，多娃扩展只改本函数即可全站生效。
+ */
+export async function getChildId(user?: User | null): Promise<number | null> {
+  if (user && user.role === 'child') return user.id;
+  if (user && user.role === 'parent') return getSelectedChildId(user.id);
   const db = getDb();
   const res = await db.execute({ sql: 'SELECT id FROM users WHERE role = ? LIMIT 1', args: ['child'] });
   return res.rows.length ? Number(res.rows[0].id) : null;

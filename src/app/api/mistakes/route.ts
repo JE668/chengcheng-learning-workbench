@@ -15,7 +15,7 @@ function localDate(offset = 0): string {
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: '未登录' }, { status: 401 });
-  const childId = user.role === 'child' ? user.id : await getChildId();
+  const childId = user.role === 'child' ? user.id : await getChildId(user);
   if (!childId) return NextResponse.json({ error: '没有孩子账号' }, { status: 404 });
   const db = getDb();
   const due = await db.execute({

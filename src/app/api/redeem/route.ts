@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, getChildPoints } from '@/lib/db';
+import { getDb, getChildPoints, getChildId } from '@/lib/db';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 
 export async function GET() {
@@ -8,9 +8,10 @@ export async function GET() {
   const db = getDb();
   let rows;
   if (user.role === 'parent') {
+    const childId = await getChildId(user);
     rows = await db.execute({
-      sql: `SELECT r.*, u.display_name as child_name FROM redemptions r JOIN users u ON r.child_id = u.id ORDER BY r.created_at DESC`,
-      args: [],
+      sql: `SELECT r.*, u.display_name as child_name FROM redemptions r JOIN users u ON r.child_id = u.id WHERE r.child_id = ? ORDER BY r.created_at DESC`,
+      args: [childId ?? -1],
     });
   } else {
     rows = await db.execute({ sql: 'SELECT * FROM redemptions WHERE child_id = ? ORDER BY created_at DESC', args: [user.id] });

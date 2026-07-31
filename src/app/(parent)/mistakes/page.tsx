@@ -1,6 +1,8 @@
 import Link from 'next/link';
-import { getDb } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
+import { getDb, getChildId } from '@/lib/db';
 import { STUDY_MODULES } from '@/lib/study-modules';
+import { ChildSwitcher } from '@/components/ChildSwitcher';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,9 +29,12 @@ export default async function ParentMistakesPage({
 }: {
   searchParams: { subject?: string; module?: string };
 }) {
+  const user = await getCurrentUser();
+  if (!user) return null;
   const db = getDb();
-  const childRow = (await db.execute({ sql: 'SELECT id FROM users WHERE role = ? LIMIT 1', args: ['child'] })).rows;
-  const childId = childRow.length ? Number(childRow[0].id) : 0;
+  const childId = (await getChildId(user)) ?? 0;
+  const nameRow = childId ? (await db.execute({ sql: 'SELECT display_name FROM users WHERE id = ?', args: [childId] })).rows[0] : null;
+  const childName = nameRow ? String(nameRow.display_name) : '孩子';
 
   const filterSubject = searchParams.subject || '';
   const filterModule = searchParams.module || '';
@@ -102,8 +107,11 @@ export default async function ParentMistakesPage({
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-3xl font-black text-moko-violet mb-2">📕 错题本</h1>
-      <p className="text-gray-600 mb-4">这里收集了程程在各科练习中做错的小题，点「去练习」就能直接回到出错的模块巩固。</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-2">
+        <h1 className="text-3xl font-black text-moko-violet">📕 错题本</h1>
+        <ChildSwitcher />
+      </div>
+      <p className="text-gray-600 mb-4">这里收集了{childName}在各科练习中做错的小题，点「去练习」就能直接回到出错的模块巩固。</p>
 
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[

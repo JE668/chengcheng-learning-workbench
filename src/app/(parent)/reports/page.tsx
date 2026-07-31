@@ -1,7 +1,9 @@
-import { getDb } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
+import { getDb, getChildId } from '@/lib/db';
 import { getBadges } from '@/lib/castle';
 import PrintButton from '@/components/PrintButton';
 import Certificate from '@/components/Certificate';
+import { ChildSwitcher } from '@/components/ChildSwitcher';
 
 function fmt(d: Date): string {
   const y = d.getFullYear();
@@ -33,9 +35,12 @@ function parsePref(raw: unknown): { mokoKey: string; theme: string } | null {
 }
 
 export default async function ReportsPage() {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const childId0 = await getChildId(user);
   const db = getDb();
-  const child = await db.execute({ sql: 'SELECT * FROM users WHERE role = ? LIMIT 1', args: ['child'] });
-  const c = child.rows[0];
+  const childRows = await db.execute({ sql: 'SELECT * FROM users WHERE id = ?', args: [childId0 ?? -1] });
+  const c = childRows.rows[0];
   const childId = c ? Number(c.id) : 0;
   const childName = c ? String(c.display_name) : '小朋友';
   const initialPref = parsePref(c?.cert_pref ?? null);
@@ -83,7 +88,10 @@ export default async function ReportsPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="no-print">
-        <h1 className="text-3xl font-black text-moko-violet mb-4">学习报告 📈</h1>
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+          <h1 className="text-3xl font-black text-moko-violet">学习报告 📈</h1>
+          <ChildSwitcher />
+        </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {[
