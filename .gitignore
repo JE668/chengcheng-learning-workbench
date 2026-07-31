@@ -13,3 +13,6 @@ local.db-journal
 .DS_Store
 .vercel
 .env*
+
+# Python deps for PDF splitting script (not committed)
+/.pylibs
