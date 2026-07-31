@@ -36,7 +36,9 @@ const CAT_META = {
 const NAME_FIX = { extra: '神秘萌可' };
 
 function parseName(fileBase) {
-  const parts = fileBase.split('_');
+  // 先剥离官网导出的 _render 标记（如 幸运萌可_render）
+  let base = fileBase.replace(/_render$/i, '');
+  const parts = base.split('_');
   let suffix = '';
   if (parts.length > 1 && /^\d+$/.test(parts[parts.length - 1])) {
     suffix = parts.pop();
@@ -57,9 +59,9 @@ for (const folder of folders) {
   const meta = CAT_META[cat];
   const season = folder.replace(/^\d+_/, '');
   const fdir = path.join(ROOT, folder);
-  const files = fs.readdirSync(fdir).filter((f) => f.toLowerCase().endsWith('.jpg')).sort();
+  const files = fs.readdirSync(fdir).filter((f) => /\.(jpe?g|png|webp)$/i.test(f)).sort();
   for (const f of files) {
-    const base = f.replace(/\.jpg$/i, '');
+    const base = f.replace(/\.(jpe?g|png|webp)$/i, '');
     const { name, suffix } = parseName(base);
     const key = `col_${digits}_${base}`;
     entries.push({

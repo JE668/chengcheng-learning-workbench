@@ -170,6 +170,16 @@ export async function ensureSchema() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
+
+    // 📜 萌可剧情捕捉进度（每集捕捉一只萌可，顺序解锁）
+    `CREATE TABLE IF NOT EXISTS story_progress (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      chapter_id TEXT NOT NULL,
+      captured_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(child_id, chapter_id),
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
   ], 'write');
 
   // 迁移：castle_state 增加 skin 字段（城堡皮肤切换）
