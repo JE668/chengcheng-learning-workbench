@@ -12,7 +12,7 @@ import LetterAdventure from '@/components/games/LetterAdventure';
 import AngleMagic from '@/components/games/AngleMagic';
 import CountChallenge from '@/components/games/CountChallenge';
 
-const gameMap: Record<string, React.FC<{ onFinish: (score: number) => void }>> = {
+const gameMap: Record<string, React.FC<{ onFinish: (score: number) => void; level?: number }>> = {
   'pinyin-eliminate': PinyinEliminate,
   'character-match': CharacterMatch,
   'math-challenge': MathChallenge,

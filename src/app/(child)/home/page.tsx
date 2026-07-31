@@ -57,7 +57,7 @@ export default async function HomePage() {
       </div>
 
       {/* 数据大板 */}
-      <h2 className="text-2xl font-black text-moko-violet mb-3">我的成长看板 📊</h2>
+      <h2 className="text-xl font-black text-moko-violet mb-3">我的成长看板 📊</h2>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
         {stats.map((s) => (
           <div key={s.label} className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}>
