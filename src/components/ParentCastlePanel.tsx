@@ -55,21 +55,19 @@ export default function ParentCastlePanel() {
         <div className="rounded-3xl p-4 shadow-lg border-2 border-red-100 bg-red-50 text-red-500 font-bold text-sm">⚠️ 有 {state.troublemakers.length} 只捣蛋萌可入侵城堡，可在孩子端背包用魔法喷雾修复，或下方补作业。</div>
       )}
 
-      {/* 今日打卡确认 */}
+      {/* 今日打卡（由「今日一练」自动完成，家长端只读） */}
       <div className="card-moko">
-        <h2 className="text-lg font-black text-moko-violet mb-2">🌟 今日学习打卡（确认）</h2>
+        <h2 className="text-lg font-black text-moko-violet mb-1">🌟 今日学习打卡</h2>
+        <p className="text-xs text-gray-500 mb-3">孩子完成「今日一练」三科全对即自动打卡，无需家长确认。</p>
         <div className="space-y-2">
           {SUBJECTS.map((sub) => {
             const st = state.checkins[sub] || 'pending';
+            const label = st === 'confirmed' ? '已完成 ✓' : st === 'child_done' ? '已提交（旧）' : '待完成';
+            const cls = st === 'confirmed' ? 'text-green-600 font-bold' : 'text-gray-500';
             return (
               <div key={sub} className="flex items-center justify-between bg-moko-cream rounded-2xl px-4 py-2">
                 <span className="font-bold text-moko-violet">{sub}</span>
-                <span className="text-sm text-gray-500 mr-auto ml-3">
-                  {st === 'pending' ? '孩子未完成' : st === 'child_done' ? '已提交，待确认' : '已确认 ✓'}
-                </span>
-                {st !== 'confirmed' && (
-                  <button onClick={() => confirm(state.today, sub)} className="btn-magic bg-moko-rose text-white text-sm">确认完成</button>
-                )}
+                <span className={`text-sm ml-auto ${cls}`}>{label}</span>
               </div>
             );
           })}

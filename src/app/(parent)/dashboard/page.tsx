@@ -42,9 +42,9 @@ export default async function DashboardPage() {
       <div className="card-moko mt-6">
         <h2 className="text-xl font-bold text-moko-violet mb-2">💡 使用提示</h2>
         <ul className="list-disc list-inside text-gray-600 space-y-1">
-          <li>孩子完成某科后点「我完成了」，请在此确认 → 解锁对应萌可 + 阳光能量</li>
-          <li>三科全确认 → 城堡繁荣度飙升，萌可开始产出星星币</li>
-          <li>某天漏做 → 次日捣蛋萌可入侵，可在「补作业」补回并修复城堡</li>
+          <li>孩子完成「今日一练」三科全对 → 自动打卡，解锁对应萌可 + 阳光能量</li>
+          <li>三科全对 → 城堡繁荣度飙升，萌可开始产出星星币</li>
+          <li>某天漏做 → 次日捣蛋萌可入侵，可在下方「补作业」补回并修复城堡</li>
           <li>在「任务」发布学习任务，在「兑换」审核奖励，在「设置」改密码</li>
         </ul>
       </div>
