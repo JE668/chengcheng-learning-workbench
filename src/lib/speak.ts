@@ -113,10 +113,13 @@ async function playTts(
 
 /**
  * 朗读一个拼音音节（如「bà」「shuǐ」「ü」）。
- * 直接把带声调符号的拼音交给 zh-CN 神经嗓音，读成正确的音节与声调；
- * tone 字段保留以兼容调用点，但声调已由拼音本身的声调符号承载，无需再转数字。
- * 语速比普通中文更慢，方便小朋友听清并跟读。
+ * 拼音的拉丁字母会被语音引擎当成英文念，所以改读一个同音汉字（如 bà→爸）。
+ * 中文神经嗓音读这个汉字时，音节和声调都正确，小朋友听起来就是标准的拼音。
+ * - syllable：保留以兼容调用点；
+ * - han：可选，从例词里取的第一个汉字，优先用它发音；
+ * - wsRate 比普通中文更慢，方便小朋友听清并跟读。
  */
-export function speakPinyin(syllable: string, _tone = 0) {
-  void playTts(syllable, 'zh', { wsRate: 0.7, pitch: 1.1 });
+export function speakPinyin(syllable: string, _tone = 0, han?: string) {
+  const text = han && /[\u4e00-\u9fff]/.test(han) ? han : syllable;
+  void playTts(text, 'zh', { wsRate: 0.75, pitch: 1.1 });
 }
