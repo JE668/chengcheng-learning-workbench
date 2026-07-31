@@ -40,10 +40,12 @@ async function getSecToken(): Promise<string> {
 export async function POST(req: NextRequest) {
   let text = '';
   let lang = 'zh';
+  let rate = '';
   try {
     const body = await req.json();
     text = typeof body.text === 'string' ? body.text : '';
     lang = body.lang === 'en' ? 'en' : 'zh';
+    if (typeof body.rate === 'string' && body.rate.trim()) rate = body.rate.trim();
   } catch {
     return NextResponse.json({ error: 'invalid body' }, { status: 400 });
   }
@@ -51,6 +53,8 @@ export async function POST(req: NextRequest) {
   if (!text.trim()) return NextResponse.json({ error: 'missing text' }, { status: 400 });
   // 防止超长文本把微软接口/内存打爆
   if (text.length > 500) text = text.slice(0, 500);
+  // 未指定则按语言给一个适合一年级小朋友的偏慢语速
+  if (!rate) rate = lang === 'en' ? '-20%' : '-20%';
 
   try {
     const sec = await getSecToken();
@@ -113,7 +117,7 @@ export async function POST(req: NextRequest) {
         const ssml =
           `X-RequestId:${uuid()}\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:${new Date()}Z\r\nPath:ssml\r\n\r\n` +
           `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>` +
-          `<voice name='${VOICE[lang]}'><prosody pitch='+0Hz' rate='+0%' volume='+0%'>${text}</prosody></voice></speak>`;
+          `<voice name='${VOICE[lang]}'><prosody pitch='+0Hz' rate='${rate}' volume='+0%'>${text}</prosody></voice></speak>`;
         ws.send(ssml, { compress: true }, (e) => e && done(() => reject(e)));
       });
 

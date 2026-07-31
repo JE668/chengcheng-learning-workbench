@@ -2,9 +2,12 @@
 
 /**
  * 共享的语音朗读助手（TTS），供各学习模块复用。
- * - 中文/英文按语言选择对应嗓音，避免英文被中文嗓音误读。
- * - 拼音统一转成「数字调号」再朗读（如 bà→ba4、shuǐ→shui3），
- *   因为 zh-CN 语音引擎不认带声调符号的拼音字母，直接读会错。
+ * - 中文 / 英文 / 拼音统一优先走服务端 /api/tts（Edge 神经嗓音，跨设备音质一致）；
+ *   任意失败（离线 / 合成服务异常 / 网络错误）降级到浏览器原生 Web Speech。
+ * - 拼音直接以「带声调符号」的形式（如 bà / shuǐ / ü）交给 zh-CN 神经嗓音，
+ *   由它读成正确的拼音音节并带上声调（不再转数字调号——「ba4」会被读成
+ *   「八…四」，根本不像拼音）。
+ * - 整体语速偏慢，适配一年级小朋友跟读。
  */
 
 let voicesReady = false;
@@ -55,27 +58,39 @@ function speak(text: string, lang: string, rate: number, pitch: number) {
   else window.speechSynthesis.addEventListener('voiceschanged', fire, { once: true });
 }
 
-export function speakZh(text: string, rate = 0.85) {
-  void playTts(text, 'zh', rate, 1.1);
+/** Web Speech 的语速(0~2) ↔ Edge 百分比 的近似映射：1.0 = 100% = +0% */
+function toEdgeRate(wsRate: number): string {
+  const pct = Math.round((wsRate - 1) * 100);
+  return pct === 0 ? '+0%' : `${pct}%`;
+}
+
+export function speakZh(text: string, rate = 0.8) {
+  void playTts(text, 'zh', { wsRate: rate, pitch: 1.05 });
 }
 
 export function speakEn(text: string, rate = 0.75) {
-  void playTts(text, 'en', rate, 1.05);
+  void playTts(text, 'en', { wsRate: rate, pitch: 1.0 });
 }
 
 /**
  * 朗读主流程：
  * 1) 优先请求服务端 /api/tts（Edge 神经嗓音，跨设备音质一致）；
  * 2) 任意失败（离线 / 合成服务异常 / 网络错误）降级到浏览器原生 Web Speech。
- * pinyin 不走此通道（数字调号只在 Web Speech 引擎下有意义），见 speakPinyin。
+ * wsRate 同时用于：(a) Web Speech 降级时的语速；(b) 推算 Edge 的 relative rate。
  */
-async function playTts(text: string, lang: 'zh' | 'en', rate: number, pitch: number) {
+async function playTts(
+  text: string,
+  lang: 'zh' | 'en',
+  opts: { wsRate?: number; pitch?: number } = {},
+) {
+  const wsRate = opts.wsRate ?? 0.8;
+  const pitch = opts.pitch ?? 1.05;
   if (typeof window !== 'undefined' && 'fetch' in window) {
     try {
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text, lang }),
+        body: JSON.stringify({ text, lang, rate: toEdgeRate(wsRate) }),
       });
       if (res.ok) {
         const blob = await res.blob();
@@ -84,7 +99,7 @@ async function playTts(text: string, lang: 'zh' | 'en', rate: number, pitch: num
         audio.onended = () => URL.revokeObjectURL(url);
         audio.onerror = () => {
           URL.revokeObjectURL(url);
-          speak(text, lang === 'zh' ? 'zh-CN' : 'en-US', rate, pitch);
+          speak(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch);
         };
         await audio.play();
         return;
@@ -93,30 +108,15 @@ async function playTts(text: string, lang: 'zh' | 'en', rate: number, pitch: num
       /* 网络/解析异常 → 降级 */
     }
   }
-  speak(text, lang === 'zh' ? 'zh-CN' : 'en-US', rate, pitch);
+  speak(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch);
 }
-
-/** 带声调符号的拼音 → 数字调号（ā→a1, á→a2 …；无声调符号的 ü 等靠 tone 字段补） */
-const TONE_MAP: Record<string, string> = {
-  ā: 'a1', á: 'a2', ǎ: 'a3', à: 'a4',
-  ē: 'e1', é: 'e2', ě: 'e3', è: 'e4',
-  ī: 'i1', í: 'i2', ǐ: 'i3', ì: 'i4',
-  ō: 'o1', ó: 'o2', ǒ: 'o3', ò: 'o4',
-  ū: 'u1', ú: 'u2', ǔ: 'u3', ù: 'u4',
-  ǖ: 'ü1', ǘ: 'ü2', ǚ: 'ü3', ǜ: 'ü4',
-};
 
 /**
  * 朗读一个拼音音节（如「bà」「shuǐ」「ü」）。
- * syllable 来自数据里的 pinyin 字段，tone 来自 tone 字段（0 表示无声调/声母/整体认读）。
+ * 直接把带声调符号的拼音交给 zh-CN 神经嗓音，读成正确的音节与声调；
+ * tone 字段保留以兼容调用点，但声调已由拼音本身的声调符号承载，无需再转数字。
+ * 语速比普通中文更慢，方便小朋友听清并跟读。
  */
-export function speakPinyin(syllable: string, tone = 0) {
-  let s = syllable;
-  for (const [k, v] of Object.entries(TONE_MAP)) {
-    if (s.includes(k)) s = s.split(k).join(v);
-  }
-  // 无声调符号但 tone 字段给出 1~4（如单独的「ü」tone=2）→ 补数字
-  if (!/[1-4]/.test(s) && tone >= 1 && tone <= 4) s = `${s}${tone}`;
-  // 数字调号只在浏览器 Web Speech 引擎下有意义，pinyin 直接走原生语音、不走 /api/tts
-  speak(s, 'zh-CN', 0.85, 1.1);
+export function speakPinyin(syllable: string, _tone = 0) {
+  void playTts(syllable, 'zh', { wsRate: 0.7, pitch: 1.1 });
 }
