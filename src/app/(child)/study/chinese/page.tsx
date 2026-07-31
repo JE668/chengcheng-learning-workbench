@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { STUDY_MODULES, SUBJECT_META } from '@/lib/study-modules';
+import MokoHelper from '@/components/MokoHelper';
 
 export default function ChineseStudyPage() {
   const modules = STUDY_MODULES.chinese;
@@ -9,6 +10,7 @@ export default function ChineseStudyPage() {
       <div className="flex items-center gap-3 mb-4">
         <Link href="/study" className="text-moko-violet font-bold hover:underline">‹ 学习首页</Link>
       </div>
+      <MokoHelper subject="语文" />
       <h1 className={`text-3xl font-black ${meta.color} mb-2`}>{meta.emoji} {meta.label}</h1>
       <p className="text-gray-600 mb-6">{meta.sub}</p>
       <div className="grid md:grid-cols-2 gap-5">

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ReviewBadge from '@/components/ReviewBadge';
+import MokoHelper from '@/components/MokoHelper';
 
 const cards = [
   {
@@ -33,6 +34,14 @@ export default function StudyPage() {
     <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl font-black text-moko-violet mb-2">学习城堡 📚</h1>
       <p className="text-gray-600 mb-4">选择一个学科，开启今天的萌可学习冒险！</p>
+      <MokoHelper
+        subject="语文"
+        tips={[
+          '欢迎来到学习城堡！今天想和爱心萌可先挑战哪一科呀？',
+          '每打开一个模块认真玩，城堡里就会多一只萌可陪你哦～',
+          '遇到难题按「换一句」，萌可随时给你打气，别怕！',
+        ]}
+      />
       <div className="mb-6">
         <ReviewBadge />
       </div>

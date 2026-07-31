@@ -5,6 +5,7 @@ import {
   CHARACTERS,
   CHARACTER_CATEGORIES,
   POEMS,
+  TRACE_CHARS,
   type CharacterItem,
   type PoemItem,
 } from '@/lib/study-data';
@@ -182,7 +183,7 @@ function TracingCard({ char }: { char: string }) {
 
 export function TraceModule() {
   const [traceChar, setTraceChar] = useState('人');
-  const traceChars = ['人', '口', '日', '月', '水', '火', '大', '小', '上', '下', '木', '山', '石', '田', '土', '天'];
+  const traceChars = TRACE_CHARS;
   return (
     <div>
       <div className="flex flex-wrap gap-2 mb-3">

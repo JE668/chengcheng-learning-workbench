@@ -757,3 +757,300 @@ export const EN_UNITS: { unit: string; title: string; emoji: string; topics: str
   { unit: 'Unit 6', title: 'Colours 颜色', emoji: '🌈', topics: ['颜色'] },
   { unit: 'Unit 7', title: 'Fruit 水果', emoji: '🍎', topics: ['食物'] },
 ];
+
+/* ============================================================
+   人教版（部编版）小学一年级上册 · 进一步扩充
+   —— 笔画偏旁 / 课文生字 / 分与合 / RAZ 点读
+   ============================================================ */
+
+/* -------------------- 语文 · 基本笔画（写字基础） -------------------- */
+export interface StrokeItem {
+  stroke: string; // 笔画符号
+  name: string; // 笔画名称
+  example: string; // 例字
+  dir: string; // 书写方向小提示
+}
+export const STROKES: StrokeItem[] = [
+  { stroke: '一', name: '横', example: '一 二 三', dir: '从左到右' },
+  { stroke: '丨', name: '竖', example: '十 中 上', dir: '从上到下' },
+  { stroke: '丿', name: '撇', example: '八 人 天', dir: '从右上到左下' },
+  { stroke: '㇏', name: '捺', example: '八 入 尺', dir: '从左上到右下' },
+  { stroke: '丶', name: '点', example: '头 火 下', dir: '从轻到重' },
+  { stroke: '㇀', name: '提', example: '虫 把 江', dir: '从下到右上' },
+  { stroke: '𠃍', name: '横折', example: '口 五 日', dir: '横后折下' },
+  { stroke: '㇇', name: '横撇', example: '又 水 子', dir: '横后向左撇' },
+  { stroke: '乛', name: '横钩', example: '你 子 买', dir: '横后向左钩' },
+  { stroke: '𠃊', name: '竖折', example: '山 牙 出', dir: '竖后向右折' },
+  { stroke: '㇙', name: '竖提', example: '长 比 衣', dir: '竖后向右上提' },
+  { stroke: '㇄', name: '竖弯', example: '四 西 酒', dir: '竖后向右弯' },
+  { stroke: '亅', name: '竖钩', example: '小 可 水', dir: '竖后向左上钩' },
+  { stroke: '㇁', name: '弯钩', example: '了 手 狗', dir: '弯弯地钩起' },
+  { stroke: '㇂', name: '斜钩', example: '我 成 战', dir: '向右下斜钩' },
+  { stroke: '𠃋', name: '撇折', example: '去 东 公', dir: '撇后向右折' },
+  { stroke: '㇃', name: '卧钩', example: '心 思 怎', dir: '躺平后向上钩' },
+  { stroke: '𡿨', name: '撇点', example: '女 妈 好', dir: '撇后向右点' },
+  { stroke: '𠃌', name: '横折钩', example: '月 用 力', dir: '横折后向左钩' },
+  { stroke: '乚', name: '竖弯钩', example: '儿 巴 毛', dir: '竖弯后向上钩' },
+  { stroke: '㇈', name: '横折弯钩', example: '九 几 吃', dir: '横折弯后向上钩' },
+  { stroke: '㇉', name: '竖折折钩', example: '马 鸟 妈', dir: '竖折折后向左钩' },
+];
+
+/* -------------------- 语文 · 常用偏旁部首 -------------------- */
+export interface RadicalItem {
+  radical: string;
+  name: string;
+  examples: string[];
+}
+export const RADICALS: RadicalItem[] = [
+  { radical: '亻', name: '单人旁', examples: ['你', '们', '作', '他'] },
+  { radical: '扌', name: '提手旁', examples: ['把', '挂', '打', '拍'] },
+  { radical: '艹', name: '草字头', examples: ['莲', '芽', '花', '苗'] },
+  { radical: '口', name: '口字旁', examples: ['叶', '吗', '吃', '听'] },
+  { radical: '囗', name: '国字框', examples: ['国', '回', '园'] },
+  { radical: '氵', name: '三点水', examples: ['江', '河', '洗', '洞'] },
+  { radical: '讠', name: '言字旁', examples: ['说', '课', '语', '话'] },
+  { radical: '虫', name: '虫字旁', examples: ['蛙', '蚂', '蚁', '蜘'] },
+  { radical: '木', name: '木字旁', examples: ['树', '桃', '林', '桥'] },
+  { radical: '日', name: '日字旁', examples: ['明', '晚', '时', '晴'] },
+  { radical: '月', name: '月字旁', examples: ['朋', '肚', '肥', '脚'] },
+  { radical: '女', name: '女字旁', examples: ['好', '妹', '妈', '奶'] },
+  { radical: '纟', name: '绞丝旁', examples: ['红', '绿', '给', '纸'] },
+  { radical: '宀', name: '宝盖', examples: ['它', '家', '字', '安'] },
+  { radical: '辶', name: '走之', examples: ['远', '近', '送', '过'] },
+  { radical: '犭', name: '反犬旁', examples: ['猫', '狗', '猪', '猴'] },
+  { radical: '门', name: '门字框', examples: ['闪', '问', '间', '闲'] },
+  { radical: '禾', name: '禾木旁', examples: ['和', '秋', '种', '香'] },
+  { radical: '鸟', name: '鸟字边', examples: ['鸭', '鸡', '鹅', '鸦'] },
+  { radical: '灬', name: '四点底', examples: ['点', '黑', '热', '煮'] },
+  { radical: '目', name: '目字旁', examples: ['眼', '睛', '睡', '盯'] },
+  { radical: '彳', name: '双人旁', examples: ['得', '很', '行', '往'] },
+  { radical: '攵', name: '反文旁', examples: ['放', '收', '数', '教'] },
+  { radical: '刂', name: '立刀', examples: ['到', '别', '刻', '剧'] },
+];
+
+/* -------------------- 语文 · 课文生字（一年级上册课文 1~14） -------------------- */
+export interface TextCharItem {
+  char: string;
+  phrase: string;
+}
+export interface TextCharLesson {
+  title: string;
+  emoji: string;
+  items: TextCharItem[];
+}
+export const TEXT_CHAR_LESSONS: TextCharLesson[] = [
+  { title: '课文 1《秋天》', emoji: '🍂', items: [
+    { char: '秋', phrase: '秋天' }, { char: '气', phrase: '天气' }, { char: '了', phrase: '凉了' },
+    { char: '树', phrase: '大树' }, { char: '叶', phrase: '树叶' }, { char: '片', phrase: '一片' },
+    { char: '飞', phrase: '飞走' }, { char: '会', phrase: '大会' }, { char: '个', phrase: '一个' },
+  ] },
+  { title: '课文 2《小小的船》', emoji: '🌙', items: [
+    { char: '船', phrase: '小船' }, { char: '两', phrase: '两头' }, { char: '头', phrase: '船头' },
+    { char: '在', phrase: '坐在' }, { char: '里', phrase: '里面' }, { char: '看', phrase: '看见' },
+    { char: '见', phrase: '见到' }, { char: '闪', phrase: '闪亮' }, { char: '星', phrase: '星星' },
+  ] },
+  { title: '课文 3《江南》', emoji: '🪷', items: [
+    { char: '江', phrase: '江南' }, { char: '南', phrase: '南方' }, { char: '可', phrase: '可以' },
+    { char: '采', phrase: '采莲' }, { char: '莲', phrase: '莲叶' }, { char: '鱼', phrase: '小鱼' },
+    { char: '东', phrase: '东边' }, { char: '西', phrase: '西边' }, { char: '北', phrase: '北边' },
+  ] },
+  { title: '课文 4《四季》', emoji: '🌸', items: [
+    { char: '尖', phrase: '尖尖' }, { char: '说', phrase: '说话' }, { char: '春', phrase: '春天' },
+    { char: '青', phrase: '青蛙' }, { char: '蛙', phrase: '青蛙' }, { char: '夏', phrase: '夏天' },
+    { char: '弯', phrase: '弯弯' }, { char: '就', phrase: '就是' }, { char: '冬', phrase: '冬天' },
+  ] },
+  { title: '课文 5《影子》', emoji: '👤', items: [
+    { char: '影', phrase: '影子' }, { char: '前', phrase: '前面' }, { char: '后', phrase: '后面' },
+    { char: '黑', phrase: '黑色' }, { char: '狗', phrase: '小狗' }, { char: '左', phrase: '左边' },
+    { char: '右', phrase: '右边' }, { char: '它', phrase: '它的' }, { char: '朋', phrase: '朋友' },
+    { char: '友', phrase: '朋友' },
+  ] },
+  { title: '课文 6《比尾巴》', emoji: '🐒', items: [
+    { char: '比', phrase: '比较' }, { char: '尾', phrase: '尾巴' }, { char: '巴', phrase: '尾巴' },
+    { char: '谁', phrase: '谁的' }, { char: '长', phrase: '长长' }, { char: '短', phrase: '短短' },
+    { char: '把', phrase: '一把' }, { char: '伞', phrase: '雨伞' }, { char: '兔', phrase: '兔子' },
+    { char: '最', phrase: '最好' },
+  ] },
+  { title: '课文 7《青蛙写诗》', emoji: '🐸', items: [
+    { char: '写', phrase: '写字' }, { char: '诗', phrase: '古诗' }, { char: '点', phrase: '标点' },
+    { char: '要', phrase: '需要' }, { char: '过', phrase: '过来' }, { char: '给', phrase: '送给' },
+    { char: '当', phrase: '当心' }, { char: '串', phrase: '一串' }, { char: '们', phrase: '我们' },
+    { char: '以', phrase: '可以' },
+  ] },
+  { title: '课文 8《雨点儿》', emoji: '🌧️', items: [
+    { char: '雨', phrase: '雨点' }, { char: '数', phrase: '数数' }, { char: '清', phrase: '数不清' },
+    { char: '彩', phrase: '云彩' }, { char: '飘', phrase: '飘落' }, { char: '落', phrase: '落下' },
+    { char: '空', phrase: '空中' }, { char: '问', phrase: '问好' }, { char: '回', phrase: '回答' },
+    { char: '答', phrase: '回答' },
+  ] },
+  { title: '课文 9《明天要远足》', emoji: '🎒', items: [
+    { char: '明', phrase: '明天' }, { char: '才', phrase: '才来' }, { char: '同', phrase: '同学' },
+    { char: '学', phrase: '学习' }, { char: '睡', phrase: '睡觉' }, { char: '海', phrase: '大海' },
+    { char: '真', phrase: '真的' }, { char: '老', phrase: '老师' }, { char: '师', phrase: '老师' },
+    { char: '吗', phrase: '好吗' },
+  ] },
+  { title: '课文 10《大还是小》', emoji: '🤔', items: [
+    { char: '时', phrase: '时候' }, { char: '候', phrase: '时候' }, { char: '觉', phrase: '觉得' },
+    { char: '得', phrase: '觉得' }, { char: '自', phrase: '自己' }, { char: '己', phrase: '自己' },
+    { char: '很', phrase: '很多' }, { char: '穿', phrase: '穿衣' }, { char: '服', phrase: '衣服' },
+    { char: '快', phrase: '快乐' },
+  ] },
+  { title: '课文 11《项链》', emoji: '🐚', items: [
+    { char: '蓝', phrase: '蓝色' }, { char: '又', phrase: '又宽又远' }, { char: '笑', phrase: '大笑' },
+    { char: '着', phrase: '笑着' }, { char: '向', phrase: '方向' }, { char: '和', phrase: '和好' },
+    { char: '贝', phrase: '贝壳' }, { char: '娃', phrase: '娃娃' }, { char: '挂', phrase: '挂上' },
+    { char: '活', phrase: '快活' }, { char: '金', phrase: '金色' },
+  ] },
+  { title: '课文 12《雪地里的小画家》', emoji: '⛄', items: [
+    { char: '群', phrase: '一群' }, { char: '竹', phrase: '竹叶' }, { char: '牙', phrase: '月牙' },
+    { char: '用', phrase: '不用' }, { char: '几', phrase: '几步' }, { char: '步', phrase: '脚步' },
+    { char: '为', phrase: '因为' }, { char: '参', phrase: '参加' }, { char: '加', phrase: '参加' },
+    { char: '洞', phrase: '洞里' }, { char: '着', phrase: '睡着' },
+  ] },
+  { title: '课文 13《乌鸦喝水》', emoji: '🐦', items: [
+    { char: '乌', phrase: '乌鸦' }, { char: '鸦', phrase: '乌鸦' }, { char: '处', phrase: '到处' },
+    { char: '找', phrase: '找到' }, { char: '办', phrase: '办法' }, { char: '旁', phrase: '旁边' },
+    { char: '许', phrase: '许多' }, { char: '法', phrase: '办法' }, { char: '放', phrase: '放进' },
+    { char: '进', phrase: '进去' }, { char: '高', phrase: '升高' },
+  ] },
+  { title: '课文 14《小蜗牛》', emoji: '🐌', items: [
+    { char: '住', phrase: '住在' }, { char: '孩', phrase: '小孩' }, { char: '玩', phrase: '玩吧' },
+    { char: '吧', phrase: '走吧' }, { char: '发', phrase: '发芽' }, { char: '芽', phrase: '发芽' },
+    { char: '爬', phrase: '爬呀' }, { char: '呀', phrase: '爬呀' }, { char: '久', phrase: '好久' },
+    { char: '回', phrase: '回来' }, { char: '全', phrase: '全了' }, { char: '变', phrase: '变了' },
+  ] },
+];
+
+/* -------------------- 语文 · 描红字库（扩展，含课文常用字） -------------------- */
+export const TRACE_CHARS: string[] = [
+  '人', '口', '日', '月', '水', '火', '大', '小', '上', '下', '木', '山', '石', '田', '土', '天',
+  '一', '二', '三', '十', '中', '了', '子', '头', '目', '耳', '手', '足', '心', '女', '力', '刀',
+  '风', '云', '雨', '马', '牛', '羊', '鸟', '鱼', '花', '虫', '书', '门', '牙', '尺', '文', '不',
+  '飞', '见', '明', '星', '朋', '友', '问', '同', '自', '己', '衣', '牙', '王', '生', '里', '东',
+];
+
+/* -------------------- 数学 · 分与合（2~10，一年级上册核心） -------------------- */
+export interface SplitItem {
+  num: number;
+  pairs: [number, number][];
+}
+export const SPLITS: SplitItem[] = [
+  { num: 2, pairs: [[1, 1]] },
+  { num: 3, pairs: [[1, 2]] },
+  { num: 4, pairs: [[1, 3], [2, 2]] },
+  { num: 5, pairs: [[1, 4], [2, 3]] },
+  { num: 6, pairs: [[1, 5], [2, 4], [3, 3]] },
+  { num: 7, pairs: [[1, 6], [2, 5], [3, 4]] },
+  { num: 8, pairs: [[1, 7], [2, 6], [3, 5], [4, 4]] },
+  { num: 9, pairs: [[1, 8], [2, 7], [3, 6], [4, 5]] },
+  { num: 10, pairs: [[1, 9], [2, 8], [3, 7], [4, 6], [5, 5]] },
+];
+
+/* -------------------- 英语 · RAZ AA 点读绘本（重复句型 + 真实书目风格） -------------------- */
+export interface RazSentence {
+  en: string;
+  cn: string;
+  emoji: string;
+}
+export interface RazReader {
+  title: string;
+  emoji: string;
+  color: string; // 主题色（对应萌可配色）
+  sentences: RazSentence[];
+}
+export const RAZ_READERS: RazReader[] = [
+  {
+    title: 'I Can 我会', emoji: '🤸', color: 'bg-moko-pink',
+    sentences: [
+      { en: 'I can run.', cn: '我会跑。', emoji: '🏃' },
+      { en: 'I can jump.', cn: '我会跳。', emoji: '🦘' },
+      { en: 'I can read.', cn: '我会读。', emoji: '📖' },
+      { en: 'I can sing.', cn: '我会唱。', emoji: '🎵' },
+      { en: 'I can swim.', cn: '我会游泳。', emoji: '🏊' },
+      { en: 'I can write.', cn: '我会写。', emoji: '✏️' },
+    ],
+  },
+  {
+    title: 'I See 我看见', emoji: '👀', color: 'bg-moko-yellow',
+    sentences: [
+      { en: 'I see a cat.', cn: '我看见一只猫。', emoji: '🐱' },
+      { en: 'I see a dog.', cn: '我看见一只狗。', emoji: '🐶' },
+      { en: 'I see a red ball.', cn: '我看见一个红球。', emoji: '🔴' },
+      { en: 'I see the sun.', cn: '我看见太阳。', emoji: '☀️' },
+      { en: 'I see the moon.', cn: '我看见月亮。', emoji: '🌙' },
+    ],
+  },
+  {
+    title: 'We Like Colors 我们喜欢颜色', emoji: '🌈', color: 'bg-moko-purple',
+    sentences: [
+      { en: 'We like red.', cn: '我们喜欢红色。', emoji: '🔴' },
+      { en: 'We like blue.', cn: '我们喜欢蓝色。', emoji: '🔵' },
+      { en: 'We like yellow.', cn: '我们喜欢黄色。', emoji: '🟡' },
+      { en: 'We like green.', cn: '我们喜欢绿色。', emoji: '🟢' },
+    ],
+  },
+  {
+    title: 'The Animals 小动物', emoji: '🐾', color: 'bg-moko-mint',
+    sentences: [
+      { en: 'The cat is small.', cn: '猫很小。', emoji: '🐱' },
+      { en: 'The dog is big.', cn: '狗很大。', emoji: '🐶' },
+      { en: 'The fish can swim.', cn: '鱼会游泳。', emoji: '🐟' },
+      { en: 'The bird can fly.', cn: '鸟会飞。', emoji: '🐦' },
+    ],
+  },
+  {
+    title: 'My Family 我的家', emoji: '👪', color: 'bg-moko-rose',
+    sentences: [
+      { en: 'This is my dad.', cn: '这是我的爸爸。', emoji: '👨' },
+      { en: 'This is my mom.', cn: '这是我的妈妈。', emoji: '👩' },
+      { en: 'This is my baby.', cn: '这是我的宝宝。', emoji: '👶' },
+      { en: 'I love my family.', cn: '我爱我的家。', emoji: '💗' },
+    ],
+  },
+  {
+    title: 'Getting Dressed 穿衣服', emoji: '👕', color: 'bg-moko-cyan',
+    sentences: [
+      { en: 'Put on your shirt.', cn: '穿上你的衬衫。', emoji: '👕' },
+      { en: 'Put on your pants.', cn: '穿上你的裤子。', emoji: '👖' },
+      { en: 'Put on your shoes.', cn: '穿上你的鞋。', emoji: '👟' },
+      { en: 'Let’s go!', cn: '我们出发吧！', emoji: '🚀' },
+    ],
+  },
+  {
+    title: 'One Two Three 数一数', emoji: '🔢', color: 'bg-moko-blue',
+    sentences: [
+      { en: 'One dog.', cn: '一只狗。', emoji: '🐶' },
+      { en: 'Two cats.', cn: '两只猫。', emoji: '🐱' },
+      { en: 'Three birds.', cn: '三只鸟。', emoji: '🐦' },
+      { en: 'Four fish.', cn: '四条鱼。', emoji: '🐟' },
+      { en: 'Five stars.', cn: '五颗星。', emoji: '⭐' },
+    ],
+  },
+  {
+    title: 'All Kinds of Faces 各种各样的脸', emoji: '😊', color: 'bg-moko-gold',
+    sentences: [
+      { en: 'Happy face.', cn: '开心的脸。', emoji: '😄' },
+      { en: 'Sad face.', cn: '难过的脸。', emoji: '😢' },
+      { en: 'Sleepy face.', cn: '困倦的脸。', emoji: '😴' },
+      { en: 'Surprised face.', cn: '惊讶的脸。', emoji: '😲' },
+    ],
+  },
+  {
+    title: 'In and Out 里和外', emoji: '🚪', color: 'bg-moko-violet',
+    sentences: [
+      { en: 'The cat is in.', cn: '猫在里面。', emoji: '🐱' },
+      { en: 'The cat is out.', cn: '猫在外面。', emoji: '🐱' },
+      { en: 'The dog is in.', cn: '狗在里面。', emoji: '🐶' },
+      { en: 'The dog is out.', cn: '狗在外面。', emoji: '🐶' },
+    ],
+  },
+  {
+    title: 'The Street 街道上', emoji: '🛣️', color: 'bg-moko-gold',
+    sentences: [
+      { en: 'I see a bus.', cn: '我看见一辆公交车。', emoji: '🚌' },
+      { en: 'I see a car.', cn: '我看见一辆汽车。', emoji: '🚗' },
+      { en: 'I see a truck.', cn: '我看见一辆卡车。', emoji: '🚚' },
+      { en: 'I see a hat.', cn: '我看见一顶帽子。', emoji: '🧢' },
+    ],
+  },
+];
