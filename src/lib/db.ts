@@ -180,6 +180,20 @@ export async function ensureSchema() {
       UNIQUE(child_id, chapter_id),
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
+
+    // 🎯 每日一练（合并到三科打卡：做完且全对 = 三科自动打卡完成）
+    `CREATE TABLE IF NOT EXISTS daily_practice (
+      child_id INTEGER NOT NULL,
+      day TEXT NOT NULL,
+      completed INTEGER NOT NULL DEFAULT 0,
+      correct INTEGER NOT NULL DEFAULT 0,
+      total INTEGER NOT NULL DEFAULT 0,
+      questions TEXT,
+      completed_at DATETIME,
+      streak_rewarded INTEGER NOT NULL DEFAULT 0,
+      UNIQUE(child_id, day),
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
   ], 'write');
 
   // 迁移：castle_state 增加 skin 字段（城堡皮肤切换）

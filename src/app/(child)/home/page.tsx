@@ -1,8 +1,10 @@
 import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildPoints } from '@/lib/db';
 import { getCastleState } from '@/lib/castle';
+import { getTodayPractice } from '@/lib/daily-practice';
 import Link from 'next/link';
 import { CheckinPanel, HarvestBtn } from '@/components/castle-client';
+import { GuideModal } from '@/components/GuideModal';
 import { MokoGroupBg } from '@/components/moko-bg';
 import { MokoAvatar } from '@/components/MokoAvatar';
 
@@ -11,6 +13,7 @@ export default async function HomePage() {
   if (!user || user.role !== 'child') return null;
   const points = await getChildPoints(user.id);
   const castle = await getCastleState(user.id);
+  const practice = await getTodayPractice(user.id, false);
   const ownedCount = castle.gallery.filter((g) => g.owned).length;
   const totalMoko = castle.gallery.length;
 
@@ -55,6 +58,25 @@ export default async function HomePage() {
         <CheckinPanel initial={castle.checkins} />
       </div>
 
+      {/* 今日一练（合并到三科打卡） */}
+      <div className="card-moko mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-black text-moko-violet">🎯 今日一练</h2>
+          <span className="text-sm text-gray-500">做完 9 题 = 三科打卡自动完成</span>
+        </div>
+        {practice.completed ? (
+          <div className="flex items-center justify-between">
+            <div className="text-moko-rose font-bold">今天已完成啦 🌟（已连续 {practice.practiceStreak} 天）</div>
+            <Link href="/daily-practice" className="text-sm font-bold text-moko-rose">查看 ›</Link>
+          </div>
+        ) : (
+          <Link href="/daily-practice" className="block text-center py-3 rounded-2xl bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black text-lg hover:scale-105 transition">
+            ▶ 开始今日一练（语文 3 + 数学 3 + 英语 3）
+          </Link>
+        )}
+        <div className="mt-3 text-xs text-gray-500">再坚持 {practice.nextMilestone} 天，解锁一只新萌可入驻城堡 🧸</div>
+      </div>
+
       {/* 城堡快览 + 快捷入口 */}
       <div className="grid md:grid-cols-2 gap-6">
         <div className="card-moko bg-gradient-to-br from-indigo-50 to-purple-50">
@@ -90,6 +112,7 @@ export default async function HomePage() {
             <Link href="/shop" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-gold text-white font-black">🛍️ 商城</Link>
             <Link href="/record" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-cyan text-white font-black col-span-2">🏆 看记录</Link>
             <Link href="/story" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black col-span-2">📜 萌可剧情 · 捕捉萌可</Link>
+            <GuideModal trigger={<span className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-cyan text-white font-black col-span-2 cursor-pointer">📖 攻略说明 · 每日一练怎么玩</span>} />
           </div>
         </div>
       </div>
