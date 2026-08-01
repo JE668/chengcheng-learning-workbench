@@ -1223,14 +1223,14 @@ export const mokoCollection: MokoChar[] = [
   },
   {
     "key": "col_06_乐美萌可_render",
-    "name": "乐美萌可",
-    "category": "star",
+    "name": "乐美公主",
+    "category": "guide",
     "season": "星星萌可_第六季",
     "img": "/moko/lemei.jpg",
-    "emoji": "☄️",
+    "emoji": "👑",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "啾~ 我是乐美萌可！"
+    "line": "一起捕捉萌可吧！"
   },
   {
     "key": "col_06_亲亲萌可_render",
@@ -1564,14 +1564,14 @@ export const mokoCollection: MokoChar[] = [
   },
   {
     "key": "col_08_查尔斯萌可_render",
-    "name": "查尔斯萌可",
+    "name": "查尔斯王子",
     "category": "prince",
     "season": "王子萌可",
     "img": "/moko/collection/08_王子萌可/查尔斯萌可_render.webp",
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "啾~ 我是查尔斯萌可！"
+    "line": "啾~ 我是查尔斯王子！"
   },
   {
     "key": "col_08_演歌萌可_render",
@@ -1649,17 +1649,6 @@ export const mokoCollection: MokoChar[] = [
     "color": "text-slate-500",
     "item": "✨ 魔法道具",
     "line": "啾~ 我是奉献萌可！"
-  },
-  {
-    "key": "col_09_泡泡萌可_render",
-    "name": "泡泡萌可",
-    "category": "villain",
-    "season": "反派及其他",
-    "img": "/moko/collection/09_反派及其他/泡泡萌可_render.webp",
-    "emoji": "😈",
-    "color": "text-slate-500",
-    "item": "✨ 魔法道具",
-    "line": "啾~ 我是泡泡萌可！"
   },
   {
     "key": "col_09_波荡萌可_render",
@@ -2952,16 +2941,16 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "item": "✨ 魔法道具",
     "line": "啾~ 我是马卡龙萌可！"
   },
-  "乐美萌可": {
+  "乐美公主": {
     "key": "col_06_乐美萌可_render",
-    "name": "乐美萌可",
-    "category": "star",
+    "name": "乐美公主",
+    "category": "guide",
     "season": "星星萌可_第六季",
     "img": "/moko/lemei.jpg",
-    "emoji": "☄️",
+    "emoji": "👑",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "啾~ 我是乐美萌可！"
+    "line": "一起捕捉萌可吧！"
   },
   "亲亲萌可": {
     "key": "col_06_亲亲萌可_render",
@@ -3293,16 +3282,16 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "item": "✨ 魔法道具",
     "line": "啾~ 我是魅力萌可！"
   },
-  "查尔斯萌可": {
+  "查尔斯王子": {
     "key": "col_08_查尔斯萌可_render",
-    "name": "查尔斯萌可",
+    "name": "查尔斯王子",
     "category": "prince",
     "season": "王子萌可",
     "img": "/moko/collection/08_王子萌可/查尔斯萌可_render.webp",
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "啾~ 我是查尔斯萌可！"
+    "line": "啾~ 我是查尔斯王子！"
   },
   "演歌萌可": {
     "key": "col_08_演歌萌可_render",
