@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ChildSwitcher } from '@/components/ChildSwitcher';
 
 type PTask = {
   id: number;
@@ -95,7 +96,10 @@ export default function TasksPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-3xl font-black text-moko-violet mb-4">学习任务 📝</h1>
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+        <h1 className="text-3xl font-black text-moko-violet">学习任务 📝</h1>
+        <ChildSwitcher />
+      </div>
 
       <div className="card-moko mb-6">
         {editing ? (

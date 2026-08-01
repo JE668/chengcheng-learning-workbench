@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ChildSwitcher } from '@/components/ChildSwitcher';
 
 export default function SettingsPage() {
   const [childUsername, setChildUsername] = useState('cara');
@@ -19,7 +20,10 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-black text-moko-violet mb-4">设置 ⚙️</h1>
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+        <h1 className="text-3xl font-black text-moko-violet">设置 ⚙️</h1>
+        <ChildSwitcher />
+      </div>
       <div className="card-moko">
         <h2 className="text-xl font-bold text-moko-violet mb-4">修改孩子密码</h2>
         {msg && <div className="mb-4 p-3 rounded-2xl bg-moko-mint text-white font-bold text-center">{msg}</div>}
