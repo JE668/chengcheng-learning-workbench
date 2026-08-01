@@ -32,15 +32,26 @@ const CAT_META = {
   legend:   { label: '传奇萌可', emoji: '🌟', color: 'text-moko-gold',   desc: '传说中的特别萌可' },
 };
 
-// 个别文件名修正
-const NAME_FIX = { extra: '神秘萌可' };
+// 个别文件名修正：磁盘文件名沿用官方导出名，映射成正确角色名
+// （乐美/查尔斯 是人类角色，不是萌可，故改名；乐美归 guide 类）
+const NAME_FIX = { '乐美萌可': '乐美公主', '查尔斯萌可': '查尔斯王子' };
+
+// 官方没有的角色（占位符/错别字/未找到出处），扫描时直接跳过，避免重新生成时复活
+// - extra(神秘萌可)、其他萌可：纯占位符，非具体角色
+// - 波荡萌可：官方无此名，疑似错别字
+// - 士兵萌可、铃铛萌可、黑暗萌可：未找到官方出处
+const EXCLUDE_NAMES = new Set(['神秘萌可', '其他萌可', '波荡萌可', '士兵萌可', '铃铛萌可', '黑暗萌可']);
 
 // 个别图片覆盖：用指定图片替换扫描到的默认图。
-// 例：图片集里的「乐美萌可_render.webp」是一张全身照（显示成腿），
-// 改用乐美公主头像 /moko/lemei.jpg，图鉴/捕捉/入驻展示更一致。
+// 乐美公主用头像 /moko/lemei.jpg（而非全身照「乐美萌可_render.webp」，否则登录页/奖状显示成腿）。
 const IMG_OVERRIDE = {
-  '乐美萌可': '/moko/lemei.jpg',
+  '乐美公主': '/moko/lemei.jpg',
 };
+
+// 个别分类/emoji/台词覆盖（人类角色，非萌可）
+const CAT_OVERRIDE = { '乐美公主': 'guide' };
+const EMOJI_OVERRIDE = { '乐美公主': '👑' };
+const LINE_OVERRIDE = { '乐美公主': '一起捕捉萌可吧！' };
 
 function parseName(fileBase) {
   // 先剥离官网导出的 _render 标记（如 幸运萌可_render）
@@ -77,17 +88,18 @@ for (const folder of folders) {
         : '.jpg';
     const f = `${base}${ext}`;
     const { name, suffix } = parseName(base);
+    if (EXCLUDE_NAMES.has(name)) continue; // 跳过官方没有的角色
     const key = `col_${digits}_${base}`;
     entries.push({
       key,
       name,
-      category: cat,
+      category: CAT_OVERRIDE[name] || cat,
       season,
       img: IMG_OVERRIDE[name] || `/moko/collection/${folder}/${f}`,
-      emoji: meta.emoji,
+      emoji: EMOJI_OVERRIDE[name] || meta.emoji,
       color: meta.color,
       item: '✨ 魔法道具',
-      line: `啾~ 我是${name}！`,
+      line: LINE_OVERRIDE[name] || `啾~ 我是${name}！`,
     });
   }
 }
@@ -115,7 +127,7 @@ export interface MokoCollectionCat {
 /** 本次新增的季分类（需并入 MOko_CATEGORIES） */
 export const COLLECTION_CATEGORIES: MokoCollectionCat[] = ${JSON.stringify(newCats, null, 2)};
 
-/** 全部萌可图片（170 张），key 以 col_ 前缀，category 见上 */
+/** 全部萌可图片（由 public/moko/collection 扫描生成，key 以 col_ 前缀，category 见上） */
 export const mokoCollection: MokoChar[] = ${JSON.stringify(entries, null, 2)};
 
 /** 同名首图（用于把核心萌可的 img 重映射到真实图片） */

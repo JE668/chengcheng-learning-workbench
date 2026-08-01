@@ -501,7 +501,6 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
 
   // 图鉴：以真实图片集为正源（图片与名字一一对应，杜绝「图不对名」）
   // - 同名只折叠「核心萌可 vs 图片集变体」（如爱心萌可出现两次只留 1 张）
-  // - 「其他萌可」整组保留：10 张都是独立图片，若按名字折叠会丢失 9 张（数量缺失）
   // - 图片集没有的核心角色（宝石萌可/钥匙萌可/甜心萌可等）补进图鉴，避免缺角
   const collectedNames = new Set(
     owned.rows.map((r) => mokoChars[String(r.moko_key)]?.name).filter((n): n is string => !!n),
@@ -510,8 +509,7 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
   const gallery: { key: string; name: string; img: string; emoji: string; color: string; category?: string; subject?: string; owned: boolean }[] = [];
   for (const m of mokoCollection) {
     if (m.category === 'trouble') continue;
-    const isOther = m.name === '其他萌可';
-    if (!isOther && seenName.has(m.name)) continue; // 普通同名折叠为 1 张
+    if (seenName.has(m.name)) continue; // 同名折叠为 1 张
     seenName.add(m.name);
     gallery.push({
       key: m.key,

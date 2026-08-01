@@ -42,7 +42,7 @@ export const COLLECTION_CATEGORIES: MokoCollectionCat[] = [
   }
 ];
 
-/** 全部萌可图片（170 张），key 以 col_ 前缀，category 见上 */
+/** 全部萌可图片（由 public/moko/collection 扫描生成，key 以 col_ 前缀，category 见上） */
 export const mokoCollection: MokoChar[] = [
   {
     "key": "col_01_优雅萌可_render",
@@ -1607,39 +1607,6 @@ export const mokoCollection: MokoChar[] = [
     "line": "啾~ 我是青蛙萌可！"
   },
   {
-    "key": "col_09_extra_render",
-    "name": "神秘萌可",
-    "category": "villain",
-    "season": "反派及其他",
-    "img": "/moko/collection/09_反派及其他/extra_render.webp",
-    "emoji": "😈",
-    "color": "text-slate-500",
-    "item": "✨ 魔法道具",
-    "line": "啾~ 我是神秘萌可！"
-  },
-  {
-    "key": "col_09_其他萌可_render",
-    "name": "其他萌可",
-    "category": "villain",
-    "season": "反派及其他",
-    "img": "/moko/collection/09_反派及其他/其他萌可_render.webp",
-    "emoji": "😈",
-    "color": "text-slate-500",
-    "item": "✨ 魔法道具",
-    "line": "啾~ 我是其他萌可！"
-  },
-  {
-    "key": "col_09_士兵萌可_render",
-    "name": "士兵萌可",
-    "category": "villain",
-    "season": "反派及其他",
-    "img": "/moko/collection/09_反派及其他/士兵萌可_render.webp",
-    "emoji": "😈",
-    "color": "text-slate-500",
-    "item": "✨ 魔法道具",
-    "line": "啾~ 我是士兵萌可！"
-  },
-  {
     "key": "col_09_奉献萌可_render",
     "name": "奉献萌可",
     "category": "villain",
@@ -1651,28 +1618,6 @@ export const mokoCollection: MokoChar[] = [
     "line": "啾~ 我是奉献萌可！"
   },
   {
-    "key": "col_09_波荡萌可_render",
-    "name": "波荡萌可",
-    "category": "villain",
-    "season": "反派及其他",
-    "img": "/moko/collection/09_反派及其他/波荡萌可_render.webp",
-    "emoji": "😈",
-    "color": "text-slate-500",
-    "item": "✨ 魔法道具",
-    "line": "啾~ 我是波荡萌可！"
-  },
-  {
-    "key": "col_09_铃铛萌可_render",
-    "name": "铃铛萌可",
-    "category": "villain",
-    "season": "反派及其他",
-    "img": "/moko/collection/09_反派及其他/铃铛萌可_render.webp",
-    "emoji": "😈",
-    "color": "text-slate-500",
-    "item": "✨ 魔法道具",
-    "line": "啾~ 我是铃铛萌可！"
-  },
-  {
     "key": "col_09_闹闹萌可_render",
     "name": "闹闹萌可",
     "category": "villain",
@@ -1682,17 +1627,6 @@ export const mokoCollection: MokoChar[] = [
     "color": "text-slate-500",
     "item": "✨ 魔法道具",
     "line": "啾~ 我是闹闹萌可！"
-  },
-  {
-    "key": "col_09_黑暗萌可_render",
-    "name": "黑暗萌可",
-    "category": "villain",
-    "season": "反派及其他",
-    "img": "/moko/collection/09_反派及其他/黑暗萌可_render.webp",
-    "emoji": "😈",
-    "color": "text-slate-500",
-    "item": "✨ 魔法道具",
-    "line": "啾~ 我是黑暗萌可！"
   },
   {
     "key": "col_10_幸运萌可_render",
@@ -3326,39 +3260,6 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "item": "✨ 魔法道具",
     "line": "啾~ 我是青蛙萌可！"
   },
-  "神秘萌可": {
-    "key": "col_09_extra_render",
-    "name": "神秘萌可",
-    "category": "villain",
-    "season": "反派及其他",
-    "img": "/moko/collection/09_反派及其他/extra_render.webp",
-    "emoji": "😈",
-    "color": "text-slate-500",
-    "item": "✨ 魔法道具",
-    "line": "啾~ 我是神秘萌可！"
-  },
-  "其他萌可": {
-    "key": "col_09_其他萌可_render",
-    "name": "其他萌可",
-    "category": "villain",
-    "season": "反派及其他",
-    "img": "/moko/collection/09_反派及其他/其他萌可_render.webp",
-    "emoji": "😈",
-    "color": "text-slate-500",
-    "item": "✨ 魔法道具",
-    "line": "啾~ 我是其他萌可！"
-  },
-  "士兵萌可": {
-    "key": "col_09_士兵萌可_render",
-    "name": "士兵萌可",
-    "category": "villain",
-    "season": "反派及其他",
-    "img": "/moko/collection/09_反派及其他/士兵萌可_render.webp",
-    "emoji": "😈",
-    "color": "text-slate-500",
-    "item": "✨ 魔法道具",
-    "line": "啾~ 我是士兵萌可！"
-  },
   "奉献萌可": {
     "key": "col_09_奉献萌可_render",
     "name": "奉献萌可",
@@ -3370,28 +3271,6 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "item": "✨ 魔法道具",
     "line": "啾~ 我是奉献萌可！"
   },
-  "波荡萌可": {
-    "key": "col_09_波荡萌可_render",
-    "name": "波荡萌可",
-    "category": "villain",
-    "season": "反派及其他",
-    "img": "/moko/collection/09_反派及其他/波荡萌可_render.webp",
-    "emoji": "😈",
-    "color": "text-slate-500",
-    "item": "✨ 魔法道具",
-    "line": "啾~ 我是波荡萌可！"
-  },
-  "铃铛萌可": {
-    "key": "col_09_铃铛萌可_render",
-    "name": "铃铛萌可",
-    "category": "villain",
-    "season": "反派及其他",
-    "img": "/moko/collection/09_反派及其他/铃铛萌可_render.webp",
-    "emoji": "😈",
-    "color": "text-slate-500",
-    "item": "✨ 魔法道具",
-    "line": "啾~ 我是铃铛萌可！"
-  },
   "闹闹萌可": {
     "key": "col_09_闹闹萌可_render",
     "name": "闹闹萌可",
@@ -3402,17 +3281,6 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "color": "text-slate-500",
     "item": "✨ 魔法道具",
     "line": "啾~ 我是闹闹萌可！"
-  },
-  "黑暗萌可": {
-    "key": "col_09_黑暗萌可_render",
-    "name": "黑暗萌可",
-    "category": "villain",
-    "season": "反派及其他",
-    "img": "/moko/collection/09_反派及其他/黑暗萌可_render.webp",
-    "emoji": "😈",
-    "color": "text-slate-500",
-    "item": "✨ 魔法道具",
-    "line": "啾~ 我是黑暗萌可！"
   },
   "幸运萌可": {
     "key": "col_10_幸运萌可_render",
