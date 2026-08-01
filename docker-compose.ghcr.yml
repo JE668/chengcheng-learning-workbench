@@ -1,0 +1,39 @@
+# 飞牛端「拉取预构建镜像」版（推荐）：不在飞牛编译，直接从 GHCR 拉镜像。
+# 用法：
+#   1) 在飞牛建目录 /vol1/1000/Docker/chengcheng-workbench/，把本文件放进去
+#   2) 把媒体拷进来：
+#        /vol1/1000/Docker/chengcheng-workbench/media/raz         <- 来自本地 public/raz
+#        /vol1/1000/Docker/chengcheng-workbench/media/textbooks   <- 来自本地 public/textbooks
+#   3) 进到该目录执行：
+#        docker compose -f docker-compose.ghcr.yml pull
+#        docker compose -f docker-compose.ghcr.yml up -d
+#   4) 访问 http://<飞牛内网IP>:3000 （首开自动建库，初始账号 parent/12345678、cara/0000）
+#
+# 若 ghcr.io 在大陆拉取缓慢/受限，可用南大镜像前缀替换镜像名：
+#   image: ghcr.nju.edu.cn/je668/chengcheng-learning-workbench:latest
+# （镜像只拉一次会缓存，无需每次翻墙）
+
+services:
+  chengcheng:
+    image: ghcr.io/je668/chengcheng-learning-workbench:latest
+    container_name: chengcheng
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - TURSO_URL=file:/data/local.db
+    volumes:
+      # 数据库持久化：账号/城堡/打卡/错题 落盘，重建容器不丢
+      - ./data:/data
+      # 媒体：把本地 public/raz、public/textbooks 拷到本目录下的 media/ 即可（无需改绝对路径）
+      - ./media/raz:/app/public/raz
+      - ./media/textbooks:/app/public/textbooks
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
