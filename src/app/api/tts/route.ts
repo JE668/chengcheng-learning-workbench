@@ -37,7 +37,17 @@ async function getSecToken(): Promise<string> {
   return sha;
 }
 
+import { getClientIp, rateLimit } from '@/lib/rate-limit';
+
+const TTS_LIMIT = { windowSeconds: 60, maxRequests: 30 }; // 每 IP 每分钟 30 次
+
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+  const limit = rateLimit(`tts:${ip}`, TTS_LIMIT);
+  if (!limit.ok) {
+    return NextResponse.json({ error: `语音朗读太频繁，请 ${limit.retryAfter} 秒后再试` }, { status: 429 });
+  }
+
   let text = '';
   let lang = 'zh';
   let rate = '';

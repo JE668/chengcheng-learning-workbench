@@ -8,6 +8,11 @@ export const metadata = {
   title: '程程学习工作台',
   description: '奇妙萌可主题的儿童学习工作台',
   manifest: '/manifest.webmanifest',
+  icons: {
+    icon: '/icon-192.png',
+    shortcut: '/icon-192.png',
+    apple: '/apple-touch-icon.png',
+  },
   appleWebApp: { capable: true, statusBarStyle: 'default', title: '程程学习' },
 };
 
