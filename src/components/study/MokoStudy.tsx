@@ -11,6 +11,8 @@ import {
 } from '@/lib/study-data';
 import { RAZ_BOOKS, type RazBook } from '@/lib/raz-books';
 import { speakZh, speakEn } from '@/lib/speak';
+import PdfViewer from '@/components/PdfViewer';
+import { mediaUrl } from '@/lib/media';
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -254,7 +256,7 @@ function ReaderCard({ book }: { book: RazBook }) {
             </button>
             {book.hasPdf && (
               <a
-                href={`/raz/books/${book.id}.pdf`}
+                href={mediaUrl(`/raz/books/${book.id}.pdf`)}
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 text-center py-2 rounded-full bg-white text-moko-violet font-bold text-sm active:scale-95 transition"
@@ -264,7 +266,7 @@ function ReaderCard({ book }: { book: RazBook }) {
             )}
           </div>
           <video
-            src={`/raz/videos/${book.id}.mp4`}
+            src={mediaUrl(`/raz/videos/${book.id}.mp4`)}
             controls
             playsInline
             className="w-full rounded-xl bg-black"
@@ -272,11 +274,9 @@ function ReaderCard({ book }: { book: RazBook }) {
             您的浏览器不支持视频播放。
           </video>
           {book.hasPdf && (
-            <iframe
-              src={`/raz/books/${book.id}.pdf`}
-              title={book.title}
-              className="w-full h-[70vh] rounded-xl border-0 bg-white"
-            />
+            <div className="w-full h-[70vh] overflow-auto rounded-xl bg-white">
+              <PdfViewer url={mediaUrl(`/raz/books/${book.id}.pdf`)} className="w-full" />
+            </div>
           )}
         </div>
       )}

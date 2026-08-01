@@ -1,10 +1,12 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "regions": ["hkg1"],
-  "crons": [
-    { "path": "/api/cron/settle", "schedule": "7 0 * * *" }
+  "headers": [
+    {
+      "source": "/(.*)\\.pdf",
+      "headers": [
+        { "key": "Content-Disposition", "value": "inline" },
+        { "key": "Content-Type", "value": "application/pdf" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
   ]
 }

@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { TEXTBOOKS, type Textbook, type Chapter } from '@/lib/textbooks';
+import PdfViewer from '@/components/PdfViewer';
+import { mediaUrl } from '@/lib/media';
 
 const PROGRESS_KEY = 'moko-textbook-progress';
 
@@ -120,7 +122,7 @@ export default function TextbookViewer() {
           {book.emoji} {book.title}
         </h2>
         <a
-          href={openFile || book.chapters[0].file}
+          href={mediaUrl(openFile || book.chapters[0].file)}
           target="_blank"
           rel="noopener noreferrer"
           className="ml-auto px-4 py-2 rounded-2xl bg-moko-violet text-white font-bold shadow hover:opacity-90"
@@ -153,18 +155,14 @@ export default function TextbookViewer() {
           })}
         </aside>
 
-        {/* 阅读区（懒加载 iframe） */}
-        <div className="rounded-3xl overflow-hidden border-4 border-moko-purple/20 shadow-xl bg-white">
+        {/* 阅读区（懒加载：画布渲染，只能看不能下载） */}
+        <div className="rounded-3xl overflow-hidden border-4 border-moko-purple/20 shadow-xl bg-white" style={{ height: '78vh' }}>
           {openFile ? (
-            <iframe
-              key={openFile}
-              src={openFile}
-              title={openTitle}
-              className="w-full"
-              style={{ height: '78vh' }}
-            />
+            <div className="w-full h-full overflow-auto p-2">
+              <PdfViewer url={mediaUrl(openFile)} className="w-full" />
+            </div>
           ) : (
-            <div className="w-full flex items-center justify-center text-gray-400" style={{ height: '78vh' }}>
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
               从左侧目录选择一章开始阅读
             </div>
           )}
