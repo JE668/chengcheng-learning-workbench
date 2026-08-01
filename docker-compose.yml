@@ -1,0 +1,28 @@
+services:
+  chengcheng:
+    build: .
+    container_name: chengcheng
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - TURSO_URL=file:/data/local.db
+      # 如改用 Turso 云端（可选，非必须），取消下面两行并删掉上面的本地 TURSO_URL：
+      # - TURSO_URL=libsql://xxxx.turso.io
+      # - TURSO_AUTH_TOKEN=xxxx
+    volumes:
+      # 数据库持久化：账号 / 城堡 / 打卡 / 错题 全部存在这里，重建容器不丢
+      - ./data:/data
+      # 媒体：直接挂「仓库里的 public/raz、public/textbooks」，无需复制 502MB
+      # ↓↓↓ 把下面两个路径改成你 NAS 上仓库的实际位置 ↓↓↓
+      - /volume1/docker/chengcheng/repo-public/raz:/app/public/raz
+      - /volume1/docker/chengcheng/repo-public/textbooks:/app/public/textbooks
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
