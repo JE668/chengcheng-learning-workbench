@@ -1,6 +1,9 @@
 # 整站自托管镜像：Next.js (next start) + libSQL 本地库
 # 媒体(public/raz、public/textbooks)不进镜像，由 docker-compose 挂 NAS 目录提供
-FROM node:20-bookworm-slim
+# 用 node:22：本地构建（Node 22）可正常通过；且 pdfjs-dist@6 要求 Node >=22.13，
+# 在 node:20 下会导致依赖 PDF 渲染的页面（castle/daily-practice/games）模块图损坏、
+# next build 报 “Module not found: Can't resolve '@/lib/moko'” 等伪错误。
+FROM node:22-bookworm-slim
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
