@@ -186,7 +186,7 @@ async function refreshStages(childId: number) {
   }
 }
 
-/* ----------------------------- 🌟 每日结算（奖励/惩罚/补作业） ----------------------------- */
+/* ----------------------------- 🌟 每日结算（奖励/捣蛋萌可捣乱/补作业） ----------------------------- */
 async function applyPenalty(childId: number, day: string, confirmedCount: number) {
   const db = getDb();
   const missed = 3 - confirmedCount;
@@ -197,13 +197,13 @@ async function applyPenalty(childId: number, day: string, confirmedCount: number
   let star = Number(row?.star_coins ?? 0);
   let lastStolen = Number(row?.last_stolen ?? 0);
 
-  // 护盾可抵挡一次捣蛋萌可攻击
+  // 护盾能帮乐美挡住一次捣蛋萌可
   let spawn = missed;
   if (shield > 0 && spawn > 0) {
     shield -= 1;
     spawn -= 1;
   }
-  // 生成捣蛋萌可
+  // 捣蛋萌可溜进城堡捣乱，帮乐美把它们捉回去
   for (let i = 0; i < spawn; i++) {
     const key = troubleMokoKeys[i % troubleMokoKeys.length];
     await db.execute({
@@ -212,14 +212,14 @@ async function applyPenalty(childId: number, day: string, confirmedCount: number
     });
   }
 
-  // ④ 迷糊萌可偷走一半星星币
+  // ④ 捣蛋萌可把一半星星币藏起来了（捉回后找回）
   if (star > 0) {
     const stolen = Math.floor(star / 2);
     star -= stolen;
     lastStolen = stolen;
   }
 
-  // 攻击已入驻萌可（心情值 3 格）
+  // 捣蛋萌可把入驻萌可的心情弄糟了（心情值 3 格）
   const residents = (
     await db.execute({ sql: "SELECT * FROM moko_owned WHERE child_id = ? AND status = 'resident'", args: [childId] })
   ).rows;
@@ -229,10 +229,10 @@ async function applyPenalty(childId: number, day: string, confirmedCount: number
     db.execute({ sql: 'UPDATE moko_owned SET mood = MAX(0, mood - ?) WHERE id = ?', args: [dec, id] });
 
   if (missed >= 3) {
-    // ③ 三科全未完成：所有萌可逃跑
+    // ③ 三科全未完成：萌可们被吓跑了
     for (const r of residents) await flee(Number(r.id));
   } else if (missed === 2) {
-    // ② 两科未完成：赶走半数；不足则各损失 2 格心情
+    // ② 两科未完成：半数萌可被吓跑；不足则各少 2 格心情
     if (residents.length >= 2) {
       const n = Math.floor(residents.length / 2);
       for (let i = 0; i < n; i++) await flee(Number(residents[i].id));
@@ -240,7 +240,7 @@ async function applyPenalty(childId: number, day: string, confirmedCount: number
       for (const r of residents) await hitMood(Number(r.id), 2);
     }
   } else {
-    // ① 一科未完成：攻击一只，损失 1 格心情
+    // ① 一科未完成：弄糟一只的心情，少 1 格
     if (residents.length) await hitMood(Number(residents[0].id), 1);
   }
 
@@ -263,7 +263,7 @@ async function settleCastle(childId: number, today: string) {
       args: [childId, cursor],
     });
     const confirmed = Number(c.rows[0]?.n ?? 0);
-    // 🌟 学习-城堡联动：未完成 → 惩罚触发
+    // 🌟 学习-城堡联动：未完成 → 捣蛋萌可溜进来捣乱
     await applyPenalty(childId, cursor, confirmed);
     // 连续打卡更新
     const streak = confirmed === 3 ? Number(row.streak_days ?? 0) + 1 : 0;
@@ -331,7 +331,7 @@ export async function confirm(childId: number, day: string, subject: Subject) {
       await logGrowthEvent(childId, 'prosperity', '🏰', '三科全勤！城堡升级', `繁荣度 +${PROSPERITY_BONUS}，萌可们更开心啦`);
     }
   } else {
-    // 补作业：若该过去日期现已三科全确认且仍有未驱散捣蛋萌可 → 可领取魔法喷雾
+    // 补作业：若该过去日期现已三科全确认且仍有未捉回的捣蛋萌可 → 可领取魔法喷雾
     const c = await db.execute({
       sql: `SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'`,
       args: [childId, day],
@@ -345,8 +345,8 @@ export async function confirm(childId: number, day: string, subject: Subject) {
         sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1',
         args: [childId, 'spray'],
       });
-      await logGrowthEvent(childId, 'rescue', '🧴', '补作业完成，获救！', '城堡被捣蛋萌可攻击，已获得魔法喷雾准备修复');
-      return { ok: true, message: '补作业完成！获得 1 瓶魔法喷雾，去背包使用修复城堡吧～' };
+      await logGrowthEvent(childId, 'rescue', '🧴', '补作业完成，乐美来帮忙！', '捣蛋萌可溜进城堡捣乱，乐美送来魔法喷雾，快帮她把捣蛋萌可捉回去！');
+      return { ok: true, message: '补作业完成！乐美送来 1 瓶魔法喷雾，去背包帮她把捣蛋萌可捉回去吧～' };
     }
   }
   return { ok: true, message: `确认「${subject}」完成，获得 ${SUN_PER_SUBJECT} 阳光能量 + 1 只萌可！` };
@@ -398,14 +398,14 @@ export async function setSkin(childId: number, skin: string): Promise<{ ok: bool
   return { ok: true, message: '城堡皮肤已更新！' };
 }
 
-/** 使用魔法喷雾：修复城堡 */
+/** 使用魔法喷雾：和乐美一起捉回捣蛋萌可 */
 export async function castSpray(childId: number) {
   const db = getDb();
   await ensureCastle(childId);
   const inv = await db.execute({ sql: 'SELECT qty FROM inventory WHERE child_id = ? AND item_key = ?', args: [childId, 'spray'] });
   if (!inv.rows.length || Number(inv.rows[0].qty) <= 0) return { ok: false, message: '没有魔法喷雾' };
   const row = await getRow(childId);
-  // 🌟 修复机制：驱散捣蛋萌可 + 恢复心情 + 返还被偷星星币 50%（向上取整）
+  // 🌟 捉回机制：帮乐美捉回捣蛋萌可 + 安抚心情 + 找回被藏星星币 50%（向上取整）
   await db.execute({ sql: 'UPDATE troublemakers SET resolved = 1 WHERE child_id = ? AND resolved = 0', args: [childId] });
   await db.execute({ sql: "UPDATE moko_owned SET mood = 3, status = 'resident' WHERE child_id = ?", args: [childId] });
   const returnCoins = Math.ceil(Number(row?.last_stolen ?? 0) * 0.5);
@@ -414,8 +414,8 @@ export async function castSpray(childId: number) {
     args: [returnCoins, childId],
   });
   await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'spray'] });
-  await logGrowthEvent(childId, 'repair', '🧼', '城堡修复完成！', `驱散捣蛋萌可，心情全满，返还 ${returnCoins} 星星币`);
-  return { ok: true, message: `城堡已修复！驱散捣蛋萌可，返还 ${returnCoins} 星星币。` };
+  await logGrowthEvent(childId, 'repair', '🧼', '捉回捣蛋萌可，城堡恢复欢乐！', `和乐美一起捉回捣蛋萌可，萌可们心情全满，找回 ${returnCoins} 星星币`);
+  return { ok: true, message: `太棒了！和乐美一起捉回捣蛋萌可，找回 ${returnCoins} 星星币～` };
 }
 
 /** 收获星星币（好朋友阶段萌可每日产出） */

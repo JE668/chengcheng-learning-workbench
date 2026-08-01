@@ -52,7 +52,7 @@ export default function ParentCastlePanel() {
         ))}
       </div>
       {state.troublemakers.length > 0 && (
-        <div className="rounded-3xl p-4 shadow-lg border-2 border-red-100 bg-red-50 text-red-500 font-bold text-sm">⚠️ 有 {state.troublemakers.length} 只捣蛋萌可入侵城堡，可在孩子端背包用魔法喷雾修复，或下方补作业。</div>
+        <div className="rounded-3xl p-4 shadow-lg border-2 border-red-100 bg-red-50 text-red-500 font-bold text-sm">⚠️ 有 {state.troublemakers.length} 只捣蛋萌可溜进城堡捣乱，快让孩子在背包用魔法喷雾，和乐美一起把它们捉回去，或在下方补作业。</div>
       )}
 
       {/* 今日打卡（由「今日一练」自动完成，家长端只读） */}
@@ -78,13 +78,13 @@ export default function ParentCastlePanel() {
       {state.missedDays.length > 0 && (
         <div className="card-moko">
           <h2 className="text-lg font-black text-moko-violet mb-2">🛠️ 补作业（过去未完成日期）</h2>
-          <p className="text-xs text-gray-500 mb-2">补完某天三科并确认后，孩子可获得魔法喷雾修复城堡。</p>
+          <p className="text-xs text-gray-500 mb-2">补完某天三科并确认后，孩子会收到乐美送来的魔法喷雾，用来把捣蛋萌可捉回。</p>
           <div className="space-y-3">
             {state.missedDays.map((d) => (
               <div key={d.day} className="border rounded-2xl p-3 bg-moko-cream">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-bold text-moko-violet">{d.day}</span>
-                  {d.hasTrouble && <span className="text-xs text-red-500">⚠️ 有捣蛋萌可</span>}
+                  {d.hasTrouble && <span className="text-xs text-red-500">⚠️ 有捣蛋萌可捣乱</span>}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {SUBJECTS.map((sub) =>

@@ -32,7 +32,7 @@ export const MokoCategories: { key: MokoCategoryKey; label: string; emoji: strin
   { key: 'villain', label: '反派萌可', emoji: '😈', color: 'text-slate-500', desc: '搞怪的反派与神秘角色' },
   { key: 'legend', label: '传奇萌可', emoji: '🌟', color: 'text-moko-gold', desc: '传说中的特别萌可' },
   { key: 'guide', label: '引导萌可', emoji: '🧭', color: 'text-moko-rose', desc: '带着爱心魔杖的领航员' },
-  { key: 'trouble', label: '捣蛋萌可', emoji: '😈', color: 'text-slate-500', desc: '最爱搞恶作剧的小淘气' },
+  { key: 'trouble', label: '捣蛋萌可', emoji: '😈', color: 'text-slate-500', desc: '最爱搞恶作剧的小淘气，帮乐美把它们捉回去吧！' },
 ];
 
 export const mokoChars: Record<string, MokoChar> = {
@@ -76,10 +76,10 @@ export const mokoChars: Record<string, MokoChar> = {
   // —— 引导萌可 ——
   lemei: { key: 'lemei', name: '乐美公主', color: 'text-moko-rose', img: '/moko/lemei.jpg', emoji: '👑', season: '全季', item: '爱心魔杖', line: '一起捕捉萌可吧！', category: 'guide' },
 
-  // —— 捣蛋萌可：未完成打卡时入侵城堡 ——
+  // —— 捣蛋萌可：未完成打卡时溜进城堡捣乱 ——
   naonao: { key: 'naonao', name: '闹闹萌可', color: 'text-slate-500', img: '/moko/transform_courage.jpg', emoji: '🤪', season: '捣蛋萌可', item: '吵闹喇叭', line: '嘻嘻，我来捣乱啦！', category: 'trouble' },
   mihu: { key: 'mihu', name: '迷糊萌可', color: 'text-slate-500', img: '/moko/transform_gem.jpg', emoji: '😵', season: '捣蛋萌可', item: '迷糊口袋', line: '唔…我的币呢？', category: 'trouble' },
-  lulu: { key: 'lulu', name: '噜噜萌可', color: 'text-slate-500', img: '/moko/transform_music.jpg', emoji: '🫧', season: '捣蛋萌可', item: '噜噜泡泡', line: '噜噜噜~ 偷走啦！', category: 'trouble' },
+  lulu: { key: 'lulu', name: '噜噜萌可', color: 'text-slate-500', img: '/moko/transform_music.jpg', emoji: '🫧', season: '捣蛋萌可', item: '噜噜泡泡', line: '噜噜噜~ 溜走啦！', category: 'trouble' },
   taopiping: { key: 'taopiping', name: '淘气萌可', color: 'text-slate-500', img: '/moko/transform_love.jpg', emoji: '😈', season: '捣蛋萌可', item: '捣蛋锤', line: '嘿嘿，看我的！', category: 'trouble' },
 };
 
@@ -92,10 +92,10 @@ for (const k of Object.keys(mokoChars)) {
 // 乐美公主保持原来的头像照（/moko/lemei.jpg），不接入全身图「乐美萌可_render.webp」，
 // 否则在孩子端/奖状/登录页里会显示成腿而不是头。
 
-// 并入真实图片集（170 张，key 以 col_ 前缀），图鉴/奖状均可直接使用
+// 并入真实图片集（157 张，key 以 col_ 前缀），图鉴/奖状均可直接使用
 for (const c of mokoCollection) mokoChars[c.key] = c;
 
-/** 捣蛋萌可池（结算时随机挑选入侵） */
+/** 捣蛋萌可池（结算时随机挑选出场捣乱） */
 export const troubleMokoKeys = ['naonao', 'mihu', 'lulu'];
 
 export const games: {
@@ -226,8 +226,8 @@ export const SHIELD_STREAK_REQ = 3;
 
 /** 魔法商店（阳光能量消费） */
 export const magicShop = [
-  { key: 'spray', name: '魔法喷雾', cost: 5, icon: '🧴', desc: '驱散所有捣蛋萌可 + 恢复全体心情至满格 + 返还被偷星星币的 50%' },
-  { key: 'shield', name: '护盾', cost: 10, icon: '🛡️', desc: `抵挡一次捣蛋萌可攻击（需连续打卡 ${SHIELD_STREAK_REQ} 天才能兑换，兑换后自动装备）` },
+  { key: 'spray', name: '魔法喷雾', cost: 5, icon: '🧴', desc: '帮乐美捉回所有捣蛋萌可 + 安抚全体萌可至满格心情 + 找回被藏星星币的 50%' },
+  { key: 'shield', name: '护盾', cost: 10, icon: '🛡️', desc: `帮乐美挡住一次捣蛋萌可（需连续打卡 ${SHIELD_STREAK_REQ} 天才能兑换，兑换后自动装备）` },
 ];
 
 /** 星星币商城（长期激励） */

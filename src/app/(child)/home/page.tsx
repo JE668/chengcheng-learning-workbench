@@ -142,7 +142,7 @@ export default async function HomePage() {
             {castle.residents.length === 0 && <span className="text-sm text-gray-500">还没有萌可入驻，快去打卡吧！</span>}
           </div>
           {castle.troublemakers.length > 0 && (
-            <p className="text-sm text-red-500 font-semibold mb-2">⚠️ {castle.troublemakers.length} 只捣蛋萌可正在捣乱！</p>
+            <p className="text-sm text-red-500 font-semibold mb-2">⚠️ {castle.troublemakers.length} 只捣蛋萌可溜进城堡！快用魔法喷雾和乐美一起把它们捉回去～</p>
           )}
           <HarvestBtn />
         </div>

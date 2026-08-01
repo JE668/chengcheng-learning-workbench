@@ -44,7 +44,7 @@ export default async function DashboardPage() {
         <ul className="list-disc list-inside text-gray-600 space-y-1">
           <li>孩子完成「今日一练」三科全对 → 自动打卡，解锁对应萌可 + 阳光能量</li>
           <li>三科全对 → 城堡繁荣度飙升，萌可开始产出星星币</li>
-          <li>某天漏做 → 次日捣蛋萌可入侵，可在下方「补作业」补回并修复城堡</li>
+          <li>某天漏做 → 次日捣蛋萌可溜进城堡捣乱，可在下方「补作业」帮乐美把它们捉回去</li>
           <li>在「任务」发布学习任务，在「兑换」审核奖励，在「设置」改密码</li>
         </ul>
       </div>

@@ -135,7 +135,7 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
-    // 🏰 捣蛋萌可入侵记录
+    // 🏰 捣蛋萌可记录（帮乐美捕捉）
     `CREATE TABLE IF NOT EXISTS troublemakers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       child_id INTEGER NOT NULL,

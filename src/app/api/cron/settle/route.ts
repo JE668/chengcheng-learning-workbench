@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { getCastleState } from '@/lib/castle';
 
-// Vercel Cron 调用：对城堡做一次结算（惩罚/成长刷新）。多娃下遍历所有孩子。
+// Vercel Cron 调用：对城堡做一次结算（捣蛋萌可捣乱/成长刷新）。多娃下遍历所有孩子。
 export async function POST(req: Request) {
   const secret = req.headers.get('authorization') || new URL(req.url).searchParams.get('secret');
   if (secret !== process.env.CRON_SECRET) {
