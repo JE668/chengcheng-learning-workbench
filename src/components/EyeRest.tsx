@@ -104,21 +104,19 @@ export default function EyeRest() {
         </div>
       )}
 
-      {/* 休息提醒全屏弹层 */}
+      {/* 休息提醒：顶部非阻塞横幅（不遮挡内容，不打断学习） */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-sky-100/95 to-indigo-100/95 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl p-7 w-full max-w-md text-center">
-            <div className="text-7xl mb-3 animate-bounce">🌿</div>
-            <h3 className="text-2xl font-black text-moko-violet mb-2">该让眼睛休息一下啦！</h3>
-            <p className="text-gray-600 mb-4">你已经专注学习 {minutes} 分钟，和萌可一起做护眼操吧～</p>
-            <ul className="text-left text-gray-600 space-y-2 mb-6 bg-moko-cream rounded-2xl p-4">
-              <li>🌳 抬头看 6 米（20 英尺）外的远处 20 秒</li>
-              <li>🌀 慢慢眨眨眼，转转眼球</li>
-              <li>👐 搓热手心敷一敷眼睛</li>
-              <li>🥤 喝口水，伸个懒腰</li>
-            </ul>
-            <button onClick={resetTimer} className="w-full btn-magic bg-moko-mint text-white text-lg">休息好啦，继续加油 💪</button>
+        <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-sky-400 to-indigo-400 text-white shadow-lg px-4 py-2.5 flex items-center justify-center gap-3">
+          <span className="text-2xl">🌿</span>
+          <div className="text-sm font-bold leading-tight">
+            该让眼睛休息一下啦！已专注 {minutes} 分钟～抬头看远处 20 秒、转转眼球、喝口水
           </div>
+          <button
+            onClick={resetTimer}
+            className="ml-1 shrink-0 px-3 py-1.5 rounded-full bg-white text-moko-violet font-bold text-sm shadow hover:scale-105 active:scale-95 transition"
+          >
+            休息好啦 💪
+          </button>
         </div>
       )}
     </>

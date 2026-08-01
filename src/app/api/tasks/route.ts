@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const db = getDb();
   const subject = req.nextUrl.searchParams.get('subject');
   if (user.role === 'child') {
-    let sql = 'SELECT * FROM tasks';
+    let sql = 'SELECT id, title, subject, description, points, created_by, created_at FROM tasks';
     const args: any[] = [];
     if (subject) { sql += ' WHERE subject = ?'; args.push(subject); }
     sql += ' ORDER BY created_at DESC';
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     }));
     return NextResponse.json({ tasks });
   }
-  const all = await db.execute({ sql: 'SELECT * FROM tasks ORDER BY created_at DESC', args: [] });
+  const all = await db.execute({ sql: 'SELECT id, title, subject, description, points, created_by, created_at FROM tasks ORDER BY created_at DESC', args: [] });
   return NextResponse.json({ tasks: all.rows });
 }
 

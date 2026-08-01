@@ -33,6 +33,18 @@ export function getDb(): Client {
 
 export async function ensureSchema() {
   const db = getDb();
+  // NAS 自托管保护：开启 WAL 预写日志，避免断电/容器强杀导致 SQLite 损坏
+  await db.execute({ sql: 'PRAGMA journal_mode=WAL', args: [] });
+  await db.execute({ sql: 'PRAGMA synchronous=NORMAL', args: [] });
+
+  // 轻量初始化守卫：已建表则跳过整批 CREATE+ALTER+账号种子，省冷启动耗时。
+  // 如需强制重建（如手动改了 schema），删除 _schema_meta 表即可。
+  const guard = await db.execute({
+    sql: "SELECT name FROM sqlite_master WHERE type='table' AND name='_schema_meta'",
+    args: [],
+  });
+  if (guard.rows.length > 0) return;
+
   await db.batch([
     `CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -273,6 +285,10 @@ export async function ensureSchema() {
       await db.execute({ sql: 'UPDATE users SET selected_child_id = ? WHERE id = ?', args: [childId, parentId] });
     }
   }
+
+  // 标记初始化完成（供上面的守卫识别，避免每次冷启动重跑整批迁移）
+  await db.execute({ sql: 'CREATE TABLE IF NOT EXISTS _schema_meta (initialized INTEGER PRIMARY KEY DEFAULT 1)', args: [] });
+  await db.execute({ sql: 'INSERT OR IGNORE INTO _schema_meta (initialized) VALUES (1)', args: [] });
 }
 
 /** 取某个家长名下的所有孩子（按 id 升序）。 */

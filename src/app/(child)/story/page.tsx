@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { storyChapters } from '@/lib/story';
-import { mokoCollectionByName } from '@/lib/moko-collection';
+import { mokoImgByName } from '@/lib/moko-imgs';
 
 interface Progress {
   captured: string[];
@@ -77,7 +77,7 @@ export default function StoryPage() {
           const isCaptured = progress.captured.includes(c.id);
           const isNext = i === progress.nextIndex;
           const isLocked = i > progress.nextIndex;
-          const img = mokoCollectionByName[c.mokoName]?.img;
+          const img = mokoImgByName[c.mokoName];
           const open = active === c.id;
 
           if (isLocked) {
