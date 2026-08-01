@@ -29,10 +29,10 @@ export default function SettingsPage() {
             <input value={childUsername} onChange={e => setChildUsername(e.target.value)} className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none" />
           </div>
           <div>
-            <label className="block font-bold text-gray-700 mb-1">新密码</label>
+            <label className="block font-bold text-gray-700 mb-1">新密码（至少 4 位）</label>
             <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none" />
           </div>
-          <button onClick={save} className="w-full py-3 bg-gradient-to-r from-moko-rose to-moko-pink text-white text-xl font-extrabold rounded-2xl shadow hover:scale-[1.02] transition">保存修改</button>
+          <button onClick={save} disabled={newPassword.length < 4} className="w-full py-3 bg-gradient-to-r from-moko-rose to-moko-pink text-white text-xl font-extrabold rounded-2xl shadow hover:scale-[1.02] transition disabled:opacity-40 disabled:cursor-not-allowed">保存修改</button>
         </div>
       </div>
     </div>

@@ -9,14 +9,18 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   const taskId = Number(params.id);
   const task = await db.execute({ sql: 'SELECT * FROM tasks WHERE id = ?', args: [taskId] });
   if (!task.rows.length) return NextResponse.json({ error: '任务不存在' }, { status: 404 });
-  try {
-    await db.execute({
-      sql: 'INSERT INTO completions (task_id, child_id, points) VALUES (?, ?, ?)',
-      args: [taskId, user.id, Number(task.rows[0].points)],
-    });
-  } catch {
+
+  const points = Number(task.rows[0].points);
+  // 防重放刷分：同一孩子同一任务只计分一次（原子 INSERT ... WHERE NOT EXISTS）。
+  const res = await db.execute({
+    sql: `INSERT INTO completions (task_id, child_id, points)
+          SELECT ?, ?, ?
+          WHERE NOT EXISTS (SELECT 1 FROM completions WHERE task_id = ? AND child_id = ?)`,
+    args: [taskId, user.id, points, taskId, user.id],
+  });
+  if (Number(res.rowsAffected ?? 0) === 0) {
     return NextResponse.json({ error: '已经领取过该任务积分' }, { status: 409 });
   }
-  const points = await getChildPoints(user.id);
-  return NextResponse.json({ ok: true, points, message: `完成「${task.rows[0].title}」，获得 ${task.rows[0].points} 积分！` });
+  const balance = await getChildPoints(user.id);
+  return NextResponse.json({ ok: true, points: balance, message: `完成「${task.rows[0].title}」，获得 ${points} 积分！` });
 }
