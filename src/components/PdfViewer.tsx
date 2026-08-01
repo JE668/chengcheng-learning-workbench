@@ -1,23 +1,52 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
 
 /**
  * 画布式 PDF 阅读器（基于 PDF.js，自托管 worker）。
  *
- * 为什么不用 <iframe src=xxx.pdf>：
- * 部分浏览器/手机 WebView 没有内置 PDF 预览，会直接「下载」；
- * 用 PDF.js 把每页渲染成 <canvas>，彻底绕开浏览器原生下载行为，
- * 实现「只能看、不能下载」。
+ * 设计目标：
+ *  1) 优先用 PDF.js 把每页渲染成 <canvas> —— 彻底绕开浏览器原生「下载」行为，实现只能看不能下载；
+ *  2) 任何失败（PDF.js 加载/初始化/渲染抛错、弱网下取不到 PDF）都**安全降级**为内嵌 <iframe>，
+ *     由 vercel.json 的 Content-Disposition: inline 保证桌面端内联显示；
+ *  3) 用 ErrorBoundary 接住一切未被 try/catch 兜住的同步渲染异常，绝不让整页白屏（client-side exception）。
  *
  * worker 自托管在 /pdf.worker.min.mjs（同源，不受国内访问影响）。
- * PDF 源支持跨域（镜像/对象存储），但跨域源需返回
- * Access-Control-Allow-Origin: *（PDF.js 用 fetch 取 PDF）。
+ * PDF 源支持跨域（镜像/对象存储），但跨域源需返回 Access-Control-Allow-Origin: *。
  */
-export default function PdfViewer({ url, className = '' }: { url: string; className?: string }) {
+
+/** 降级方案：内嵌 iframe 直接打开 PDF（不会崩，桌面端内联显示，移动端可能触发下载亦可用） */
+function PdfIframeFallback({ url }: { url: string }) {
+  return (
+    <iframe
+      src={url}
+      title="PDF 阅读"
+      className="w-full border-0 rounded-lg bg-white"
+      style={{ height: '100%', minHeight: '60vh' }}
+    />
+  );
+}
+
+/** 错误边界：接住子组件的同步渲染异常，降级为 iframe，避免整页 client-side exception 白屏 */
+class PdfErrorBoundary extends Component<{ url: string; children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch() {
+    /* 仅作降级，无需上报 */
+  }
+  render() {
+    if (this.state.hasError) return <PdfIframeFallback url={this.props.url} />;
+    return this.props.children;
+  }
+}
+
+/** 真正的 canvas 渲染逻辑；异步任何失败都置 failed，由本组件渲染 iframe 降级 */
+function PdfCanvas({ url, className = '' }: { url: string; className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,7 +54,7 @@ export default function PdfViewer({ url, className = '' }: { url: string; classN
     if (!container) return;
     container.innerHTML = '';
     setStatus('loading');
-    setErrorMsg('');
+    setFailed(false);
 
     (async () => {
       try {
@@ -57,15 +86,16 @@ export default function PdfViewer({ url, className = '' }: { url: string; classN
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const base = page.getViewport({ scale: 1 });
+          if (!base.width || !base.height) continue;
           const scale = (containerWidth / base.width) * dpr;
           const viewport = page.getViewport({ scale });
 
           const canvas = document.createElement('canvas');
           canvas.className = 'block mx-auto mb-3 rounded-lg shadow bg-white';
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
+          canvas.width = Math.max(1, Math.floor(viewport.width));
+          canvas.height = Math.max(1, Math.floor(viewport.height));
           canvas.style.width = `${containerWidth}px`;
-          canvas.style.height = `${(viewport.height / dpr).toFixed(0)}px`;
+          canvas.style.height = `${Math.max(1, Math.floor(viewport.height / dpr))}px`;
 
           const ctx = canvas.getContext('2d');
           if (!ctx) continue;
@@ -75,11 +105,8 @@ export default function PdfViewer({ url, className = '' }: { url: string; classN
         }
 
         if (!cancelled) setStatus('ready');
-      } catch (e) {
-        if (!cancelled) {
-          setStatus('error');
-          setErrorMsg(e instanceof Error ? e.message : 'PDF 加载失败');
-        }
+      } catch {
+        if (!cancelled) setFailed(true); // 降级为 iframe，避免白屏
       }
     })();
 
@@ -88,20 +115,26 @@ export default function PdfViewer({ url, className = '' }: { url: string; classN
     };
   }, [url]);
 
+  // 任意失败 → iframe 降级（不再白屏）
+  if (failed) return <PdfIframeFallback url={url} />;
+
   return (
     <div className={className}>
       {status === 'loading' && (
         <div className="flex items-center justify-center text-gray-400 py-10">📄 正在加载绘本…</div>
       )}
       {status === 'error' && (
-        <div className="flex flex-col items-center justify-center text-gray-500 py-10 gap-2 text-center px-4">
-          <span>😢 PDF 加载失败（{errorMsg}）</span>
-          <a href={url} target="_blank" rel="noreferrer" className="text-moko-rose font-bold underline">
-            尝试在新标签打开 ↗
-          </a>
-        </div>
+        <div className="flex items-center justify-center text-gray-500 py-10">😢 该绘本暂不可用</div>
       )}
       <div ref={containerRef} className="w-full" />
     </div>
+  );
+}
+
+export default function PdfViewer({ url, className = '' }: { url: string; className?: string }) {
+  return (
+    <PdfErrorBoundary url={url}>
+      <PdfCanvas url={url} className={className} />
+    </PdfErrorBoundary>
   );
 }
