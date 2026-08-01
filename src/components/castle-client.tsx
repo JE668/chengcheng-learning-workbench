@@ -29,7 +29,7 @@ export function CheckinPanel({ initial }: { initial: Record<Subject, string> }) 
               <div className="text-3xl mb-1">{s.icon}</div>
               <div className="font-black text-lg mb-2">{s.label}</div>
               <div className={`w-full py-2 rounded-full font-bold text-sm ${done ? 'bg-white/30' : 'bg-white text-moko-rose'}`}>
-                {done ? (st === 'confirmed' ? '今天已完成 🌟' : '已提交，今天完成 ✓') : '待完成'}
+                {done ? '今天已完成 🌟' : '待完成'}
               </div>
             </div>
           );

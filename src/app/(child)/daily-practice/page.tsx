@@ -46,12 +46,11 @@ export default function DailyPracticePage() {
     if (q) autoPlay(q);
   }, [q]);
 
-  const allCorrect = !!data && data.questions.length > 0 && selected.length === data.questions.length && data.questions.every((qq, i) => selected[i] === qq.answer);
+  const allAnswered = !!data && selected.length === data.questions.length && selected.every((s) => s !== -1);
 
   const choose = useCallback(
     (optionIndex: number) => {
       if (!q) return;
-      if (selected[idx] === q.answer) return; // 已答对则锁定
       setSelected((prev) => {
         const next = [...prev];
         next[idx] = optionIndex;
@@ -61,8 +60,20 @@ export default function DailyPracticePage() {
     [q, selected, idx],
   );
 
+  const retry = useCallback(() => {
+    if (!data || !result) return;
+    // 已完成的科自动填对答案（锁定），只清空没过、需要重练的科
+    setSelected(
+      data.questions.map((qq) => {
+        const st = result.subjects.find((x) => x.subject === qq.subject)?.status;
+        return st === 'failed' ? -1 : qq.answer;
+      }),
+    );
+    setResult(null);
+  }, [data, result]);
+
   const submit = useCallback(async () => {
-    if (!allCorrect) return;
+    if (!allAnswered) return;
     setSubmitting(true);
     try {
       const r = await fetch('/api/daily-practice', {
@@ -75,7 +86,7 @@ export default function DailyPracticePage() {
     } finally {
       setSubmitting(false);
     }
-  }, [allCorrect, selected]);
+  }, [allAnswered, selected]);
 
   if (loading) {
     return <div className="max-w-2xl mx-auto p-10 text-center text-moko-violet font-bold">萌可正在准备今天的练习…</div>;
@@ -104,30 +115,65 @@ export default function DailyPracticePage() {
 
   // 提交结果弹窗
   if (result) {
-    const rw = result.rewards;
+    // 三科全部完成 → 庆祝
+    if (result.completed) {
+      const rw = result.rewards;
+      return (
+        <div className="max-w-2xl mx-auto p-6">
+          <div className="card-moko text-center p-8 bg-gradient-to-br from-moko-pink to-moko-rose text-white">
+            <div className="text-6xl mb-3">🎉</div>
+            <h1 className="text-3xl font-black mb-2">三科全部完成，太棒啦！</h1>
+            <p className="text-lg opacity-90">今日一练打卡完成，萌可们超开心～</p>
+            {rw && (
+              <div className="mt-5 space-y-2 text-left bg-white/20 rounded-2xl p-4">
+                <div className="flex items-center gap-2">☀️ <span>阳光能量 +{rw.sunlight}</span></div>
+                <div className="flex items-center gap-2">🧸 <span>召唤 {rw.mokos.join('、')}</span></div>
+                {rw.prosperity && <div className="flex items-center gap-2">🏰 <span>城堡繁荣度 +1</span></div>}
+                <div className="flex items-center gap-2">🔥 <span>已连续完成 {result.practiceStreak} 天</span></div>
+              </div>
+            )}
+            {result.milestone && (
+              <div className="mt-4 bg-white/25 rounded-2xl p-4">
+                <div className="text-2xl font-black">🌟 连续 7 天达成！</div>
+                <div className="mt-1">解锁新萌可「{result.milestone.mokoName}」+ 10 ⭐ 星星币</div>
+              </div>
+            )}
+            <div className="flex gap-3 justify-center mt-6">
+              <Link href="/home" className="px-6 py-3 rounded-full bg-white text-moko-rose font-black">返回首页</Link>
+              <Link href="/castle" className="px-6 py-3 rounded-full bg-moko-gold text-white font-black">去看城堡</Link>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    // 部分完成 → 按科展示 + 继续练习
     return (
       <div className="max-w-2xl mx-auto p-6">
-        <div className="card-moko text-center p-8 bg-gradient-to-br from-moko-pink to-moko-rose text-white">
-          <div className="text-6xl mb-3">🎉</div>
-          <h1 className="text-3xl font-black mb-2">全部答对，太棒啦！</h1>
-          <p className="text-lg opacity-90">今日一练完成，三科打卡自动完成 🌟</p>
-          {rw && (
-            <div className="mt-5 space-y-2 text-left bg-white/20 rounded-2xl p-4">
-              <div className="flex items-center gap-2">☀️ <span>阳光能量 +{rw.sunlight}</span></div>
-              <div className="flex items-center gap-2">🧸 <span>召唤 {rw.mokos.join('、')}</span></div>
-              {rw.prosperity && <div className="flex items-center gap-2">🏰 <span>城堡繁荣度 +1</span></div>}
-              <div className="flex items-center gap-2">🔥 <span>已连续完成 {result.practiceStreak} 天</span></div>
+        <div className="card-moko text-center p-8 bg-gradient-to-br from-moko-gold to-moko-yellow text-white">
+          <div className="text-6xl mb-3">💪</div>
+          <h1 className="text-3xl font-black mb-2">这一科完成啦，继续加油！</h1>
+          <p className="text-lg opacity-90">每做对一科，就解锁一只萌可～把没过的也补上吧！</p>
+          <div className="mt-5 space-y-2 text-left bg-white/20 rounded-2xl p-4">
+            {result.subjects.map((s) => (
+              <div key={s.subject} className="flex items-center justify-between">
+                <span className="font-bold">{s.subject}</span>
+                <span>
+                  {s.status === 'passed' || s.status === 'already' ? '✅ 已完成' : `❌ ${s.correct}/${s.total} 再练一次`}
+                </span>
+              </div>
+            ))}
+          </div>
+          {result.rewards && (
+            <div className="mt-3 text-left bg-white/20 rounded-2xl p-4 space-y-1">
+              <div>☀️ 阳光能量 +{result.rewards.sunlight}</div>
+              <div>🧸 召唤 {result.rewards.mokos.join('、')}</div>
             </div>
           )}
-          {result.milestone && (
-            <div className="mt-4 bg-white/25 rounded-2xl p-4">
-              <div className="text-2xl font-black">🌟 连续 7 天达成！</div>
-              <div className="mt-1">解锁新萌可「{result.milestone.mokoName}」+ 10 ⭐ 星星币</div>
-            </div>
-          )}
-          <div className="flex gap-3 justify-center mt-6">
-            <Link href="/home" className="px-6 py-3 rounded-full bg-white text-moko-rose font-black">返回首页</Link>
-            <Link href="/castle" className="px-6 py-3 rounded-full bg-moko-gold text-white font-black">去看城堡</Link>
+          <button onClick={retry} className="mt-6 px-8 py-3 rounded-full bg-white text-moko-rose font-black hover:scale-105 transition">
+            继续练习没完成的科目
+          </button>
+          <div className="mt-3">
+            <Link href="/home" className="text-sm font-bold text-white/90 underline">先回首页逛逛 ›</Link>
           </div>
         </div>
       </div>
@@ -218,7 +264,7 @@ export default function DailyPracticePage() {
         {idx < (data?.questions.length ?? 1) - 1 ? (
           <button
             onClick={() => setIdx((i) => i + 1)}
-            disabled={!isCorrect}
+            disabled={selected[idx] === -1}
             className="px-6 py-3 rounded-full bg-gradient-to-r from-moko-pink to-moko-rose text-white font-black disabled:opacity-40"
           >
             下一题 ›
@@ -226,7 +272,7 @@ export default function DailyPracticePage() {
         ) : (
           <button
             onClick={submit}
-            disabled={!allCorrect || submitting}
+            disabled={!allAnswered || submitting}
             className="px-6 py-3 rounded-full bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black disabled:opacity-40"
           >
             {submitting ? '提交中…' : '✅ 完成今日一练'}

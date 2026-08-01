@@ -72,7 +72,7 @@ export default async function HomePage() {
       <div className="card-moko mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl font-black text-moko-violet">🌟 今日学习打卡</h2>
-          <span className="text-sm text-gray-500">三科全完成 → 繁荣度飙升！</span>
+          <span className="text-sm text-gray-500">每科 3 题答对，即完成该科打卡 🌟</span>
         </div>
         <CheckinPanel initial={castle.checkins} />
       </div>
@@ -81,7 +81,7 @@ export default async function HomePage() {
       <div className="card-moko mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl font-black text-moko-violet">🎯 今日一练</h2>
-          <span className="text-sm text-gray-500">做完 9 题 = 三科打卡自动完成</span>
+          <span className="text-sm text-gray-500">每科 3 题全对，该科打卡自动完成（不用一次全对）</span>
         </div>
         {practice.completed ? (
           <div className="flex items-center justify-between">
