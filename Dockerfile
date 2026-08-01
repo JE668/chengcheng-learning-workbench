@@ -11,13 +11,18 @@ ENV TURSO_URL=file:/data/local.db
 
 WORKDIR /app
 
-# 1) 先装依赖（利用层缓存，仅生产依赖）
+# 1) 先装全部依赖（利用层缓存）。
+#    注意：next build 需要 tailwindcss/postcss/autoprefixer（devDependencies）来编译 CSS，
+#    因此不能 --omit=dev；构建完成后再 npm prune 去掉 dev 依赖以减小运行镜像。
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
 # 2) 拷源码并构建（public/raz、public/textbooks 已在 .dockerignore 排除，运行时由卷挂载）
 COPY . .
 RUN npm run build
+
+# 3) 构建产物就绪，移除 dev 依赖（next start 运行时不需要 tailwind/eslint/typescript）
+RUN npm prune --omit=dev
 
 # 3) 降权运行 + 建数据库持久目录
 RUN groupadd -g 1001 nodejs \
