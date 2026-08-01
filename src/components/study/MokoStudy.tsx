@@ -6,12 +6,10 @@ import {
   RADICALS,
   TEXT_CHAR_LESSONS,
   SPLITS,
-  RAZ_READERS,
   type TextCharLesson,
   type TextCharItem,
-  type RazReader,
-  type RazSentence,
 } from '@/lib/study-data';
+import { RAZ_BOOKS, type RazBook } from '@/lib/raz-books';
 import { speakZh, speakEn } from '@/lib/speak';
 
 function shuffle<T>(arr: T[]): T[] {
@@ -224,60 +222,62 @@ export function SplitModule() {
 }
 
 /* ============================================================
-   英语 · RAZ AA 点读绘本
+   英语 · RAZ AA 点读绘本（真实 PDF 绘本 + 动画视频）
    ============================================================ */
-function SentenceRow({ s }: { s: RazSentence }) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl bg-white shadow border-2 border-gray-100 p-3">
-      <div className="text-3xl">{s.emoji}</div>
-      <div className="flex-1">
-        <button
-          onClick={() => speakEn(s.en)}
-          className="text-lg font-black text-moko-violet cursor-pointer hover:underline"
-        >
-          {s.en}
-        </button>
-        <div className="text-xs text-gray-400">{s.cn}</div>
-      </div>
-      <button
-        onClick={() => speakEn(s.en)}
-        className="px-3 py-2 rounded-full bg-moko-yellow text-white font-bold text-sm active:scale-95 transition"
-      >
-        🔊 点读
-      </button>
-    </div>
-  );
-}
-
-function ReaderCard({ r }: { r: RazReader }) {
+function ReaderCard({ book }: { book: RazBook }) {
   const [open, setOpen] = useState(false);
-  function readAll() {
-    r.sentences.forEach((s, i) => setTimeout(() => speakEn(s.en, 0.7), i * 1100));
-  }
   return (
-    <div className={`rounded-2xl shadow-lg border-2 border-white/40 overflow-hidden ${r.color} text-white`}>
+    <div className="rounded-2xl shadow-lg border-2 border-white/40 overflow-hidden bg-moko-yellow text-white">
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center gap-3 p-4 text-left active:scale-[0.99] transition"
       >
-        <span className="text-3xl">{r.emoji}</span>
+        <span className="text-3xl">{book.hasPdf ? '📖' : '🎬'}</span>
         <span className="flex-1">
-          <span className="block text-lg font-black">{r.title}</span>
-          <span className="block text-xs opacity-90">{r.sentences.length} 句 · RAZ AA</span>
+          <span className="block text-lg font-black">
+            {book.id} · {book.title}
+          </span>
+          <span className="block text-xs opacity-90">
+            RAZ AA · {book.hasPdf ? '绘本 + 动画' : '动画'}
+          </span>
         </span>
         <span className="text-2xl">{open ? '▾' : '▸'}</span>
       </button>
       {open && (
-        <div className="px-4 pb-4 space-y-2 bg-white/10">
-          <button
-            onClick={readAll}
-            className="w-full py-2 rounded-full bg-white text-moko-violet font-bold text-sm active:scale-95 transition"
+        <div className="px-4 pb-4 space-y-3 bg-white/10">
+          <div className="flex gap-2">
+            <button
+              onClick={() => speakEn(book.title)}
+              className="flex-1 py-2 rounded-full bg-white text-moko-violet font-bold text-sm active:scale-95 transition"
+            >
+              🔊 读标题
+            </button>
+            {book.hasPdf && (
+              <a
+                href={`/raz/books/${book.id}.pdf`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 text-center py-2 rounded-full bg-white text-moko-violet font-bold text-sm active:scale-95 transition"
+              >
+                ↗ 新窗口读绘本
+              </a>
+            )}
+          </div>
+          <video
+            src={`/raz/videos/${book.id}.mp4`}
+            controls
+            playsInline
+            className="w-full rounded-xl bg-black"
           >
-            🔊 读整本
-          </button>
-          {r.sentences.map((s, i) => (
-            <SentenceRow key={i} s={s} />
-          ))}
+            您的浏览器不支持视频播放。
+          </video>
+          {book.hasPdf && (
+            <iframe
+              src={`/raz/books/${book.id}.pdf`}
+              title={book.title}
+              className="w-full h-[70vh] rounded-xl border-0 bg-white"
+            />
+          )}
         </div>
       )}
     </div>
@@ -288,10 +288,10 @@ export function RazReaderModule() {
   return (
     <div className="space-y-3">
       <p className="text-sm text-gray-500">
-        🎵 唱唱萌可带你读 RAZ AA 绘本～点「点读」听发音，跟着小声念，再把整本连起来读！
+        🎵 唱唱萌可带你读 RAZ AA 绘本～点开一本书，先看动画听发音，再翻绘本跟读；点「读标题」听单词发音！
       </p>
-      {RAZ_READERS.map((r) => (
-        <ReaderCard key={r.title} r={r} />
+      {RAZ_BOOKS.map((b) => (
+        <ReaderCard key={b.id} book={b} />
       ))}
     </div>
   );
