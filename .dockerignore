@@ -1,0 +1,12 @@
+# 构建上下文排除：减小镜像、跳过 502MB 媒体（媒体由卷挂载，不进镜像）
+node_modules
+.next
+.git
+.workbuddy
+**/node_modules_bak_*
+public/raz
+public/textbooks
+npm-debug.log
+*.log
+.DS_Store
+README.md
