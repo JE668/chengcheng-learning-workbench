@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 const DURATIONS = [10, 20, 30, 40];
 const STORE_ENABLED = 'eyeRestEnabled';
@@ -13,6 +13,7 @@ export default function EyeRest() {
   const [remaining, setRemaining] = useState(20 * 60);
   const [showModal, setShowModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const startRef = useRef(0); // 本次会话计时起点（用 ref，避免 reset 后 tick 闭包读到旧起点导致反复弹窗）
 
   // 初始化：从 localStorage 读取偏好，从 sessionStorage 恢复本次会话的计时起点
   useEffect(() => {
@@ -24,8 +25,9 @@ export default function EyeRest() {
       start = Date.now();
       sessionStorage.setItem(SESSION_START, String(start));
     }
+    startRef.current = start;
     const tick = () => {
-      const elapsed = Math.floor((Date.now() - start) / 1000);
+      const elapsed = Math.floor((Date.now() - startRef.current) / 1000);
       const left = Math.max(0, m * 60 - elapsed);
       setRemaining(left);
       if (localStorage.getItem(STORE_ENABLED) !== 'false' && left <= 0) {
@@ -38,7 +40,9 @@ export default function EyeRest() {
   }, [minutes]);
 
   const resetTimer = useCallback(() => {
-    sessionStorage.setItem(SESSION_START, String(Date.now()));
+    const now = Date.now();
+    sessionStorage.setItem(SESSION_START, String(now));
+    startRef.current = now; // 关键：同步更新起点，下一次 tick 读到新值，弹窗不会立刻再次弹出
     setRemaining(minutes * 60);
     setShowModal(false);
   }, [minutes]);
