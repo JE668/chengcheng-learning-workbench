@@ -7,7 +7,6 @@ import { NumberSenseModule, CompareModule, ShapeModule, MathQuizModule, AngleMod
 import { PositionModule, SolidShapeModule, Numbers1120Module, ClockModule } from '@/components/study/MathExtra';
 import { SplitModule } from '@/components/study/MokoStudy';
 import { LetterModule, WordModule, EnListenModule, EnSpeakModule, UnitModule } from '@/components/study/EnglishModules';
-import { RazReaderModule } from '@/components/study/MokoStudy';
 
 export interface StudyModuleMeta {
   key: string;
@@ -48,7 +47,6 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'letters', label: '字母乐园', emoji: '🔤', desc: 'A ~ Z 认读', Component: LetterModule, color: 'bg-moko-yellow' },
     { key: 'units', label: '单元通关', emoji: '🗂️', desc: '人教版一年级起点 7 个单元', Component: UnitModule, color: 'bg-moko-yellow' },
     { key: 'words', label: '单词世界', emoji: '📚', desc: '动物·食物·颜色…点读跟读', Component: WordModule, color: 'bg-moko-yellow' },
-    { key: 'raz', label: 'RAZ 点读绘本', emoji: '📖', desc: 'RAZ AA 分级阅读，点读跟读', Component: RazReaderModule, color: 'bg-moko-yellow' },
     { key: 'listen', label: '听音选词', emoji: '🎧', desc: '难度会自己调整哦', Component: EnListenModule, color: 'bg-moko-yellow' },
     { key: 'speak', label: '口语跟读', emoji: '🎙️', desc: '逐词挑战，评发音', Component: EnSpeakModule, color: 'bg-moko-violet' },
   ],

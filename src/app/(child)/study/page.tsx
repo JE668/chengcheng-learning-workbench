@@ -22,7 +22,7 @@ const cards = [
   {
     key: 'english',
     label: '英语乐园',
-    sub: '唱唱萌可教你字母、单词、RAZ AA 点读录音',
+    sub: '唱唱萌可教你字母、单词、听读练习',
     img: '/moko/singping.jpg',
     color: 'bg-moko-yellow',
     border: 'border-moko-yellow/30',

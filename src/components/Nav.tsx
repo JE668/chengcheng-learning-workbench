@@ -5,16 +5,16 @@ import { usePathname } from 'next/navigation';
 import { User } from '@/lib/types';
 
 const childLinks = [
-  { href: '/home', label: '首页', icon: '🏠' },
-  { href: '/daily-practice', label: '今日一练', icon: '🎯' },
-  { href: '/study', label: '学习', icon: '📚' },
+  { href: '/home', label: '萌可小屋', icon: '🏠' },
+  { href: '/daily-practice', label: '萌可闯关', icon: '🎯' },
+  { href: '/study', label: '萌可学堂', icon: '📚' },
   { href: '/my-tasks', label: '我的任务', icon: '📝' },
-  { href: '/textbook', label: '课本', icon: '📖' },
-  { href: '/games', label: '游戏', icon: '🎮' },
-  { href: '/record', label: '记录', icon: '🏆' },
-  { href: '/cert', label: '奖状', icon: '🎖️' },
-  { href: '/castle', label: '城堡', icon: '🏰' },
-  { href: '/shop', label: '商店', icon: '🛍️' },
+  { href: '/textbook', label: '萌可课本', icon: '📖' },
+  { href: '/games', label: '萌可游戏', icon: '🎮' },
+  { href: '/record', label: '成长记录', icon: '🏆' },
+  { href: '/cert', label: '荣誉奖状', icon: '🎖️' },
+  { href: '/castle', label: '萌可城堡', icon: '🏰' },
+  { href: '/shop', label: '萌可商店', icon: '🛍️' },
 ];
 
 const parentLinks = [

@@ -68,31 +68,25 @@ export default async function HomePage() {
         ))}
       </div>
 
-      {/* 今日打卡 */}
+      {/* 今日一练 · 三科打卡（合并卡片：状态 + 入口合一） */}
       <div className="card-moko mb-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-black text-moko-violet">🌟 今日学习打卡</h2>
-          <span className="text-sm text-gray-500">每科 3 题答对，即完成该科打卡 🌟</span>
+          <h2 className="text-xl font-black text-moko-violet">🎯 今日一练 · 三科打卡</h2>
+          <span className="text-sm text-gray-500">每科 3 题全对，自动完成该科打卡 🌟</span>
         </div>
         <CheckinPanel initial={castle.checkins} />
-      </div>
-
-      {/* 今日一练（合并到三科打卡） */}
-      <div className="card-moko mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-black text-moko-violet">🎯 今日一练</h2>
-          <span className="text-sm text-gray-500">每科 3 题全对，该科打卡自动完成（不用一次全对）</span>
+        <div className="mt-3">
+          {practice.completed ? (
+            <div className="flex items-center justify-between">
+              <div className="text-moko-rose font-bold">今天已完成啦 🌟（已连续 {practice.practiceStreak} 天）</div>
+              <Link href="/daily-practice" className="text-sm font-bold text-moko-rose">查看 ›</Link>
+            </div>
+          ) : (
+            <Link href="/daily-practice" className="block text-center py-3 rounded-2xl bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black text-lg hover:scale-105 transition">
+              ▶ 开始今日一练（语文 3 + 数学 3 + 英语 3）
+            </Link>
+          )}
         </div>
-        {practice.completed ? (
-          <div className="flex items-center justify-between">
-            <div className="text-moko-rose font-bold">今天已完成啦 🌟（已连续 {practice.practiceStreak} 天）</div>
-            <Link href="/daily-practice" className="text-sm font-bold text-moko-rose">查看 ›</Link>
-          </div>
-        ) : (
-          <Link href="/daily-practice" className="block text-center py-3 rounded-2xl bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black text-lg hover:scale-105 transition">
-            ▶ 开始今日一练（语文 3 + 数学 3 + 英语 3）
-          </Link>
-        )}
         <div className="mt-3 text-xs text-gray-500">再坚持 {practice.nextMilestone} 天，解锁一只新萌可入驻城堡 🧸</div>
       </div>
 
