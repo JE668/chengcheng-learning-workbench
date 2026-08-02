@@ -72,6 +72,18 @@ export default function StudyPage() {
       </Link>
 
       <Link
+        href="/study/picto"
+        className="mt-8 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-purple/40 bg-gradient-to-r from-moko-purple/20 to-moko-pink/20 hover:scale-[1.02] transition block"
+      >
+        <span className="text-5xl">🌟</span>
+        <div className="flex-1">
+          <h3 className="text-xl font-black text-moko-violet">象形字变变变</h3>
+          <p className="text-sm text-gray-600">看汉字怎么从「画」变成「字」，记得更牢</p>
+        </div>
+        <span className="text-moko-violet font-black text-lg">打开 ›</span>
+      </Link>
+
+      <Link
         href="/textbook"
         className="mt-8 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-gold/40 bg-gradient-to-r from-moko-gold/20 to-moko-yellow/20 hover:scale-[1.02] transition block"
       >
