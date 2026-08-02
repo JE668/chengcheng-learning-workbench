@@ -60,6 +60,18 @@ export default function StudyPage() {
       </div>
 
       <Link
+        href="/study/talk"
+        className="mt-8 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-cyan/40 bg-gradient-to-r from-moko-cyan/20 to-moko-blue/20 hover:scale-[1.02] transition block"
+      >
+        <span className="text-5xl">🗣️</span>
+        <div className="flex-1">
+          <h3 className="text-xl font-black text-moko-violet">看图说话 · 开口表达</h3>
+          <p className="text-sm text-gray-600">看场景说 3 句话，还能录下自己的声音回放</p>
+        </div>
+        <span className="text-moko-violet font-black text-lg">打开 ›</span>
+      </Link>
+
+      <Link
         href="/textbook"
         className="mt-8 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-gold/40 bg-gradient-to-r from-moko-gold/20 to-moko-yellow/20 hover:scale-[1.02] transition block"
       >
