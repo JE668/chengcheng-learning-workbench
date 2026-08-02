@@ -53,6 +53,12 @@ const BLEND_POOL = Object.keys(PINYIN_TONES)
 
 const ALL_FINALS = Array.from(new Set(BLEND_POOL.map((b) => b.final)));
 
+/* 易混韵母（前后鼻音、平翘舌相关），高难度时优先当干扰项 */
+const CONFUSABLE: Record<string, string[]> = {
+  an: ['ang'], ang: ['an'], en: ['eng'], eng: ['en'], in: ['ing'], ing: ['in'],
+  ian: ['iang'], iang: ['ian'], un: ['ün'], ün: ['un'], üe: ['ie'], ie: ['üe'],
+};
+
 type Mode = 'blend' | 'pick';
 
 export default function PinyinBlendPage() {
@@ -60,12 +66,23 @@ export default function PinyinBlendPage() {
   const [cur, setCur] = useState(() => rand(BLEND_POOL));
   const [picked, setPicked] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
+  // 难度自适应：连对 3 次升一档，连错 2 次降一档（1 易 ~ 3 难）
+  const [level, setLevel] = useState(1);
+  const [correctStreak, setCorrectStreak] = useState(0);
+  const [wrongStreak, setWrongStreak] = useState(0);
 
   const pickOptions = useMemo(() => {
     if (mode !== 'pick') return [];
-    const wrongs = shuffle(ALL_FINALS.filter((f) => f !== cur.final)).slice(0, 3);
-    return shuffle([cur.final, ...wrongs]);
-  }, [cur, mode]);
+    const count = Math.min(ALL_FINALS.length, level + 1); // 2~4 个选项
+    const wrongs: string[] = [];
+    const conf = CONFUSABLE[cur.final];
+    if (level >= 2 && conf) {
+      for (const cf of conf) if (cf !== cur.final && ALL_FINALS.includes(cf)) wrongs.push(cf);
+    }
+    const others = shuffle(ALL_FINALS.filter((f) => f !== cur.final && !wrongs.includes(f)));
+    while (wrongs.length < count - 1 && others.length) wrongs.push(others.shift()!);
+    return shuffle([cur.final, ...wrongs]).slice(0, count);
+  }, [cur, mode, level]);
 
   const next = useCallback(() => {
     setCur(rand(BLEND_POOL));
@@ -88,11 +105,19 @@ export default function PinyinBlendPage() {
     if (picked) return;
     setPicked(f);
     if (f === cur.final) {
+      const nc = correctStreak + 1;
+      setCorrectStreak(nc);
+      setWrongStreak(0);
+      setLevel((lv) => Math.min(3, nc >= 3 ? lv + 1 : lv));
       setMsg('✅ ' + rand(PRAISE));
       speakZh(rand(PRAISE));
       speakPinyin(cur.syllable, 0, cur.han);
       trackActivity('pinyin');
     } else {
+      const nw = wrongStreak + 1;
+      setWrongStreak(nw);
+      setCorrectStreak(0);
+      setLevel((lv) => Math.max(1, nw >= 2 ? lv - 1 : lv));
       setMsg('再听听看～');
       speakPinyin(cur.syllable, 0, cur.han);
     }
@@ -156,7 +181,11 @@ export default function PinyinBlendPage() {
               <span className="text-3xl font-black text-moko-violet">+ ? =</span>
               <button onClick={listenSyllable} className="px-5 py-4 rounded-3xl bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black text-lg shadow">🔊 听一听</button>
             </div>
-            <p className="text-center text-gray-500 mb-4">听听这个音，选出正确的韵母吧！</p>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <span className="text-sm text-gray-400">难度</span>
+              <span className="text-moko-gold">{level >= 1 ? '⭐'.repeat(level) : ''}{'☆'.repeat(3 - level)}</span>
+            </div>
+            <p className="text-center text-gray-500 mb-4">听听这个音，选出正确的韵母吧！连对会升级，连错会降级哦～</p>
             <div className="grid grid-cols-2 gap-3 mb-4">
               {pickOptions.map((f) => {
                 const chosen = picked === f;
