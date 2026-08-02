@@ -22,6 +22,14 @@ RUN npm ci
 
 # 2) 拷源码并构建（public/raz、public/textbooks 已在 .dockerignore 排除，运行时由卷挂载）
 COPY . .
+
+# [DEBUG] 临时排查 GHCR 构建中部分 @/ 模块报 “Module not found”：确认关键源文件与配置在上下文中存在
+RUN node -v \
+ && echo "--- key files ---" \
+ && ls -la src/lib/moko.ts src/components/MokoAvatar.tsx src/components/GuideModal.tsx src/lib/speak.ts src/components/GameShell.tsx 2>&1 \
+ && echo "--- tsconfig paths/baseUrl ---" \
+ && grep -E "baseUrl|@/\*" tsconfig.json 2>&1
+
 RUN npm run build
 
 # 3) 构建产物就绪，移除 dev 依赖（next start 运行时不需要 tailwind/eslint/typescript）
