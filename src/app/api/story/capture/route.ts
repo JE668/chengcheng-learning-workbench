@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const mokoKey = resolveChapterMokoKey(chapter.mokoName);
+  const mokoKey = chapter.mokoKey ?? resolveChapterMokoKey(chapter.mokoName);
   if (!mokoKey) return NextResponse.json({ error: '萌可数据缺失' }, { status: 500 });
 
   // 记录剧情进度（幂等）
