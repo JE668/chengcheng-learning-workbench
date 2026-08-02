@@ -5,7 +5,6 @@
 # next build 报 “Module not found: Can't resolve '@/lib/moko'” 等伪错误。
 FROM node:22-bookworm-slim
 
-ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
@@ -15,8 +14,9 @@ ENV TURSO_URL=file:/data/local.db
 WORKDIR /app
 
 # 1) 先装全部依赖（利用层缓存）。
-#    注意：next build 需要 tailwindcss/postcss/autoprefixer（devDependencies）来编译 CSS，
-#    因此不能 --omit=dev；构建完成后再 npm prune 去掉 dev 依赖以减小运行镜像。
+#    注意：构建期绝不能设 NODE_ENV=production —— npm ci 在 production 下会跳过全部
+#    devDependencies（tailwindcss/postcss/autoprefixer 等），导致 next build 编译 CSS 时
+#    报 “Cannot find module 'tailwindcss'”。因此 NODE_ENV=production 放到构建/prune 之后。
 COPY package.json package-lock.json ./
 RUN npm ci
 
@@ -27,7 +27,10 @@ RUN npm run build
 # 3) 构建产物就绪，移除 dev 依赖（next start 运行时不需要 tailwind/eslint/typescript）
 RUN npm prune --omit=dev
 
-# 3) 降权运行 + 建数据库持久目录
+# 4) 运行时才设 production（构建期不设置，避免 npm ci 漏装 dev 依赖）
+ENV NODE_ENV=production
+
+# 5) 降权运行 + 建数据库持久目录
 RUN groupadd -g 1001 nodejs \
  && useradd -u 1001 -g nodejs -m nextjs \
  && mkdir -p /data && chown -R nextjs:nodejs /data
