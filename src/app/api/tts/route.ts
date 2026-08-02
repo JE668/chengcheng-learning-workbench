@@ -51,11 +51,16 @@ export async function POST(req: NextRequest) {
   let text = '';
   let lang = 'zh';
   let rate = '';
+  let pause = 0;
   try {
     const body = await req.json();
     text = typeof body.text === 'string' ? body.text : '';
     lang = body.lang === 'en' ? 'en' : 'zh';
     if (typeof body.rate === 'string' && body.rate.trim()) rate = body.rate.trim();
+    // 可选：音节后追加静音停顿（毫秒），用于把单个拼音拉长到接近 1 秒
+    if (typeof body.pause === 'number' && Number.isFinite(body.pause)) {
+      pause = Math.max(0, Math.min(2000, Math.round(body.pause)));
+    }
   } catch {
     return NextResponse.json({ error: 'invalid body' }, { status: 400 });
   }
@@ -127,7 +132,7 @@ export async function POST(req: NextRequest) {
         const ssml =
           `X-RequestId:${uuid()}\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:${new Date()}Z\r\nPath:ssml\r\n\r\n` +
           `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>` +
-          `<voice name='${VOICE[lang]}'><prosody pitch='+0Hz' rate='${rate}' volume='+0%'>${text}</prosody></voice></speak>`;
+          `<voice name='${VOICE[lang]}'><prosody pitch='+0Hz' rate='${rate}' volume='+0%'>${text}</prosody>${pause > 0 ? `<break time='${pause}ms'/>` : ''}</voice></speak>`;
         ws.send(ssml, { compress: true }, (e) => e && done(() => reject(e)));
       });
 

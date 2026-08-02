@@ -81,16 +81,17 @@ export function speakEn(text: string, rate = 0.75) {
 export async function playTts(
   text: string,
   lang: 'zh' | 'en',
-  opts: { wsRate?: number; pitch?: number } = {},
+  opts: { wsRate?: number; pitch?: number; pauseMs?: number } = {},
 ) {
   const wsRate = opts.wsRate ?? 0.8;
   const pitch = opts.pitch ?? 1.05;
+  const pauseMs = opts.pauseMs ?? 0;
   if (typeof window !== 'undefined' && 'fetch' in window) {
     try {
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text, lang, rate: toEdgeRate(wsRate) }),
+        body: JSON.stringify({ text, lang, rate: toEdgeRate(wsRate), pause: pauseMs }),
       });
       if (res.ok) {
         const blob = await res.blob();
@@ -117,9 +118,10 @@ export async function playTts(
  * 中文神经嗓音读这个汉字时，音节和声调都正确，小朋友听起来就是标准的拼音。
  * - syllable：保留以兼容调用点；
  * - han：可选，从例词里取的第一个汉字，优先用它发音；
- * - wsRate 比普通中文更慢（0.55，约 Edge -45%），方便小朋友听清并跟读。
+ * - wsRate 用最慢稳定档（0.5，约 Edge -50%），并在音节后追加约 400ms 静音停顿，
+ *   使单个拼音总时长接近 1 秒，方便小朋友听清并跟读。
  */
 export function speakPinyin(syllable: string, _tone = 0, han?: string) {
   const text = han && /[\u4e00-\u9fff]/.test(han) ? han : syllable;
-  void playTts(text, 'zh', { wsRate: 0.55, pitch: 1.1 });
+  void playTts(text, 'zh', { wsRate: 0.5, pitch: 1.1, pauseMs: 400 });
 }
