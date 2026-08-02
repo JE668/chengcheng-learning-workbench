@@ -106,22 +106,31 @@ const QUIRKS = {
   legend: ['奇迹', '幸运', '传说', '闪耀', '熠熠', '祥祥', '瑞瑞', '圣圣', '辉辉', '灿灿', '奇奇', '运运'],
 };
 
-// 句式模板（与口癖交叉，保证每只台词不同）
+// 句式模板（每只萌可的「名字」都会写进句子，保证不同萌可台词绝不雷同）
 const TEMPLATES = [
   (n, q) => `${q}~ 我是${n}！`,
   (n, q) => `${q}！${n}来啦！`,
   (n, q) => `${n}登场，${q}~`,
-  (n, q) => `跟我一起玩吧，${q}~`,
-  (n, q) => `今天也要开心哦，${q}~`,
+  (n, q) => `来和我玩吧，${q}~ 我是${n}！`,
+  (n, q) => `今天也要开开心心哦，${q}~ 我是${n}！`,
   (n, q) => `呼呼，${n}在这里，${q}~`,
 ];
 
-// 生成独特台词：命中官方口癖的用精准台词；否则按「系列 + 系列内序号」交叉生成，同系列内绝不重复
-function makeLine(name, cat, ci) {
+// 名字哈希：同一个萌可无论出现在哪一季，口癖与句式都稳定一致
+function hash(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+// 生成独特台词：命中官方口癖的用精准台词；否则按「名字哈希」稳定地选口癖+句式，
+// 名字已写进每句，所以不同萌可永不相同，同名萌可在各季也保持一致。
+function makeLine(name, cat) {
   if (NAME_LINE[name]) return NAME_LINE[name];
   const quirks = QUIRKS[cat] || QUIRKS.royal;
-  const q = quirks[(ci - 1) % quirks.length];
-  const t = TEMPLATES[(ci - 1) % TEMPLATES.length];
+  const h = hash(name);
+  const q = quirks[h % quirks.length];
+  const t = TEMPLATES[h % TEMPLATES.length];
   return t(name, q);
 }
 
@@ -139,7 +148,6 @@ function parseName(fileBase) {
 }
 
 const entries = [];
-const catCount = {};
 const folders = fs.readdirSync(ROOT).filter((d) => fs.statSync(path.join(ROOT, d)).isDirectory());
 folders.sort();
 
@@ -172,7 +180,7 @@ for (const folder of folders) {
       emoji: EMOJI_OVERRIDE[name] || meta.emoji,
       color: meta.color,
       item: '✨ 魔法道具',
-      line: LINE_OVERRIDE[name] || makeLine(name, cat, (catCount[cat] = (catCount[cat] || 0) + 1)),
+      line: LINE_OVERRIDE[name] || makeLine(name, cat),
     });
   }
 }

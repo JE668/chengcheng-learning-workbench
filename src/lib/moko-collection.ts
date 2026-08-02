@@ -53,7 +53,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "啾~ 我是优雅萌可！"
+    "line": "今天也要开开心心哦，温柔~ 我是优雅萌可！"
   },
   {
     "key": "col_01_信信萌可_render",
@@ -64,7 +64,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "敬礼！信信萌可来啦！"
+    "line": "来和我玩吧，软软~ 我是信信萌可！"
   },
   {
     "key": "col_01_勇气萌可_render",
@@ -97,7 +97,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，幸福~"
+    "line": "来和我玩吧，软软~ 我是好好萌可！"
   },
   {
     "key": "col_01_幸福萌可_render",
@@ -152,7 +152,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，软软~"
+    "line": "来和我玩吧，元气~ 我是漂亮萌可！"
   },
   {
     "key": "col_01_热情萌可_render",
@@ -163,7 +163,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，闪闪~"
+    "line": "华丽！热情萌可来啦！"
   },
   {
     "key": "col_01_爱心萌可_render",
@@ -207,7 +207,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "笑笑萌可登场，自信~"
+    "line": "呼呼，笑笑萌可在这里，甜甜~"
   },
   {
     "key": "col_01_绵绵萌可_render",
@@ -229,7 +229,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，温柔~"
+    "line": "今天也要开开心心哦，幸福~ 我是美丽萌可！"
   },
   {
     "key": "col_01_诚实萌可_render",
@@ -240,7 +240,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "呼呼，诚实萌可在这里，好奇~"
+    "line": "月光！诚实萌可来啦！"
   },
   {
     "key": "col_01_赞赞萌可_render",
@@ -251,7 +251,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "欢乐~ 我是赞赞萌可！"
+    "line": "来和我玩吧，元气~ 我是赞赞萌可！"
   },
   {
     "key": "col_01_软软萌可_render",
@@ -295,7 +295,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "魔法~ 我是乖乖萌可！"
+    "line": "呼呼，乖乖萌可在这里，咻咻~"
   },
   {
     "key": "col_02_仿仿萌可_render",
@@ -306,7 +306,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "噗噗！仿仿萌可来啦！"
+    "line": "咻咻！仿仿萌可来啦！"
   },
   {
     "key": "col_02_倒倒萌可_render",
@@ -317,7 +317,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "倒倒萌可登场，叮叮~"
+    "line": "呼呼，倒倒萌可在这里，咻咻~"
   },
   {
     "key": "col_02_八卦萌可_render",
@@ -328,7 +328,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，咻咻~"
+    "line": "八卦萌可登场，转转~"
   },
   {
     "key": "col_02_冰冰萌可_render",
@@ -339,7 +339,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，呼呼~"
+    "line": "呼呼，冰冰萌可在这里，咻咻~"
   },
   {
     "key": "col_02_冷冷萌可_render",
@@ -350,7 +350,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼，冷冷萌可在这里，变变~"
+    "line": "咻咻！冷冷萌可来啦！"
   },
   {
     "key": "col_02_厌厌萌可_render",
@@ -361,7 +361,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "灵灵~ 我是厌厌萌可！"
+    "line": "来和我玩吧，咻咻~ 我是厌厌萌可！"
   },
   {
     "key": "col_02_变身萌可_render",
@@ -372,7 +372,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "飘飘！变身萌可来啦！"
+    "line": "今天也要开开心心哦，灵灵~ 我是变身萌可！"
   },
   {
     "key": "col_02_叹气萌可_render",
@@ -383,7 +383,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "叹气萌可登场，晶晶~"
+    "line": "叹气萌可登场，转转~"
   },
   {
     "key": "col_02_否否萌可_render",
@@ -394,7 +394,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，咕噜~"
+    "line": "呼呼，否否萌可在这里，咻咻~"
   },
   {
     "key": "col_02_好奇萌可_render",
@@ -405,7 +405,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，喵喵~"
+    "line": "来和我玩吧，叮咚~ 我是好奇萌可！"
   },
   {
     "key": "col_02_妒妒萌可_render",
@@ -416,7 +416,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼，妒妒萌可在这里，闪闪~"
+    "line": "来和我玩吧，咻咻~ 我是妒妒萌可！"
   },
   {
     "key": "col_02_妖妖萌可_render",
@@ -427,7 +427,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "噗通~ 我是妖妖萌可！"
+    "line": "呼呼，妖妖萌可在这里，咻咻~"
   },
   {
     "key": "col_02_娇娇萌可_render",
@@ -438,7 +438,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "叮咚！娇娇萌可来啦！"
+    "line": "来和我玩吧，咻咻~ 我是娇娇萌可！"
   },
   {
     "key": "col_02_孤独萌可_render",
@@ -449,7 +449,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "孤独萌可登场，转转~"
+    "line": "呼呼，孤独萌可在这里，闪闪~"
   },
   {
     "key": "col_02_宝宝萌可_render",
@@ -460,7 +460,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，咔咔~"
+    "line": "呼呼，宝宝萌可在这里，咻咻~"
   },
   {
     "key": "col_02_害羞萌可_render",
@@ -471,7 +471,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，魔法~"
+    "line": "今天也要开开心心哦，转转~ 我是害羞萌可！"
   },
   {
     "key": "col_02_幻幻萌可_render",
@@ -482,7 +482,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼，幻幻萌可在这里，噗噗~"
+    "line": "来和我玩吧，咻咻~ 我是幻幻萌可！"
   },
   {
     "key": "col_02_怒怒萌可_render",
@@ -493,7 +493,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "叮叮~ 我是怒怒萌可！"
+    "line": "咻咻！怒怒萌可来啦！"
   },
   {
     "key": "col_02_怕怕萌可_render",
@@ -515,7 +515,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "恋恋萌可登场，呼呼~"
+    "line": "咻咻！恋恋萌可来啦！"
   },
   {
     "key": "col_02_泪泪萌可_render",
@@ -526,7 +526,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，变变~"
+    "line": "咻咻！泪泪萌可来啦！"
   },
   {
     "key": "col_02_淘气萌可_render",
@@ -537,7 +537,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，灵灵~"
+    "line": "咔咔！淘气萌可来啦！"
   },
   {
     "key": "col_02_玩具萌可_render",
@@ -548,7 +548,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼，玩具萌可在这里，飘飘~"
+    "line": "呼呼，玩具萌可在这里，噗噗~"
   },
   {
     "key": "col_02_玩玩萌可_render",
@@ -559,7 +559,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "晶晶~ 我是玩玩萌可！"
+    "line": "呼呼，玩玩萌可在这里，咻咻~"
   },
   {
     "key": "col_02_玩玩萌可_乐乐萌可_render",
@@ -570,7 +570,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "咕噜！玩玩萌可·乐乐萌可来啦！"
+    "line": "飘飘！玩玩萌可·乐乐萌可来啦！"
   },
   {
     "key": "col_02_电电萌可_render",
@@ -581,7 +581,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "电电萌可登场，喵喵~"
+    "line": "呼呼，电电萌可在这里，咻咻~"
   },
   {
     "key": "col_02_画画萌可_render",
@@ -592,7 +592,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，闪闪~"
+    "line": "呼呼，画画萌可在这里，咻咻~"
   },
   {
     "key": "col_02_睡睡萌可_render",
@@ -603,7 +603,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，噗通~"
+    "line": "咻咻！睡睡萌可来啦！"
   },
   {
     "key": "col_02_美美萌可_render",
@@ -614,7 +614,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼，美美萌可在这里，叮咚~"
+    "line": "呼呼，美美萌可在这里，咻咻~"
   },
   {
     "key": "col_02_聪明萌可_render",
@@ -625,7 +625,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "转转~ 我是聪明萌可！"
+    "line": "来和我玩吧，飘飘~ 我是聪明萌可！"
   },
   {
     "key": "col_02_花花萌可_render",
@@ -636,7 +636,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "咔咔！花花萌可来啦！"
+    "line": "来和我玩吧，咻咻~ 我是花花萌可！"
   },
   {
     "key": "col_02_贪贪萌可_render",
@@ -647,7 +647,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "贪贪萌可登场，魔法~"
+    "line": "咻咻！贪贪萌可来啦！"
   },
   {
     "key": "col_02_赛赛萌可_render",
@@ -658,7 +658,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，噗噗~"
+    "line": "来和我玩吧，咻咻~ 我是赛赛萌可！"
   },
   {
     "key": "col_02_迷糊萌可_render",
@@ -669,7 +669,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，叮叮~"
+    "line": "灵灵~ 我是迷糊萌可！"
   },
   {
     "key": "col_02_速速萌可_render",
@@ -680,7 +680,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼，速速萌可在这里，咻咻~"
+    "line": "来和我玩吧，咻咻~ 我是速速萌可！"
   },
   {
     "key": "col_02_重重萌可_render",
@@ -691,7 +691,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼~ 我是重重萌可！"
+    "line": "呼呼，重重萌可在这里，咻咻~"
   },
   {
     "key": "col_02_黏黏萌可_render",
@@ -702,7 +702,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "变变！黏黏萌可来啦！"
+    "line": "呼呼，黏黏萌可在这里，咻咻~"
   },
   {
     "key": "col_03_公主萌可_render",
@@ -713,7 +713,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "bling~ 我是公主萌可！"
+    "line": "亮晶晶~ 我是公主萌可！"
   },
   {
     "key": "col_03_净净萌可_render",
@@ -724,7 +724,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "闪闪！净净萌可来啦！"
+    "line": "透透！净净萌可来啦！"
   },
   {
     "key": "col_03_分享萌可_render",
@@ -746,7 +746,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，璀璨~"
+    "line": "呼呼，双双萌可在这里，耀耀~"
   },
   {
     "key": "col_03_嘻嘻萌可_render",
@@ -757,7 +757,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，红红~"
+    "line": "来和我玩吧，耀耀~ 我是嘻嘻萌可！"
   },
   {
     "key": "col_03_安慰萌可_render",
@@ -768,7 +768,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "呼呼，安慰萌可在这里，透透~"
+    "line": "亮晶晶~ 我是安慰萌可！"
   },
   {
     "key": "col_03_弱弱萌可_render",
@@ -779,7 +779,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "宝气~ 我是弱弱萌可！"
+    "line": "晶晶！弱弱萌可来啦！"
   },
   {
     "key": "col_03_愿望萌可_render",
@@ -790,7 +790,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "熠熠！愿望萌可来啦！"
+    "line": "来和我玩吧，熠熠~ 我是愿望萌可！"
   },
   {
     "key": "col_03_暖暖萌可_render",
@@ -801,7 +801,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "暖暖萌可登场，烁烁~"
+    "line": "透透！暖暖萌可来啦！"
   },
   {
     "key": "col_03_神奇萌可_render",
@@ -812,7 +812,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，晶晶~"
+    "line": "今天也要开开心心哦，绚绚~ 我是神奇萌可！"
   },
   {
     "key": "col_03_笔记萌可_render",
@@ -823,7 +823,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，绚绚~"
+    "line": "来和我玩吧，熠熠~ 我是笔记萌可！"
   },
   {
     "key": "col_03_美味萌可_render",
@@ -834,7 +834,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "呼呼，美味萌可在这里，耀耀~"
+    "line": "今天也要开开心心哦，bling~ 我是美味萌可！"
   },
   {
     "key": "col_03_芭蕾萌可_render",
@@ -845,7 +845,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "珠珠~ 我是芭蕾萌可！"
+    "line": "芭蕾萌可登场，bling~"
   },
   {
     "key": "col_03_躲躲萌可_render",
@@ -856,7 +856,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "光光！躲躲萌可来啦！"
+    "line": "呼呼，躲躲萌可在这里，耀耀~"
   },
   {
     "key": "col_03_雕刻萌可_render",
@@ -867,7 +867,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "雕刻萌可登场，bling~"
+    "line": "璀璨！雕刻萌可来啦！"
   },
   {
     "key": "col_04_人鱼萌可_render",
@@ -878,7 +878,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "咔嚓~ 我是人鱼萌可！"
+    "line": "呼呼，人鱼萌可在这里，叮当~"
   },
   {
     "key": "col_04_修理萌可_render",
@@ -889,7 +889,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "钥匙！修理萌可来啦！"
+    "line": "呼呼，修理萌可在这里，叮当~"
   },
   {
     "key": "col_04_加油萌可_render",
@@ -900,7 +900,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "加油萌可登场，猜猜~"
+    "line": "加油萌可登场，寻寻~"
   },
   {
     "key": "col_04_医生萌可_render",
@@ -911,7 +911,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，打开~"
+    "line": "来和我玩吧，探索~ 我是医生萌可！"
   },
   {
     "key": "col_04_发明萌可_render",
@@ -922,7 +922,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，锁好~"
+    "line": "今天也要开开心心哦，锁好~ 我是发明萌可！"
   },
   {
     "key": "col_04_吞吞萌可_render",
@@ -933,7 +933,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "呼呼，吞吞萌可在这里，叮当~"
+    "line": "锁好！吞吞萌可来啦！"
   },
   {
     "key": "col_04_快快萌可_render",
@@ -944,7 +944,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "探索~ 我是快快萌可！"
+    "line": "钥匙！快快萌可来啦！"
   },
   {
     "key": "col_04_时尚萌可_render",
@@ -955,7 +955,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "解密！时尚萌可来啦！"
+    "line": "钥匙！时尚萌可来啦！"
   },
   {
     "key": "col_04_歌声萌可_render",
@@ -966,7 +966,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "歌声萌可登场，知识~"
+    "line": "呼呼，歌声萌可在这里，猜猜~"
   },
   {
     "key": "col_04_气气萌可_render",
@@ -977,7 +977,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，咔哒~"
+    "line": "呼呼，气气萌可在这里，猜猜~"
   },
   {
     "key": "col_04_派对萌可_render",
@@ -988,7 +988,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，秘密~"
+    "line": "派对萌可登场，猜猜~"
   },
   {
     "key": "col_04_滑冰萌可_render",
@@ -999,7 +999,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "呼呼，滑冰萌可在这里，寻寻~"
+    "line": "今天也要开开心心哦，解密~ 我是滑冰萌可！"
   },
   {
     "key": "col_04_灭火萌可_render",
@@ -1010,7 +1010,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "智慧~ 我是灭火萌可！"
+    "line": "来和我玩吧，探索~ 我是灭火萌可！"
   },
   {
     "key": "col_04_美发萌可_render",
@@ -1021,7 +1021,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "明白！美发萌可来啦！"
+    "line": "今天也要开开心心哦，解密~ 我是美发萌可！"
   },
   {
     "key": "col_04_警察萌可_render",
@@ -1032,7 +1032,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "警察萌可登场，哒哒~"
+    "line": "今天也要开开心心哦，钥匙~ 我是警察萌可！"
   },
   {
     "key": "col_05_冰沙萌可_render",
@@ -1043,7 +1043,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "软软~ 我是冰沙萌可！"
+    "line": "华夫~ 我是冰沙萌可！"
   },
   {
     "key": "col_05_华夫萌可_render",
@@ -1054,7 +1054,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "闪闪！华夫萌可来啦！"
+    "line": "软软~ 我是华夫萌可！"
   },
   {
     "key": "col_05_夹心萌可_render",
@@ -1065,7 +1065,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "夹心萌可登场，甜甜~"
+    "line": "呼呼，夹心萌可在这里，棒棒~"
   },
   {
     "key": "col_05_奶油萌可_render",
@@ -1076,7 +1076,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，绵绵~"
+    "line": "香香~ 我是奶油萌可！"
   },
   {
     "key": "col_05_巧克力萌可_render",
@@ -1087,7 +1087,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，呼呼~"
+    "line": "巧克力萌可登场，糖糖~"
   },
   {
     "key": "col_05_布丁萌可_render",
@@ -1098,7 +1098,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "呼呼，布丁萌可在这里，香香~"
+    "line": "来和我玩吧，甜甜~ 我是布丁萌可！"
   },
   {
     "key": "col_05_松饼萌可_render",
@@ -1109,7 +1109,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "巧巧~ 我是松饼萌可！"
+    "line": "来和我玩吧，糖糖~ 我是松饼萌可！"
   },
   {
     "key": "col_05_棉花糖萌可_render",
@@ -1120,7 +1120,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "糖糖！棉花糖萌可来啦！"
+    "line": "来和我玩吧，凉凉~ 我是棉花糖萌可！"
   },
   {
     "key": "col_05_棒棒糖萌可_render",
@@ -1131,7 +1131,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "棒棒糖萌可登场，圈圈~"
+    "line": "呼呼，棒棒糖萌可在这里，甜甜~"
   },
   {
     "key": "col_05_泡泡萌可_render",
@@ -1142,7 +1142,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，华夫~"
+    "line": "糯糯！泡泡萌可来啦！"
   },
   {
     "key": "col_05_甜甜圈萌可_render",
@@ -1153,7 +1153,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，棒棒~"
+    "line": "呼呼，甜甜圈萌可在这里，呼呼~"
   },
   {
     "key": "col_05_糖糖萌可_render",
@@ -1175,7 +1175,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "奶油~ 我是蛋糕妹妹萌可！"
+    "line": "呼呼，蛋糕妹妹萌可在这里，糯糯~"
   },
   {
     "key": "col_05_蛋糕妹妹萌可_蛋糕弟弟萌可_render",
@@ -1186,7 +1186,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "泡泡！蛋糕妹妹萌可·蛋糕弟弟萌可来啦！"
+    "line": "呼呼！蛋糕妹妹萌可·蛋糕弟弟萌可来啦！"
   },
   {
     "key": "col_05_蛋糕弟弟萌可_render",
@@ -1197,7 +1197,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "蛋糕弟弟萌可登场，薄薄~"
+    "line": "来和我玩吧，绵绵~ 我是蛋糕弟弟萌可！"
   },
   {
     "key": "col_05_酸奶萌可_render",
@@ -1208,7 +1208,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，糯糯~"
+    "line": "呼呼，酸奶萌可在这里，蜜蜜~"
   },
   {
     "key": "col_05_马卡龙萌可_render",
@@ -1219,7 +1219,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，蜜蜜~"
+    "line": "来和我玩吧，巧巧~ 我是马卡龙萌可！"
   },
   {
     "key": "col_06_乐美萌可_render",
@@ -1340,7 +1340,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "☄️",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，星河~"
+    "line": "嗖嗖~ 我是流浪萌可！"
   },
   {
     "key": "col_06_熊熊萌可_render",
@@ -1406,7 +1406,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "☄️",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，月光~"
+    "line": "望望！缤缤萌可·纷纷萌可来啦！"
   },
   {
     "key": "col_06_贴贴萌可_render",
@@ -1450,7 +1450,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "月光~ 我是丘比特萌可！"
+    "line": "丘比特萌可登场，月光~"
   },
   {
     "key": "col_07_丝绸萌可_render",
@@ -1461,7 +1461,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "希望！丝绸萌可来啦！"
+    "line": "丝绸萌可登场，灵灵~"
   },
   {
     "key": "col_07_困困萌可_render",
@@ -1472,7 +1472,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "困困萌可登场，华丽~"
+    "line": "呼呼，困困萌可在这里，自信~"
   },
   {
     "key": "col_07_洗洗萌可_render",
@@ -1483,7 +1483,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，自信~"
+    "line": "自信！洗洗萌可来啦！"
   },
   {
     "key": "col_07_猫猫萌可_render",
@@ -1494,7 +1494,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，浪漫~"
+    "line": "呼呼，猫猫萌可在这里，自信~"
   },
   {
     "key": "col_07_玲珑萌可_render",
@@ -1505,7 +1505,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "呼呼，玲珑萌可在这里，优雅~"
+    "line": "华丽~ 我是玲珑萌可！"
   },
   {
     "key": "col_07_白雪萌可_render",
@@ -1516,7 +1516,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "温柔~ 我是白雪萌可！"
+    "line": "今天也要开开心心哦，月光~ 我是白雪萌可！"
   },
   {
     "key": "col_07_蝴蝶萌可_render",
@@ -1527,7 +1527,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "高贵！蝴蝶萌可来啦！"
+    "line": "优雅！蝴蝶萌可来啦！"
   },
   {
     "key": "col_07_露水萌可_render",
@@ -1538,7 +1538,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "露水萌可登场，婷婷~"
+    "line": "呼呼，露水萌可在这里，优雅~"
   },
   {
     "key": "col_07_鞋鞋萌可_render",
@@ -1549,7 +1549,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，盈盈~"
+    "line": "呼呼，鞋鞋萌可在这里，自信~"
   },
   {
     "key": "col_07_魅力萌可_render",
@@ -1560,7 +1560,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，冉冉~"
+    "line": "来和我玩吧，盈盈~ 我是魅力萌可！"
   },
   {
     "key": "col_08_查尔斯萌可_render",
@@ -1571,7 +1571,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "守护~ 我是查尔斯王子！"
+    "line": "来和我玩吧，凛凛~ 我是查尔斯王子！"
   },
   {
     "key": "col_08_演歌萌可_render",
@@ -1582,7 +1582,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "骑士！演歌萌可来啦！"
+    "line": "来和我玩吧，剑剑~ 我是演歌萌可！"
   },
   {
     "key": "col_08_绅士萌可_render",
@@ -1593,7 +1593,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "绅士萌可登场，勇勇~"
+    "line": "呼呼，绅士萌可在这里，英英~"
   },
   {
     "key": "col_08_青蛙萌可_render",
@@ -1604,7 +1604,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，剑剑~"
+    "line": "帅帅~ 我是青蛙萌可！"
   },
   {
     "key": "col_09_奉献萌可_render",
@@ -1626,7 +1626,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "😈",
     "color": "text-slate-500",
     "item": "✨ 魔法道具",
-    "line": "嘿嘿！闹闹萌可来啦！"
+    "line": "呼呼，闹闹萌可在这里，鬼鬼~"
   },
   {
     "key": "col_10_幸运萌可_render",
@@ -1637,7 +1637,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "奇迹~ 我是幸运萌可！"
+    "line": "呼呼，幸运萌可在这里，运运~"
   },
   {
     "key": "col_10_月神萌可_render",
@@ -1648,7 +1648,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "幸运！月神萌可来啦！"
+    "line": "来和我玩吧，灿灿~ 我是月神萌可！"
   },
   {
     "key": "col_10_月食萌可_render",
@@ -1659,7 +1659,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "月食萌可登场，传说~"
+    "line": "今天也要开开心心哦，奇奇~ 我是月食萌可！"
   },
   {
     "key": "col_10_极光萌可_render",
@@ -1681,7 +1681,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，熠熠~"
+    "line": "来和我玩吧，闪耀~ 我是甜甜萌可！"
   },
   {
     "key": "col_10_酸酸萌可_render",
@@ -1692,7 +1692,7 @@ export const mokoCollection: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "呼呼，酸酸萌可在这里，祥祥~"
+    "line": "来和我玩吧，闪耀~ 我是酸酸萌可！"
   }
 ];
 
@@ -1707,7 +1707,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "啾~ 我是优雅萌可！"
+    "line": "今天也要开开心心哦，温柔~ 我是优雅萌可！"
   },
   "信信萌可": {
     "key": "col_01_信信萌可_render",
@@ -1718,7 +1718,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "敬礼！信信萌可来啦！"
+    "line": "来和我玩吧，软软~ 我是信信萌可！"
   },
   "勇气萌可": {
     "key": "col_01_勇气萌可_render",
@@ -1751,7 +1751,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，幸福~"
+    "line": "来和我玩吧，软软~ 我是好好萌可！"
   },
   "幸福萌可": {
     "key": "col_01_幸福萌可_render",
@@ -1806,7 +1806,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，软软~"
+    "line": "来和我玩吧，元气~ 我是漂亮萌可！"
   },
   "热情萌可": {
     "key": "col_01_热情萌可_render",
@@ -1817,7 +1817,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，闪闪~"
+    "line": "华丽！热情萌可来啦！"
   },
   "爱心萌可": {
     "key": "col_01_爱心萌可_render",
@@ -1861,7 +1861,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "笑笑萌可登场，自信~"
+    "line": "呼呼，笑笑萌可在这里，甜甜~"
   },
   "绵绵萌可": {
     "key": "col_01_绵绵萌可_render",
@@ -1883,7 +1883,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，温柔~"
+    "line": "今天也要开开心心哦，幸福~ 我是美丽萌可！"
   },
   "诚实萌可": {
     "key": "col_01_诚实萌可_render",
@@ -1894,7 +1894,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "呼呼，诚实萌可在这里，好奇~"
+    "line": "月光！诚实萌可来啦！"
   },
   "赞赞萌可": {
     "key": "col_01_赞赞萌可_render",
@@ -1905,7 +1905,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "👑",
     "color": "text-moko-rose",
     "item": "✨ 魔法道具",
-    "line": "欢乐~ 我是赞赞萌可！"
+    "line": "来和我玩吧，元气~ 我是赞赞萌可！"
   },
   "软软萌可": {
     "key": "col_01_软软萌可_render",
@@ -1949,7 +1949,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "魔法~ 我是乖乖萌可！"
+    "line": "呼呼，乖乖萌可在这里，咻咻~"
   },
   "仿仿萌可": {
     "key": "col_02_仿仿萌可_render",
@@ -1960,7 +1960,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "噗噗！仿仿萌可来啦！"
+    "line": "咻咻！仿仿萌可来啦！"
   },
   "倒倒萌可": {
     "key": "col_02_倒倒萌可_render",
@@ -1971,7 +1971,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "倒倒萌可登场，叮叮~"
+    "line": "呼呼，倒倒萌可在这里，咻咻~"
   },
   "八卦萌可": {
     "key": "col_02_八卦萌可_render",
@@ -1982,7 +1982,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，咻咻~"
+    "line": "八卦萌可登场，转转~"
   },
   "冰冰萌可": {
     "key": "col_02_冰冰萌可_render",
@@ -1993,7 +1993,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，呼呼~"
+    "line": "呼呼，冰冰萌可在这里，咻咻~"
   },
   "冷冷萌可": {
     "key": "col_02_冷冷萌可_render",
@@ -2004,7 +2004,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼，冷冷萌可在这里，变变~"
+    "line": "咻咻！冷冷萌可来啦！"
   },
   "厌厌萌可": {
     "key": "col_02_厌厌萌可_render",
@@ -2015,7 +2015,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "灵灵~ 我是厌厌萌可！"
+    "line": "来和我玩吧，咻咻~ 我是厌厌萌可！"
   },
   "变身萌可": {
     "key": "col_02_变身萌可_render",
@@ -2026,7 +2026,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "飘飘！变身萌可来啦！"
+    "line": "今天也要开开心心哦，灵灵~ 我是变身萌可！"
   },
   "叹气萌可": {
     "key": "col_02_叹气萌可_render",
@@ -2037,7 +2037,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "叹气萌可登场，晶晶~"
+    "line": "叹气萌可登场，转转~"
   },
   "否否萌可": {
     "key": "col_02_否否萌可_render",
@@ -2048,7 +2048,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，咕噜~"
+    "line": "呼呼，否否萌可在这里，咻咻~"
   },
   "好奇萌可": {
     "key": "col_02_好奇萌可_render",
@@ -2059,7 +2059,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，喵喵~"
+    "line": "来和我玩吧，叮咚~ 我是好奇萌可！"
   },
   "妒妒萌可": {
     "key": "col_02_妒妒萌可_render",
@@ -2070,7 +2070,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼，妒妒萌可在这里，闪闪~"
+    "line": "来和我玩吧，咻咻~ 我是妒妒萌可！"
   },
   "妖妖萌可": {
     "key": "col_02_妖妖萌可_render",
@@ -2081,7 +2081,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "噗通~ 我是妖妖萌可！"
+    "line": "呼呼，妖妖萌可在这里，咻咻~"
   },
   "娇娇萌可": {
     "key": "col_02_娇娇萌可_render",
@@ -2092,7 +2092,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "叮咚！娇娇萌可来啦！"
+    "line": "来和我玩吧，咻咻~ 我是娇娇萌可！"
   },
   "孤独萌可": {
     "key": "col_02_孤独萌可_render",
@@ -2103,7 +2103,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "孤独萌可登场，转转~"
+    "line": "呼呼，孤独萌可在这里，闪闪~"
   },
   "宝宝萌可": {
     "key": "col_02_宝宝萌可_render",
@@ -2114,7 +2114,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，咔咔~"
+    "line": "呼呼，宝宝萌可在这里，咻咻~"
   },
   "害羞萌可": {
     "key": "col_02_害羞萌可_render",
@@ -2125,7 +2125,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，魔法~"
+    "line": "今天也要开开心心哦，转转~ 我是害羞萌可！"
   },
   "幻幻萌可": {
     "key": "col_02_幻幻萌可_render",
@@ -2136,7 +2136,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼，幻幻萌可在这里，噗噗~"
+    "line": "来和我玩吧，咻咻~ 我是幻幻萌可！"
   },
   "怒怒萌可": {
     "key": "col_02_怒怒萌可_render",
@@ -2147,7 +2147,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "叮叮~ 我是怒怒萌可！"
+    "line": "咻咻！怒怒萌可来啦！"
   },
   "怕怕萌可": {
     "key": "col_02_怕怕萌可_render",
@@ -2169,7 +2169,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "恋恋萌可登场，呼呼~"
+    "line": "咻咻！恋恋萌可来啦！"
   },
   "泪泪萌可": {
     "key": "col_02_泪泪萌可_render",
@@ -2180,7 +2180,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，变变~"
+    "line": "咻咻！泪泪萌可来啦！"
   },
   "淘气萌可": {
     "key": "col_02_淘气萌可_render",
@@ -2191,7 +2191,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，灵灵~"
+    "line": "咔咔！淘气萌可来啦！"
   },
   "玩具萌可": {
     "key": "col_02_玩具萌可_render",
@@ -2202,7 +2202,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼，玩具萌可在这里，飘飘~"
+    "line": "呼呼，玩具萌可在这里，噗噗~"
   },
   "玩玩萌可": {
     "key": "col_02_玩玩萌可_render",
@@ -2213,7 +2213,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "晶晶~ 我是玩玩萌可！"
+    "line": "呼呼，玩玩萌可在这里，咻咻~"
   },
   "玩玩萌可·乐乐萌可": {
     "key": "col_02_玩玩萌可_乐乐萌可_render",
@@ -2224,7 +2224,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "咕噜！玩玩萌可·乐乐萌可来啦！"
+    "line": "飘飘！玩玩萌可·乐乐萌可来啦！"
   },
   "电电萌可": {
     "key": "col_02_电电萌可_render",
@@ -2235,7 +2235,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "电电萌可登场，喵喵~"
+    "line": "呼呼，电电萌可在这里，咻咻~"
   },
   "画画萌可": {
     "key": "col_02_画画萌可_render",
@@ -2246,7 +2246,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，闪闪~"
+    "line": "呼呼，画画萌可在这里，咻咻~"
   },
   "睡睡萌可": {
     "key": "col_02_睡睡萌可_render",
@@ -2257,7 +2257,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，噗通~"
+    "line": "咻咻！睡睡萌可来啦！"
   },
   "美美萌可": {
     "key": "col_02_美美萌可_render",
@@ -2268,7 +2268,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼，美美萌可在这里，叮咚~"
+    "line": "呼呼，美美萌可在这里，咻咻~"
   },
   "聪明萌可": {
     "key": "col_02_聪明萌可_render",
@@ -2279,7 +2279,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "转转~ 我是聪明萌可！"
+    "line": "来和我玩吧，飘飘~ 我是聪明萌可！"
   },
   "花花萌可": {
     "key": "col_02_花花萌可_render",
@@ -2290,7 +2290,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "咔咔！花花萌可来啦！"
+    "line": "来和我玩吧，咻咻~ 我是花花萌可！"
   },
   "贪贪萌可": {
     "key": "col_02_贪贪萌可_render",
@@ -2301,7 +2301,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "贪贪萌可登场，魔法~"
+    "line": "咻咻！贪贪萌可来啦！"
   },
   "赛赛萌可": {
     "key": "col_02_赛赛萌可_render",
@@ -2312,7 +2312,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，噗噗~"
+    "line": "来和我玩吧，咻咻~ 我是赛赛萌可！"
   },
   "迷糊萌可": {
     "key": "col_02_迷糊萌可_render",
@@ -2323,7 +2323,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，叮叮~"
+    "line": "灵灵~ 我是迷糊萌可！"
   },
   "速速萌可": {
     "key": "col_02_速速萌可_render",
@@ -2334,7 +2334,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼，速速萌可在这里，咻咻~"
+    "line": "来和我玩吧，咻咻~ 我是速速萌可！"
   },
   "重重萌可": {
     "key": "col_02_重重萌可_render",
@@ -2345,7 +2345,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "呼呼~ 我是重重萌可！"
+    "line": "呼呼，重重萌可在这里，咻咻~"
   },
   "黏黏萌可": {
     "key": "col_02_黏黏萌可_render",
@@ -2356,7 +2356,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🧊",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "变变！黏黏萌可来啦！"
+    "line": "呼呼，黏黏萌可在这里，咻咻~"
   },
   "公主萌可": {
     "key": "col_03_公主萌可_render",
@@ -2367,7 +2367,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "bling~ 我是公主萌可！"
+    "line": "亮晶晶~ 我是公主萌可！"
   },
   "净净萌可": {
     "key": "col_03_净净萌可_render",
@@ -2378,7 +2378,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "闪闪！净净萌可来啦！"
+    "line": "透透！净净萌可来啦！"
   },
   "分享萌可": {
     "key": "col_03_分享萌可_render",
@@ -2400,7 +2400,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，璀璨~"
+    "line": "呼呼，双双萌可在这里，耀耀~"
   },
   "嘻嘻萌可": {
     "key": "col_03_嘻嘻萌可_render",
@@ -2411,7 +2411,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，红红~"
+    "line": "来和我玩吧，耀耀~ 我是嘻嘻萌可！"
   },
   "安慰萌可": {
     "key": "col_03_安慰萌可_render",
@@ -2422,7 +2422,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "呼呼，安慰萌可在这里，透透~"
+    "line": "亮晶晶~ 我是安慰萌可！"
   },
   "弱弱萌可": {
     "key": "col_03_弱弱萌可_render",
@@ -2433,7 +2433,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "宝气~ 我是弱弱萌可！"
+    "line": "晶晶！弱弱萌可来啦！"
   },
   "愿望萌可": {
     "key": "col_03_愿望萌可_render",
@@ -2444,7 +2444,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "熠熠！愿望萌可来啦！"
+    "line": "来和我玩吧，熠熠~ 我是愿望萌可！"
   },
   "暖暖萌可": {
     "key": "col_03_暖暖萌可_render",
@@ -2455,7 +2455,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "暖暖萌可登场，烁烁~"
+    "line": "透透！暖暖萌可来啦！"
   },
   "神奇萌可": {
     "key": "col_03_神奇萌可_render",
@@ -2466,7 +2466,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，晶晶~"
+    "line": "今天也要开开心心哦，绚绚~ 我是神奇萌可！"
   },
   "笔记萌可": {
     "key": "col_03_笔记萌可_render",
@@ -2477,7 +2477,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，绚绚~"
+    "line": "来和我玩吧，熠熠~ 我是笔记萌可！"
   },
   "美味萌可": {
     "key": "col_03_美味萌可_render",
@@ -2488,7 +2488,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "呼呼，美味萌可在这里，耀耀~"
+    "line": "今天也要开开心心哦，bling~ 我是美味萌可！"
   },
   "芭蕾萌可": {
     "key": "col_03_芭蕾萌可_render",
@@ -2499,7 +2499,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "珠珠~ 我是芭蕾萌可！"
+    "line": "芭蕾萌可登场，bling~"
   },
   "躲躲萌可": {
     "key": "col_03_躲躲萌可_render",
@@ -2510,7 +2510,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "光光！躲躲萌可来啦！"
+    "line": "呼呼，躲躲萌可在这里，耀耀~"
   },
   "雕刻萌可": {
     "key": "col_03_雕刻萌可_render",
@@ -2521,7 +2521,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "💎",
     "color": "text-moko-purple",
     "item": "✨ 魔法道具",
-    "line": "雕刻萌可登场，bling~"
+    "line": "璀璨！雕刻萌可来啦！"
   },
   "人鱼萌可": {
     "key": "col_04_人鱼萌可_render",
@@ -2532,7 +2532,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "咔嚓~ 我是人鱼萌可！"
+    "line": "呼呼，人鱼萌可在这里，叮当~"
   },
   "修理萌可": {
     "key": "col_04_修理萌可_render",
@@ -2543,7 +2543,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "钥匙！修理萌可来啦！"
+    "line": "呼呼，修理萌可在这里，叮当~"
   },
   "加油萌可": {
     "key": "col_04_加油萌可_render",
@@ -2554,7 +2554,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "加油萌可登场，猜猜~"
+    "line": "加油萌可登场，寻寻~"
   },
   "医生萌可": {
     "key": "col_04_医生萌可_render",
@@ -2565,7 +2565,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，打开~"
+    "line": "来和我玩吧，探索~ 我是医生萌可！"
   },
   "发明萌可": {
     "key": "col_04_发明萌可_render",
@@ -2576,7 +2576,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，锁好~"
+    "line": "今天也要开开心心哦，锁好~ 我是发明萌可！"
   },
   "吞吞萌可": {
     "key": "col_04_吞吞萌可_render",
@@ -2587,7 +2587,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "呼呼，吞吞萌可在这里，叮当~"
+    "line": "锁好！吞吞萌可来啦！"
   },
   "快快萌可": {
     "key": "col_04_快快萌可_render",
@@ -2598,7 +2598,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "探索~ 我是快快萌可！"
+    "line": "钥匙！快快萌可来啦！"
   },
   "时尚萌可": {
     "key": "col_04_时尚萌可_render",
@@ -2609,7 +2609,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "解密！时尚萌可来啦！"
+    "line": "钥匙！时尚萌可来啦！"
   },
   "歌声萌可": {
     "key": "col_04_歌声萌可_render",
@@ -2620,7 +2620,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "歌声萌可登场，知识~"
+    "line": "呼呼，歌声萌可在这里，猜猜~"
   },
   "气气萌可": {
     "key": "col_04_气气萌可_render",
@@ -2631,7 +2631,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，咔哒~"
+    "line": "呼呼，气气萌可在这里，猜猜~"
   },
   "派对萌可": {
     "key": "col_04_派对萌可_render",
@@ -2642,7 +2642,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，秘密~"
+    "line": "派对萌可登场，猜猜~"
   },
   "滑冰萌可": {
     "key": "col_04_滑冰萌可_render",
@@ -2653,7 +2653,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "呼呼，滑冰萌可在这里，寻寻~"
+    "line": "今天也要开开心心哦，解密~ 我是滑冰萌可！"
   },
   "灭火萌可": {
     "key": "col_04_灭火萌可_render",
@@ -2664,7 +2664,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "智慧~ 我是灭火萌可！"
+    "line": "来和我玩吧，探索~ 我是灭火萌可！"
   },
   "美发萌可": {
     "key": "col_04_美发萌可_render",
@@ -2675,7 +2675,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "明白！美发萌可来啦！"
+    "line": "今天也要开开心心哦，解密~ 我是美发萌可！"
   },
   "警察萌可": {
     "key": "col_04_警察萌可_render",
@@ -2686,7 +2686,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🔑",
     "color": "text-moko-violet",
     "item": "✨ 魔法道具",
-    "line": "警察萌可登场，哒哒~"
+    "line": "今天也要开开心心哦，钥匙~ 我是警察萌可！"
   },
   "冰沙萌可": {
     "key": "col_05_冰沙萌可_render",
@@ -2697,7 +2697,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "软软~ 我是冰沙萌可！"
+    "line": "华夫~ 我是冰沙萌可！"
   },
   "华夫萌可": {
     "key": "col_05_华夫萌可_render",
@@ -2708,7 +2708,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "闪闪！华夫萌可来啦！"
+    "line": "软软~ 我是华夫萌可！"
   },
   "夹心萌可": {
     "key": "col_05_夹心萌可_render",
@@ -2719,7 +2719,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "夹心萌可登场，甜甜~"
+    "line": "呼呼，夹心萌可在这里，棒棒~"
   },
   "奶油萌可": {
     "key": "col_05_奶油萌可_render",
@@ -2730,7 +2730,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，绵绵~"
+    "line": "香香~ 我是奶油萌可！"
   },
   "巧克力萌可": {
     "key": "col_05_巧克力萌可_render",
@@ -2741,7 +2741,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，呼呼~"
+    "line": "巧克力萌可登场，糖糖~"
   },
   "布丁萌可": {
     "key": "col_05_布丁萌可_render",
@@ -2752,7 +2752,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "呼呼，布丁萌可在这里，香香~"
+    "line": "来和我玩吧，甜甜~ 我是布丁萌可！"
   },
   "松饼萌可": {
     "key": "col_05_松饼萌可_render",
@@ -2763,7 +2763,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "巧巧~ 我是松饼萌可！"
+    "line": "来和我玩吧，糖糖~ 我是松饼萌可！"
   },
   "棉花糖萌可": {
     "key": "col_05_棉花糖萌可_render",
@@ -2774,7 +2774,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "糖糖！棉花糖萌可来啦！"
+    "line": "来和我玩吧，凉凉~ 我是棉花糖萌可！"
   },
   "棒棒糖萌可": {
     "key": "col_05_棒棒糖萌可_render",
@@ -2785,7 +2785,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "棒棒糖萌可登场，圈圈~"
+    "line": "呼呼，棒棒糖萌可在这里，甜甜~"
   },
   "泡泡萌可": {
     "key": "col_05_泡泡萌可_render",
@@ -2796,7 +2796,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，华夫~"
+    "line": "糯糯！泡泡萌可来啦！"
   },
   "甜甜圈萌可": {
     "key": "col_05_甜甜圈萌可_render",
@@ -2807,7 +2807,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，棒棒~"
+    "line": "呼呼，甜甜圈萌可在这里，呼呼~"
   },
   "糖糖萌可": {
     "key": "col_05_糖糖萌可_render",
@@ -2829,7 +2829,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "奶油~ 我是蛋糕妹妹萌可！"
+    "line": "呼呼，蛋糕妹妹萌可在这里，糯糯~"
   },
   "蛋糕妹妹萌可·蛋糕弟弟萌可": {
     "key": "col_05_蛋糕妹妹萌可_蛋糕弟弟萌可_render",
@@ -2840,7 +2840,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "泡泡！蛋糕妹妹萌可·蛋糕弟弟萌可来啦！"
+    "line": "呼呼！蛋糕妹妹萌可·蛋糕弟弟萌可来啦！"
   },
   "蛋糕弟弟萌可": {
     "key": "col_05_蛋糕弟弟萌可_render",
@@ -2851,7 +2851,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "蛋糕弟弟萌可登场，薄薄~"
+    "line": "来和我玩吧，绵绵~ 我是蛋糕弟弟萌可！"
   },
   "酸奶萌可": {
     "key": "col_05_酸奶萌可_render",
@@ -2862,7 +2862,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，糯糯~"
+    "line": "呼呼，酸奶萌可在这里，蜜蜜~"
   },
   "马卡龙萌可": {
     "key": "col_05_马卡龙萌可_render",
@@ -2873,7 +2873,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，蜜蜜~"
+    "line": "来和我玩吧，巧巧~ 我是马卡龙萌可！"
   },
   "乐美公主": {
     "key": "col_06_乐美萌可_render",
@@ -2994,7 +2994,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "☄️",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，星河~"
+    "line": "嗖嗖~ 我是流浪萌可！"
   },
   "熊熊萌可": {
     "key": "col_06_熊熊萌可_render",
@@ -3060,7 +3060,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "☄️",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，月光~"
+    "line": "望望！缤缤萌可·纷纷萌可来啦！"
   },
   "贴贴萌可": {
     "key": "col_06_贴贴萌可_render",
@@ -3104,7 +3104,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "月光~ 我是丘比特萌可！"
+    "line": "丘比特萌可登场，月光~"
   },
   "丝绸萌可": {
     "key": "col_07_丝绸萌可_render",
@@ -3115,7 +3115,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "希望！丝绸萌可来啦！"
+    "line": "丝绸萌可登场，灵灵~"
   },
   "困困萌可": {
     "key": "col_07_困困萌可_render",
@@ -3126,7 +3126,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "困困萌可登场，华丽~"
+    "line": "呼呼，困困萌可在这里，自信~"
   },
   "洗洗萌可": {
     "key": "col_07_洗洗萌可_render",
@@ -3137,7 +3137,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，自信~"
+    "line": "自信！洗洗萌可来啦！"
   },
   "猫猫萌可": {
     "key": "col_07_猫猫萌可_render",
@@ -3148,7 +3148,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，浪漫~"
+    "line": "呼呼，猫猫萌可在这里，自信~"
   },
   "玲珑萌可": {
     "key": "col_07_玲珑萌可_render",
@@ -3159,7 +3159,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "呼呼，玲珑萌可在这里，优雅~"
+    "line": "华丽~ 我是玲珑萌可！"
   },
   "白雪萌可": {
     "key": "col_07_白雪萌可_render",
@@ -3170,7 +3170,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "温柔~ 我是白雪萌可！"
+    "line": "今天也要开开心心哦，月光~ 我是白雪萌可！"
   },
   "蝴蝶萌可": {
     "key": "col_07_蝴蝶萌可_render",
@@ -3181,7 +3181,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "高贵！蝴蝶萌可来啦！"
+    "line": "优雅！蝴蝶萌可来啦！"
   },
   "露水萌可": {
     "key": "col_07_露水萌可_render",
@@ -3192,7 +3192,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "露水萌可登场，婷婷~"
+    "line": "呼呼，露水萌可在这里，优雅~"
   },
   "鞋鞋萌可": {
     "key": "col_07_鞋鞋萌可_render",
@@ -3203,7 +3203,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，盈盈~"
+    "line": "呼呼，鞋鞋萌可在这里，自信~"
   },
   "魅力萌可": {
     "key": "col_07_魅力萌可_render",
@@ -3214,7 +3214,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，冉冉~"
+    "line": "来和我玩吧，盈盈~ 我是魅力萌可！"
   },
   "查尔斯王子": {
     "key": "col_08_查尔斯萌可_render",
@@ -3225,7 +3225,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "守护~ 我是查尔斯王子！"
+    "line": "来和我玩吧，凛凛~ 我是查尔斯王子！"
   },
   "演歌萌可": {
     "key": "col_08_演歌萌可_render",
@@ -3236,7 +3236,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "骑士！演歌萌可来啦！"
+    "line": "来和我玩吧，剑剑~ 我是演歌萌可！"
   },
   "绅士萌可": {
     "key": "col_08_绅士萌可_render",
@@ -3247,7 +3247,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "绅士萌可登场，勇勇~"
+    "line": "呼呼，绅士萌可在这里，英英~"
   },
   "青蛙萌可": {
     "key": "col_08_青蛙萌可_render",
@@ -3258,7 +3258,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "跟我一起玩吧，剑剑~"
+    "line": "帅帅~ 我是青蛙萌可！"
   },
   "奉献萌可": {
     "key": "col_09_奉献萌可_render",
@@ -3280,7 +3280,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "😈",
     "color": "text-slate-500",
     "item": "✨ 魔法道具",
-    "line": "嘿嘿！闹闹萌可来啦！"
+    "line": "呼呼，闹闹萌可在这里，鬼鬼~"
   },
   "幸运萌可": {
     "key": "col_10_幸运萌可_render",
@@ -3291,7 +3291,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "奇迹~ 我是幸运萌可！"
+    "line": "呼呼，幸运萌可在这里，运运~"
   },
   "月神萌可": {
     "key": "col_10_月神萌可_render",
@@ -3302,7 +3302,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "幸运！月神萌可来啦！"
+    "line": "来和我玩吧，灿灿~ 我是月神萌可！"
   },
   "月食萌可": {
     "key": "col_10_月食萌可_render",
@@ -3313,7 +3313,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "月食萌可登场，传说~"
+    "line": "今天也要开开心心哦，奇奇~ 我是月食萌可！"
   },
   "极光萌可": {
     "key": "col_10_极光萌可_render",
@@ -3335,7 +3335,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "今天也要开心哦，熠熠~"
+    "line": "来和我玩吧，闪耀~ 我是甜甜萌可！"
   },
   "酸酸萌可": {
     "key": "col_10_酸酸萌可_render",
@@ -3346,6 +3346,6 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "呼呼，酸酸萌可在这里，祥祥~"
+    "line": "来和我玩吧，闪耀~ 我是酸酸萌可！"
   }
 };
