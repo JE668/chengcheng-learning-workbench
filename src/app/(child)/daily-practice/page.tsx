@@ -134,7 +134,7 @@ export default function DailyPracticePage() {
             )}
             {result.milestone && (
               <div className="mt-4 bg-white/25 rounded-2xl p-4">
-                <div className="text-2xl font-black">🌟 连续 7 天达成！</div>
+                <div className="text-2xl font-black">🌟 连续 {result.practiceStreak} 天达成！</div>
                 <div className="mt-1">解锁新萌可「{result.milestone.mokoName}」+ 10 ⭐ 星星币</div>
               </div>
             )}

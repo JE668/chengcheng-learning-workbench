@@ -5,6 +5,14 @@ import { mokoChars, subjectMokoKey, SUN_PER_SUBJECT } from './moko';
 import { mokoCollection } from './moko-collection';
 import type { Subject } from './types';
 
+/**
+ * 连续一练「额外萌可」里程碑（天数）。
+ * 设计意图：前期密集奖赏帮孩子建立习惯——第 2~7 天几乎每天解锁一只新萌可，
+ * 之后间隔逐步拉开（10/14/21…90），形成「衰减奖励曲线」，既容易上手又不至于一次发完。
+ * 注意：三科全对当天本就会各召唤一只学科萌可（爱心/正正/唱唱），这里的里程碑是「额外惊喜」。
+ */
+export const MILESTONE_DAYS = [2, 3, 4, 5, 6, 7, 10, 14, 21, 30, 45, 60, 90];
+
 /* ----------------------------- 题型定义 ----------------------------- */
 export type PracticeQuestion =
   | {
@@ -227,7 +235,8 @@ export async function getTodayPractice(childId: number, generate = false): Promi
     row = (await db.execute({ sql: 'SELECT * FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, today] })).rows[0];
   }
   const streak = await computePracticeStreak(childId, today);
-  const nextMilestone = streak > 0 ? 7 - (streak % 7) : 7;
+  const nextMilestoneDay = MILESTONE_DAYS.find((d) => d > streak);
+  const nextMilestone = nextMilestoneDay != null ? nextMilestoneDay - streak : 0;
   if (!row) {
     return { completed: false, correct: 0, total: 0, questions: [], practiceStreak: streak, nextMilestone };
   }
@@ -321,7 +330,7 @@ export async function submitPractice(childId: number, answers: number[]): Promis
   if (allDone) {
     practiceStreak = await computePracticeStreak(childId, today);
     const stRow = (await db.execute({ sql: 'SELECT streak_rewarded FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, today] })).rows[0];
-    if (practiceStreak % 7 === 0 && Number(stRow?.streak_rewarded ?? 0) !== 1) {
+    if (MILESTONE_DAYS.includes(practiceStreak) && Number(stRow?.streak_rewarded ?? 0) !== 1) {
       const ownedKeys = (await db.execute({ sql: 'SELECT moko_key FROM moko_owned WHERE child_id = ?', args: [childId] })).rows.map((r) => String(r.moko_key));
       const candidate = mokoCollection.find((m) => m.key.startsWith('col_') && !ownedKeys.includes(m.key));
       if (candidate) {
@@ -332,7 +341,7 @@ export async function submitPractice(childId: number, answers: number[]): Promis
           args: [childId, candidate.key],
         });
         await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + 10 WHERE child_id = ?', args: [childId] });
-        await logGrowthEvent(childId, 'milestone', '🌟', '连续 7 日一练达成！', `解锁新萌可「${candidate.name}」，并收获 10 星星币！`);
+        await logGrowthEvent(childId, 'milestone', '🌟', `连续 ${practiceStreak} 日一练达成！`, `解锁新萌可「${candidate.name}」，并收获 10 星星币！`);
         milestone = { mokoKey: candidate.key, mokoName: candidate.name ?? '新萌可', img: candidate.img ?? '' };
       }
       await db.execute({ sql: 'UPDATE daily_practice SET streak_rewarded = 1 WHERE child_id = ? AND day = ?', args: [childId, today] });
