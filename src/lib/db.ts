@@ -112,6 +112,29 @@ export async function ensureSchema() {
     } catch { /* 表未建好（全新库），忽略 */ }
   }
 
+  // 增量迁移（每次启动都跑，幂等）：把「多娃扩展」与「错题来源」所需的列、以及家长↔孩子关联，
+  // 补齐到已部署旧库。全新库此刻这些表尚未创建（主批次在守卫之后），ALTER/UPDATE 会抛错被 try/catch 吞掉，
+  // 无害——主批次及其后的迁移仍会处理全新库；旧库表已存在，这里直接补齐。
+  try { await db.execute({ sql: 'ALTER TABLE users ADD COLUMN parent_id INTEGER', args: [] }); } catch { /* 已存在/表未建 */ }
+  try { await db.execute({ sql: 'ALTER TABLE users ADD COLUMN selected_child_id INTEGER', args: [] }); } catch { /* 已存在/表未建 */ }
+  try { await db.execute({ sql: 'ALTER TABLE mistakes ADD COLUMN source_module TEXT', args: [] }); } catch { /* 已存在/表未建 */ }
+  try { await db.execute({ sql: 'ALTER TABLE mistakes ADD COLUMN chapter TEXT', args: [] }); } catch { /* 已存在/表未建 */ }
+  try {
+    const linkCheck = await db.execute({
+      sql: "SELECT id FROM users WHERE username = 'cara' AND parent_id IS NULL LIMIT 1",
+      args: [],
+    });
+    if (linkCheck.rows.length) {
+      const childId = Number(linkCheck.rows[0].id);
+      const pRow = (await db.execute({ sql: "SELECT id FROM users WHERE username = 'parent' LIMIT 1", args: [] })).rows;
+      if (pRow.length) {
+        const parentId = Number(pRow[0].id);
+        await db.execute({ sql: 'UPDATE users SET parent_id = ? WHERE id = ?', args: [parentId, childId] });
+        await db.execute({ sql: 'UPDATE users SET selected_child_id = ? WHERE id = ?', args: [childId, parentId] });
+      }
+    }
+  } catch { /* 表未建（全新库），忽略 */ }
+
   if (guard.rows.length > 0) return;
 
   await db.batch([
