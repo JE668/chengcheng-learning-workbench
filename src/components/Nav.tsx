@@ -22,6 +22,7 @@ const childLinks = [
 const parentLinks = [
   { href: '/dashboard', label: '看板', icon: '📊' },
   { href: '/tasks', label: '任务', icon: '📝' },
+  { href: '/parent/dictation', label: '听写布置', icon: '🎤' },
   { href: '/mistakes', label: '错题本', icon: '📕' },
   { href: '/redeem', label: '兑换', icon: '🎁' },
   { href: '/reports', label: '报告', icon: '📈' },

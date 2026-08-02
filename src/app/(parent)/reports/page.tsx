@@ -81,6 +81,32 @@ export default async function ReportsPage() {
   }) : { rows: [{ n: 0 }] };
   const mokoCount = Number(moko.rows[0]?.n ?? 0);
 
+  // 薄弱点：按学科 + 题型聚合错题（未掌握优先）
+  const weakRows = c
+    ? await db.execute({
+        sql: `SELECT subject, kind, COUNT(*) n,
+                     SUM(CASE WHEN resolved = 0 THEN 1 ELSE 0 END) as unsolved
+              FROM mistakes WHERE child_id = ? GROUP BY subject, kind ORDER BY unsolved DESC`,
+        args: [childId],
+      })
+    : { rows: [] };
+  const KIND_LABEL: Record<string, string> = {
+    pinyin: '拼音', math: '数学', english: '英语', char: '识字', poem: '古诗', other: '其他',
+  };
+  const SUBJECT_HINT: Record<string, string> = {
+    语文: '多做「拼音拼读乐园」「象形字」「古诗填空」',
+    数学: '多做「每日一练」数学题和「分与合」',
+    英语: '多听 RAZ 绘本和英语单词点读',
+  };
+  const weakness = weakRows.rows
+    .map((r) => ({
+      subject: String(r.subject),
+      kind: String(r.kind),
+      n: Number(r.n),
+      unsolved: Number(r.unsolved ?? 0),
+    }))
+    .filter((w) => w.unsolved > 0);
+
   const badges = c ? await getBadges(childId) : [];
   const earnedBadges = badges.filter((b) => b.earned);
 
@@ -122,6 +148,34 @@ export default async function ReportsPage() {
             ))}
             {daily.rows.length === 0 && <div className="text-gray-500">本周还没有积分记录</div>}
           </div>
+        </div>
+
+        <div className="card-moko mb-6">
+          <h2 className="text-xl font-bold text-moko-violet mb-3">🔍 薄弱点分析</h2>
+          {weakness.length === 0 ? (
+            <p className="text-gray-500">暂时没有未掌握的错题，孩子的掌握情况很棒！继续保持～</p>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {weakness.map((w) => (
+                  <span
+                    key={`${w.subject}-${w.kind}`}
+                    className="px-3 py-1.5 rounded-full bg-moko-rose/15 text-moko-rose font-bold text-sm"
+                  >
+                    {w.subject}·{KIND_LABEL[w.kind] ?? w.kind} <span className="opacity-80">({w.unsolved} 道待练)</span>
+                  </span>
+                ))}
+              </div>
+              <ul className="text-gray-600 text-sm space-y-1 list-disc list-inside">
+                {weakness.slice(0, 4).map((w) => (
+                  <li key={`${w.subject}-${w.kind}-tip`}>
+                    {w.subject}的{KIND_LABEL[w.kind] ?? w.kind}出现 {w.unsolved} 道还没掌握，建议：{SUBJECT_HINT[w.subject] ?? '针对性多练一练'}。
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-gray-400 mt-2">提示：错题本里的题目会按遗忘曲线自动回炉，点「错题复习」就能练。</p>
+            </>
+          )}
         </div>
 
         <div className="card-moko mb-6">

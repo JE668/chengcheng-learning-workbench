@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
 
 type PTask = {
@@ -98,7 +99,10 @@ export default function TasksPage() {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
         <h1 className="text-3xl font-black text-moko-violet">学习任务 📝</h1>
-        <ChildSwitcher />
+        <div className="flex items-center gap-2">
+          <Link href="/parent/dictation" className="px-4 py-2 rounded-2xl bg-gradient-to-r from-moko-rose to-moko-pink text-white font-black shadow hover:scale-105 transition text-sm">🎤 布置听写/口算</Link>
+          <ChildSwitcher />
+        </div>
       </div>
 
       <div className="card-moko mb-6">
