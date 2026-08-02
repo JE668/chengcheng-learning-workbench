@@ -86,6 +86,32 @@ export async function ensureSchema() {
     args: [],
   });
 
+  // 增量修正（每次启动都跑，幂等）：学科萌可对齐图鉴 key，避免与剧情萌可重复计数。
+  // 旧版本每日打卡写入 heartping/courageping/singping，与剧情捕捉写入的 col_01_*_render 同名，
+  // 导致「收集萌可数 = COUNT(moko_owned)」把爱心/正正/唱唱各多算一次。
+  // 处理：若孩子已同时拥有 col_ 版本则删掉重复的旧 key；否则把旧 key 改名为 col_ 版本。
+  // 放在守卫之前，确保已部署旧库也能自动纠正。
+  {
+    const subjectMerge: [string, string][] = [
+      ['heartping', 'col_01_爱心萌可_render'],
+      ['courageping', 'col_01_正正萌可_render'],
+      ['singping', 'col_01_唱唱萌可_render'],
+    ];
+    // 全新库 moko_owned 在主批次（guard 之后）才建表，此处可能尚未存在 → 静默跳过，下次启动生效。
+    try {
+      for (const [oldKey, newKey] of subjectMerge) {
+        await db.execute({
+          sql: `DELETE FROM moko_owned WHERE moko_key = ? AND child_id IN (SELECT child_id FROM moko_owned WHERE moko_key = ?)`,
+          args: [oldKey, newKey],
+        });
+        await db.execute({
+          sql: `UPDATE moko_owned SET moko_key = ? WHERE moko_key = ?`,
+          args: [newKey, oldKey],
+        });
+      }
+    } catch { /* 表未建好（全新库），忽略 */ }
+  }
+
   if (guard.rows.length > 0) return;
 
   await db.batch([

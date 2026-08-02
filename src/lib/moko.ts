@@ -3,11 +3,16 @@ import { mokoCollection, mokoCollectionByName } from './moko-collection';
 
 export const appName = process.env.NEXT_PUBLIC_APP_NAME || '程程学习工作台';
 
-/** 学科 → 对应萌可 key（用于每日打卡奖励） */
+/**
+ * 学科 → 对应萌可 key（用于每日打卡奖励）。
+ * 注意：必须与剧情捕捉写入的图鉴 key 一致（col_01_*_render），
+ * 否则「爱心/正正/唱唱」会同时存在 heartping 与 col_ 两个 key，导致收集数重复计数。
+ * mokoChars 已合并 mokoCollection，故 col_ key 在显示/奖状处也能正确解析。
+ */
 export const subjectMokoKey: Record<Subject, string> = {
-  语文: 'heartping',
-  数学: 'courageping',
-  英语: 'singping',
+  语文: 'col_01_爱心萌可_render',
+  数学: 'col_01_正正萌可_render',
+  英语: 'col_01_唱唱萌可_render',
 };
 
 export const subjects: { key: Subject; label: string; color: string; img: string; desc: string }[] = [
