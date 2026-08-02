@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { TRACE_CHARS, CHARACTERS } from '@/lib/study-data';
 import { speakZh } from '@/lib/speak';
+import { trackActivity } from '@/lib/activity';
 
 const CHAR_INFO = new Map(CHARACTERS.map((c) => [c.char, c]));
 
@@ -116,6 +117,7 @@ export default function TracePage() {
   const prev = () => setIdx((i) => (i - 1 + TRACE_CHARS.length) % TRACE_CHARS.length);
   const next = () => {
     setDone(true);
+    trackActivity('trace');
     setTimeout(() => setIdx((i) => (i + 1) % TRACE_CHARS.length), 350);
   };
 

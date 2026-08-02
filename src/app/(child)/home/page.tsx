@@ -151,6 +151,8 @@ export default async function HomePage() {
             <Link href="/record" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-cyan text-white font-black col-span-2">🏆 看记录</Link>
             <Link href="/pinyin-blend" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-rose text-white font-black col-span-2">🀄 拼音拼读 · 拼读乐园</Link>
             <Link href="/story" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black col-span-2">📜 萌可剧情 · 捕捉萌可</Link>
+            <Link href="/moko-house" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-purple text-white font-black col-span-2">🧸 萌可房间 · 和萌可互动</Link>
+            <Link href="/badges" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-gradient-to-r from-moko-cyan to-moko-blue text-white font-black col-span-2">🥇 勋章墙 · 看看我的成就</Link>
             <GuideModal
               className="col-span-2 rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-cyan text-white font-black cursor-pointer"
               trigger="📖 攻略说明 · 每日一练怎么玩"

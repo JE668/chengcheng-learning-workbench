@@ -3,7 +3,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { POEMS, CHARACTERS } from '@/lib/study-data';
-import { speakZh } from '@/lib/speak';
+import { speakZh, praise } from '@/lib/speak';
+import { trackActivity } from '@/lib/activity';
 
 const PUNCT = new Set(['，', '。', '？', '！', '、', '；', '：', '“', '”', '《', '》']);
 
@@ -113,7 +114,9 @@ export default function PoemFillPage() {
       setConsumed((prev) => new Set(prev).add(cardIdx));
       if (ns.every((s) => s !== null)) {
         setSolved(true);
+        trackActivity('poem');
         setTimeout(() => speakZh(poem.lines.join(''), 0.7), 500);
+        setTimeout(() => praise(), 1200);
       }
     } else {
       setWrongSlot(slotIdx);

@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { speakZh } from '@/lib/speak';
+import { trackActivity } from '@/lib/activity';
 
 interface Scene {
   id: string;
@@ -66,6 +67,7 @@ export default function TalkPage() {
   const stopRec = () => {
     mrRef.current?.stop();
     setRecording(false);
+    trackActivity('talk');
   };
 
   return (

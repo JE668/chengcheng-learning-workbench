@@ -125,3 +125,19 @@ export function speakPinyin(syllable: string, _tone = 0, han?: string) {
   const text = han && /[\u4e00-\u9fff]/.test(han) ? han : syllable;
   void playTts(text, 'zh', { wsRate: 0.5, pitch: 1.1, pauseMs: 400 });
 }
+
+const PRAISES = [
+  '你真棒！',
+  '太厉害啦！',
+  '答对啦，了不起！',
+  '程程好聪明！',
+  '哇，全对！',
+  '萌可给你点赞！',
+  '继续加油，你最棒！',
+];
+
+/** 随机夸夸语音（答对/完成时给孩子情绪反馈） */
+export function praise(rate = 0.85) {
+  const text = PRAISES[Math.floor(Math.random() * PRAISES.length)];
+  speakZh(text, rate);
+}

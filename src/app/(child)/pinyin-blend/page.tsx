@@ -4,6 +4,7 @@ import { useMemo, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { PINYIN_TONES } from '@/lib/study-data';
 import { speakPinyin, speakZh } from '@/lib/speak';
+import { trackActivity } from '@/lib/activity';
 
 /* 真声母（不含 y/w 零声母改写，拼读阶段先不教） */
 const REAL_INITIALS = ['zh', 'ch', 'sh', 'b', 'p', 'm', 'f', 'd', 't', 'n', 'l', 'g', 'k', 'h', 'j', 'q', 'x', 'r', 'z', 'c', 's'];
@@ -90,6 +91,7 @@ export default function PinyinBlendPage() {
       setMsg('✅ ' + rand(PRAISE));
       speakZh(rand(PRAISE));
       speakPinyin(cur.syllable, 0, cur.han);
+      trackActivity('pinyin');
     } else {
       setMsg('再听听看～');
       speakPinyin(cur.syllable, 0, cur.han);

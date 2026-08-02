@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { speakZh } from '@/lib/speak';
+import { trackActivity } from '@/lib/activity';
 
 interface Picto {
   char: string;
@@ -32,6 +33,7 @@ export default function PictoPage() {
   const play = () => {
     setShowChar(true);
     speakZh(p.char);
+    trackActivity('picto');
   };
   const pick = (i: number) => {
     setIdx(i);

@@ -11,6 +11,8 @@ const childLinks = [
   { href: '/my-tasks', label: '我的任务', icon: '📝' },
   { href: '/textbook', label: '萌可课本', icon: '📖' },
   { href: '/games', label: '萌可游戏', icon: '🎮' },
+  { href: '/moko-house', label: '萌可房间', icon: '🧸' },
+  { href: '/badges', label: '勋章墙', icon: '🥇' },
   { href: '/record', label: '成长记录', icon: '🏆' },
   { href: '/cert', label: '荣誉奖状', icon: '🎖️' },
   { href: '/castle', label: '萌可城堡', icon: '🏰' },
@@ -71,14 +73,14 @@ export default function Nav({ user }: { user: User }) {
 
       {/* mobile bottom bar */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-gradient-to-r from-moko-purple to-moko-violet px-2 pb-2 pt-2 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
-        <div className="flex justify-around">
+        <div className="flex justify-around overflow-x-auto whitespace-nowrap">
           {links.map((l) => (
-            <Link key={l.href} href={l.href} className={`flex flex-col items-center p-2 rounded-xl ${pathname === l.href || pathname.startsWith(l.href + '/') ? 'bg-white text-moko-rose' : 'text-white/90'}`}>
+            <Link key={l.href} href={l.href} className={`flex flex-col items-center p-2 rounded-xl flex-shrink-0 ${pathname === l.href || pathname.startsWith(l.href + '/') ? 'bg-white text-moko-rose' : 'text-white/90'}`}>
               <span className="text-2xl">{l.icon}</span>
               <span className="text-xs font-bold">{l.label}</span>
             </Link>
           ))}
-          <form action="/api/auth/logout" method="POST" className="flex flex-col items-center p-2 text-white/90">
+          <form action="/api/auth/logout" method="POST" className="flex flex-col items-center p-2 text-white/90 flex-shrink-0">
             <button className="flex flex-col items-center"><span className="text-2xl">🚪</span><span className="text-xs font-bold">退出</span></button>
           </form>
         </div>
