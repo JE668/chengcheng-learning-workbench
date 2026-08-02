@@ -72,6 +72,20 @@ export async function ensureSchema() {
     args: [],
   });
 
+  // 增量表（每次启动都跑，幂等）：奖状颁发申请——孩子端只能「申请」，家长审批通过后才能颁发/打印。
+  // 放在守卫之前，保证已部署旧库自动补齐。一个孩子对应当前一条有效申请（pending/approved/rejected 后新建）。
+  await db.execute({
+    sql: `CREATE TABLE IF NOT EXISTS cert_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      decided_at DATETIME,
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
+    args: [],
+  });
+
   if (guard.rows.length > 0) return;
 
   await db.batch([

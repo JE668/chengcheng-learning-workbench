@@ -25,6 +25,7 @@ const parentLinks = [
   { href: '/parent/dictation', label: '听写布置', icon: '🎤' },
   { href: '/mistakes', label: '错题本', icon: '📕' },
   { href: '/redeem', label: '兑换', icon: '🎁' },
+  { href: '/parent/cert', label: '奖状颁发', icon: '🎖️' },
   { href: '/reports', label: '报告', icon: '📈' },
   { href: '/settings', label: '设置', icon: '⚙️' },
 ];
@@ -62,7 +63,7 @@ export default function Nav({ user }: { user: User }) {
             <p className="text-xs opacity-80">{user.displayName} · {user.role === 'parent' ? '爸爸妈妈' : '小朋友'}</p>
           </div>
         </div>
-        <nav className="flex-1 space-y-2">
+        <nav className="flex-1 space-y-2 min-h-0 overflow-y-auto pr-1">
           {links.map((l) => <Item key={l.href} {...l} />)}
         </nav>
         <form action={logoutAction} method="POST">

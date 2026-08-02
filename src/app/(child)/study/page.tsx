@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import ReviewBadge from '@/components/ReviewBadge';
 import { MokoHelper } from '@/components/MokoHelper';
+import { STUDY_MODULES, SUBJECT_META } from '@/lib/study-modules';
 
 const cards = [
   {
@@ -29,6 +30,26 @@ const cards = [
   },
 ];
 
+// 首页精选模块（每个学科挑几个最受欢迎的，直接点进小课堂）
+const FEATURED: { subject: string; key: string }[] = [
+  { subject: 'chinese', key: 'pinyin' },
+  { subject: 'chinese', key: 'characters' },
+  { subject: 'chinese', key: 'poems' },
+  { subject: 'math', key: 'count' },
+  { subject: 'math', key: 'calc' },
+  { subject: 'math', key: 'compare' },
+  { subject: 'english', key: 'letters' },
+  { subject: 'english', key: 'words' },
+  { subject: 'english', key: 'speak' },
+];
+
+const TOOLS = [
+  { href: '/study/talk', emoji: '🗣️', title: '看图说话', sub: '看场景说 3 句话，录下自己的声音' },
+  { href: '/study/picto', emoji: '🌟', title: '象形字变变变', sub: '汉字怎么从「画」变成「字」' },
+  { href: '/study/trace', emoji: '✍️', title: '描红跟写', sub: '米字格描红范字，听读音记字形' },
+  { href: '/study/poem-fill', emoji: '📜', title: '古诗填空背诵', sub: '从字卡补全古诗，填对听萌可念' },
+];
+
 export default function StudyPage() {
   return (
     <div className="max-w-4xl mx-auto">
@@ -45,6 +66,8 @@ export default function StudyPage() {
       <div className="mb-6">
         <ReviewBadge />
       </div>
+
+      {/* 三大主学科 */}
       <div className="grid md:grid-cols-3 gap-5">
         {cards.map((s) => (
           <Link
@@ -59,62 +82,55 @@ export default function StudyPage() {
         ))}
       </div>
 
-      <Link
-        href="/study/talk"
-        className="mt-8 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-cyan/40 bg-gradient-to-r from-moko-cyan/20 to-moko-blue/20 hover:scale-[1.02] transition block"
-      >
-        <span className="text-5xl">🗣️</span>
-        <div className="flex-1">
-          <h3 className="text-xl font-black text-moko-violet">看图说话 · 开口表达</h3>
-          <p className="text-sm text-gray-600">看场景说 3 句话，还能录下自己的声音回放</p>
-        </div>
-        <span className="text-moko-violet font-black text-lg">打开 ›</span>
-      </Link>
+      {/* 精选热门模块：直接点进小课堂，不用层层点 */}
+      <h2 className="text-2xl font-black text-moko-violet mt-10 mb-3">⭐ 精选小课堂</h2>
+      <div className="grid sm:grid-cols-3 gap-4">
+        {FEATURED.map((f) => {
+          const mod = STUDY_MODULES[f.subject]?.find((m) => m.key === f.key);
+          if (!mod) return null;
+          const meta = SUBJECT_META[f.subject];
+          return (
+            <Link
+              key={`${f.subject}-${f.key}`}
+              href={`/study/${f.subject}/${f.key}`}
+              className={`rounded-2xl p-4 shadow-lg border-2 border-white/40 text-white hover:scale-105 transition block ${mod.color}`}
+            >
+              <div className="text-3xl mb-1">{mod.emoji}</div>
+              <div className="font-black text-lg">{mod.label}</div>
+              <div className="text-xs opacity-90 mt-1">{meta.label} · {mod.desc}</div>
+            </Link>
+          );
+        })}
+      </div>
 
-      <Link
-        href="/study/picto"
-        className="mt-8 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-purple/40 bg-gradient-to-r from-moko-purple/20 to-moko-pink/20 hover:scale-[1.02] transition block"
-      >
-        <span className="text-5xl">🌟</span>
-        <div className="flex-1">
-          <h3 className="text-xl font-black text-moko-violet">象形字变变变</h3>
-          <p className="text-sm text-gray-600">看汉字怎么从「画」变成「字」，记得更牢</p>
-        </div>
-        <span className="text-moko-violet font-black text-lg">打开 ›</span>
-      </Link>
+      {/* 趣味表达与练习 */}
+      <h2 className="text-2xl font-black text-moko-violet mt-10 mb-3">🎨 趣味表达与练习</h2>
+      <div className="grid sm:grid-cols-2 gap-4">
+        {TOOLS.map((t) => (
+          <Link
+            key={t.href}
+            href={t.href}
+            className="flex items-center gap-4 rounded-2xl p-4 shadow-lg border-2 border-moko-purple/20 bg-white hover:scale-[1.02] transition"
+          >
+            <span className="text-4xl">{t.emoji}</span>
+            <div className="flex-1">
+              <h3 className="font-black text-moko-violet">{t.title}</h3>
+              <p className="text-sm text-gray-600">{t.sub}</p>
+            </div>
+            <span className="text-moko-violet font-black">打开 ›</span>
+          </Link>
+        ))}
+      </div>
 
-      <Link
-        href="/study/trace"
-        className="mt-8 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-pink/40 bg-gradient-to-r from-moko-pink/20 to-moko-violet/20 hover:scale-[1.02] transition block"
-      >
-        <span className="text-5xl">✍️</span>
-        <div className="flex-1">
-          <h3 className="text-xl font-black text-moko-violet">描红跟写</h3>
-          <p className="text-sm text-gray-600">米字格描红范字，写完听读音记字形</p>
-        </div>
-        <span className="text-moko-violet font-black text-lg">打开 ›</span>
-      </Link>
-
-      <Link
-        href="/study/poem-fill"
-        className="mt-8 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-gold/40 bg-gradient-to-r from-moko-gold/20 to-moko-yellow/20 hover:scale-[1.02] transition block"
-      >
-        <span className="text-5xl">📜</span>
-        <div className="flex-1">
-          <h3 className="text-xl font-black text-moko-violet">古诗填空背诵</h3>
-          <p className="text-sm text-gray-600">从字卡补全古诗，填对听萌可念整首</p>
-        </div>
-        <span className="text-moko-violet font-black text-lg">打开 ›</span>
-      </Link>
-
+      {/* 课本 & 绘本 */}
       <Link
         href="/textbook"
-        className="mt-8 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-gold/40 bg-gradient-to-r from-moko-gold/20 to-moko-yellow/20 hover:scale-[1.02] transition block"
+        className="mt-6 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-gold/40 bg-gradient-to-r from-moko-gold/20 to-moko-yellow/20 hover:scale-[1.02] transition block"
       >
         <span className="text-5xl">📖</span>
         <div className="flex-1">
-          <h3 className="text-xl font-black text-moko-violet">电子课本（一年级上册）</h3>
-          <p className="text-sm text-gray-600">语文 · 数学 原版 PDF，随时翻开和萌可一起学</p>
+          <h3 className="text-xl font-black text-moko-violet">电子课本 & 英语绘本</h3>
+          <p className="text-sm text-gray-600">一年级上册语文·数学课本，还有 RAZ 英语绘本跟读</p>
         </div>
         <span className="text-moko-violet font-black text-lg">打开 ›</span>
       </Link>

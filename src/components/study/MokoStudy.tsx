@@ -265,16 +265,19 @@ function ReaderCard({ book }: { book: RazBook }) {
               </a>
             )}
           </div>
-          <video
-            src={mediaUrl(`/raz/videos/${book.id}.mp4`)}
-            controls
-            playsInline
-            className="w-full rounded-xl bg-black"
-          >
-            您的浏览器不支持视频播放。
-          </video>
+          <div className="max-w-2xl mx-auto">
+            <video
+              src={mediaUrl(`/raz/videos/${book.id}.mp4`)}
+              controls
+              playsInline
+              preload="metadata"
+              className="w-full max-h-[55vh] object-contain rounded-xl bg-black"
+            >
+              您的浏览器不支持视频播放。
+            </video>
+          </div>
           {book.hasPdf && (
-            <div className="w-full h-[70vh] overflow-auto rounded-xl bg-white">
+            <div className="w-full max-h-[60vh] sm:max-h-[70vh] overflow-auto rounded-xl bg-white">
               <PdfViewer url={mediaUrl(`/raz/books/${book.id}.pdf`)} className="w-full" />
             </div>
           )}

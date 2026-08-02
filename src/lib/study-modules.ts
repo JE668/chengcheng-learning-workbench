@@ -6,6 +6,7 @@ import { StrokeRadicalModule, TextCharModule } from '@/components/study/MokoStud
 import { NumberSenseModule, CompareModule, ShapeModule, MathQuizModule, AngleModule, CarryModule } from '@/components/study/MathModules';
 import { PositionModule, SolidShapeModule, Numbers1120Module, ClockModule } from '@/components/study/MathExtra';
 import { SplitModule } from '@/components/study/MokoStudy';
+import { FindPatternModule } from '@/components/study/PatternModule';
 import { LetterModule, WordModule, EnListenModule, EnSpeakModule, UnitModule } from '@/components/study/EnglishModules';
 
 export interface StudyModuleMeta {
@@ -42,6 +43,7 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'carry', label: '进位加法', emoji: '➕', desc: '20 以内进位加法', Component: CarryModule, color: 'bg-moko-cyan' },
     { key: 'clock', label: '认识钟表', emoji: '🕐', desc: '认识整时', Component: ClockModule, color: 'bg-moko-cyan' },
     { key: 'angle', label: '角的世界', emoji: '📐', desc: '锐角、直角、钝角', Component: AngleModule, color: 'bg-moko-blue' },
+    { key: 'pattern', label: '找规律', emoji: '🔍', desc: '发现顺序里的秘密', Component: FindPatternModule, color: 'bg-moko-violet' },
   ],
   english: [
     { key: 'letters', label: '字母乐园', emoji: '🔤', desc: 'A ~ Z 认读', Component: LetterModule, color: 'bg-moko-yellow' },
