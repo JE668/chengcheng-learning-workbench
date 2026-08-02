@@ -612,8 +612,7 @@ export async function getBadges(childId: number): Promise<BadgeItem[]> {
   const row = await getRow(childId);
   const prosperity = Number(row?.prosperity ?? 0);
   const streak = await computeStreak(childId, dateStr());
-  const moko = await db.execute({ sql: 'SELECT COUNT(*) n FROM moko_owned WHERE child_id = ?', args: [childId] });
-  const mokoCount = Number(moko.rows[0]?.n ?? 0);
+  const { owned: mokoCount } = await getMokoProgress(childId);
   const resolved = await db.execute({ sql: "SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND resolved = 1", args: [childId] });
   const resolvedCount = Number(resolved.rows[0]?.n ?? 0);
   const enResolved = await db.execute({ sql: "SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND subject = '英语' AND resolved = 1", args: [childId] });
@@ -633,6 +632,29 @@ export async function getBadges(childId: number): Promise<BadgeItem[]> {
     { id: 'raz', name: 'RAZ 小学者', emoji: '🇬🇧', desc: '攻克 5 个英语易错词', earned: enCount >= 5, hint: '英语发音评测把 5 个词练到 3 星' },
     { id: 'full', name: '满血城堡', emoji: '🌟', desc: '繁荣 20 且无捣蛋萌可', earned: prosperity >= 20 && troubleCount === 0, hint: '繁荣度 20 且城堡无捣蛋萌可' },
   ];
+}
+
+/** 图鉴收集进度：以「唯一角色名」去重统计（与城堡图鉴口径完全一致），分母=图鉴可收集角色总数。
+ *  这样爱心/正正/唱唱等既来自打卡也来自剧情的萌可只算 1 只，进度条按图鉴唯一角色（约 150）算 100%。 */
+export async function getMokoProgress(childId: number): Promise<{ owned: number; total: number; percent: number }> {
+  const db = getDb();
+  const res = await db.execute({ sql: 'SELECT moko_key FROM moko_owned WHERE child_id = ?', args: [childId] });
+  const ownedNames = new Set(
+    res.rows.map((r) => mokoChars[String(r.moko_key)]?.name).filter((n): n is string => !!n),
+  );
+  const totalNames = new Set<string>();
+  for (const m of mokoCollection) {
+    if (m.category === 'trouble') continue;
+    totalNames.add(m.name);
+  }
+  for (const m of Object.values(mokoChars)) {
+    if (m.category === 'trouble') continue;
+    totalNames.add(m.name);
+  }
+  const owned = ownedNames.size;
+  const total = totalNames.size;
+  const percent = total > 0 ? owned / total : 0;
+  return { owned, total, percent };
 }
 
 export { STAGE_LABEL, dateStr };

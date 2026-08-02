@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildId } from '@/lib/db';
-import { getBadges } from '@/lib/castle';
+import { getBadges, getMokoProgress } from '@/lib/castle';
 import PrintButton from '@/components/PrintButton';
 import Certificate from '@/components/Certificate';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
@@ -75,11 +75,8 @@ export default async function ReportsPage() {
   }) : { rows: [{ n: 0 }] };
   const resolvedCount = Number(resolved.rows[0]?.n ?? 0);
 
-  const moko = c ? await db.execute({
-    sql: 'SELECT COUNT(*) n FROM moko_owned WHERE child_id = ?',
-    args: [childId],
-  }) : { rows: [{ n: 0 }] };
-  const mokoCount = Number(moko.rows[0]?.n ?? 0);
+  const mokoProgress = c ? await getMokoProgress(childId) : { owned: 0, total: 0, percent: 0 };
+  const mokoCount = mokoProgress.owned;
 
   // 薄弱点：按学科 + 题型聚合错题（未掌握优先）
   const weakRows = c
@@ -176,6 +173,23 @@ export default async function ReportsPage() {
               <p className="text-xs text-gray-400 mt-2">提示：错题本里的题目会按遗忘曲线自动回炉，点「错题复习」就能练。</p>
             </>
           )}
+        </div>
+
+        <div className="card-moko mb-6">
+          <h2 className="text-xl font-bold text-moko-violet mb-3">🐰 萌可收集进度</h2>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-600 text-sm">已收集 {mokoProgress.owned} / {mokoProgress.total} 只萌可</span>
+            <span className="font-black text-moko-cyan">{Math.round(mokoProgress.percent * 100)}%</span>
+          </div>
+          <div className="h-5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-moko-pink to-moko-cyan transition-all"
+              style={{ width: `${Math.min(100, Math.round(mokoProgress.percent * 100))}%` }}
+            ></div>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">
+            图鉴共 {mokoProgress.total} 种萌可，按「唯一角色」去重统计（爱心/正正/唱唱等既来自打卡也来自剧情，只算 1 只）。
+          </p>
         </div>
 
         <div className="card-moko mb-6">
