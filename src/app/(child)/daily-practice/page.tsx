@@ -14,7 +14,7 @@ const KIND_META: Record<string, { label: string; grad: string; icon: string }> =
 
 async function autoPlay(q?: PracticeQuestion) {
   if (!q) return;
-  if (q.kind === 'pinyin') void playTts(q.audioText, 'zh');
+  if (q.kind === 'pinyin') void playTts(q.audioText, 'zh', { wsRate: 0.55 });
   else if (q.kind === 'english') void playTts(q.word, 'en');
 }
 
@@ -213,7 +213,7 @@ export default function DailyPracticePage() {
           {q.kind === 'pinyin' && (
             <>
               <div className="text-6xl font-black mb-2">{q.han}</div>
-              <button onClick={() => playTts(q.audioText, 'zh')} className="text-sm bg-white/30 rounded-full px-3 py-1">🔊 听一听</button>
+              <button onClick={() => playTts(q.audioText, 'zh', { wsRate: 0.55 })} className="text-sm bg-white/30 rounded-full px-3 py-1">🔊 听一听</button>
             </>
           )}
           {q.kind === 'math' && <div className="text-5xl font-black">{q.prompt}</div>}

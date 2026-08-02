@@ -117,9 +117,9 @@ export async function playTts(
  * 中文神经嗓音读这个汉字时，音节和声调都正确，小朋友听起来就是标准的拼音。
  * - syllable：保留以兼容调用点；
  * - han：可选，从例词里取的第一个汉字，优先用它发音；
- * - wsRate 比普通中文更慢，方便小朋友听清并跟读。
+ * - wsRate 比普通中文更慢（0.55，约 Edge -45%），方便小朋友听清并跟读。
  */
 export function speakPinyin(syllable: string, _tone = 0, han?: string) {
   const text = han && /[\u4e00-\u9fff]/.test(han) ? han : syllable;
-  void playTts(text, 'zh', { wsRate: 0.75, pitch: 1.1 });
+  void playTts(text, 'zh', { wsRate: 0.55, pitch: 1.1 });
 }
