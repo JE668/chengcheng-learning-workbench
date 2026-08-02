@@ -43,6 +43,21 @@ export async function ensureSchema() {
     sql: "SELECT name FROM sqlite_master WHERE type='table' AND name='_schema_meta'",
     args: [],
   });
+
+  // 增量表（每次启动都跑，幂等）：剧情「已读」标记——捕捉萌可前必须先读完这一集故事。
+  // 放在守卫之前，确保已部署的旧库（_schema_meta 已存在）也能自动补齐该表，无需手动重建。
+  await db.execute({
+    sql: `CREATE TABLE IF NOT EXISTS story_read (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      chapter_id TEXT NOT NULL,
+      read_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(child_id, chapter_id),
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
+    args: [],
+  });
+
   if (guard.rows.length > 0) return;
 
   await db.batch([

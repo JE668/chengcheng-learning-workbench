@@ -113,6 +113,82 @@ export async function playTts(
 }
 
 /**
+ * 朗读并在「播放结束」时 resolve 的 Promise 版本——用于剧情段落按顺序连读，
+ * 保证上一句读完再开始下一句，不会叠在一起。
+ * - Edge 路径：监听 audio.onended；失败/出错降级到 Web Speech 并同样等 onend。
+ * - Web Speech 路径：监听 utterance.onend / onerror，并加 30s 兜底超时，避免卡死。
+ */
+export function playTtsEnd(
+  text: string,
+  lang: 'zh' | 'en',
+  opts: { wsRate?: number; pitch?: number; pauseMs?: number } = {},
+): Promise<void> {
+  const wsRate = opts.wsRate ?? 0.8;
+  const pitch = opts.pitch ?? 1.05;
+  const pauseMs = opts.pauseMs ?? 0;
+  return new Promise<void>((resolve) => {
+    const fallback = () => speakEnd(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch).then(resolve);
+    if (typeof window !== 'undefined' && 'fetch' in window) {
+      fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text, lang, rate: toEdgeRate(wsRate), pause: pauseMs }),
+      })
+        .then((res) => (res.ok ? res.blob() : Promise.reject()))
+        .then((blob) => {
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          audio.onended = () => {
+            URL.revokeObjectURL(url);
+            resolve();
+          };
+          audio.onerror = () => {
+            URL.revokeObjectURL(url);
+            fallback();
+          };
+          audio.play().catch(fallback);
+        })
+        .catch(fallback);
+    } else {
+      fallback();
+    }
+  });
+}
+
+/** Web Speech 朗读并在 onend/onerror 时 resolve（含兜底超时） */
+function speakEnd(text: string, lang: string, rate: number, pitch: number): Promise<void> {
+  return new Promise<void>((resolve) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      resolve();
+      return;
+    }
+    ensureVoices();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.rate = rate;
+    u.pitch = pitch;
+    const v = pickVoice(lang);
+    if (v) u.voice = v;
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      resolve();
+    };
+    u.onend = finish;
+    u.onerror = finish;
+    const fire = () => {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    };
+    if (voicesReady) fire();
+    else window.speechSynthesis.addEventListener('voiceschanged', fire, { once: true });
+    // 兜底：最长朗读 30s，避免个别引擎不触发 onend 时卡住顺序朗读
+    setTimeout(finish, 30000);
+  });
+}
+
+/**
  * 朗读一个拼音音节（如「bà」「shuǐ」「ü」）。
  * 拼音的拉丁字母会被语音引擎当成英文念，所以改读一个同音汉字（如 bà→爸）。
  * 中文神经嗓音读这个汉字时，音节和声调都正确，小朋友听起来就是标准的拼音。

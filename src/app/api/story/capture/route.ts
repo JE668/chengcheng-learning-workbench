@@ -15,6 +15,19 @@ export async function POST(req: NextRequest) {
   const idx = getChapterIndex(chapterId);
   const db = getDb();
 
+  // 读故事门槛：捕捉前必须先听完/读完这一集剧情（与顺序解锁、捕捉券相互独立）
+  const rd = await db.execute({
+    sql: 'SELECT 1 FROM story_read WHERE child_id = ? AND chapter_id = ?',
+    args: [user.id, chapterId],
+  });
+  if (rd.rows.length === 0) {
+    return NextResponse.json({
+      ok: false,
+      code: 'not_read',
+      error: '先打开这一集、听完了故事，才能捕捉萌可哦～点「读这一集」让故事读给你听吧！',
+    }, { status: 409 });
+  }
+
   // 顺序解锁：第一集直接可捕捉；其余需上一集已捕捉 + 消耗 1 张捕捉券
   if (idx > 0) {
     const prev = await db.execute({

@@ -12,6 +12,12 @@ export async function GET() {
     args: [user.id],
   });
   const captured = res.rows.map((r) => String(r.chapter_id));
+  // 已读完故事的章节（捕捉前必须先读）
+  const rd = await db.execute({
+    sql: 'SELECT chapter_id FROM story_read WHERE child_id = ?',
+    args: [user.id],
+  });
+  const read = rd.rows.map((r) => String(r.chapter_id));
   // 当前可解锁的章节 = 第一集，或上一集已捕捉的下一集
   let nextIndex = 0;
   while (nextIndex < storyChapters.length && captured.includes(storyChapters[nextIndex].id)) {
@@ -25,6 +31,7 @@ export async function GET() {
   const tickets = tk.rows.length ? Number(tk.rows[0].total) - Number(tk.rows[0].used) : 0;
   return NextResponse.json({
     captured,
+    read,
     nextIndex,
     total: storyChapters.length,
     allDone: nextIndex >= storyChapters.length,
