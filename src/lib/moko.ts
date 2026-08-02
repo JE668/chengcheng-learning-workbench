@@ -38,7 +38,7 @@ export const MokoCategories: { key: MokoCategoryKey; label: string; emoji: strin
 export const mokoChars: Record<string, MokoChar> = {
   // —— 皇室萌可（核心三科 + 伙伴）——
   heartping: { key: 'heartping', name: '爱心萌可', color: 'text-moko-rose', img: '/moko/heartping.jpg', emoji: '💗', season: 'S1 魔方萌可', item: '爱心镜子', line: '啾~ 爱心光波！', category: 'royal', subject: '语文' },
-  courageping: { key: 'courageping', name: '正正萌可', color: 'text-moko-blue', img: '/moko/courageping.jpg', emoji: '💪', season: 'S1 魔方萌可', item: '勇气相机', line: '哈哈，无所畏惧！', category: 'royal', subject: '数学' },
+  courageping: { key: 'courageping', name: '正正萌可', color: 'text-moko-blue', img: '/moko/courageping.jpg', emoji: '💪', season: 'S1 魔方萌可', item: '勇气相机', line: '敬礼！正正萌可，无所畏惧！', category: 'royal', subject: '数学' },
   singping: { key: 'singping', name: '唱唱萌可', color: 'text-moko-yellow', img: '/moko/singping.jpg', emoji: '🎵', season: 'S1 魔方萌可', item: '甜心铃铛', line: '啦啦啦，唱给世界听！', category: 'royal', subject: '英语' },
   curiousping: { key: 'curiousping', name: '好奇萌可', color: 'text-moko-cyan', emoji: '🔍', season: 'S1 魔方萌可', item: '放大镜', line: '咦？这是什么呢？', category: 'royal' },
   happyping: { key: 'happyping', name: '欢欢萌可', color: 'text-moko-pink', emoji: '😄', season: 'S1 魔方萌可', item: '欢乐喇叭', line: '笑一个嘛，嘿嘿！', category: 'royal' },

@@ -10,6 +10,7 @@ interface Progress {
   nextIndex: number;
   total: number;
   allDone: boolean;
+  tickets: number;
 }
 
 export default function StoryPage() {
@@ -64,6 +65,12 @@ export default function StoryPage() {
         跟着乐美公主的领航故事，一集一集认识并捕捉萌可。已捕捉
         <span className="font-black text-moko-rose"> {progress.captured.length} </span>/ {progress.total} 只。
       </p>
+      <div className="mb-3 flex items-center gap-2 flex-wrap">
+        <span className="inline-flex items-center gap-1 rounded-full bg-moko-gold/15 text-moko-gold font-black px-3 py-1 text-sm">🎟️ 捕捉券 ×{progress.tickets}</span>
+        {progress.tickets === 0 && (
+          <span className="text-xs text-gray-500">做「萌可闯关」练习可攒捕捉券，用来解锁下一集</span>
+        )}
+      </div>
       <div className="h-2 rounded-full bg-gray-200 overflow-hidden mb-6">
         <div className="h-full bg-gradient-to-r from-moko-pink to-moko-rose transition-all" style={{ width: `${(progress.captured.length / progress.total) * 100}%` }} />
       </div>
@@ -123,14 +130,27 @@ export default function StoryPage() {
                 >
                   {open ? '收起故事' : '📖 读这一集'}
                 </button>
-                {isNext && !isCaptured && (
-                  <button
-                    onClick={() => capture(c.id)}
-                    disabled={capturing}
-                    className="px-5 py-2 rounded-full bg-white text-moko-violet font-black shadow hover:scale-105 transition disabled:opacity-60"
-                  >
-                    {capturing ? '捕捉中…' : `✨ 捕捉${c.mokoName}！`}
-                  </button>
+                {isNext && !isCaptured && (() => {
+                  const canCapture = progress.tickets > 0 || i === 0;
+                  if (canCapture) {
+                    return (
+                      <button
+                        onClick={() => capture(c.id)}
+                        disabled={capturing}
+                        className="px-5 py-2 rounded-full bg-white text-moko-violet font-black shadow hover:scale-105 transition disabled:opacity-60"
+                      >
+                        {capturing ? '捕捉中…' : `✨ 捕捉${c.mokoName}！`}
+                      </button>
+                    );
+                  }
+                  return (
+                    <Link href="/daily-practice" className="px-5 py-2 rounded-full bg-white/90 text-moko-violet font-black shadow hover:scale-105 transition">
+                      🎯 去赚捕捉券
+                    </Link>
+                  );
+                })()}
+                {isNext && !isCaptured && progress.tickets === 0 && i > 0 && (
+                  <p className="text-xs text-white/90 w-full mt-1">需要「捕捉券」才能解锁，先去萌可闯关做练习吧～</p>
                 )}
                 {isCaptured && (
                   <Link href="/castle" className="px-5 py-2 rounded-full bg-white/25 font-bold hover:bg-white/35 transition">

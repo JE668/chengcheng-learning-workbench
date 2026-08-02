@@ -1,6 +1,6 @@
 import { getDb } from './db';
 import { confirm, logGrowthEvent } from './castle';
-import { PINYIN_TONES, applyTone, ALL_EN_WORDS } from './study-data';
+import { PINYIN_TONES, applyTone, ALL_EN_WORDS, CHARACTERS } from './study-data';
 import { mokoChars, subjectMokoKey, SUN_PER_SUBJECT } from './moko';
 import { mokoCollection } from './moko-collection';
 import type { Subject } from './types';
@@ -44,6 +44,16 @@ export type PracticeQuestion =
       cn: string;
       emoji: string;
       options: string[];
+      answer: number;
+      explain: string;
+    }
+  | {
+      id: string;
+      kind: 'dictation';
+      subject: Subject;
+      prompt: string;
+      han: string; // 听到的字（TTS 朗读）
+      options: string[]; // 汉字选项
       answer: number;
       explain: string;
     };
@@ -127,16 +137,16 @@ function genPinyinQ(): PracticeQuestion {
   };
 }
 
-function genMathQ(): PracticeQuestion {
+function genMathQ(hard = false): PracticeQuestion {
   const isAdd = Math.random() < 0.6;
   let a: number, b: number, ans: number, prompt: string;
   if (isAdd) {
-    a = randInt(0, 12);
-    b = randInt(0, 12);
+    a = randInt(0, hard ? 20 : 12);
+    b = randInt(0, hard ? 20 : 12);
     ans = a + b;
     prompt = `${a} + ${b} = ?`;
   } else {
-    a = randInt(2, 18);
+    a = randInt(2, hard ? 30 : 18);
     b = randInt(0, a);
     ans = a - b;
     prompt = `${a} − ${b} = ?`;
@@ -178,19 +188,35 @@ function genEnglishQ(): PracticeQuestion {
   };
 }
 
+function genDictationQ(): PracticeQuestion {
+  // 听写：听一个字的读音，从几个汉字里选出正确的字（TTS 直接朗读汉字，无需拼音字段）
+  const c = CHARACTERS[randInt(0, CHARACTERS.length - 1)];
+  const han = c.char;
+  const distractors = shuffle(CHARACTERS.filter((x) => x.char !== han)).slice(0, 3).map((x) => x.char);
+  const options = shuffle([han, ...distractors]);
+  const answer = options.indexOf(han);
+  return {
+    id: `dc-${han}-${answer}`,
+    kind: 'dictation',
+    subject: '语文',
+    prompt: '听写：听一听，选出正确的字',
+    han,
+    options,
+    answer,
+    explain: `「${han}」${c.meaning}，${c.phrase}`,
+  };
+}
+
 function generateQuestions(): PracticeQuestion[] {
   const qs: PracticeQuestion[] = [];
-  const usedPinyin = new Set<string>();
-  for (let i = 0; i < 3; i++) {
-    let base = PINYIN_FULL[randInt(0, PINYIN_FULL.length - 1)];
-    let guard = 0;
-    while (usedPinyin.has(base) && guard++ < 20) base = PINYIN_FULL[randInt(0, PINYIN_FULL.length - 1)];
-    usedPinyin.add(base);
-    qs.push(genPinyinQ());
-  }
-  for (let i = 0; i < 3; i++) qs.push(genMathQ());
+  // 语文：听写 10 题（听音选字）
+  for (let i = 0; i < 10; i++) qs.push(genDictationQ());
+  // 数学：口算 10 题（选择，前 5 题基础、后 5 题加难）
+  for (let i = 0; i < 5; i++) qs.push(genMathQ(false));
+  for (let i = 0; i < 5; i++) qs.push(genMathQ(true));
+  // 英语：听音选词 5 题
   const usedEn = new Set<string>();
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 5; i++) {
     let w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
     let guard = 0;
     while (usedEn.has(w.word) && guard++ < 20) w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
@@ -304,6 +330,12 @@ export async function submitPractice(childId: number, answers: number[]): Promis
       await confirm(childId, today, s);
       newlyMokos.push(mokoChars[subjectMokoKey[s]]?.name ?? '萌可');
       sunlightGain += SUN_PER_SUBJECT;
+      // 每确认一科发 1 张捕捉券（剧情解锁下一集萌可时使用）
+      await db.execute({
+        sql: `INSERT INTO capture_tickets (child_id, total, used) VALUES (?, 1, 0)
+              ON CONFLICT(child_id) DO UPDATE SET total = total + 1`,
+        args: [childId],
+      });
     }
     // 已确认的科始终视为完成；只有「未确认且本次没全对」才标记为待重练
     const status: SubjectStatus = already ? 'already' : passed ? 'passed' : 'failed';

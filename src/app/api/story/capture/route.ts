@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const idx = getChapterIndex(chapterId);
   const db = getDb();
 
-  // 顺序解锁：第一集直接可捕捉；其余需上一集已捕捉
+  // 顺序解锁：第一集直接可捕捉；其余需上一集已捕捉 + 消耗 1 张捕捉券
   if (idx > 0) {
     const prev = await db.execute({
       sql: 'SELECT 1 FROM story_progress WHERE child_id = ? AND chapter_id = ?',
@@ -24,6 +24,28 @@ export async function POST(req: NextRequest) {
     if (prev.rows.length === 0) {
       return NextResponse.json({ error: '请先捕捉上一集的萌可哦', ok: false }, { status: 409 });
     }
+    // 捕捉券余额（来自每日一练每科确认 1 张）
+    const tk = await db.execute({
+      sql: 'SELECT COALESCE(total,0) AS total, COALESCE(used,0) AS used FROM capture_tickets WHERE child_id = ?',
+      args: [user.id],
+    });
+    const avail = tk.rows.length ? Number(tk.rows[0].total) - Number(tk.rows[0].used) : 0;
+    if (avail <= 0) {
+      return NextResponse.json({
+        ok: false,
+        code: 'no_ticket',
+        error: '这一集需要「捕捉券」才能解锁～先去「萌可闯关」完成练习，每做对一科就能攒到捕捉券！',
+      }, { status: 409 });
+    }
+    await db.execute({
+      sql: `INSERT INTO capture_tickets (child_id, total, used) VALUES (?, 0, 0)
+            ON CONFLICT(child_id) DO NOTHING`,
+      args: [user.id],
+    });
+    await db.execute({
+      sql: 'UPDATE capture_tickets SET used = used + 1 WHERE child_id = ?',
+      args: [user.id],
+    });
   }
 
   const mokoKey = chapter.mokoKey ?? resolveChapterMokoKey(chapter.mokoName);

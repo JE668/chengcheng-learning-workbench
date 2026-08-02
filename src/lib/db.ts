@@ -211,6 +211,14 @@ export async function ensureSchema() {
       UNIQUE(child_id, day),
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
+
+    // 🎟️ 捕捉券（剧情解锁需消耗；每日一练每确认一科发放 1 张）
+    `CREATE TABLE IF NOT EXISTS capture_tickets (
+      child_id INTEGER PRIMARY KEY,
+      total INTEGER NOT NULL DEFAULT 0,
+      used INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
   ], 'write');
 
   // 迁移：castle_state 增加 skin 字段（城堡皮肤切换）

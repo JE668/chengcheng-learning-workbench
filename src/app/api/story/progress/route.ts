@@ -17,10 +17,17 @@ export async function GET() {
   while (nextIndex < storyChapters.length && captured.includes(storyChapters[nextIndex].id)) {
     nextIndex++;
   }
+  // 捕捉券余额（剧情解锁下一集需消耗）
+  const tk = await db.execute({
+    sql: 'SELECT COALESCE(total,0) AS total, COALESCE(used,0) AS used FROM capture_tickets WHERE child_id = ?',
+    args: [user.id],
+  });
+  const tickets = tk.rows.length ? Number(tk.rows[0].total) - Number(tk.rows[0].used) : 0;
   return NextResponse.json({
     captured,
     nextIndex,
     total: storyChapters.length,
     allDone: nextIndex >= storyChapters.length,
+    tickets,
   });
 }

@@ -8,6 +8,7 @@ import type { PracticeDayRecord, PracticeQuestion, PracticeSubmitResult } from '
 
 const KIND_META: Record<string, { label: string; grad: string; icon: string }> = {
   pinyin: { label: '语文 · 拼音', grad: 'from-moko-pink to-moko-rose', icon: '🔤' },
+  dictation: { label: '语文 · 听写', grad: 'from-moko-pink to-moko-rose', icon: '✍️' },
   math: { label: '数学 · 口算', grad: 'from-moko-blue to-sky-400', icon: '🔢' },
   english: { label: '英语 · 听音', grad: 'from-moko-yellow to-amber-300', icon: '🔤' },
 };
@@ -16,6 +17,7 @@ async function autoPlay(q?: PracticeQuestion) {
   if (!q) return;
   if (q.kind === 'pinyin') void playTts(q.audioText, 'zh', { wsRate: 0.5, pauseMs: 400 });
   else if (q.kind === 'english') void playTts(q.word, 'en');
+  else if (q.kind === 'dictation') void playTts(q.han, 'zh', { wsRate: 0.5, pauseMs: 400 });
 }
 
 export default function DailyPracticePage() {
@@ -214,6 +216,12 @@ export default function DailyPracticePage() {
             <>
               <div className="text-6xl font-black mb-2">{q.han}</div>
               <button onClick={() => playTts(q.audioText, 'zh', { wsRate: 0.5, pauseMs: 400 })} className="text-sm bg-white/30 rounded-full px-3 py-1">🔊 听一听</button>
+            </>
+          )}
+          {q.kind === 'dictation' && (
+            <>
+              <div className="text-6xl font-black mb-2">✍️</div>
+              <button onClick={() => playTts(q.han, 'zh', { wsRate: 0.5, pauseMs: 400 })} className="text-sm bg-white/30 rounded-full px-4 py-1.5">🔊 听写 · 再听一遍</button>
             </>
           )}
           {q.kind === 'math' && <div className="text-5xl font-black">{q.prompt}</div>}
