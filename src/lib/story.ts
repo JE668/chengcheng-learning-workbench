@@ -12,6 +12,14 @@ export interface StoryChapter {
   scene: string; // 副标题 / 场景
   paragraphs: string[]; // 剧情文字（适合一年级孩子）
   tip?: string; // 给程程的小提示
+  quiz?: StoryQuiz; // 读完故事后的小问题（答对才能捕捉萌可）
+}
+
+/** 读完故事后的小互动题：4 选 1，answer 为正确选项下标 */
+export interface StoryQuiz {
+  q: string;
+  options: string[];
+  answer: number;
 }
 
 /* ------------------------------------------------------------------ *
@@ -113,6 +121,11 @@ const HERO_CHAPTERS: StoryChapter[] = [
       '爱心萌可把镜子轻轻一照，程程就学会了好多好多的字。',
     ],
     tip: '语文里藏着好多字宝宝，和爱心萌可一起去找它们吧！',
+    quiz: {
+      q: '爱心萌可用什么本领，帮程程认字读书呀？',
+      options: ['爱心光波', '勇气相机', '甜心铃铛', '万能钥匙'],
+      answer: 0,
+    },
   },
   {
     id: 'ch2-courage',
@@ -128,6 +141,11 @@ const HERO_CHAPTERS: StoryChapter[] = [
       '程程跟着正正萌可数呀算呀，越来越勇敢了。',
     ],
     tip: '数学就像闯关游戏，算对一步就前进一格！',
+    quiz: {
+      q: '正正萌可带着程程一起做什么，让他越来越勇敢？',
+      options: ['加加减减算数字', '唱歌跳舞', '游泳划船', '做饭炒菜'],
+      answer: 0,
+    },
   },
   {
     id: 'ch3-sing',
@@ -143,6 +161,11 @@ const HERO_CHAPTERS: StoryChapter[] = [
       '程程跟着哼唱，发现英语原来这么好听。',
     ],
     tip: '把单词唱成歌，记起来就轻松多啦！',
+    quiz: {
+      q: '唱唱萌可用什么有趣的方式，教程程学英语？',
+      options: ['唱歌', '画画', '踢足球', '搭积木'],
+      answer: 0,
+    },
   },
   {
     id: 'ch4-mermaid',
@@ -158,6 +181,11 @@ const HERO_CHAPTERS: StoryChapter[] = [
       '程程用钥匙打开了一扇扇门，学到了好多新知识。',
     ],
     tip: '每一个「为什么」，都是一把打开知识的小钥匙。',
+    quiz: {
+      q: '人鱼萌可说，想知道宝盒里的秘密，得先做什么？',
+      options: ['解开知识谜题', '睡个午觉', '吃甜甜圈', '去跑步'],
+      answer: 0,
+    },
   },
   {
     id: 'ch5-share',
@@ -173,6 +201,11 @@ const HERO_CHAPTERS: StoryChapter[] = [
       '程程明白了，好的东西要和别人一起分享才更闪亮。',
     ],
     tip: '会分享的小朋友，身边总有许多好朋友。',
+    quiz: {
+      q: '分享萌可把闪亮宝石怎么分，才更快乐？',
+      options: ['分成两半和朋友分享', '全部藏起来', '一口吃掉', '扔到地上'],
+      answer: 0,
+    },
   },
   {
     id: 'ch6-cotton',
@@ -188,6 +221,11 @@ const HERO_CHAPTERS: StoryChapter[] = [
       '程程在甜甜的梦里，把学过的字和数都复习了一遍。',
     ],
     tip: '学累了就休息一下，像棉花糖一样软软地放松～',
+    quiz: {
+      q: '棉花糖萌可在哪里等着程程，请他吃点心？',
+      options: ['甜甜圈工厂', '学校教室', '医院', '超市'],
+      answer: 0,
+    },
   },
   {
     id: 'ch7-kiss',
@@ -203,6 +241,11 @@ const HERO_CHAPTERS: StoryChapter[] = [
       '程程闭上眼睛许愿：希望明天也能和萌可们一起学习。',
     ],
     tip: '对着流星许个愿，然后一步一步去实现它。',
+    quiz: {
+      q: '亲亲萌可让程程对着什么，许下认真学习的愿望？',
+      options: ['流星', '太阳', '大树', '石头'],
+      answer: 0,
+    },
   },
   {
     id: 'ch8-moon',
@@ -218,6 +261,11 @@ const HERO_CHAPTERS: StoryChapter[] = [
       '数着数着，程程觉得夜晚也变得温柔又安心。',
     ],
     tip: '睡不着的时候，就和月光萌可一起数星星吧。',
+    quiz: {
+      q: '月光萌可和程程一起数什么，数到一百？',
+      options: ['天上的小星星', '小羊', '糖果', '书本'],
+      answer: 0,
+    },
   },
   {
     id: 'ch9-lucky',
@@ -233,17 +281,63 @@ const HERO_CHAPTERS: StoryChapter[] = [
       '程程把四叶草收好，萌可王国响起了庆祝的歌声。',
     ],
     tip: '你已经捕捉了好多萌可！打开图鉴，看看谁在等你回家～',
+    quiz: {
+      q: '幸运萌可把什么送给了，勇敢学到这里的程程？',
+      options: ['四叶草', '苹果', '气球', '铅笔'],
+      answer: 0,
+    },
   },
 ];
 
 /** 主线登场的核心萌可名字（其余图鉴萌可自动生成「图鉴远征」章节） */
 const HERO_NAMES = new Set(HERO_CHAPTERS.map((c) => c.mokoName));
 
+// 主线 9 集的题做确定性洗牌，让正确选项位置每次都不同（但仍可答对）
+const HERO_CHAPTERS_Q = HERO_CHAPTERS.map((c) =>
+  c.quiz ? { ...c, quiz: shuffleQuiz(c.quiz, c.id) } : c,
+);
+
 /* ------------------------------------------------------------------ *
  * 「图鉴远征」——把图鉴里其余的萌可都做进剧情
  * 每份图鉴萌可自动生成一集，按系列顺序排列，捕捉它即可入驻城堡。
  * 这样「看完所有剧情」=「集齐整个图鉴」。
  * ------------------------------------------------------------------ */
+
+// 确定性洗牌：用章节 key 当种子，保证服务端校验与孩子端渲染的选项顺序完全一致
+function hashStr(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+function seededShuffle<T>(arr: T[], seed: number): T[] {
+  const a = arr.slice();
+  let s = seed >>> 0;
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    const j = s % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// 对题目选项做确定性洗牌，避免正确项总在 A（孩子会瞎猜第一个）；种子来自章节 id，保证服务端/客户端一致
+function shuffleQuiz(q: StoryQuiz, seedStr: string): StoryQuiz {
+  const opts = seededShuffle(q.options, hashStr(seedStr));
+  return { q: q.q, options: opts, answer: opts.indexOf(q.options[q.answer]) };
+}
+
+// 给图鉴远征章节自动出一道「认萌可」题：正确项是本集萌可，配 3 个确定性干扰项
+function buildAutoQuiz(m: MokoChar): StoryQuiz {
+  const pool = mokoCollection.map((x) => x.name).filter((n) => n !== m.name);
+  const seed = hashStr(m.key);
+  const distractors = seededShuffle(pool, seed).slice(0, 3);
+  const options = seededShuffle([m.name, ...distractors], seed ^ 0x9e3779b9);
+  return { q: `这一集，程程遇到了哪只萌可？`, options, answer: options.indexOf(m.name) };
+}
+
 function buildAutoChapter(m: MokoChar, idx: number): StoryChapter {
   const cat = m.category;
   const label = CAT_LABEL[cat] ?? '萌可';
@@ -265,6 +359,7 @@ function buildAutoChapter(m: MokoChar, idx: number): StoryChapter {
       tip,
     ],
     tip,
+    quiz: buildAutoQuiz(m),
   };
 }
 
@@ -277,7 +372,7 @@ const autoChapters: StoryChapter[] = mokoCollection
  * 按图鉴系列把其余萌可一只一只做进剧情，捕到上一只才会遇到下一只。
  * 把全部剧情走完，就等于集齐了整个图鉴。
  */
-export const storyChapters: StoryChapter[] = [...HERO_CHAPTERS, ...autoChapters];
+export const storyChapters: StoryChapter[] = [...HERO_CHAPTERS_Q, ...autoChapters];
 
 /** 把章节里的萌可名字解析成数据集中真实的 key（用于写入 moko_owned） */
 export function resolveChapterMokoKey(name: string): string | null {

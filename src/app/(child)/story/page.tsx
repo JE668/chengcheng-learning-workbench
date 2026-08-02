@@ -9,6 +9,7 @@ import { playTtsEnd } from '@/lib/speak';
 interface Progress {
   captured: string[];
   read: string[];
+  quiz: string[];
   nextIndex: number;
   total: number;
   allDone: boolean;
@@ -21,15 +22,21 @@ export default function StoryPage() {
   const [narrating, setNarrating] = useState<string | null>(null); // 正在自动朗读的章节
   const [readPara, setReadPara] = useState(-1); // 当前朗读到第几段（-1=未朗读，paragraphs.length=正在读 tip）
   const [readSet, setReadSet] = useState<Set<string>>(new Set());
+  const [quizSet, setQuizSet] = useState<Set<string>>(new Set());
   const [capturing, setCapturing] = useState(false);
   const [toast, setToast] = useState('');
   const abortRef = useRef(false);
+  const quizAbortRef = useRef(false);
+  const [quizSpeaking, setQuizSpeaking] = useState(false);
+  const [quizWrong, setQuizWrong] = useState(false);
+  const [quizRight, setQuizRight] = useState(false);
 
   async function load() {
     const r = await fetch('/api/story/progress');
     const j = await r.json();
     setProgress(j);
     setReadSet(new Set(j.read || []));
+    setQuizSet(new Set(j.quiz || []));
   }
 
   useEffect(() => { load(); }, []);
@@ -68,7 +75,7 @@ export default function StoryPage() {
     await markRead(c.id);
   }
 
-  /** 停止朗读 */
+  /** 停止朗读（故事） */
   function stopNarration() {
     abortRef.current = true;
     if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
@@ -76,14 +83,75 @@ export default function StoryPage() {
     setReadPara(-1);
   }
 
+  /** 停止朗读（题目语音） */
+  function stopQuiz() {
+    quizAbortRef.current = true;
+    if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
+    setQuizSpeaking(false);
+  }
+
+  /** 顺序朗读题目 + 每个选项（照顾还不识字的孩子） */
+  async function speakQuiz(c: (typeof storyChapters)[number]) {
+    if (!c.quiz || quizSpeaking) return;
+    setQuizSpeaking(true);
+    quizAbortRef.current = false;
+    await playTtsEnd(c.quiz.q, 'zh', { wsRate: 0.7, pauseMs: 220 });
+    if (quizAbortRef.current) { setQuizSpeaking(false); return; }
+    const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+    for (let k = 0; k < c.quiz.options.length; k++) {
+      if (quizAbortRef.current) { setQuizSpeaking(false); return; }
+      await playTtsEnd(`${letters[k]}、${c.quiz.options[k]}`, 'zh', { wsRate: 0.8, pauseMs: 260 });
+    }
+    setQuizSpeaking(false);
+  }
+
+  /** 单独朗读某一个选项文字 */
+  async function speakOne(text: string) {
+    stopQuiz();
+    await playTtsEnd(text, 'zh', { wsRate: 0.85, pauseMs: 120 });
+  }
+
+  /** 展开/收起 */
   function toggleOpen(c: (typeof storyChapters)[number]) {
+    stopNarration();
+    stopQuiz();
+    setQuizWrong(false);
+    setQuizRight(false);
     if (active === c.id) {
-      stopNarration();
       setActive(null);
     } else {
       setActive(c.id);
       // 还没读过这集 → 打开就自动朗读（满足「打开阅读故事 + 自动语音」）
       if (!readSet.has(c.id)) startNarration(c);
+    }
+  }
+
+  /** 提交小问题答案：答对才解锁捕捉 */
+  async function answerQuiz(c: (typeof storyChapters)[number], idx: number) {
+    stopQuiz();
+    setQuizWrong(false);
+    setQuizRight(false);
+    try {
+      const r = await fetch('/api/story/quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chapterId: c.id, answer: idx }),
+      });
+      const j = await r.json();
+      if (j.ok) {
+        setQuizSet((s) => new Set(s).add(c.id));
+        setQuizRight(true);
+        playTtsEnd('答对啦！真棒！', 'zh', { wsRate: 0.85, pauseMs: 120 });
+      } else if (j.code === 'wrong') {
+        setQuizWrong(true);
+        playTtsEnd('再想想看，选另一个试试吧～', 'zh', { wsRate: 0.85, pauseMs: 120 });
+      } else {
+        setQuizWrong(true);
+        if (j.error) setToast(j.error);
+      }
+    } catch {
+      setQuizWrong(true);
+      setToast('网络好像走神了，再试一次吧');
     }
   }
 
@@ -101,9 +169,14 @@ export default function StoryPage() {
         setToast(`🎉 捕捉到${j.mokoName}啦！去看看图鉴吧～`);
         setActive(null);
         stopNarration();
+        stopQuiz();
         await load();
       } else if (j.code === 'not_read') {
         setToast(j.error || '先读完故事再捕捉哦～');
+      } else if (j.code === 'not_quiz') {
+        setToast(j.error || '先答对小问题再捕捉哦～');
+      } else if (j.code === 'no_ticket') {
+        setToast(j.error || '捕捉券不够啦～去做练习攒券吧');
       } else {
         setToast(j.error || '捕捉失败，再试一次');
       }
@@ -113,6 +186,15 @@ export default function StoryPage() {
       setCapturing(false);
     }
   }
+
+  // 当某集「已读但还没答对」时，自动把题目和选项读给孩子听
+  useEffect(() => {
+    if (active && readSet.has(active) && !quizSet.has(active)) {
+      const c = storyChapters.find((x) => x.id === active);
+      if (c?.quiz) speakQuiz(c);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, readSet, quizSet]);
 
   if (!progress) {
     return <div className="max-w-3xl mx-auto py-20 text-center text-gray-400">故事加载中…</div>;
@@ -128,6 +210,7 @@ export default function StoryPage() {
         跟着乐美公主的领航故事，一集一集认识并捕捉萌可。已捕捉
         <span className="font-black text-moko-rose"> {progress.captured.length} </span>/ {progress.total} 只。
       </p>
+      <p className="text-xs text-gray-500 mb-2">流程：听故事 → 答对小问题 → 捕捉萌可（第 2 集起还要用 1 张捕捉券）</p>
       <div className="mb-3 flex items-center gap-2 flex-wrap">
         <span className="inline-flex items-center gap-1 rounded-full bg-moko-gold/15 text-moko-gold font-black px-3 py-1 text-sm">🎟️ 捕捉券 ×{progress.tickets}</span>
         {progress.tickets === 0 && (
@@ -146,6 +229,7 @@ export default function StoryPage() {
         {storyChapters.map((c, i) => {
           const isCaptured = progress.captured.includes(c.id);
           const isRead = readSet.has(c.id);
+          const isQuiz = quizSet.has(c.id);
           const isNext = i === progress.nextIndex;
           const isLocked = i > progress.nextIndex;
           const img = mokoImgByName[c.mokoName];
@@ -177,7 +261,8 @@ export default function StoryPage() {
                   <div className="text-sm opacity-90">{c.scene} · 主角 {c.mokoName}</div>
                 </div>
                 {isCaptured && <span className="text-sm font-bold bg-white/25 px-3 py-1 rounded-full">✅ 已捕捉</span>}
-                {!isCaptured && isRead && <span className="text-sm font-bold bg-white/25 px-3 py-1 rounded-full">📖 已读</span>}
+                {!isCaptured && isQuiz && <span className="text-sm font-bold bg-white/25 px-3 py-1 rounded-full">📖 已读·已答</span>}
+                {!isCaptured && isRead && !isQuiz && <span className="text-sm font-bold bg-white/25 px-3 py-1 rounded-full">📖 已读</span>}
               </div>
 
               {open && (
@@ -185,11 +270,6 @@ export default function StoryPage() {
                   {isNarrating && (
                     <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-moko-violet/10 text-moko-violet font-bold px-3 py-1 text-sm">
                       🔊 正在读故事…
-                    </div>
-                  )}
-                  {!isNarrating && isRead && (
-                    <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-moko-gold/15 text-moko-gold font-bold px-3 py-1 text-sm">
-                      ✅ 故事读完啦，可以捕捉咯！
                     </div>
                   )}
                   {c.paragraphs.map((p, k) => (
@@ -206,6 +286,54 @@ export default function StoryPage() {
                     >
                       💡 {c.tip}
                     </p>
+                  )}
+
+                  {/* —— 读完故事，弹出小问题（答对才能捕捉） —— */}
+                  {open && isRead && !isQuiz && c.quiz && (
+                    <div className="mt-4 rounded-2xl bg-moko-gold/10 border-2 border-moko-gold/30 p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-black text-moko-violet">❓ 小问题</span>
+                        {quizSpeaking && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-moko-violet/10 text-moko-violet text-xs font-bold px-2 py-0.5">🔊 正在读题…</span>
+                        )}
+                        <button
+                          onClick={() => speakQuiz(c)}
+                          className="ml-auto text-xs px-3 py-1 rounded-full bg-moko-violet/10 text-moko-violet font-bold hover:bg-moko-violet/20 transition"
+                        >
+                          🔊 再听一遍
+                        </button>
+                      </div>
+                      <p className="font-bold text-gray-800 mb-3 leading-relaxed">{c.quiz.q}</p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {c.quiz.options.map((opt, k) => (
+                          <div key={k} className="flex items-center gap-2">
+                            <button
+                              onClick={() => answerQuiz(c, k)}
+                              className="flex-1 text-left px-4 py-2.5 rounded-xl bg-white border-2 border-moko-violet/30 font-bold text-gray-800 hover:bg-moko-violet/10 hover:border-moko-violet transition"
+                            >
+                              {opt}
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); speakOne(opt); }}
+                              className="px-3 py-2.5 rounded-xl bg-moko-violet/10 text-moko-violet font-bold hover:bg-moko-violet/20 transition"
+                              aria-label="听这个选项"
+                            >
+                              🔊
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      {quizWrong && (
+                        <p className="mt-3 text-sm font-bold text-moko-rose">😊 再想想看，选另一个试试吧～</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 已读且已答对 */}
+                  {open && isQuiz && (
+                    <div className="mt-4 mb-1 inline-flex items-center gap-2 rounded-full bg-moko-rose/10 text-moko-rose font-bold px-3 py-1 text-sm">
+                      ✅ 小问题答对啦，可以捕捉咯！
+                    </div>
                   )}
                 </div>
               )}
@@ -239,19 +367,34 @@ export default function StoryPage() {
                 )}
                 {isNext && !isCaptured && !isRead && !isNarrating && (
                   <p className="text-xs text-white/90 w-full mt-1">
-                    {i === 0 ? '点「读这一集」，听完故事就能捕捉萌可～' : '先读完故事，并用捕捉券解锁这一集哦～'}
+                    {i === 0 ? '点「读这一集」，听完故事就能答题啦～' : '先读完故事，并用捕捉券解锁这一集哦～'}
                   </p>
                 )}
 
-                {/* 已读但缺券（非首集）：去赚券 */}
-                {isNext && !isCaptured && isRead && i > 0 && progress.tickets === 0 && (
+                {/* —— 读完但还没答对：先答题 —— */}
+                {isNext && !isCaptured && isRead && !isQuiz && (
+                  <button
+                    disabled
+                    className="px-5 py-2 rounded-full bg-white/40 text-white/80 font-black cursor-not-allowed"
+                  >
+                    ❓ 先回答小问题
+                  </button>
+                )}
+                {isNext && !isCaptured && isRead && !isQuiz && (
+                  <p className="text-xs text-white/90 w-full mt-1">
+                    故事听完啦，先答对下面的小问题，就能捕捉萌可～
+                  </p>
+                )}
+
+                {/* 已读已答但缺券（非首集）：去赚券 */}
+                {isNext && !isCaptured && isQuiz && i > 0 && progress.tickets === 0 && (
                   <Link href="/daily-practice" className="px-5 py-2 rounded-full bg-white/90 text-moko-violet font-black shadow hover:scale-105 transition">
                     🎯 去赚捕捉券
                   </Link>
                 )}
 
-                {/* 已读且有资格：直接捕捉 */}
-                {isNext && !isCaptured && isRead && (i === 0 || progress.tickets > 0) && (
+                {/* 已读已答且有资格：直接捕捉 */}
+                {isNext && !isCaptured && isQuiz && (i === 0 || progress.tickets > 0) && (
                   <button
                     onClick={() => capture(c.id)}
                     disabled={capturing}

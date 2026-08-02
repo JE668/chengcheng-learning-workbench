@@ -58,6 +58,20 @@ export async function ensureSchema() {
     args: [],
   });
 
+  // 增量表（每次启动都跑，幂等）：剧情「已答对」标记——读完故事还要答对小问题才能捕捉萌可。
+  // 同样放在守卫之前，保证已部署旧库自动补齐。
+  await db.execute({
+    sql: `CREATE TABLE IF NOT EXISTS story_quiz (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      chapter_id TEXT NOT NULL,
+      passed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(child_id, chapter_id),
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
+    args: [],
+  });
+
   if (guard.rows.length > 0) return;
 
   await db.batch([

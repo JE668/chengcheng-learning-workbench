@@ -28,6 +28,19 @@ export async function POST(req: NextRequest) {
     }, { status: 409 });
   }
 
+  // 答题门槛：读完故事还要答对小问题，才能捕捉萌可（与已读、顺序解锁、捕捉券相互独立）
+  const qz = await db.execute({
+    sql: 'SELECT 1 FROM story_quiz WHERE child_id = ? AND chapter_id = ?',
+    args: [user.id, chapterId],
+  });
+  if (qz.rows.length === 0) {
+    return NextResponse.json({
+      ok: false,
+      code: 'not_quiz',
+      error: '听完故事，还要答对小问题才能捕捉萌可哦～点「读这一集」下面的小问题试试吧！',
+    }, { status: 409 });
+  }
+
   // 顺序解锁：第一集直接可捕捉；其余需上一集已捕捉 + 消耗 1 张捕捉券
   if (idx > 0) {
     const prev = await db.execute({

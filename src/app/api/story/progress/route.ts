@@ -18,6 +18,12 @@ export async function GET() {
     args: [user.id],
   });
   const read = rd.rows.map((r) => String(r.chapter_id));
+  // 已答对小问题的章节（读完故事还要答对，才能捕捉萌可）
+  const qz = await db.execute({
+    sql: 'SELECT chapter_id FROM story_quiz WHERE child_id = ?',
+    args: [user.id],
+  });
+  const quiz = qz.rows.map((r) => String(r.chapter_id));
   // 当前可解锁的章节 = 第一集，或上一集已捕捉的下一集
   let nextIndex = 0;
   while (nextIndex < storyChapters.length && captured.includes(storyChapters[nextIndex].id)) {
@@ -32,6 +38,7 @@ export async function GET() {
   return NextResponse.json({
     captured,
     read,
+    quiz,
     nextIndex,
     total: storyChapters.length,
     allDone: nextIndex >= storyChapters.length,
