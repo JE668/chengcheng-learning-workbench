@@ -84,6 +84,30 @@ export default function StudyPage() {
       </Link>
 
       <Link
+        href="/study/trace"
+        className="mt-8 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-pink/40 bg-gradient-to-r from-moko-pink/20 to-moko-violet/20 hover:scale-[1.02] transition block"
+      >
+        <span className="text-5xl">✍️</span>
+        <div className="flex-1">
+          <h3 className="text-xl font-black text-moko-violet">描红跟写</h3>
+          <p className="text-sm text-gray-600">米字格描红范字，写完听读音记字形</p>
+        </div>
+        <span className="text-moko-violet font-black text-lg">打开 ›</span>
+      </Link>
+
+      <Link
+        href="/study/poem-fill"
+        className="mt-8 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-gold/40 bg-gradient-to-r from-moko-gold/20 to-moko-yellow/20 hover:scale-[1.02] transition block"
+      >
+        <span className="text-5xl">📜</span>
+        <div className="flex-1">
+          <h3 className="text-xl font-black text-moko-violet">古诗填空背诵</h3>
+          <p className="text-sm text-gray-600">从字卡补全古诗，填对听萌可念整首</p>
+        </div>
+        <span className="text-moko-violet font-black text-lg">打开 ›</span>
+      </Link>
+
+      <Link
         href="/textbook"
         className="mt-8 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-gold/40 bg-gradient-to-r from-moko-gold/20 to-moko-yellow/20 hover:scale-[1.02] transition block"
       >
