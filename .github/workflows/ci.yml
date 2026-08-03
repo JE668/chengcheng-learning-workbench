@@ -1,0 +1,29 @@
+name: CI
+
+# 类型安全守门：next.config.mjs 里为兼容 NAS 自托管构建设了
+# typescript.ignoreBuildErrors / eslint.ignoreDuringBuilds，
+# 因此构建不会因类型错误而失败——改由 CI 显式校验，避免「能构建但不能跑」的回归。
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: TypeScript 类型检查
+        run: npx tsc --noEmit --skipLibCheck
+
+      - name: 单元测试（castle 核心逻辑等）
+        run: npx vitest run

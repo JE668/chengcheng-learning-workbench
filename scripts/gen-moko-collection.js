@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '../public/moko/collection');
-const OUT = path.resolve(__dirname, '../src/lib/moko-collection.ts');
 
 // 文件夹前缀(2位) -> 分类 key
 const FOLDER_CAT = {
@@ -148,6 +147,7 @@ function parseName(fileBase) {
 }
 
 const entries = [];
+const byFolder = {};
 const folders = fs.readdirSync(ROOT).filter((d) => fs.statSync(path.join(ROOT, d)).isDirectory());
 folders.sort();
 
@@ -171,7 +171,7 @@ for (const folder of folders) {
     const { name, suffix } = parseName(base);
     if (EXCLUDE_NAMES.has(name)) continue; // 跳过官方没有的角色
     const key = `col_${digits}_${base}`;
-    entries.push({
+    const entry = {
       key,
       name,
       category: CAT_OVERRIDE[name] || cat,
@@ -181,7 +181,9 @@ for (const folder of folders) {
       color: meta.color,
       item: '✨ 魔法道具',
       line: LINE_OVERRIDE[name] || makeLine(name, cat),
-    });
+    };
+    entries.push(entry);
+    (byFolder[folder] = byFolder[folder] || []).push(entry);
   }
 }
 
@@ -193,9 +195,36 @@ for (const e of entries) {
 
 const newCats = ['mo', 'prince', 'villain', 'legend'].map((k) => ({ key: k, ...CAT_META[k] }));
 
-const ts = `// 自动生成：由 scripts 扫描 public/moko/collection/ 生成，请勿手改。
+// 按「季/文件夹」拆分写入目录，避免单文件过长（原 moko-collection.ts 约 3351 行）。
+// 拼接顺序与扫描顺序（文件夹排序）一致，保证 mokoCollection 与旧单文件完全等价。
+const OUT_DIR = path.resolve(__dirname, '../src/lib/moko-collection');
+const DATA_DIR = path.join(OUT_DIR, 'by-season');
+fs.mkdirSync(DATA_DIR, { recursive: true });
+
+// 删除旧的单一文件，避免与同名目录冲突
+fs.rmSync(path.resolve(__dirname, '../src/lib/moko-collection.ts'), { force: true });
+
+const partImports = [];
+const partSpreads = [];
+for (const folder of folders) {
+  const digits = folder.slice(0, 2);
+  const list = byFolder[folder] || [];
+  const file = path.join(DATA_DIR, `${digits}.ts`);
+  const data = `// 自动生成（按季拆分）：由 scripts/gen-moko-collection.js 生成，请勿手改。
+import type { MokoChar } from '../../types';
+
+export const mokoCollection_${digits}: MokoChar[] = ${JSON.stringify(list, null, 2)};
+`;
+  fs.writeFileSync(file, data);
+  partImports.push(`import { mokoCollection_${digits} } from './by-season/${digits}';`);
+  partSpreads.push(`...mokoCollection_${digits}`);
+}
+
+const index = `// 自动生成：由 scripts 按「季/文件夹」拆分扫描 public/moko/collection/ 生成，请勿手改。
 // 重新生成：node scripts/gen-moko-collection.js
-import type { MokoChar, MokoCategoryKey } from './types';
+import type { MokoChar, MokoCategoryKey } from '../types';
+
+${partImports.join('\n')}
 
 export interface MokoCollectionCat {
   key: MokoCategoryKey;
@@ -209,12 +238,14 @@ export interface MokoCollectionCat {
 export const COLLECTION_CATEGORIES: MokoCollectionCat[] = ${JSON.stringify(newCats, null, 2)};
 
 /** 全部萌可图片（由 public/moko/collection 扫描生成，key 以 col_ 前缀，category 见上） */
-export const mokoCollection: MokoChar[] = ${JSON.stringify(entries, null, 2)};
+export const mokoCollection: MokoChar[] = [
+  ${partSpreads.join(',\n  ')}
+];
 
 /** 同名首图（用于把核心萌可的 img 重映射到真实图片） */
 export const mokoCollectionByName: Record<string, MokoChar> = ${JSON.stringify(byName, null, 2)};
 `;
 
-fs.writeFileSync(OUT, ts);
-console.log(`写入 ${OUT}`);
+fs.writeFileSync(path.join(OUT_DIR, 'index.ts'), index);
+console.log(`写入目录 ${OUT_DIR}（按季拆分 ${folders.length} 个文件）`);
 console.log(`总图片: ${entries.length}，分类数: ${Object.keys(FOLDER_CAT).length}，同名去重后: ${Object.keys(byName).length}`);

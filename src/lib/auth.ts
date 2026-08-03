@@ -25,12 +25,29 @@ export async function createSession(userId: number): Promise<string> {
     sql: 'INSERT INTO sessions (token, user_id) VALUES (?, ?)',
     args: [token, userId],
   });
+  // 顺手清理过期会话：登录是高频操作，借此把 sessions 表持续修剪，
+  // 避免 NAS 自托管（无 Vercel Cron）长期运行后 token 无限累积。
+  await cleanupExpiredSessions().catch(() => {});
   return token;
 }
 
 export async function deleteSession(token: string) {
   const db = getDb();
   await db.execute({ sql: 'DELETE FROM sessions WHERE token = ?', args: [token] });
+}
+
+/**
+ * 清理过期会话：删除 created_at 早于 N 天前的 token。
+ * 与 cookie maxAge（7 天）对齐，只删确实失效的会话，不影响活跃登录。
+ * 调用点：createSession（每次登录顺手修剪）+ cron/settle（云端每日兜底）。
+ */
+const SESSION_TTL_DAYS = 7;
+export async function cleanupExpiredSessions(): Promise<void> {
+  const db = getDb();
+  await db.execute({
+    sql: `DELETE FROM sessions WHERE created_at < datetime('now', '-' || ? || ' days')`,
+    args: [SESSION_TTL_DAYS],
+  });
 }
 
 export async function setSessionCookie(userId: number) {
@@ -75,14 +92,14 @@ export function requireAuth(allowed?: ('parent' | 'child')[]) {
 }
 
 /**
- * 解析「当前要操作的孩子 id」：
+ * 解析「当前要操作的孩子 id」（统一入口）：
  * - 孩子本人 → 自己；
- * - 家长 → 其孩子（多娃后改为「选中的孩子」，目前恒为第一个）。
- * 所有按孩子隔离的查询都应走这里，避免家长接口直接拿客户端传入的 childId，
- * 也便于后续多娃扩展只改这一处。
+ * - 家长 → 其选中的孩子（多娃切换支点，逻辑在 getChildId）；
+ * - 未登录/无用户 → 返回 null（调用方据此回 401/404）。
+ * 与 daily-practice/route.ts 等处的重复实现合并为唯一来源，避免鉴权口径不一致。
  */
-export async function resolveChildId(user: User): Promise<number | null> {
-  if (user.role === 'child') return user.id;
+export async function resolveChildId(user: User | null | undefined): Promise<number | null> {
+  if (!user) return null;
   return getChildId(user);
 }
 

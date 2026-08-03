@@ -129,21 +129,26 @@ async function ensureCastle(childId: number) {
   });
 }
 
-/* 连续打卡天数（截至昨天） */
+/* 连续打卡天数（截至昨天）。
+ * 优化：原实现逐天 COUNT（最多 60 次查询），改为一条 GROUP BY 取回窗口内每日
+ * 「三科全确认」的天集合，再在内存里从昨天往回数，等价且只需 1 次查询。 */
 async function computeStreak(childId: number, today: string): Promise<number> {
   const db = getDb();
+  const yesterday = addDays(today, -1);
+  const start = addDays(today, -60); // 回看窗口：含 yesterday，共 60 天
+  const res = await db.execute({
+    sql: `SELECT day, COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND status = 'confirmed' AND day >= ? AND day <= ? GROUP BY day`,
+    args: [childId, start, yesterday],
+  });
+  const fullDays = new Set<string>();
+  for (const r of res.rows) {
+    if (Number(r.n) === 3) fullDays.add(String(r.day));
+  }
   let streak = 0;
-  let d = addDays(today, -1);
-  // 最多回看 60 天
-  for (let i = 0; i < 60; i++) {
-    const res = await db.execute({
-      sql: `SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'`,
-      args: [childId, d],
-    });
-    if (Number(res.rows[0]?.n) === 3) {
-      streak++;
-      d = addDays(d, -1);
-    } else break;
+  let d = yesterday;
+  while (fullDays.has(d)) {
+    streak++;
+    d = addDays(d, -1);
   }
   return streak;
 }
@@ -253,28 +258,33 @@ async function applyPenalty(childId: number, day: string, confirmedCount: number
 async function settleCastle(childId: number, today: string) {
   const row = await getRow(childId);
   if (!row) return;
-  let last = row.last_settled_day ? String(row.last_settled_day) : today;
-  let cursor = addDays(last, 1);
+  const initialLast = row.last_settled_day ? String(row.last_settled_day) : today;
+  let cursor = addDays(initialLast, 1);
   const yesterday = addDays(today, -1);
+  if (cursor > yesterday) return;
   const db = getDb();
+  // 优化：原实现逐天 COUNT（最多 30 次查询），改为一条 GROUP BY 取回窗口内每日
+  // 「已确认」科数，在内存里按天处理；applyPenalty 的逐日写库仍保留（惩罚机制本质按天）。
+  const res = await db.execute({
+    sql: `SELECT day, COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND status = 'confirmed' AND day >= ? AND day <= ? GROUP BY day`,
+    args: [childId, cursor, yesterday],
+  });
+  const confirmedByDay = new Map<string, number>();
+  for (const r of res.rows) confirmedByDay.set(String(r.day), Number(r.n));
+
+  let streak = Number(row.streak_days ?? 0);
+  let last = initialLast;
   while (cursor <= yesterday) {
-    const c = await db.execute({
-      sql: `SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'`,
-      args: [childId, cursor],
-    });
-    const confirmed = Number(c.rows[0]?.n ?? 0);
+    const confirmed = confirmedByDay.get(cursor) ?? 0;
     // 🌟 学习-城堡联动：未完成 → 捣蛋萌可溜进来捣乱
     await applyPenalty(childId, cursor, confirmed);
-    // 连续打卡更新
-    const streak = confirmed === 3 ? Number(row.streak_days ?? 0) + 1 : 0;
+    // 连续打卡更新（与原实现一致：满 3 科则 +1，否则归零）
+    streak = confirmed === 3 ? streak + 1 : 0;
     await db.execute({ sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?', args: [streak, childId] });
-    // 重新读取（streak 已变）
-    const r2 = await getRow(childId);
-    row.streak_days = r2?.streak_days;
     last = cursor;
     cursor = addDays(cursor, 1);
   }
-  if (last !== (row.last_settled_day ? String(row.last_settled_day) : today)) {
+  if (last !== initialLast) {
     await db.execute({ sql: 'UPDATE castle_state SET last_settled_day = ? WHERE child_id = ?', args: [last, childId] });
   }
 }
