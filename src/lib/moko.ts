@@ -216,6 +216,58 @@ export const games: {
       { name: '高手', tag: '1~70 数数' },
     ],
   },
+  {
+    id: 'make-ten',
+    title: '凑十法十格阵',
+    mokoKey: 'diamondping',
+    subject: '数学',
+    desc: '用十格阵数一数，还差几个凑成 10',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '1~9 凑十' },
+      { name: '进阶', tag: '易混数' },
+      { name: '高手', tag: '快速凑十' },
+    ],
+  },
+  {
+    id: 'tone-detective',
+    title: '声调小侦探',
+    mokoKey: 'mihu',
+    subject: '语文',
+    desc: '听拼音，找出它是第几声',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '基础四声' },
+      { name: '进阶', tag: '同音辨调' },
+      { name: '高手', tag: '快速辨调' },
+    ],
+  },
+  {
+    id: 'word-chain',
+    title: '词语接龙',
+    mokoKey: 'wisejingping',
+    subject: '语文',
+    desc: '看词语，接出下一个以尾字开头的新词',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '常见词' },
+      { name: '进阶', tag: '易混词' },
+      { name: '高手', tag: '挑战词' },
+    ],
+  },
+  {
+    id: 'schulte',
+    title: '舒尔特方格',
+    mokoKey: 'cometping',
+    subject: '专注',
+    desc: '按顺序点出 1→N，训练专注力',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '3×3' },
+      { name: '进阶', tag: '4×4' },
+      { name: '高手', tag: '5×5' },
+    ],
+  },
 ];
 
 /** 萌可成长时长（分钟级，便于孩子体验，可在设置里调整） */

@@ -11,6 +11,10 @@ import WordMatch from '@/components/games/WordMatch';
 import LetterAdventure from '@/components/games/LetterAdventure';
 import AngleMagic from '@/components/games/AngleMagic';
 import CountChallenge from '@/components/games/CountChallenge';
+import MakeTen from '@/components/games/MakeTen';
+import ToneDetective from '@/components/games/ToneDetective';
+import WordChain from '@/components/games/WordChain';
+import Schulte from '@/components/games/Schulte';
 
 const gameMap: Record<string, React.FC<{ onFinish: (score: number) => void; level?: number }>> = {
   'pinyin-eliminate': PinyinEliminate,
@@ -21,6 +25,10 @@ const gameMap: Record<string, React.FC<{ onFinish: (score: number) => void; leve
   'letter-adventure': LetterAdventure,
   'angle-magic': AngleMagic,
   'count-challenge': CountChallenge,
+  'make-ten': MakeTen,
+  'tone-detective': ToneDetective,
+  'word-chain': WordChain,
+  'schulte': Schulte,
 };
 
 export default function GamePage() {
