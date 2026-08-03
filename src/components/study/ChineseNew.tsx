@@ -10,6 +10,7 @@ import {
 } from '@/lib/study-data';
 import { speakZh, speakPinyin, praise } from '@/lib/speak';
 import { StudyQuiz, type QuizItem } from './StudyQuiz';
+import { useModuleProgress } from '@/lib/module-progress';
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -91,7 +92,7 @@ export function PinyinBlendModule() {
 
       <div>
         <h3 className="text-lg font-black text-moko-violet mb-2">🎯 拼读小考场</h3>
-        <StudyQuiz items={quizItems} subject="语文" color="bg-moko-pink" textColor="text-moko-rose" />
+        <StudyQuiz items={quizItems} subject="语文" color="bg-moko-pink" textColor="text-moko-rose" moduleKey="pinyin-blend" />
       </div>
     </div>
   );
@@ -100,7 +101,7 @@ export function PinyinBlendModule() {
 /* ========================================================================
  * 笔顺（hanzi-writer 动画演示）
  * ===================================================================== */
-function StrokeOrderCard({ item }: { item: { char: string; py: string; mean: string } }) {
+function StrokeOrderCard({ item, learned, onLearned }: { item: { char: string; py: string; mean: string }; learned?: boolean; onLearned?: () => void }) {
   const elRef = useRef<HTMLDivElement>(null);
   const writerRef = useRef<any>(null);
 
@@ -154,6 +155,12 @@ function StrokeOrderCard({ item }: { item: { char: string; py: string; mean: str
         >
           🔊 读字
         </button>
+        <button
+          onClick={() => onLearned?.()}
+          className={`px-3 py-1 rounded-full font-bold text-xs active:scale-95 transition ${learned ? 'bg-green-500 text-white' : 'bg-moko-blue/80 text-white'}`}
+        >
+          {learned ? '✅ 已学会' : '✓ 我会写啦'}
+        </button>
       </div>
     </div>
   );
@@ -161,10 +168,18 @@ function StrokeOrderCard({ item }: { item: { char: string; py: string; mean: str
 
 export function StrokeOrderModule() {
   const [idx, setIdx] = useState(0);
+  const [learned, setLearned] = useState<string[]>([]);
+  const { record } = useModuleProgress('chinese', 'strokes-order');
   const item = STROKE_ORDER_CHARS[idx % STROKE_ORDER_CHARS.length];
+  function learn(char: string) {
+    if (learned.includes(char)) return;
+    const next = [...learned, char];
+    setLearned(next);
+    record(Math.min(3, Math.ceil(next.length / 7)));
+  }
   return (
     <div className="space-y-4">
-      <StrokeOrderCard item={item} />
+      <StrokeOrderCard item={item} learned={learned.includes(item.char)} onLearned={() => learn(item.char)} />
       <div className="flex justify-center gap-3">
         <button
           onClick={() => setIdx((i) => i - 1 + STROKE_ORDER_CHARS.length)}
@@ -209,7 +224,7 @@ export function TextComprehensionModule() {
       })),
     [],
   );
-  return <StudyQuiz items={items} subject="语文" color="bg-moko-purple" textColor="text-moko-purple" autoSpeak="zh" />;
+  return <StudyQuiz items={items} subject="语文" color="bg-moko-purple" textColor="text-moko-purple" autoSpeak="zh" moduleKey="reading" />;
 }
 
 /* ========================================================================
@@ -228,6 +243,8 @@ export function SentenceBuildModule() {
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number[]>([]);
   const [result, setResult] = useState<'idle' | 'right' | 'wrong'>('idle');
+  const { record } = useModuleProgress('chinese', 'sentence');
+  const correctRef = useRef(0);
   const s = SENTENCE_BUILD[idx % SENTENCE_BUILD.length];
   const scrambled = useMemo(() => shuffle(s.words.map((_, i) => i)), [idx]); // 下标打乱
 
@@ -247,6 +264,8 @@ export function SentenceBuildModule() {
     if (ok) {
       speakZh(s.answer);
       praise();
+      correctRef.current += 1;
+      record(Math.min(3, Math.ceil(correctRef.current / 2)));
       setTimeout(() => {
         setResult('idle');
         setSelected([]);
@@ -327,6 +346,7 @@ export function SentenceBuildModule() {
 export function SchoolPrepModule() {
   const [choice, setChoice] = useState<Record<string, 'bag' | 'home' | undefined>>({});
   const [checked, setChecked] = useState(false);
+  const { record } = useModuleProgress('chinese', 'school-prep');
 
   function assign(name: string, v: 'bag' | 'home') {
     if (checked) return;
@@ -337,7 +357,9 @@ export function SchoolPrepModule() {
   }
   function check() {
     setChecked(true);
-    const ok = SCHOOL_ITEMS.every((it) => choice[it.name] === (it.bring ? 'bag' : 'home'));
+    const correctCount = SCHOOL_ITEMS.filter((it) => choice[it.name] === (it.bring ? 'bag' : 'home')).length;
+    record(Math.round((correctCount / SCHOOL_ITEMS.length) * 3));
+    const ok = correctCount === SCHOOL_ITEMS.length;
     if (ok) praise();
     else speakZh('再看看，哪些是上学要带的呀？');
   }

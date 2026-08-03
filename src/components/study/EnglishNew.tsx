@@ -33,7 +33,7 @@ export function EnglishPhonicsModule() {
       kind: '自然拼读',
     };
   });
-  return <StudyQuiz items={items} subject="英语" color="bg-moko-yellow" textColor="text-moko-violet" autoSpeak="en" />;
+  return <StudyQuiz items={items} subject="英语" color="bg-moko-yellow" textColor="text-moko-violet" autoSpeak="en" moduleKey="phonics" />;
 }
 
 /* ========================================================================
@@ -56,5 +56,5 @@ export function EnglishSentenceModule() {
       kind: '英语句型',
     };
   });
-  return <StudyQuiz items={items} subject="英语" color="bg-moko-violet" textColor="text-moko-violet" autoSpeak="en" />;
+  return <StudyQuiz items={items} subject="英语" color="bg-moko-violet" textColor="text-moko-violet" autoSpeak="en" moduleKey="sentences" />;
 }

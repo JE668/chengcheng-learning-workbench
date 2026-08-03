@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   WORD_PROBLEMS,
   ORDINALS,
@@ -13,6 +13,7 @@ import {
 import { speakZh } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { StudyQuiz, type QuizItem } from './StudyQuiz';
+import { useModuleProgress } from '@/lib/module-progress';
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -38,7 +39,7 @@ export function MathWordProblemModule() {
     answer: p.answer,
     kind: '应用题',
   }));
-  return <StudyQuiz items={items} subject="数学" color="bg-moko-blue" textColor="text-moko-blue" autoSpeak="zh" />;
+  return <StudyQuiz items={items} subject="数学" color="bg-moko-blue" textColor="text-moko-blue" autoSpeak="zh" moduleKey="word-problem" />;
 }
 
 /* ========================================================================
@@ -68,7 +69,7 @@ export function OrdinalModule() {
       kind: '序数',
     };
   });
-  return <StudyQuiz items={items} subject="数学" color="bg-moko-blue" textColor="text-moko-blue" autoSpeak="zh" />;
+  return <StudyQuiz items={items} subject="数学" color="bg-moko-blue" textColor="text-moko-blue" autoSpeak="zh" moduleKey="ordinal" />;
 }
 
 /* ========================================================================
@@ -121,6 +122,8 @@ function ClockHalfFace({ hour }: { hour: number }) {
 export function ClockHalfModule() {
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
+  const correctRef = useRef(0);
+  const { record } = useModuleProgress('math', 'clock-half');
   const logM = useMistakeLogger();
   const current: ClockHalfItem = CLOCK_HALF[idx % CLOCK_HALF.length];
   const choices = shuffle(CLOCK_HALF.map((c) => c.label)).slice(0, 4);
@@ -132,6 +135,8 @@ export function ClockHalfModule() {
     const ok = label === current.label;
     speakZh(ok ? '答对啦！' : `现在是 ${current.label}`);
     if (ok) {
+      correctRef.current += 1;
+      record(Math.min(3, Math.ceil(correctRef.current / 3)));
       setTimeout(() => {
         setPicked(null);
         setIdx((i) => i + 1);
@@ -192,7 +197,7 @@ export function CompareMoreModule() {
     answer: c.answer,
     kind: '比一比',
   }));
-  return <StudyQuiz items={items} subject="数学" color="bg-moko-cyan" textColor="text-moko-cyan" autoSpeak="zh" />;
+  return <StudyQuiz items={items} subject="数学" color="bg-moko-cyan" textColor="text-moko-cyan" autoSpeak="zh" moduleKey="compare-more" />;
 }
 
 /* ========================================================================
@@ -210,5 +215,5 @@ export function CalendarModule() {
     answer: c.answer,
     kind: '星期日历',
   }));
-  return <StudyQuiz items={items} subject="数学" color="bg-moko-blue" textColor="text-moko-blue" autoSpeak="zh" />;
+  return <StudyQuiz items={items} subject="数学" color="bg-moko-blue" textColor="text-moko-blue" autoSpeak="zh" moduleKey="calendar" />;
 }

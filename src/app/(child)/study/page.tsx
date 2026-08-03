@@ -2,6 +2,8 @@ import Link from 'next/link';
 import ReviewBadge from '@/components/ReviewBadge';
 import { MokoHelper } from '@/components/MokoHelper';
 import { STUDY_MODULES, SUBJECT_META } from '@/lib/study-modules';
+import { ModuleCover } from '@/components/study/ModuleCover';
+import { ModuleStars } from '@/components/study/ModuleStars';
 
 const cards = [
   {
@@ -105,11 +107,16 @@ export default function StudyPage() {
             <Link
               key={`${f.subject}-${f.key}`}
               href={`/study/${f.subject}/${f.key}`}
-              className={`rounded-2xl p-4 shadow-lg border-2 border-white/40 text-white hover:scale-105 transition block ${mod.color}`}
+              className="rounded-2xl overflow-hidden shadow-lg border-2 border-moko-purple/10 bg-white hover:scale-[1.03] transition block"
             >
-              <div className="text-3xl mb-1">{mod.emoji}</div>
-              <div className="font-black text-lg">{mod.label}</div>
-              <div className="text-xs opacity-90 mt-1">{meta.label} · {mod.desc}</div>
+              <ModuleCover subject={f.subject} moduleKey={f.key} emoji={mod.emoji} color={mod.color} />
+              <div className="p-3">
+                <div className="font-black text-base text-gray-800">{mod.label}</div>
+                <div className="text-[11px] text-gray-400 mt-0.5 leading-snug">{meta.label} · {mod.desc}</div>
+                <div className="mt-1.5">
+                  <ModuleStars subject={f.subject} moduleKey={f.key} />
+                </div>
+              </div>
             </Link>
           );
         })}

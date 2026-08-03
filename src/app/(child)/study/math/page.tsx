@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { STUDY_MODULES, SUBJECT_META } from '@/lib/study-modules';
+import { ModuleCover } from '@/components/study/ModuleCover';
+import { ModuleStars } from '@/components/study/ModuleStars';
 import { MokoHelper } from '@/components/MokoHelper';
 
 export default function MathStudyPage() {
@@ -18,11 +20,16 @@ export default function MathStudyPage() {
           <Link
             key={m.key}
             href={`/study/math/${m.key}`}
-            className={`rounded-3xl p-5 shadow-xl border-2 border-white/40 text-white hover:scale-105 transition block ${m.color}`}
+            className="rounded-3xl overflow-hidden shadow-xl border-2 border-moko-purple/10 bg-white hover:scale-[1.03] transition block"
           >
-            <div className="text-4xl mb-2">{m.emoji}</div>
-            <h2 className="text-2xl font-black mb-1">{m.label}</h2>
-            <p className="text-sm opacity-90">{m.desc}</p>
+            <ModuleCover subject="math" moduleKey={m.key} emoji={m.emoji} color={m.color} />
+            <div className="p-4">
+              <h2 className="text-xl font-black text-gray-800">{m.label}</h2>
+              <p className="text-xs text-gray-500 mt-1 leading-snug">{m.desc}</p>
+              <div className="mt-2">
+                <ModuleStars subject="math" moduleKey={m.key} />
+              </div>
+            </div>
           </Link>
         ))}
       </div>

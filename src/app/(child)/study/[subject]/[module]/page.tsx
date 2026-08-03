@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { STUDY_MODULES, SUBJECT_META } from '@/lib/study-modules';
 import { StudyModuleProvider } from '@/lib/study-context';
+import { ModuleCover } from '@/components/study/ModuleCover';
+import { ModuleStars } from '@/components/study/ModuleStars';
 
 export default function StudyModulePage({ params }: { params: { subject: string; module: string } }) {
   const list = STUDY_MODULES[params.subject];
@@ -20,9 +22,11 @@ export default function StudyModulePage({ params }: { params: { subject: string;
           {subj?.label ?? params.subject}
         </Link>
       </div>
-      <h1 className={`text-3xl font-black ${subj?.color ?? 'text-moko-violet'} mb-2`}>
-        {mod.emoji} {mod.label}
-      </h1>
+      <ModuleCover subject={params.subject} moduleKey={params.module} emoji={mod.emoji} color={mod.color} variant="banner" />
+      <div className="flex items-center justify-between mt-3">
+        <h1 className={`text-2xl font-black ${subj?.color ?? 'text-moko-violet'}`}>{mod.label}</h1>
+        <ModuleStars subject={params.subject} moduleKey={params.module} size="lg" />
+      </div>
       <p className="text-gray-600 mb-6">{mod.desc}</p>
       <StudyModuleProvider subject={params.subject} moduleKey={params.module}>
         <C />
