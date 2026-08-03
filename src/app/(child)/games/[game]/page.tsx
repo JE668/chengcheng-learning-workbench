@@ -16,6 +16,8 @@ import ToneDetective from '@/components/games/ToneDetective';
 import WordChain from '@/components/games/WordChain';
 import Schulte from '@/components/games/Schulte';
 import PinyinSpell from '@/components/games/PinyinSpell';
+import SpotDifference from '@/components/games/SpotDifference';
+import SoundMemory from '@/components/games/SoundMemory';
 
 const gameMap: Record<string, React.FC<{ onFinish: (score: number) => void; level?: number }>> = {
   'pinyin-eliminate': PinyinEliminate,
@@ -31,6 +33,8 @@ const gameMap: Record<string, React.FC<{ onFinish: (score: number) => void; leve
   'word-chain': WordChain,
   'schulte': Schulte,
   'pinyin-spell': PinyinSpell,
+  'spot-difference': SpotDifference,
+  'sound-memory': SoundMemory,
 };
 
 export default function GamePage() {

@@ -25,6 +25,10 @@ import {
 import { EnglishPhonicsModule, EnglishSentenceModule } from '@/components/study/EnglishNew';
 import { MathTableModule } from '@/components/study/MathTable';
 import { EnListenPicModule, EnInitialSoundModule, EnTprModule } from '@/components/study/EnglishListen';
+import { WordFormModule } from '@/components/study/ChineseWordForm';
+import { FingerReadModule } from '@/components/study/ChineseFingerRead';
+import { PoemFunModule } from '@/components/study/PoemFun';
+import { MyDayModule } from '@/components/study/MyDay';
 
 export interface StudyModuleMeta {
   key: string;
@@ -52,6 +56,10 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'reading', label: '阅读理解', emoji: '📖', desc: '读短句答小问题', Component: TextComprehensionModule, color: 'bg-moko-purple' },
     { key: 'sentence', label: '连词成句', emoji: '🔤', desc: '把词语排成一句话', Component: SentenceBuildModule, color: 'bg-moko-pink' },
     { key: 'school-prep', label: '整理书包', emoji: '🎒', desc: '上学前要带些什么', Component: SchoolPrepModule, color: 'bg-moko-rose' },
+    { key: 'word-form', label: '组词造句', emoji: '✍️', desc: '给字组词，再说一句完整的话', Component: WordFormModule, color: 'bg-moko-pink' },
+    { key: 'finger-read', label: '指读高亮', emoji: '👆', desc: '点字跟读，小手指跟着滑过去', Component: FingerReadModule, color: 'bg-moko-rose' },
+    { key: 'poem-fun', label: '古诗游乐场', emoji: '🌙', desc: '诗中有画·诗句排序·飞花令', Component: PoemFunModule, color: 'bg-moko-purple' },
+    { key: 'my-day', label: '我的一天', emoji: '🕒', desc: '听一听一天的安排，排排序', Component: MyDayModule, color: 'bg-moko-blue' },
   ],
   math: [
     { key: 'count', label: '数感启蒙', emoji: '🔟', desc: '1~10 数一数', Component: NumberSenseModule, color: 'bg-moko-blue' },

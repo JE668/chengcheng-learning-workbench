@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { storyChapters } from '@/lib/story';
 import { mokoCollection } from '@/lib/moko-collection';
 import { speakZh } from '@/lib/speak';
+import MokoTasks from '@/components/MokoTasks';
 
 const COLLECTION_MAP = new Map(mokoCollection.map((m) => [m.key, m]));
 
@@ -128,6 +129,8 @@ export default function MokoHousePage() {
           <li>想入住更多萌可，就去「萌可剧情」连续捕捉吧！</li>
         </ul>
       </div>
+
+      <MokoTasks />
     </div>
   );
 }

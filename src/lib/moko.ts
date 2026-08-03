@@ -281,6 +281,32 @@ export const games: {
       { name: '高手', tag: '5×5' },
     ],
   },
+  {
+    id: 'spot-difference',
+    title: '火眼金睛找不同',
+    mokoKey: 'curiousping',
+    subject: '专注',
+    desc: '左右两幅图只有一处不一样，圈出它',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '4×3 · 12 格' },
+      { name: '进阶', tag: '5×4 · 20 格' },
+      { name: '高手', tag: '6×5 · 30 格' },
+    ],
+  },
+  {
+    id: 'sound-memory',
+    title: '听觉记忆大挑战',
+    mokoKey: 'wisejingping',
+    subject: '专注',
+    desc: '听一串数字，按顺序复述出来',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '3 位数字' },
+      { name: '进阶', tag: '4 位数字' },
+      { name: '高手', tag: '5 位数字' },
+    ],
+  },
 ];
 
 /** 萌可成长时长（分钟级，便于孩子体验，可在设置里调整） */

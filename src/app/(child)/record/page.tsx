@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildPoints } from '@/lib/db';
 import { getGrowthDiary } from '@/lib/castle';
 import Link from 'next/link';
+import GrowthTree from '@/components/GrowthTree';
 
 export default async function RecordPage() {
   const user = await getCurrentUser();
@@ -38,6 +39,10 @@ export default async function RecordPage() {
           <div className="text-gray-500">完成次数</div>
         </div>
       </div>
+
+      {/* 🌳 成长树 */}
+      <h2 className="text-2xl font-black text-moko-violet mb-3">🌳 我的成长树</h2>
+      <GrowthTree />
 
       {/* 📔 萌可成长日记 */}
       <h2 className="text-2xl font-black text-moko-violet mb-3">📔 萌可成长日记</h2>

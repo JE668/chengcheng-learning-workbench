@@ -1275,3 +1275,79 @@ export const STROKE_ORDER_CHARS: StrokeOrderItem[] = [
   { char: '大', py: 'dà', mean: '大' },
   { char: '小', py: 'xiǎo', mean: '小' },
 ];
+
+/* -------------------- 语文 · 组词造句 -------------------- */
+export interface WordFormItem {
+  char: string; // 要组词/造句的字
+  word: string; // 含该字的正确词
+  wrongWords: string[]; // 干扰词（不含该字或不是词）
+  sentenceOk: string; // 用该词的正确句子
+  sentenceWrong: string[]; // 干扰句子（不通顺）
+}
+
+export const WORD_FORM: WordFormItem[] = [
+  { char: '火', word: '火车', wrongWords: ['水车', '开车', '口水'], sentenceOk: '我坐火车去外婆家。', sentenceWrong: ['火车在天上飞。', '火车吃了苹果。'] },
+  { char: '水', word: '水果', wrongWords: ['火山', '水火', '开水'], sentenceOk: '妹妹最爱吃水果。', sentenceWrong: ['水果在唱歌。', '水果长得很高。'] },
+  { char: '花', word: '花朵', wrongWords: ['火朵', '花草', '开花'], sentenceOk: '花园里开满了花朵。', sentenceWrong: ['花朵会跑步。', '花朵吃了米饭。'] },
+  { char: '风', word: '大风', wrongWords: ['小风', '风气', '风车'], sentenceOk: '今天刮起了大风。', sentenceWrong: ['大风在写字。', '大风吃了西瓜。'] },
+  { char: '月', word: '月亮', wrongWords: ['日光', '明月', '月牙'], sentenceOk: '晚上月亮出来了。', sentenceWrong: ['月亮在读书。', '月亮喝了牛奶。'] },
+  { char: '鸟', word: '小鸟', wrongWords: ['飞鸟', '鸟窝', '水鸟'], sentenceOk: '小鸟在树上唱歌。', sentenceWrong: ['小鸟在写作业。', '小鸟开了汽车。'] },
+  { char: '书', word: '书本', wrongWords: ['书包', '看书', '书皮'], sentenceOk: '我每天看书本。', sentenceWrong: ['书本在游泳。', '书本吃了蛋糕。'] },
+  { char: '山', word: '高山', wrongWords: ['火山', '上山', '山下'], sentenceOk: '远处有一座高山。', sentenceWrong: ['高山在说话。', '高山喝了汤。'] },
+];
+
+/* -------------------- 语文 · 指读高亮 -------------------- */
+export const FINGER_READ: string[] = [
+  '春天来了，花儿开了。',
+  '小鸟在树上唱歌。',
+  '太阳公公笑眯眯。',
+  '妹妹在数星星。',
+  '小兔子爱吃胡萝卜。',
+  '妈妈给我讲故事。',
+  '我们一起做游戏。',
+  '小鱼在水里游来游去。',
+  '月亮升上了树梢。',
+  '风儿轻轻吹过脸颊。',
+  '弟弟把玩具收好了。',
+  '老师夸我写字真漂亮。',
+];
+
+/* -------------------- 语文 · 古诗趣味化（诗中有画） -------------------- */
+export interface PoemPictureQ {
+  poem: string;
+  hint: string; // 诗句提示
+  options: string[]; // emoji 选项
+  answer: string; // 正确的 emoji
+}
+
+export const POEM_PICTURE_Q: PoemPictureQ[] = [
+  { poem: '咏鹅', hint: '鹅，鹅，鹅，曲项向天歌。', options: ['🦢', '🐱', '🐟'], answer: '🦢' },
+  { poem: '悯农', hint: '锄禾日当午，汗滴禾下土。', options: ['🌾', '🍔', '🚗'], answer: '🌾' },
+  { poem: '静夜思', hint: '举头望明月，低头思故乡。', options: ['🌙', '☀️', '⭐'], answer: '🌙' },
+  { poem: '江南', hint: '江南可采莲，莲叶何田田。', options: ['🪷', '🌲', '🍎'], answer: '🪷' },
+  { poem: '春晓', hint: '春眠不觉晓，处处闻啼鸟。', options: ['🐦', '🐟', '🌸'], answer: '🐦' },
+  { poem: '咏柳', hint: '碧玉妆成一树高，万条垂下绿丝绦。', options: ['🌿', '🍎', '🌲'], answer: '🌿' },
+  { poem: '小池', hint: '小荷才露尖尖角，早有蜻蜓立上头。', options: ['🦗', '🐱', '🌞'], answer: '🦗' },
+  { poem: '画鸡', hint: '头上红冠不用裁，满身雪白走将来。', options: ['🐔', '🐶', '🐱'], answer: '🐔' },
+  { poem: '风', hint: '解落三秋叶，能开二月花。', options: ['🍃', '🔥', '🌊'], answer: '🍃' },
+];
+
+/* -------------------- 语文 · 我的一天（时间线） -------------------- */
+export interface MyDayItem {
+  time: string;
+  emoji: string;
+  text: string; // 用「时间 + 动作」的口吻，便于点读
+}
+
+export const MY_DAY: MyDayItem[] = [
+  { time: '7:00', emoji: '🌅', text: '早上七点，程程起床啦。' },
+  { time: '7:30', emoji: '🪥', text: '七点半，刷牙洗脸真干净。' },
+  { time: '8:00', emoji: '🍚', text: '八点吃早饭，身体棒棒。' },
+  { time: '8:30', emoji: '🎒', text: '八点半，背着书包上学去。' },
+  { time: '12:00', emoji: '🍱', text: '中午十二点，吃香喷喷的午饭。' },
+  { time: '16:30', emoji: '📚', text: '下午四点半，放学回家做作业。' },
+  { time: '18:00', emoji: '🍲', text: '晚上六点，全家一起吃晚饭。' },
+  { time: '19:30', emoji: '🛁', text: '七点半，洗澡香香的。' },
+  { time: '20:30', emoji: '📖', text: '八点半，读一本好看的绘本。' },
+  { time: '21:00', emoji: '😴', text: '晚上九点，盖好被子睡觉觉。' },
+];

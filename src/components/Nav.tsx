@@ -12,6 +12,7 @@ const childLinks = [
   { href: '/textbook', label: '萌可课本', icon: '📖' },
   { href: '/games', label: '萌可游戏', icon: '🎮' },
   { href: '/moko-house', label: '萌可房间', icon: '🧸' },
+  { href: '/co-op', label: '萌可帮帮忙', icon: '🤝' },
   { href: '/badges', label: '勋章墙', icon: '🥇' },
   { href: '/record', label: '成长记录', icon: '🏆' },
   { href: '/cert', label: '荣誉奖状', icon: '🎖️' },
