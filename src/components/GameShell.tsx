@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { mokoChars } from '@/lib/moko';
+import { getGameLevel, setGameLevel, recordGameResult } from '@/lib/game-difficulty';
 
 export default function GameShell({
   gameId,
@@ -24,11 +25,19 @@ export default function GameShell({
   const [msg, setMsg] = useState('');
   const [level, setLevel] = useState(1);
   const moko = mokoChars[mokoKey] || mokoChars.lemei;
+  const maxLevels = levels?.length ?? 1;
+
+  // 自适应难度：开局默认档位取该游戏记忆的档位（跨局生效，纯偏好）。
+  useEffect(() => {
+    setLevel(getGameLevel(gameId));
+  }, [gameId]);
 
   async function handleFinish(finalScore: number) {
     setScore(finalScore);
     setFinished(true);
     setStarted(false);
+    // 依据本次成绩调整下一局的难度档位（发挥好升档、退步降档）。
+    setLevel(recordGameResult(gameId, finalScore, maxLevels));
     try {
       const res = await fetch('/api/tasks/game-complete', {
         method: 'POST',
@@ -67,7 +76,10 @@ export default function GameShell({
                   return (
                     <button
                       key={n}
-                      onClick={() => setLevel(n)}
+                      onClick={() => {
+                        setLevel(n);
+                        setGameLevel(gameId, n);
+                      }}
                       className={`px-5 py-3 rounded-2xl font-bold shadow transition border-2 ${
                         active ? 'border-moko-rose bg-moko-rose/10 text-moko-rose scale-105' : 'border-gray-200 text-gray-600 hover:border-moko-pink'
                       }`}
