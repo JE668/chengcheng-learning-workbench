@@ -19,23 +19,24 @@ export default function GrowthTree() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const m: Record<string, P> = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('cc:progress:v1:')) {
-        const parts = k.split(':');
-        const subject = parts[3];
-        const moduleKey = parts.slice(4).join(':');
-        try {
-          const v = JSON.parse(localStorage.getItem(k) || '{}');
-          m[`${subject}:${moduleKey}`] = { stars: v.stars || 0, rounds: v.rounds || 0, lastPlayed: v.lastPlayed || 0 };
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-    setData(m);
-    setLoaded(true);
+    let active = true;
+    fetch('/api/module-progress')
+      .then((r) => r.json())
+      .then((res: { items?: { subject: string; moduleKey: string; stars: number; rounds: number; lastPlayed: number }[] }) => {
+        if (!active) return;
+        const m: Record<string, P> = {};
+        (res.items || []).forEach((it) => {
+          m[`${it.subject}:${it.moduleKey}`] = { stars: it.stars || 0, rounds: it.rounds || 0, lastPlayed: it.lastPlayed || 0 };
+        });
+        setData(m);
+        setLoaded(true);
+      })
+      .catch(() => {
+        if (active) setLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const subjects = ['chinese', 'math', 'english'];

@@ -25,25 +25,29 @@ export default function MokoTasks() {
   const [celebrate, setCelebrate] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('cc:mokoTasks');
-      if (raw) setDone(JSON.parse(raw));
-    } catch {
-      /* ignore */
-    }
+    fetch('/api/child-tasks')
+      .then((r) => r.json())
+      .then((res: { done?: Record<string, boolean> }) => {
+        if (res.done) setDone(res.done);
+      })
+      .catch(() => {
+        /* 断网时保留本地内存状态，不影响交互 */
+      });
   }, []);
 
   function markDone(t: MokoTasksDef) {
     const next = { ...done, [t.key]: true };
     setDone(next);
-    try {
-      localStorage.setItem('cc:mokoTasks', JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
     setCelebrate(t.key);
     speakZh(t.doneLine, 0.9);
     setTimeout(() => setCelebrate(null), 1500);
+    fetch('/api/child-tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: t.key, done: true }),
+    }).catch(() => {
+      /* 断网静默，下次进入会拉取最新 */
+    });
   }
 
   return (

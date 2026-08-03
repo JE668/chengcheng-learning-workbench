@@ -60,6 +60,51 @@ export async function ensureSchema() {
     args: [],
   });
 
+  // 增量表（每次启动都跑，幂等）：模块关卡进度——按 学科+模块 记录历史最佳星数/轮数，
+  // 跨设备一致（原来存在 localStorage，换设备会丢）。放在守卫之前，已部署旧库自动补齐。
+  await db.execute({
+    sql: `CREATE TABLE IF NOT EXISTS module_progress (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      subject TEXT NOT NULL,
+      module_key TEXT NOT NULL,
+      stars INTEGER NOT NULL DEFAULT 0,
+      rounds INTEGER NOT NULL DEFAULT 0,
+      last_played DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(child_id, subject, module_key),
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
+    args: [],
+  });
+
+  // 增量表（每次启动都跑，幂等）：萌可小任务的「已完成」标记——跨设备一致。
+  await db.execute({
+    sql: `CREATE TABLE IF NOT EXISTS child_tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      task_key TEXT NOT NULL,
+      done INTEGER NOT NULL DEFAULT 0,
+      done_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(child_id, task_key),
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
+    args: [],
+  });
+
+  // 增量表（每次启动都跑，幂等）：电子课本阅读进度（book_key → 上次读到的章节 idx），跨设备续读。
+  await db.execute({
+    sql: `CREATE TABLE IF NOT EXISTS textbook_progress (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      book_key TEXT NOT NULL,
+      chapter_idx INTEGER NOT NULL DEFAULT 0,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(child_id, book_key),
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
+    args: [],
+  });
+
   // 增量修正（每次启动都跑，幂等）：学科萌可对齐图鉴 key，避免与剧情萌可重复计数。
   // 旧版本每日打卡写入 heartping/courageping/singping，与剧情捕捉写入的 col_01_*_render 同名，
   // 导致「收集萌可数 = COUNT(moko_owned)」把爱心/正正/唱唱各多算一次。

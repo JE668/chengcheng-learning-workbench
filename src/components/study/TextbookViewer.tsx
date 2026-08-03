@@ -5,17 +5,7 @@ import { TEXTBOOKS, type Textbook, type Chapter } from '@/lib/textbooks';
 import PdfViewer from '@/components/PdfViewer';
 import { mediaUrl } from '@/lib/media';
 
-const PROGRESS_KEY = 'moko-textbook-progress';
-
 type Progress = Record<string, number>; // bookKey -> 上次读到的章节 idx
-
-function loadProgress(): Progress {
-  try {
-    return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
-  } catch {
-    return {};
-  }
-}
 
 export default function TextbookViewer() {
   const [book, setBook] = useState<Textbook | null>(null);
@@ -25,18 +15,24 @@ export default function TextbookViewer() {
   const [progress, setProgress] = useState<Progress>({});
 
   useEffect(() => {
-    setProgress(loadProgress());
+    fetch('/api/textbook-progress')
+      .then((r) => r.json())
+      .then((res: { progress?: Progress }) => {
+        if (res.progress) setProgress(res.progress);
+      })
+      .catch(() => {
+        /* 断网时保留内存状态 */
+      });
   }, []);
 
   const remember = useCallback((bookKey: string, chapterIdx: number) => {
-    setProgress((p) => {
-      const next = { ...p, [bookKey]: chapterIdx };
-      try {
-        localStorage.setItem(PROGRESS_KEY, JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
-      return next;
+    setProgress((p) => ({ ...p, [bookKey]: chapterIdx }));
+    fetch('/api/textbook-progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bookKey, chapterIdx }),
+    }).catch(() => {
+      /* 断网静默，下次进入会拉取最新 */
     });
   }, []);
 
