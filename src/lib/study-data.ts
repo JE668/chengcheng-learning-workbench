@@ -1034,3 +1034,244 @@ export const SPLITS: SplitItem[] = [
   { num: 9, pairs: [[1, 8], [2, 7], [3, 6], [4, 5]] },
   { num: 10, pairs: [[1, 9], [2, 8], [3, 7], [4, 6], [5, 5]] },
 ];
+
+/* =========================================================================
+ * 以下为「幼小衔接 + 一年级」新增内容数据集（12 个拓展模块共用）
+ * ========================================================================= */
+
+/* -------------------- 语文 · 拼音拼读（声母 + 单韵母 拼一拼） -------------------- */
+export interface PinyinBlendItem {
+  sheng: string; // 声母
+  yun: string; // 单韵母
+  syllable: string; // 拼出的音节
+  word: string; // 例字
+  emoji: string;
+}
+export const PINYIN_BLEND: PinyinBlendItem[] = [
+  { sheng: 'b', yun: 'a', syllable: 'ba', word: '八', emoji: '🎈' },
+  { sheng: 'p', yun: 'a', syllable: 'pa', word: '趴', emoji: '🐭' },
+  { sheng: 'm', yun: 'a', syllable: 'ma', word: '妈', emoji: '👩' },
+  { sheng: 'd', yun: 'a', syllable: 'da', word: '大', emoji: '🐘' },
+  { sheng: 't', yun: 'a', syllable: 'ta', word: '他', emoji: '🧒' },
+  { sheng: 'n', yun: 'a', syllable: 'na', word: '拿', emoji: '✋' },
+  { sheng: 'l', yun: 'a', syllable: 'la', word: '拉', emoji: '🎻' },
+  { sheng: 'b', yun: 'o', syllable: 'bo', word: '波', emoji: '🌊' },
+  { sheng: 'p', yun: 'o', syllable: 'po', word: '坡', emoji: '⛰️' },
+  { sheng: 'm', yun: 'o', syllable: 'mo', word: '摸', emoji: '🤚' },
+  { sheng: 'f', yun: 'o', syllable: 'fo', word: '佛', emoji: '🙏' },
+  { sheng: 'b', yun: 'i', syllable: 'bi', word: '笔', emoji: '🖊️' },
+  { sheng: 'p', yun: 'i', syllable: 'pi', word: '皮', emoji: '👟' },
+  { sheng: 'm', yun: 'i', syllable: 'mi', word: '米', emoji: '🍚' },
+  { sheng: 'g', yun: 'e', syllable: 'ge', word: '哥', emoji: '👦' },
+  { sheng: 'h', yun: 'e', syllable: 'he', word: '喝', emoji: '🥤' },
+  { sheng: 'b', yun: 'u', syllable: 'bu', word: '布', emoji: '👕' },
+  { sheng: 'm', yun: 'u', syllable: 'mu', word: '木', emoji: '🪵' },
+  { sheng: 'h', yun: 'u', syllable: 'hu', word: '虎', emoji: '🐯' },
+];
+
+/* -------------------- 数学 · 应用题（20 以内加减） -------------------- */
+export interface WordProblemItem {
+  text: string;
+  options: string[]; // 含正确答案的数字字符串
+  answer: string;
+  emoji: string;
+}
+export const WORD_PROBLEMS: WordProblemItem[] = [
+  { text: '小明有 3 颗糖，妈妈又给了 5 颗，现在有几颗？', options: ['7', '8', '9'], answer: '7', emoji: '🍬' },
+  { text: '池塘里有 8 只鸭子，游走 3 只，还剩几只？', options: ['5', '6', '4'], answer: '5', emoji: '🦆' },
+  { text: '树上原有 6 只鸟，又飞来 4 只，一共有几只？', options: ['10', '9', '11'], answer: '10', emoji: '🐦' },
+  { text: '程程有 10 块饼干，吃了 2 块，还剩几块？', options: ['8', '7', '9'], answer: '8', emoji: '🍪' },
+  { text: '停车场有 5 辆汽车，又开进 4 辆，现在有几辆？', options: ['9', '10', '8'], answer: '9', emoji: '🚗' },
+  { text: '书包里有 7 本书，借给同学 2 本，还剩几本？', options: ['5', '6', '4'], answer: '5', emoji: '📚' },
+  { text: '草地上有 4 头牛，又来了 5 头，一共几头？', options: ['9', '8', '10'], answer: '9', emoji: '🐮' },
+  { text: '花丛里有 12 朵花，采了 3 朵，还剩几朵？', options: ['9', '8', '10'], answer: '9', emoji: '🌸' },
+  { text: '鱼缸里有 9 条鱼，死了 1 条，还剩几条？', options: ['8', '7', '9'], answer: '8', emoji: '🐟' },
+  { text: '弟弟有 6 个气球，破了 2 个，还剩几个？', options: ['4', '5', '3'], answer: '4', emoji: '🎈' },
+  { text: '教室有 11 把椅子，搬走 4 把，还剩几把？', options: ['7', '6', '8'], answer: '7', emoji: '🪑' },
+  { text: '水果盘有 5 个苹果，妈妈又放进 5 个，现在有几个？', options: ['10', '9', '11'], answer: '10', emoji: '🍎' },
+];
+
+/* -------------------- 英语 · 自然拼读（CVC 词） -------------------- */
+export interface CvcItem {
+  word: string;
+  sound: string; // 字母音拆分，如 c-a-t
+  emoji: string;
+  cn: string;
+}
+export const CVC_WORDS: CvcItem[] = [
+  { word: 'cat', sound: 'c-a-t', emoji: '🐱', cn: '猫' },
+  { word: 'dog', sound: 'd-o-g', emoji: '🐶', cn: '狗' },
+  { word: 'pig', sound: 'p-i-g', emoji: '🐷', cn: '猪' },
+  { word: 'sun', sound: 's-u-n', emoji: '☀️', cn: '太阳' },
+  { word: 'cup', sound: 'c-u-p', emoji: '🥤', cn: '杯子' },
+  { word: 'hat', sound: 'h-a-t', emoji: '🎩', cn: '帽子' },
+  { word: 'bug', sound: 'b-u-g', emoji: '🐛', cn: '虫子' },
+  { word: 'box', sound: 'b-o-x', emoji: '📦', cn: '盒子' },
+  { word: 'pen', sound: 'p-e-n', emoji: '🖊️', cn: '钢笔' },
+  { word: 'red', sound: 'r-e-d', emoji: '🔴', cn: '红色' },
+  { word: 'bed', sound: 'b-e-d', emoji: '🛏️', cn: '床' },
+  { word: 'fox', sound: 'f-o-x', emoji: '🦊', cn: '狐狸' },
+  { word: 'bag', sound: 'b-a-g', emoji: '👜', cn: '包' },
+  { word: 'map', sound: 'm-a-p', emoji: '🗺️', cn: '地图' },
+];
+
+/* -------------------- 语文 · 课文阅读理解（一年级短句） -------------------- */
+export interface ReadingItem {
+  passage: string;
+  question: string;
+  options: string[];
+  answer: string;
+  emoji: string;
+  chapter?: string;
+}
+export const READING_PASSAGES: ReadingItem[] = [
+  { passage: '小鸡跟着鸡妈妈在草地上找虫子吃。', question: '小鸡在干什么？', options: ['找虫子吃', '睡觉', '游泳'], answer: '找虫子吃', emoji: '🐤' },
+  { passage: '天上的白云像小羊。', question: '白云像什么？', options: ['小羊', '小鱼', '小树'], answer: '小羊', emoji: '☁️' },
+  { passage: '秋天到了，树叶变黄了，一片一片落下来。', question: '树叶为什么落下来？', options: ['秋天到了', '春天到了', '被风吹跑'], answer: '秋天到了', emoji: '🍂' },
+  { passage: '小明早上自己穿好衣服，背上书包去上学。', question: '小明去哪里？', options: ['上学', '公园', '超市'], answer: '上学', emoji: '🎒' },
+  { passage: '小兔子爱吃胡萝卜，不爱吃肉。', question: '小兔子爱吃什么？', options: ['胡萝卜', '肉', '米饭'], answer: '胡萝卜', emoji: '🥕' },
+  { passage: '晚上，月亮挂在天上，星星一闪一闪。', question: '什么时候星星出来了？', options: ['晚上', '早上', '中午'], answer: '晚上', emoji: '⭐' },
+  { passage: '花儿开了，蜜蜂来采蜜。', question: '谁在采蜜？', options: ['蜜蜂', '蝴蝶', '小鸟'], answer: '蜜蜂', emoji: '🐝' },
+  { passage: '弟弟把玩具收拾好，房间变干净了。', question: '房间为什么干净了？', options: ['玩具收拾好了', '有人打扫', '本来就很干净'], answer: '玩具收拾好了', emoji: '🧸' },
+];
+
+/* -------------------- 数学 · 序数（第1~第N / 排队） -------------------- */
+export interface OrdinalItem {
+  row: string[]; // 一排 emoji
+  ask: number; // 从左边数，第几个（0 基）
+  question: string;
+  answer: string; // 如 第3
+}
+export const ORDINALS: OrdinalItem[] = [
+  { row: ['🐱', '🐶', '🐰', '🐯', '🐼'], ask: 2, question: '从左边数，🐰排第几？', answer: '第3' },
+  { row: ['🍎', '🍌', '🍊', '🍇'], ask: 0, question: '从左边数，🍎排第几？', answer: '第1' },
+  { row: ['🚌', '🚗', '🚕', '🚙', '🚎'], ask: 4, question: '从左边数，🚎排第几？', answer: '第5' },
+  { row: ['🐟', '🐠', '🐡', '🦈'], ask: 1, question: '从左边数，🐠排第几？', answer: '第2' },
+  { row: ['🌹', '🌻', '🌷', '🌼', '🌺'], ask: 2, question: '从左边数，🌷排第几？', answer: '第3' },
+  { row: ['🍓', '🍉', '🍇', '🍒', '🍑'], ask: 3, question: '从左边数，🍒排第几？', answer: '第4' },
+  { row: ['🦁', '🐯', '🐻', '🐼', '🐨'], ask: 4, question: '从左边数，🐨排第几？', answer: '第5' },
+  { row: ['⭐', '🌙', '☁️', '⚡', '❄️'], ask: 3, question: '从左边数，⚡排第几？', answer: '第4' },
+];
+
+/* -------------------- 数学 · 钟表半时（分针指 6） -------------------- */
+export interface ClockHalfItem {
+  hour: number;
+  label: string;
+  emoji: string;
+}
+export const CLOCK_HALF: ClockHalfItem[] = [
+  { hour: 1, label: '1时半', emoji: '🥛' },
+  { hour: 3, label: '3时半', emoji: '🍰' },
+  { hour: 5, label: '5时半', emoji: '🌇' },
+  { hour: 7, label: '7时半', emoji: '🌆' },
+  { hour: 9, label: '9时半', emoji: '📚' },
+  { hour: 11, label: '11时半', emoji: '🛏️' },
+];
+
+/* -------------------- 数学 · 比轻重 / 比长短 -------------------- */
+export interface CompareMoreItem {
+  a: string; // emoji
+  b: string; // emoji
+  question: string;
+  options: string[];
+  answer: string;
+}
+export const COMPARE_MORE: CompareMoreItem[] = [
+  { a: '🐘', b: '🐭', question: '谁更重？', options: ['大象', '老鼠'], answer: '大象' },
+  { a: '🚚', b: '🚲', question: '谁更重？', options: ['卡车', '自行车'], answer: '卡车' },
+  { a: '🪨', b: '🪶', question: '谁更轻？', options: ['羽毛', '石头'], answer: '羽毛' },
+  { a: '🍎', b: '🍒', question: '谁更重？', options: ['苹果', '樱桃'], answer: '苹果' },
+  { a: '🐳', b: '🐟', question: '谁更重？', options: ['鲸鱼', '小鱼'], answer: '鲸鱼' },
+  { a: '🪢', b: '✏️', question: '谁更长？', options: ['绳子', '铅笔'], answer: '绳子' },
+  { a: '🚌', b: '🚗', question: '谁更长？', options: ['公交车', '小汽车'], answer: '公交车' },
+  { a: '🐍', b: '🐛', question: '谁更长？', options: ['蛇', '毛毛虫'], answer: '蛇' },
+  { a: '🏠', b: '⛺', question: '谁占的地方更大？', options: ['房子', '帐篷'], answer: '房子' },
+  { a: '📕', b: '🪶', question: '谁更轻？', options: ['羽毛', '书'], answer: '羽毛' },
+];
+
+/* -------------------- 数学 · 星期 / 日历 / 天气 -------------------- */
+export interface CalendarItem {
+  question: string;
+  options: string[];
+  answer: string;
+  emoji: string;
+}
+export const WEEK_CALENDAR: CalendarItem[] = [
+  { question: '今天是星期一，明天是星期几？', options: ['星期二', '星期三', '星期日'], answer: '星期二', emoji: '📅' },
+  { question: '今天是星期五，后天是星期几？', options: ['星期日', '星期六', '星期一'], answer: '星期日', emoji: '📆' },
+  { question: '哪一天之后是星期六？', options: ['星期五', '星期日', '星期一'], answer: '星期五', emoji: '🗓️' },
+  { question: '一个星期有几天？', options: ['7天', '5天', '6天'], answer: '7天', emoji: '🗓️' },
+  { question: '晴天的时候，天上有什么？', options: ['太阳', '月亮', '星星'], answer: '太阳', emoji: '☀️' },
+  { question: '下雨天出门要带什么？', options: ['雨伞', '墨镜', '扇子'], answer: '雨伞', emoji: '☔' },
+  { question: '今天是星期三，昨天是星期几？', options: ['星期二', '星期四', '星期一'], answer: '星期二', emoji: '📅' },
+  { question: '十二月过完，接着是几月？', options: ['一月', '十一月', '二月'], answer: '一月', emoji: '🎄' },
+  { question: '哪个季节会下雪？', options: ['冬天', '夏天', '春天'], answer: '冬天', emoji: '❄️' },
+  { question: '星期一的前一天是星期几？', options: ['星期日', '星期二', '星期六'], answer: '星期日', emoji: '📅' },
+];
+
+/* -------------------- 生活 · 整理书包（上学准备） -------------------- */
+export interface SchoolItem {
+  name: string;
+  emoji: string;
+  bring: boolean; // true=要带去学校
+}
+export const SCHOOL_ITEMS: SchoolItem[] = [
+  { name: '语文书', emoji: '📕', bring: true },
+  { name: '数学书', emoji: '📗', bring: true },
+  { name: '铅笔', emoji: '✏️', bring: true },
+  { name: '尺子', emoji: '📏', bring: true },
+  { name: '水杯', emoji: '🥤', bring: true },
+  { name: '作业本', emoji: '📓', bring: true },
+  { name: '书包', emoji: '🎒', bring: true },
+  { name: '玩具车', emoji: '🚗', bring: false },
+  { name: '平板', emoji: '💻', bring: false },
+  { name: '零食', emoji: '🍪', bring: false },
+  { name: '洋娃娃', emoji: '🧸', bring: false },
+  { name: '游戏机', emoji: '🎮', bring: false },
+];
+
+/* -------------------- 英语 · 常见句型（选词填空） -------------------- */
+export interface EnSentenceItem {
+  sentence: string; // 含 ___ 表示空格
+  options: string[];
+  answer: string;
+  speak: string; // 完整句子（朗读用）
+  emoji: string;
+}
+export const EN_SENTENCES: EnSentenceItem[] = [
+  { sentence: 'I ___ a cat.', options: ['have', 'has', 'am'], answer: 'have', speak: 'I have a cat.', emoji: '🐱' },
+  { sentence: 'This ___ a dog.', options: ['is', 'are', 'am'], answer: 'is', speak: 'This is a dog.', emoji: '🐶' },
+  { sentence: 'I can ___ .', options: ['jump', 'jumps', 'jumping'], answer: 'jump', speak: 'I can jump.', emoji: '🦘' },
+  { sentence: 'What ___ your name?', options: ['is', 'are', 'am'], answer: 'is', speak: 'What is your name?', emoji: '📛' },
+  { sentence: 'I ___ happy.', options: ['am', 'is', 'are'], answer: 'am', speak: 'I am happy.', emoji: '😊' },
+  { sentence: 'He ___ a ball.', options: ['has', 'have', 'is'], answer: 'has', speak: 'He has a ball.', emoji: '⚽' },
+  { sentence: 'We ___ friends.', options: ['are', 'is', 'am'], answer: 'are', speak: 'We are friends.', emoji: '🤝' },
+  { sentence: 'My name ___ Tom.', options: ['is', 'am', 'are'], answer: 'is', speak: 'My name is Tom.', emoji: '🏷️' },
+  { sentence: 'I like ___ .', options: ['apples', 'apple', 'an apple'], answer: 'apples', speak: 'I like apples.', emoji: '🍎' },
+  { sentence: 'How ___ you?', options: ['are', 'is', 'am'], answer: 'are', speak: 'How are you?', emoji: '🤗' },
+];
+
+/* -------------------- 语文 · 笔顺（简单常用字） -------------------- */
+export interface StrokeOrderItem {
+  char: string;
+  py: string;
+  mean: string;
+}
+export const STROKE_ORDER_CHARS: StrokeOrderItem[] = [
+  { char: '一', py: 'yī', mean: '一' },
+  { char: '二', py: 'èr', mean: '二' },
+  { char: '三', py: 'sān', mean: '三' },
+  { char: '十', py: 'shí', mean: '十' },
+  { char: '上', py: 'shàng', mean: '上' },
+  { char: '下', py: 'xià', mean: '下' },
+  { char: '人', py: 'rén', mean: '人' },
+  { char: '口', py: 'kǒu', mean: '口' },
+  { char: '日', py: 'rì', mean: '日' },
+  { char: '月', py: 'yuè', mean: '月' },
+  { char: '木', py: 'mù', mean: '木' },
+  { char: '水', py: 'shuǐ', mean: '水' },
+  { char: '火', py: 'huǒ', mean: '火' },
+  { char: '中', py: 'zhōng', mean: '中' },
+  { char: '大', py: 'dà', mean: '大' },
+  { char: '小', py: 'xiǎo', mean: '小' },
+];

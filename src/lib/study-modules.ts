@@ -8,6 +8,21 @@ import { PositionModule, SolidShapeModule, Numbers1120Module, ClockModule } from
 import { SplitModule } from '@/components/study/MokoStudy';
 import { FindPatternModule } from '@/components/study/PatternModule';
 import { LetterModule, WordModule, EnListenModule, EnSpeakModule, UnitModule } from '@/components/study/EnglishModules';
+import {
+  PinyinBlendModule,
+  StrokeOrderModule,
+  TextComprehensionModule,
+  SentenceBuildModule,
+  SchoolPrepModule,
+} from '@/components/study/ChineseNew';
+import {
+  MathWordProblemModule,
+  OrdinalModule,
+  ClockHalfModule,
+  CompareMoreModule,
+  CalendarModule,
+} from '@/components/study/MathNew';
+import { EnglishPhonicsModule, EnglishSentenceModule } from '@/components/study/EnglishNew';
 
 export interface StudyModuleMeta {
   key: string;
@@ -30,6 +45,11 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'poems', label: '古诗诵读', emoji: '🌙', desc: '小学必背古诗词', Component: PoemModule, color: 'bg-moko-purple' },
     { key: 'trace', label: '描红练习', emoji: '✍️', desc: '跟着模板写一写', Component: TraceModule, color: 'bg-moko-pink' },
     { key: 'quiz', label: '识字闯关', emoji: '🎯', desc: '难度会自己调整哦', Component: CharacterQuizModule, color: 'bg-moko-rose' },
+    { key: 'pinyin-blend', label: '拼音拼读', emoji: '🀄', desc: '声母韵母拼一拼', Component: PinyinBlendModule, color: 'bg-moko-pink' },
+    { key: 'strokes-order', label: '笔顺动画', emoji: '✍️', desc: '看萌可写一写笔画顺序', Component: StrokeOrderModule, color: 'bg-moko-rose' },
+    { key: 'reading', label: '阅读理解', emoji: '📖', desc: '读短句答小问题', Component: TextComprehensionModule, color: 'bg-moko-purple' },
+    { key: 'sentence', label: '连词成句', emoji: '🔤', desc: '把词语排成一句话', Component: SentenceBuildModule, color: 'bg-moko-pink' },
+    { key: 'school-prep', label: '整理书包', emoji: '🎒', desc: '上学前要带些什么', Component: SchoolPrepModule, color: 'bg-moko-rose' },
   ],
   math: [
     { key: 'count', label: '数感启蒙', emoji: '🔟', desc: '1~10 数一数', Component: NumberSenseModule, color: 'bg-moko-blue' },
@@ -44,6 +64,11 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'clock', label: '认识钟表', emoji: '🕐', desc: '认识整时', Component: ClockModule, color: 'bg-moko-cyan' },
     { key: 'angle', label: '角的世界', emoji: '📐', desc: '锐角、直角、钝角', Component: AngleModule, color: 'bg-moko-blue' },
     { key: 'pattern', label: '找规律', emoji: '🔍', desc: '发现顺序里的秘密', Component: FindPatternModule, color: 'bg-moko-violet' },
+    { key: 'word-problem', label: '应用题', emoji: '🧮', desc: '20 以内加减应用题', Component: MathWordProblemModule, color: 'bg-moko-blue' },
+    { key: 'ordinal', label: '序数排队', emoji: '🚩', desc: '第1~第10 排第几', Component: OrdinalModule, color: 'bg-moko-cyan' },
+    { key: 'clock-half', label: '钟表半时', emoji: '🕡', desc: '认识几点半', Component: ClockHalfModule, color: 'bg-moko-cyan' },
+    { key: 'compare-more', label: '比轻重长短', emoji: '⚖️', desc: '谁更重谁更长', Component: CompareMoreModule, color: 'bg-moko-blue' },
+    { key: 'calendar', label: '星期日历', emoji: '📅', desc: '星期·日历·天气', Component: CalendarModule, color: 'bg-moko-blue' },
   ],
   english: [
     { key: 'letters', label: '字母乐园', emoji: '🔤', desc: 'A ~ Z 认读', Component: LetterModule, color: 'bg-moko-yellow' },
@@ -51,6 +76,8 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'words', label: '单词世界', emoji: '📚', desc: '动物·食物·颜色…点读跟读', Component: WordModule, color: 'bg-moko-yellow' },
     { key: 'listen', label: '听音选词', emoji: '🎧', desc: '难度会自己调整哦', Component: EnListenModule, color: 'bg-moko-yellow' },
     { key: 'speak', label: '口语跟读', emoji: '🎙️', desc: '逐词挑战，评发音', Component: EnSpeakModule, color: 'bg-moko-violet' },
+    { key: 'phonics', label: '自然拼读', emoji: '🔡', desc: 'CVC 词 c-a-t', Component: EnglishPhonicsModule, color: 'bg-moko-yellow' },
+    { key: 'sentences', label: '常见句型', emoji: '💬', desc: 'I can… / This is…', Component: EnglishSentenceModule, color: 'bg-moko-violet' },
   ],
 };
 
