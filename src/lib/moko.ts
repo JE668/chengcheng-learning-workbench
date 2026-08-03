@@ -218,15 +218,28 @@ export const games: {
   },
   {
     id: 'make-ten',
-    title: '凑十法十格阵',
+    title: '十格阵魔法屋',
     mokoKey: 'diamondping',
     subject: '数学',
-    desc: '用十格阵数一数，还差几个凑成 10',
+    desc: '凑十·破十·进位，用十格阵玩转 20 以内加减',
     difficulty: '3 关递进',
     levels: [
-      { name: '入门', tag: '1~9 凑十' },
-      { name: '进阶', tag: '易混数' },
-      { name: '高手', tag: '快速凑十' },
+      { name: '入门', tag: '凑十法' },
+      { name: '进阶', tag: '破十法' },
+      { name: '高手', tag: '进位加法' },
+    ],
+  },
+  {
+    id: 'pinyin-spell',
+    title: '拼音拼拼拼',
+    mokoKey: 'heartping',
+    subject: '语文',
+    desc: '声母＋韵母＋声调，拼出一个完整音节',
+    difficulty: '3 关递进',
+    levels: [
+      { name: '入门', tag: '基础拼读' },
+      { name: '进阶', tag: '易混韵母' },
+      { name: '高手', tag: '快速拼读' },
     ],
   },
   {

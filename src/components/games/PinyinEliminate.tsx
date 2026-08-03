@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 const POOLS: Record<number, string[]> = {
   1: ['bā', 'mā', 'tā', 'dà', 'xiǎo', 'rén', 'kǒu', 'shǒu', 'mù', 'rì', 'yuè', 'shuǐ'],
   2: ['bā', 'mā', 'tā', 'dà', 'xiǎo', 'rén', 'kǒu', 'shǒu', 'mù', 'rì', 'yuè', 'shuǐ', 'pā', 'fā', 'lái', 'hǎo', 'shàng', 'xià', 'shān', 'huǒ'],
-  3: ['bā', 'mā', 'tā', 'dà', 'xiǎo', 'rén', 'kǒu', 'shǒu', 'mù', 'rì', 'yuè', 'shuǐ', 'chuán', 'qiū', 'xuě', 'juān', 'zhōng', 'chē', 'shū', 'yǔ', 'fēng', 'yún', 'huā', 'niǎo'],
+  3: ['bā', 'mā', 'tā', 'dà', 'xiǎo', 'rén', 'kǒu', 'shǒu', 'mù', 'rì', 'yuè', 'shuǐ', 'chuán', 'qiū', 'xuě', 'juān', 'zhōng', 'chē', 'shū', 'yǔ', 'fēng', 'yún', 'huā', 'niǎo', 'má', 'mǎ', 'mà', 'bá', 'bǎ', 'bà', 'dá', 'dǎ', 'tǎ', 'tà', 'lǐ', 'lí', 'nǐ', 'nì'],
 };
 const PAIRS: Record<number, number> = { 1: 6, 2: 8, 3: 10 };
 const TIME: Record<number, number> = { 1: 90, 2: 75, 3: 60 };

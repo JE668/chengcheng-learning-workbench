@@ -23,6 +23,8 @@ import {
   CalendarModule,
 } from '@/components/study/MathNew';
 import { EnglishPhonicsModule, EnglishSentenceModule } from '@/components/study/EnglishNew';
+import { MathTableModule } from '@/components/study/MathTable';
+import { EnListenPicModule, EnInitialSoundModule, EnTprModule } from '@/components/study/EnglishListen';
 
 export interface StudyModuleMeta {
   key: string;
@@ -69,6 +71,7 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'clock-half', label: '钟表半时', emoji: '🕡', desc: '认识几点半', Component: ClockHalfModule, color: 'bg-moko-cyan' },
     { key: 'compare-more', label: '比轻重长短', emoji: '⚖️', desc: '谁更重谁更长', Component: CompareMoreModule, color: 'bg-moko-blue' },
     { key: 'calendar', label: '星期日历', emoji: '📅', desc: '星期·日历·天气', Component: CalendarModule, color: 'bg-moko-blue' },
+    { key: 'mult-table', label: '乘法口诀树', emoji: '🌳', desc: '萌可陪你背会九九乘法口诀', Component: MathTableModule, color: 'bg-moko-blue' },
   ],
   english: [
     { key: 'letters', label: '字母乐园', emoji: '🔤', desc: 'A ~ Z 认读', Component: LetterModule, color: 'bg-moko-yellow' },
@@ -78,6 +81,9 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'speak', label: '口语跟读', emoji: '🎙️', desc: '逐词挑战，评发音', Component: EnSpeakModule, color: 'bg-moko-violet' },
     { key: 'phonics', label: '自然拼读', emoji: '🔡', desc: 'CVC 词 c-a-t', Component: EnglishPhonicsModule, color: 'bg-moko-yellow' },
     { key: 'sentences', label: '常见句型', emoji: '💬', desc: 'I can… / This is…', Component: EnglishSentenceModule, color: 'bg-moko-violet' },
+    { key: 'en-listen-pic', label: '听音选图', emoji: '🖼️', desc: '听英语，选对应的图', Component: EnListenPicModule, color: 'bg-moko-yellow' },
+    { key: 'en-initial', label: '首音辨析', emoji: '🔤', desc: '哪个单词以这个音开头', Component: EnInitialSoundModule, color: 'bg-moko-yellow' },
+    { key: 'en-tpr', label: 'TPR 动作', emoji: '🏃', desc: '听指令做动作', Component: EnTprModule, color: 'bg-moko-violet' },
   ],
 };
 

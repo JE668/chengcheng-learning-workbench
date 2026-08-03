@@ -20,9 +20,9 @@ services:
       # 数据库持久化：账号 / 城堡 / 打卡 / 错题 全部存在这里，重建容器不丢
       - ./data:/data
       # 媒体：直接挂「仓库里的 public/raz、public/textbooks」，无需复制 502MB
-      # ↓↓↓ 把下面两个路径改成你 NAS 上仓库的实际位置 ↓↓↓
-      - /volume1/docker/chengcheng/repo-public/raz:/app/public/raz
-      - /volume1/docker/chengcheng/repo-public/textbooks:/app/public/textbooks
+      # NAS 上仓库的实际位置（飞牛 FnOS 存储池前缀为 /vol1）
+      - /vol1/1000/Docker/chengcheng-workbench/media/raz:/app/public/raz
+      - /vol1/1000/Docker/chengcheng-workbench/media/textbooks:/app/public/textbooks
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
       interval: 30s

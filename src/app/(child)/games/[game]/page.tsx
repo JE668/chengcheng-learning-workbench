@@ -15,6 +15,7 @@ import MakeTen from '@/components/games/MakeTen';
 import ToneDetective from '@/components/games/ToneDetective';
 import WordChain from '@/components/games/WordChain';
 import Schulte from '@/components/games/Schulte';
+import PinyinSpell from '@/components/games/PinyinSpell';
 
 const gameMap: Record<string, React.FC<{ onFinish: (score: number) => void; level?: number }>> = {
   'pinyin-eliminate': PinyinEliminate,
@@ -29,6 +30,7 @@ const gameMap: Record<string, React.FC<{ onFinish: (score: number) => void; leve
   'tone-detective': ToneDetective,
   'word-chain': WordChain,
   'schulte': Schulte,
+  'pinyin-spell': PinyinSpell,
 };
 
 export default function GamePage() {
