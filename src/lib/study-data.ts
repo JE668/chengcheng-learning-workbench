@@ -1285,15 +1285,37 @@ export interface WordFormItem {
   sentenceWrong: string[]; // 干扰句子（不通顺）
 }
 
+// ⚠️ 数据规则（改动前必读）：
+// 题目是「给『X』组一个词，下面哪个对？」，所以 wrongWords 里的三个词
+// **绝对不能含有 char 本身**，否则它们也是正确答案，孩子答对反而被判错。
+// （旧数据里 山→[火山, 上山, 山下] 这类全是有效组词，已全部修正。）
 export const WORD_FORM: WordFormItem[] = [
-  { char: '火', word: '火车', wrongWords: ['水车', '开车', '口水'], sentenceOk: '我坐火车去外婆家。', sentenceWrong: ['火车在天上飞。', '火车吃了苹果。'] },
-  { char: '水', word: '水果', wrongWords: ['火山', '水火', '开水'], sentenceOk: '妹妹最爱吃水果。', sentenceWrong: ['水果在唱歌。', '水果长得很高。'] },
-  { char: '花', word: '花朵', wrongWords: ['火朵', '花草', '开花'], sentenceOk: '花园里开满了花朵。', sentenceWrong: ['花朵会跑步。', '花朵吃了米饭。'] },
-  { char: '风', word: '大风', wrongWords: ['小风', '风气', '风车'], sentenceOk: '今天刮起了大风。', sentenceWrong: ['大风在写字。', '大风吃了西瓜。'] },
-  { char: '月', word: '月亮', wrongWords: ['日光', '明月', '月牙'], sentenceOk: '晚上月亮出来了。', sentenceWrong: ['月亮在读书。', '月亮喝了牛奶。'] },
-  { char: '鸟', word: '小鸟', wrongWords: ['飞鸟', '鸟窝', '水鸟'], sentenceOk: '小鸟在树上唱歌。', sentenceWrong: ['小鸟在写作业。', '小鸟开了汽车。'] },
-  { char: '书', word: '书本', wrongWords: ['书包', '看书', '书皮'], sentenceOk: '我每天看书本。', sentenceWrong: ['书本在游泳。', '书本吃了蛋糕。'] },
-  { char: '山', word: '高山', wrongWords: ['火山', '上山', '山下'], sentenceOk: '远处有一座高山。', sentenceWrong: ['高山在说话。', '高山喝了汤。'] },
+  { char: '火', word: '火车', wrongWords: ['水果', '开门', '口水'], sentenceOk: '我坐火车去外婆家。', sentenceWrong: ['火车在天上飞。', '火车吃了苹果。'] },
+  { char: '水', word: '水果', wrongWords: ['火车', '大山', '明月'], sentenceOk: '妹妹最爱吃水果。', sentenceWrong: ['水果在唱歌。', '水果长得比楼房高。'] },
+  { char: '花', word: '花朵', wrongWords: ['小鸟', '大米', '汽车'], sentenceOk: '花园里开满了花朵。', sentenceWrong: ['花朵会跑步。', '花朵吃了米饭。'] },
+  { char: '风', word: '大风', wrongWords: ['太阳', '石头', '铅笔'], sentenceOk: '今天刮起了大风。', sentenceWrong: ['大风在写字。', '大风吃了西瓜。'] },
+  { char: '月', word: '月亮', wrongWords: ['太阳', '小狗', '书包'], sentenceOk: '晚上月亮出来了。', sentenceWrong: ['月亮在读书。', '月亮喝了牛奶。'] },
+  { char: '鸟', word: '小鸟', wrongWords: ['大树', '白云', '桌子'], sentenceOk: '小鸟在树上唱歌。', sentenceWrong: ['小鸟在写作业。', '小鸟开着汽车上班。'] },
+  { char: '书', word: '书本', wrongWords: ['苹果', '小猫', '花园'], sentenceOk: '我每天都要看书本。', sentenceWrong: ['书本在游泳。', '书本吃了蛋糕。'] },
+  { char: '山', word: '高山', wrongWords: ['河水', '大海', '衣服'], sentenceOk: '远处有一座高山。', sentenceWrong: ['高山在说话。', '高山喝了汤。'] },
+  { char: '日', word: '日出', wrongWords: ['月亮', '大风', '雨伞'], sentenceOk: '我们早起去看日出。', sentenceWrong: ['日出在写作业。', '日出把书包背走了。'] },
+  { char: '木', word: '木头', wrongWords: ['白云', '小鱼', '铅笔'], sentenceOk: '爷爷用木头做了一把椅子。', sentenceWrong: ['木头在天上飞。', '木头唱起了歌。'] },
+  { char: '手', word: '小手', wrongWords: ['大树', '汽车', '月亮'], sentenceOk: '洗干净小手再吃饭。', sentenceWrong: ['小手在天上飞。', '小手吃了一碗面。'] },
+  { char: '口', word: '口水', wrongWords: ['大山', '花朵', '书包'], sentenceOk: '看到蛋糕，弟弟流口水了。', sentenceWrong: ['口水会开汽车。', '口水长在树上。'] },
+  { char: '目', word: '目光', wrongWords: ['小鸟', '大米', '雨伞'], sentenceOk: '妈妈的目光很温柔。', sentenceWrong: ['目光在吃饭。', '目光穿上了鞋子。'] },
+  { char: '耳', word: '耳朵', wrongWords: ['小手', '大风', '汽车'], sentenceOk: '小兔子的耳朵长长的。', sentenceWrong: ['耳朵在开火车。', '耳朵吃了西瓜。'] },
+  { char: '心', word: '开心', wrongWords: ['大树', '白云', '桌子'], sentenceOk: '得了小红花，我很开心。', sentenceWrong: ['开心跑到树上去了。', '开心喝了一杯水。'] },
+  { char: '田', word: '田地', wrongWords: ['月亮', '书包', '小猫'], sentenceOk: '农民伯伯在田地里干活。', sentenceWrong: ['田地在天上飞。', '田地背着书包上学。'] },
+  { char: '虫', word: '昆虫', wrongWords: ['大山', '雨水', '汽车'], sentenceOk: '草丛里有很多小昆虫。', sentenceWrong: ['昆虫在开飞机。', '昆虫穿上了大衣服。'] },
+  { char: '石', word: '石头', wrongWords: ['小鸟', '花朵', '面包'], sentenceOk: '小河边有一块大石头。', sentenceWrong: ['石头在唱歌跳舞。', '石头吃了三碗饭。'] },
+  { char: '云', word: '白云', wrongWords: ['大山', '小狗', '铅笔'], sentenceOk: '天上飘着一朵白云。', sentenceWrong: ['白云在写作业。', '白云坐在椅子上。'] },
+  { char: '雨', word: '下雨', wrongWords: ['太阳', '书包', '小猫'], sentenceOk: '今天下雨了，出门要带伞。', sentenceWrong: ['下雨在吃苹果。', '下雨背着书包上学。'] },
+  { char: '牛', word: '小牛', wrongWords: ['大树', '汽车', '月亮'], sentenceOk: '小牛在草地上吃草。', sentenceWrong: ['小牛在写字。', '小牛开着飞机。'] },
+  { char: '羊', word: '山羊', wrongWords: ['白云', '面包', '铅笔'], sentenceOk: '山羊有一把长长的胡子。', sentenceWrong: ['山羊在看电视写作业。', '山羊喝了一桶油。'] },
+  { char: '车', word: '汽车', wrongWords: ['小鸟', '花朵', '大米'], sentenceOk: '爸爸开汽车送我上学。', sentenceWrong: ['汽车在天上游泳。', '汽车吃了一个苹果。'] },
+  { char: '门', word: '大门', wrongWords: ['小猫', '白云', '书包'], sentenceOk: '学校的大门打开了。', sentenceWrong: ['大门在跑步比赛。', '大门吃了西瓜。'] },
+  { char: '天', word: '天空', wrongWords: ['大地', '小狗', '铅笔'], sentenceOk: '天空又高又蓝。', sentenceWrong: ['天空在写作业。', '天空坐在板凳上。'] },
+  { char: '家', word: '家人', wrongWords: ['小鸟', '汽车', '花朵'], sentenceOk: '我爱我的家人。', sentenceWrong: ['家人长在大树上。', '家人被风吹到天上去了。'] },
 ];
 
 /* -------------------- 语文 · 指读高亮 -------------------- */
@@ -1320,16 +1342,36 @@ export interface PoemPictureQ {
   answer: string; // 正确的 emoji
 }
 
+// 覆盖 POEMS 里全部 16 首，热门篇目再各配一题，共 28 题。
 export const POEM_PICTURE_Q: PoemPictureQ[] = [
   { poem: '咏鹅', hint: '鹅，鹅，鹅，曲项向天歌。', options: ['🦢', '🐱', '🐟'], answer: '🦢' },
-  { poem: '悯农', hint: '锄禾日当午，汗滴禾下土。', options: ['🌾', '🍔', '🚗'], answer: '🌾' },
+  { poem: '咏鹅', hint: '白毛浮绿水，红掌拨清波。', options: ['🌊', '⛰️', '🏜️'], answer: '🌊' },
+  { poem: '悯农（其二）', hint: '锄禾日当午，汗滴禾下土。', options: ['🌾', '🍔', '🚗'], answer: '🌾' },
+  { poem: '悯农（其二）', hint: '谁知盘中餐，粒粒皆辛苦。', options: ['🍚', '🍦', '🍟'], answer: '🍚' },
   { poem: '静夜思', hint: '举头望明月，低头思故乡。', options: ['🌙', '☀️', '⭐'], answer: '🌙' },
+  { poem: '静夜思', hint: '床前明月光，疑是地上霜。', options: ['❄️', '🔥', '🌈'], answer: '❄️' },
   { poem: '江南', hint: '江南可采莲，莲叶何田田。', options: ['🪷', '🌲', '🍎'], answer: '🪷' },
+  { poem: '江南', hint: '鱼戏莲叶间。', options: ['🐟', '🐘', '🐔'], answer: '🐟' },
   { poem: '春晓', hint: '春眠不觉晓，处处闻啼鸟。', options: ['🐦', '🐟', '🌸'], answer: '🐦' },
+  { poem: '春晓', hint: '夜来风雨声，花落知多少。', options: ['🌧️', '☀️', '🌈'], answer: '🌧️' },
+  { poem: '村居', hint: '儿童散学归来早，忙趁东风放纸鸢。', options: ['🪁', '📚', '🚲'], answer: '🪁' },
+  { poem: '村居', hint: '草长莺飞二月天，拂堤杨柳醉春烟。', options: ['🌱', '🍂', '❄️'], answer: '🌱' },
   { poem: '咏柳', hint: '碧玉妆成一树高，万条垂下绿丝绦。', options: ['🌿', '🍎', '🌲'], answer: '🌿' },
+  { poem: '咏柳', hint: '不知细叶谁裁出，二月春风似剪刀。', options: ['✂️', '🔨', '🥄'], answer: '✂️' },
+  { poem: '登鹳雀楼', hint: '白日依山尽，黄河入海流。', options: ['🌄', '🌧️', '🏙️'], answer: '🌄' },
+  { poem: '登鹳雀楼', hint: '欲穷千里目，更上一层楼。', options: ['🏯', '🚗', '⛵'], answer: '🏯' },
+  { poem: '敕勒歌', hint: '风吹草低见牛羊。', options: ['🐑', '🐟', '🦅'], answer: '🐑' },
+  { poem: '敕勒歌', hint: '天似穹庐，笼盖四野。', options: ['⛺', '🏢', '🚢'], answer: '⛺' },
+  { poem: '池上', hint: '小娃撑小艇，偷采白莲回。', options: ['🛶', '🚗', '🛝'], answer: '🛶' },
   { poem: '小池', hint: '小荷才露尖尖角，早有蜻蜓立上头。', options: ['🦗', '🐱', '🌞'], answer: '🦗' },
-  { poem: '画鸡', hint: '头上红冠不用裁，满身雪白走将来。', options: ['🐔', '🐶', '🐱'], answer: '🐔' },
+  { poem: '小池', hint: '泉眼无声惜细流，树阴照水爱晴柔。', options: ['💧', '🔥', '🏔️'], answer: '💧' },
+  { poem: '画', hint: '远看山有色，近听水无声。', options: ['🖼️', '📻', '🎈'], answer: '🖼️' },
+  { poem: '赠汪伦', hint: '桃花潭水深千尺，不及汪伦送我情。', options: ['🌊', '🔥', '🏜️'], answer: '🌊' },
+  { poem: '寻隐者不遇', hint: '松下问童子，言师采药去。', options: ['🌲', '🏖️', '🌵'], answer: '🌲' },
   { poem: '风', hint: '解落三秋叶，能开二月花。', options: ['🍃', '🔥', '🌊'], answer: '🍃' },
+  { poem: '风', hint: '过江千尺浪，入竹万竿斜。', options: ['🎋', '🌵', '🍄'], answer: '🎋' },
+  { poem: '画鸡', hint: '头上红冠不用裁，满身雪白走将来。', options: ['🐔', '🐶', '🐱'], answer: '🐔' },
+  { poem: '画鸡', hint: '平生不敢轻言语，一叫千门万户开。', options: ['🌅', '🌃', '🕯️'], answer: '🌅' },
 ];
 
 /* -------------------- 语文 · 我的一天（时间线） -------------------- */

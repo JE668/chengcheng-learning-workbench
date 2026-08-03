@@ -3,6 +3,7 @@ import { confirm, logGrowthEvent } from './castle';
 import { PINYIN_TONES, applyTone, ALL_EN_WORDS, CHARACTERS } from './study-data';
 import { mokoChars, subjectMokoKey, SUN_PER_SUBJECT } from './moko';
 import { mokoCollection } from './moko-collection';
+import { getDueMistakes, reviewMistake, type MistakeRow } from './mistakes';
 import type { Subject } from './types';
 
 /**
@@ -56,6 +57,18 @@ export type PracticeQuestion =
       options: string[]; // 汉字选项
       answer: number;
       explain: string;
+    }
+  | {
+      id: string;
+      kind: 'mistake';
+      subject: Subject;
+      prompt: string; // 原题目
+      options: string[];
+      answer: number;
+      explain: string;
+      mistakeId: number; // 对应 mistakes.id，提交时推进间隔重复
+      origin: string; // 「来自 xx 模块」之类的来源说明
+      speakText?: string; // 需要朗读时的中文文本
     };
 
 export interface PracticeDayRecord {
@@ -207,8 +220,78 @@ function genDictationQ(): PracticeQuestion {
   };
 }
 
-function generateQuestions(): PracticeQuestion[] {
+/* —— 错题复习题：从到期错题生成，放在一练最前面 —— */
+
+/** 粗略判断答案「形状」，只有同形状的选项混在一起才不别扭（数字 / 英文 / N 个汉字 / emoji…） */
+function shapeOf(s: string): string {
+  if (/^-?\d+$/.test(s)) return 'num';
+  // eslint-disable-next-line no-control-regex
+  if (/^[\u0000-\u007F]+$/.test(s)) return 'ascii';
+  if (/^[\u4e00-\u9fa5]+$/.test(s)) return `han${Array.from(s).length}`;
+  return 'other';
+}
+
+function buildMistakeOptions(m: MistakeRow, pool: MistakeRow[]): string[] {
+  const answer = m.answer;
+  const shape = shapeOf(answer);
+  const opts: string[] = [answer];
+  const push = (v: string | null | undefined) => {
+    const t = (v ?? '').trim();
+    if (t && !opts.includes(t) && shapeOf(t) === shape && opts.length < 4) opts.push(t);
+  };
+  push(m.wrong);
+  // 同学科的其他错题答案/错答，形状一致才拿来当干扰项
+  for (const o of shuffle(pool)) {
+    if (o.id === m.id) continue;
+    if (o.subject !== m.subject) continue;
+    push(o.answer);
+    push(o.wrong);
+  }
+  // 数字类可以直接造相邻数
+  if (shape === 'num') {
+    const n = Number(answer);
+    for (const d of shuffle([1, 2, 3, -1, -2, -3])) {
+      if (opts.length >= 4) break;
+      const v = n + d;
+      if (v >= 0) push(String(v));
+    }
+  }
+  return shuffle(opts);
+}
+
+function genMistakeQ(m: MistakeRow, pool: MistakeRow[]): PracticeQuestion | null {
+  const options = buildMistakeOptions(m, pool);
+  if (options.length < 2) return null; // 连一个干扰项都凑不出来就跳过
+  const subject: Subject = (['语文', '数学', '英语'] as string[]).includes(m.subject)
+    ? (m.subject as Subject)
+    : '语文';
+  return {
+    id: `mk-${m.id}`,
+    kind: 'mistake',
+    subject,
+    prompt: m.prompt,
+    options,
+    answer: options.indexOf(m.answer),
+    explain: `正确答案是「${m.answer}」${m.wrong ? `，上次选成了「${m.wrong}」` : ''}`,
+    mistakeId: m.id,
+    origin: m.kind ? `错题本 · ${m.kind}` : '错题本',
+    speakText: shapeOf(m.answer).startsWith('han') ? m.prompt : undefined,
+  };
+}
+
+async function generateQuestions(childId: number): Promise<PracticeQuestion[]> {
   const qs: PracticeQuestion[] = [];
+  // 0) 错题优先：今天到期的错题最多抽 2 题排在最前面，让「错题本 → 每日一练」闭环自动跑起来
+  try {
+    const due = await getDueMistakes(childId, 6);
+    for (const m of due) {
+      if (qs.length >= 2) break;
+      const q = genMistakeQ(m, due);
+      if (q) qs.push(q);
+    }
+  } catch {
+    /* 错题本还没建表/查询失败时，不影响正常出题 */
+  }
   // 语文：听写 10 题（听音选字）
   for (let i = 0; i < 10; i++) qs.push(genDictationQ());
   // 数学：口算 10 题（选择，前 5 题基础、后 5 题加难）
@@ -253,7 +336,7 @@ export async function getTodayPractice(childId: number, generate = false): Promi
   const today = dateStr();
   let row = (await db.execute({ sql: 'SELECT * FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, today] })).rows[0];
   if (!row && generate) {
-    const qs = generateQuestions();
+    const qs = await generateQuestions(childId);
     await db.execute({
       sql: 'INSERT OR IGNORE INTO daily_practice (child_id, day, completed, correct, total, questions) VALUES (?, ?, 0, 0, ?, ?)',
       args: [childId, today, qs.length, JSON.stringify(qs)],
@@ -287,7 +370,7 @@ export async function submitPractice(childId: number, answers: number[]): Promis
   const today = dateStr();
   let row = (await db.execute({ sql: 'SELECT * FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, today] })).rows[0];
   if (!row) {
-    const qs = generateQuestions();
+    const qs = await generateQuestions(childId);
     await db.execute({
       sql: 'INSERT OR IGNORE INTO daily_practice (child_id, day, completed, correct, total, questions) VALUES (?, ?, 0, 0, ?, ?)',
       args: [childId, today, qs.length, JSON.stringify(qs)],
@@ -300,7 +383,18 @@ export async function submitPractice(childId: number, answers: number[]): Promis
   // 按学科归类题目
   const SUBJECTS: Subject[] = ['语文', '数学', '英语'];
   const bySubject: Record<Subject, PracticeQuestion[]> = { 语文: [], 数学: [], 英语: [] };
-  for (const q of questions) bySubject[q.subject].push(q);
+  for (const q of questions) (bySubject[q.subject] ?? bySubject['语文']).push(q);
+
+  // 错题复习结果回写间隔重复（reviewMistake 内部按「今天是否到期」做幂等，重复提交只按第一次算）
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+    if (q.kind !== 'mistake') continue;
+    try {
+      await reviewMistake(childId, q.mistakeId, answers[i] === q.answer);
+    } catch {
+      /* 单条复习失败不影响整体交卷 */
+    }
+  }
 
   // 今天已确认过的学科（防止重复发奖 / 重做答错取消）
   const doneRows = await db.execute({

@@ -6,23 +6,60 @@ import { speakPinyin } from '@/lib/speak';
 type Item = { syl: string; tone: 1 | 2 | 3 | 4; han: string; marked: string };
 
 // 同一音节不同声调（mā/má/mǎ/mà）用于「同音辨调」训练。
+// 每个条目的 han 必须与 tone 完全一致（TTS 借这个字发出正确声调）。
 const POOL: Item[] = [
+  // ── 第一声 ──
   { syl: 'ma', tone: 1, han: '妈', marked: 'mā' },
   { syl: 'ba', tone: 1, han: '八', marked: 'bā' },
   { syl: 'ta', tone: 1, han: '他', marked: 'tā' },
   { syl: 'ge', tone: 1, han: '哥', marked: 'gē' },
+  { syl: 'shu', tone: 1, han: '书', marked: 'shū' },
+  { syl: 'hua', tone: 1, han: '花', marked: 'huā' },
+  { syl: 'tian', tone: 1, han: '天', marked: 'tiān' },
+  { syl: 'gao', tone: 1, han: '高', marked: 'gāo' },
+  { syl: 'xi', tone: 1, han: '西', marked: 'xī' },
+  { syl: 'zhong', tone: 1, han: '中', marked: 'zhōng' },
+  { syl: 'mao', tone: 1, han: '猫', marked: 'māo' },
+  { syl: 'dong', tone: 1, han: '东', marked: 'dōng' },
+  // ── 第二声 ──
   { syl: 'ma', tone: 2, han: '麻', marked: 'má' },
   { syl: 'ba', tone: 2, han: '拔', marked: 'bá' },
   { syl: 'ti', tone: 2, han: '提', marked: 'tí' },
   { syl: 'hu', tone: 2, han: '胡', marked: 'hú' },
+  { syl: 'niu', tone: 2, han: '牛', marked: 'niú' },
+  { syl: 'yang', tone: 2, han: '羊', marked: 'yáng' },
+  { syl: 'lai', tone: 2, han: '来', marked: 'lái' },
+  { syl: 'hong', tone: 2, han: '红', marked: 'hóng' },
+  { syl: 'tian', tone: 2, han: '甜', marked: 'tián' },
+  { syl: 'ren', tone: 2, han: '人', marked: 'rén' },
+  { syl: 'yu', tone: 2, han: '鱼', marked: 'yú' },
+  { syl: 'bai', tone: 2, han: '白', marked: 'bái' },
+  // ── 第三声 ──
   { syl: 'ma', tone: 3, han: '马', marked: 'mǎ' },
   { syl: 'ba', tone: 3, han: '把', marked: 'bǎ' },
   { syl: 'ni', tone: 3, han: '你', marked: 'nǐ' },
   { syl: 'hao', tone: 3, han: '好', marked: 'hǎo' },
+  { syl: 'shui', tone: 3, han: '水', marked: 'shuǐ' },
+  { syl: 'gou', tone: 3, han: '狗', marked: 'gǒu' },
+  { syl: 'wu', tone: 3, han: '五', marked: 'wǔ' },
+  { syl: 'xiao', tone: 3, han: '小', marked: 'xiǎo' },
+  { syl: 'jiu', tone: 3, han: '九', marked: 'jiǔ' },
+  { syl: 'yan', tone: 3, han: '眼', marked: 'yǎn' },
+  { syl: 'zao', tone: 3, han: '早', marked: 'zǎo' },
+  { syl: 'lao', tone: 3, han: '老', marked: 'lǎo' },
+  // ── 第四声 ──
   { syl: 'ma', tone: 4, han: '骂', marked: 'mà' },
   { syl: 'ba', tone: 4, han: '爸', marked: 'bà' },
   { syl: 'pa', tone: 4, han: '怕', marked: 'pà' },
   { syl: 'lu', tone: 4, han: '路', marked: 'lù' },
+  { syl: 'da', tone: 4, han: '大', marked: 'dà' },
+  { syl: 'yue', tone: 4, han: '月', marked: 'yuè' },
+  { syl: 'shu', tone: 4, han: '树', marked: 'shù' },
+  { syl: 'si', tone: 4, han: '四', marked: 'sì' },
+  { syl: 'kan', tone: 4, han: '看', marked: 'kàn' },
+  { syl: 'hua', tone: 4, han: '画', marked: 'huà' },
+  { syl: 'cai', tone: 4, han: '菜', marked: 'cài' },
+  { syl: 'dian', tone: 4, han: '电', marked: 'diàn' },
 ];
 
 const TONES = [

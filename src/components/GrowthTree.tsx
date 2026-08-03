@@ -47,6 +47,7 @@ export default function GrowthTree() {
     totalMastered: 0,
     week: 0,
     strongest: '' as string,
+    newThisWeek: [] as { emoji: string; label: string; subject: string; stars: number }[],
   });
 
   useEffect(() => {
@@ -72,7 +73,18 @@ export default function GrowthTree() {
       const totalMastered = perCalc.reduce((a, b) => a + b.mastered, 0);
       const week = Object.values(data).filter((p) => p.lastPlayed && Date.now() - p.lastPlayed < 7 * 864e5).length;
       const strongest = perCalc.slice().sort((a, b) => b.total - a.total)[0]?.s || '';
-      setSummary({ per: perCalc, totalStars, totalMastered, week, strongest });
+      // 本周新学会：近 7 天内有练习记录且至少拿到 1 星的模块
+      const newThisWeek: { emoji: string; label: string; subject: string; stars: number }[] = [];
+      perCalc.forEach((subj) => {
+        subj.mods.forEach((md: any) => {
+          const p = data[`${subj.s}:${md.key}`];
+          if (p && p.stars > 0 && p.lastPlayed && Date.now() - p.lastPlayed < 7 * 864e5) {
+            newThisWeek.push({ emoji: md.emoji, label: md.label, subject: subj.s, stars: p.stars });
+          }
+        });
+      });
+      newThisWeek.sort((a, b) => b.stars - a.stars);
+      setSummary({ per: perCalc, totalStars, totalMastered, week, strongest, newThisWeek });
     });
     return () => {
       active = false;
@@ -152,6 +164,25 @@ export default function GrowthTree() {
         </div>
         <div className="h-2 bg-green-300 rounded-full opacity-70 mt-1" />
         <p className="text-center text-xs text-gray-500 mt-2">每认真玩一个模块，树上就会多一片发光的叶子；集满三颗星，叶子就熟透啦！</p>
+        {/* 本周新学会：不只看星数，还展示最近真正学进去的内容 */}
+        {summary.newThisWeek.length > 0 && (
+          <div className="mt-4 rounded-2xl p-4 bg-white/70 border border-green-200">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xl">🌟</span>
+              <h4 className="font-black text-green-700">本周新学会</h4>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {summary.newThisWeek.map((w, i) => (
+                <span
+                  key={i}
+                  className={`px-3 py-1.5 rounded-full text-sm font-bold shadow-sm ${SUBJ_META[w.subject]?.color || 'bg-gray-300'} text-white`}
+                >
+                  {w.emoji} {w.label} {'★'.repeat(w.stars)}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { speakZh, praise } from '@/lib/speak';
+import { speakZh, praise, playTtsEnd } from '@/lib/speak';
 
 const TOTAL_ROUNDS = 5;
 
@@ -23,14 +23,19 @@ export default function SoundMemory({ onFinish, level = 1 }: { onFinish: (score:
 
   useEffect(() => () => { if (wrongTimer.current) clearTimeout(wrongTimer.current); }, []);
 
-  function play() {
+  async function play() {
     if (playing) return;
     setPlaying(true);
-    const text = seq.join('、');
-    speakZh(`请记住这一串数字：${text}`, 0.7);
-    // 估算朗读时长，结束解除锁定
-    const ms = 1400 + seq.length * 650;
-    setTimeout(() => setPlaying(false), ms);
+    const digits = seq.map(String);
+    // 先整体播报一遍（带顿号分隔），让孩子知道共有几位数字
+    await playTtsEnd(`请记住这一串数字：${digits.join('、')}`, 'zh', { wsRate: 0.7 });
+    // 再逐位朗读，每位之间留停顿，方便按顺序记忆
+    for (const d of digits) {
+      await playTtsEnd(d, 'zh', { wsRate: 0.6, pauseMs: 400 });
+      // 兼容 Web Speech 降级路径（它不读 pauseMs 静音），这里统一补一个短停顿
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    setPlaying(false);
   }
 
   // 进入每一关自动播一次

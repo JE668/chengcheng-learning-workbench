@@ -334,3 +334,21 @@ export const starShop = [
   { key: 'skin_star', name: '🏰 星空城堡皮肤', cost: 80, icon: '🌌', desc: '把城堡变成梦幻星空主题' },
   { key: 'skin_candy', name: '🍬 糖果城堡皮肤', cost: 80, icon: '🍬', desc: '把城堡变成甜甜蜜糖主题' },
 ];
+
+/**
+ * 预设奖励模板（真实生活奖励，用「积分」兑换）。
+ * 家长在「兑换管理」里可以一键套用这些模板快速给孩子发奖励，
+ * 也方便孩子理解「攒积分能换到什么」。cost 为建议积分值，可改。
+ */
+export const REWARD_TEMPLATES = [
+  { name: '去公园玩一小时', cost: 30 },
+  { name: '多看一集动画片', cost: 20 },
+  { name: '吃一个冰淇淋', cost: 15 },
+  { name: '周末去游乐园', cost: 100 },
+  { name: '和爸爸妈妈做手工', cost: 25 },
+  { name: '晚睡 15 分钟', cost: 40 },
+  { name: '邀请好朋友来玩', cost: 60 },
+  { name: '买一本喜欢的书', cost: 50 },
+  { name: '多玩 20 分钟游戏', cost: 35 },
+  { name: '点一份喜欢的晚餐', cost: 45 },
+];

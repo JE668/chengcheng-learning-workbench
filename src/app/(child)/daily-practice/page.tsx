@@ -11,13 +11,16 @@ const KIND_META: Record<string, { label: string; grad: string; icon: string }> =
   dictation: { label: '语文 · 听写', grad: 'from-moko-pink to-moko-rose', icon: '✍️' },
   math: { label: '数学 · 口算', grad: 'from-moko-blue to-sky-400', icon: '🔢' },
   english: { label: '英语 · 听音', grad: 'from-moko-yellow to-amber-300', icon: '🔤' },
+  mistake: { label: '错题重练', grad: 'from-moko-violet to-purple-400', icon: '🔁' },
 };
+const FALLBACK_META = { label: '今日练习', grad: 'from-moko-violet to-moko-purple', icon: '📝' };
 
 async function autoPlay(q?: PracticeQuestion) {
   if (!q) return;
   if (q.kind === 'pinyin') void playTts(q.audioText, 'zh', { wsRate: 0.5, pauseMs: 400 });
   else if (q.kind === 'english') void playTts(q.word, 'en');
   else if (q.kind === 'dictation') void playTts(q.han, 'zh', { wsRate: 0.5, pauseMs: 400 });
+  else if (q.kind === 'mistake' && q.speakText) void playTts(q.speakText, 'zh', { wsRate: 0.6 });
 }
 
 export default function DailyPracticePage() {
@@ -186,9 +189,11 @@ export default function DailyPracticePage() {
     return <div className="max-w-2xl mx-auto p-10 text-center text-moko-violet font-bold">今天暂时没有练习哦～</div>;
   }
 
-  const meta = KIND_META[q.kind];
+  const meta = KIND_META[q.kind] ?? FALLBACK_META;
   const isCorrect = selected[idx] === q.answer;
   const isWrong = selected[idx] !== -1 && selected[idx] !== q.answer;
+  // 错题重练的选项可能是整句话，太长就改成一行一个、字号调小
+  const longOpts = q.options.some((o) => o.length > 6);
 
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -231,11 +236,28 @@ export default function DailyPracticePage() {
               <button onClick={() => playTts(q.word, 'en')} className="text-sm bg-white/30 rounded-full px-3 py-1">🔊 听一听</button>
             </>
           )}
-          <p className="text-sm opacity-90 mt-3">{q.prompt}</p>
+          {q.kind === 'mistake' && (
+            <>
+              <div className="text-4xl mb-2">🔁</div>
+              <div className="inline-block text-xs bg-white/25 px-3 py-1 rounded-full mb-2">
+                {q.origin} · 上次做错了，再来一次！
+              </div>
+              <div className="text-2xl font-black leading-snug">{q.prompt}</div>
+              {q.speakText && (
+                <button
+                  onClick={() => playTts(q.speakText as string, 'zh', { wsRate: 0.6 })}
+                  className="mt-2 text-sm bg-white/30 rounded-full px-3 py-1"
+                >
+                  🔊 听一听
+                </button>
+              )}
+            </>
+          )}
+          {q.kind !== 'mistake' && <p className="text-sm opacity-90 mt-3">{q.prompt}</p>}
         </div>
 
         {/* 选项 */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className={`grid ${longOpts ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
           {q.options.map((opt, i) => {
             const correct = i === q.answer;
             const picked = selected[idx] === i;
@@ -248,7 +270,7 @@ export default function DailyPracticePage() {
                 key={i}
                 onClick={() => choose(i)}
                 disabled={isCorrect}
-                className={`py-4 rounded-2xl text-2xl font-black transition transform active:scale-95 ${cls}`}
+                className={`py-4 px-3 rounded-2xl ${longOpts ? 'text-base leading-snug' : 'text-2xl'} font-black transition transform active:scale-95 ${cls}`}
               >
                 {opt}
               </button>

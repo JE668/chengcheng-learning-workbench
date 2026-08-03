@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 
-const DURATIONS = [10, 20, 30, 40];
+const DURATIONS = [10, 15, 20, 30, 40];
 const STORE_ENABLED = 'eyeRestEnabled';
 const STORE_MIN = 'eyeRestMin';
 const SESSION_START = 'eyeRestStart';

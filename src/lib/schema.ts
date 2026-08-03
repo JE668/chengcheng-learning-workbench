@@ -206,6 +206,16 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
+    // 🐷 愿望存钱罐：孩子写下想换的奖励，爸爸妈妈审核/实现
+    `CREATE TABLE IF NOT EXISTS wishes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER NOT NULL,
+      text TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(child_id) REFERENCES users(id)
+    );`,
+
     // 🏰 萌可城堡：单个孩子的城堡资源
     `CREATE TABLE IF NOT EXISTS castle_state (
       child_id INTEGER PRIMARY KEY,
