@@ -37,15 +37,23 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: resetPw }),
       });
-      const d = await res.json();
-      if (d.ok) {
+      // 先读原文再解析：接口异常可能返回非 JSON（如 404 HTML），
+      // 此时把真实 HTTP 状态透出，便于定位「镜像未更新 / 接口缺失」之类问题。
+      const text = await res.text();
+      let d: { ok?: boolean; error?: string } = {};
+      try {
+        d = JSON.parse(text);
+      } catch {
+        d = {};
+      }
+      if (res.ok && d.ok) {
         setResetMsg('已还原出厂设置，所有学习数据已清空 ✅');
         setResetPw('');
       } else {
-        setResetMsg(d.error || '还原失败');
+        setResetMsg(d.error || `还原失败（HTTP ${res.status}）`);
       }
     } catch {
-      setResetMsg('还原失败，请重试');
+      setResetMsg('网络错误，请检查连接后重试');
     } finally {
       setResetting(false);
     }
