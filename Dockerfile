@@ -10,6 +10,9 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 # libSQL 数据库持久化路径（挂卷到容器 /data，见 docker-compose.yml）
 ENV TURSO_URL=file:/data/local.db
+# 低内存设备（飞牛/ NAS 常只有 2~4G）构建时给 Node 设上限，避免 next build 阶段 OOM 被 kill
+# 导致「镜像没重建、compose 保留旧容器、问题依旧」。4G 以上设备可酌情调大。
+ENV NODE_OPTIONS=--max-old-space-size=2048
 
 WORKDIR /app
 
