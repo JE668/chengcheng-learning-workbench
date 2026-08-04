@@ -20,6 +20,18 @@ function mondayOf(d: Date): Date {
 /** 计算孩子本周的奖状数据（孩子端预览与家长端审批共用，保证一致） */
 export async function getCertData(childId: number, childName: string): Promise<CertData> {
   const db = getDb();
+  // 优先用孩子自定义的名字（存于 cert_pref.name），否则回退到账号显示名
+  let certName = childName;
+  try {
+    const prefRes = await db.execute({ sql: 'SELECT cert_pref FROM users WHERE id = ?', args: [childId] });
+    const raw = prefRes.rows[0]?.cert_pref;
+    if (raw != null) {
+      const o = JSON.parse(String(raw));
+      if (o && typeof o.name === 'string' && o.name.trim()) certName = o.name.trim();
+    }
+  } catch {
+    /* ignore */
+  }
   const now = new Date();
   const weekStart = mondayOf(now);
   const weekEnd = new Date(weekStart);
@@ -57,7 +69,7 @@ export async function getCertData(childId: number, childName: string): Promise<C
   const earnedBadges = badges.filter((b) => b.earned).map((b) => ({ emoji: b.emoji, name: b.name }));
 
   return {
-    childName,
+    childName: certName,
     weekLabel: `${ws} ~ ${we}`,
     pointsWeek,
     fullDays,

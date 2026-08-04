@@ -108,7 +108,11 @@ body {
   background: linear-gradient(180deg, rgba(255,247,237,0.92) 0%, rgba(255,247,237,0.7) 100%);
 }
 
-/* ============ 🖨️ 可打印奖状（打印时只显示奖状） ============ */
+/* ============ 🖨️ 可打印奖状（打印时只显示奖状，A4 横向） ============ */
+@page {
+  size: A4 landscape;
+  margin: 10mm;
+}
 @media print {
   body * { visibility: hidden; }
   #print-cert, #print-cert * { visibility: visible; }
@@ -116,8 +120,9 @@ body {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
-    border-width: 8px;
+    width: 277mm;
+    min-height: 190mm;
+    border-width: 6px;
     box-shadow: none;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;

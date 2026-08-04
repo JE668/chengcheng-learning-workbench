@@ -6,12 +6,16 @@ import Certificate from '@/components/Certificate';
 import PrintButton from '@/components/PrintButton';
 import CertApproveClient from '@/components/parent/CertApproveClient';
 
-function parsePref(raw: unknown): { mokoKey: string; theme: string } | null {
+function parsePref(raw: unknown): { mokoKey: string; theme: string; name?: string } | null {
   if (raw == null) return null;
   try {
     const o = JSON.parse(String(raw));
     if (o && typeof o.mokoKey === 'string') {
-      return { mokoKey: o.mokoKey, theme: typeof o.theme === 'string' ? o.theme : 'violet' };
+      return {
+        mokoKey: o.mokoKey,
+        theme: typeof o.theme === 'string' ? o.theme : 'violet',
+        name: typeof o.name === 'string' ? o.name : '',
+      };
     }
   } catch {
     /* ignore */

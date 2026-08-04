@@ -67,6 +67,17 @@ export const mokoCollection: MokoChar[] = [
   ...mokoCollection_10
 ];
 
+/**
+ * 图鉴可收集角色总数（去重后的唯一角色名，排除捣蛋萌可）。
+ * 仅以「真实图片集」mokoCollection 为准（150 种），不混入早期 emoji 版核心萌可
+ * （欢欢/睿智/温柔/钥匙/锁锁/宝盒/宝石/钻石/红宝石/甜心/蛋糕萌可/流星/星星/彗星/希望
+ * 共 15 个）——它们是重复占位、无图鉴图，混入会把总数虚增到 165。
+ * 图鉴进度条分母与城堡图鉴均以此为唯一口径，保证一致。
+ */
+export const COLLECTIBLE_MOKO_NAMES: string[] = Array.from(
+  new Set(mokoCollection.filter((m) => m.category !== 'trouble').map((m) => m.name)),
+);
+
 /** 同名首图（用于把核心萌可的 img 重映射到真实图片） */
 export const mokoCollectionByName: Record<string, MokoChar> = {
   "优雅萌可": {

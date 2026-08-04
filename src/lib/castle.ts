@@ -1,5 +1,5 @@
 import { getDb } from './db';
-import { mokoCollection } from './moko-collection';
+import { mokoCollection, COLLECTIBLE_MOKO_NAMES } from './moko-collection';
 import {
   mokoChars,
   subjectMokoKey,
@@ -533,22 +533,9 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
       owned: collectedNames.has(m.name),
     });
   }
-  // 补充：核心萌可里图片集没有的角色（宝石萌可/钥匙萌可/甜心萌可/星星萌可/乐美公主等）
-  for (const m of Object.values(mokoChars)) {
-    if (m.category === 'trouble') continue;
-    if (seenName.has(m.name)) continue; // 图片集已收录的角色不再重复
-    seenName.add(m.name);
-    gallery.push({
-      key: m.key,
-      name: m.name,
-      img: m.img ?? '',
-      emoji: m.emoji,
-      color: m.color,
-      category: m.category,
-      subject: m.subject,
-      owned: collectedNames.has(m.name),
-    });
-  }
+  // 图鉴成员严格以真实图片集 mokoCollection 为准（已按唯一角色名去重），
+  // 不再并入 mokoChars 里的早期 emoji 版核心萌可（与图片集重复且多为占位），
+  // 否则总数会被虚增、且与图鉴进度条分母口径不一致。
 
   // 活跃捣蛋萌可
   const trouble = await db.execute({
@@ -652,17 +639,8 @@ export async function getMokoProgress(childId: number): Promise<{ owned: number;
   const ownedNames = new Set(
     res.rows.map((r) => mokoChars[String(r.moko_key)]?.name).filter((n): n is string => !!n),
   );
-  const totalNames = new Set<string>();
-  for (const m of mokoCollection) {
-    if (m.category === 'trouble') continue;
-    totalNames.add(m.name);
-  }
-  for (const m of Object.values(mokoChars)) {
-    if (m.category === 'trouble') continue;
-    totalNames.add(m.name);
-  }
   const owned = ownedNames.size;
-  const total = totalNames.size;
+  const total = COLLECTIBLE_MOKO_NAMES.length;
   const percent = total > 0 ? owned / total : 0;
   return { owned, total, percent };
 }

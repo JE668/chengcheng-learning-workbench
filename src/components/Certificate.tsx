@@ -40,18 +40,21 @@ const CHOICES = (() => {
 
 const PREF_KEY = 'certPref';
 
-type Pref = { mokoKey: string; theme: string };
+type Pref = { mokoKey: string; theme: string; name?: string };
 
 export default function Certificate({
   data,
   editable = false,
   initialPref = null,
   persistUrl,
+  printable = true,
 }: {
   data: CertData;
   editable?: boolean;
   initialPref?: Pref | null;
   persistUrl?: string;
+  /** 是否作为可打印奖状（家长端 true；孩子端 false → 不可被浏览器打印，杜绝孩子自行打印） */
+  printable?: boolean;
 }) {
   const [pref, setPref] = useState<Pref>(initialPref ?? { mokoKey: 'heartping', theme: 'violet' });
 
@@ -86,6 +89,8 @@ export default function Certificate({
   const theme = THEMES.find((t) => t.key === pref.theme) || THEMES[0];
   const moko = mokoChars[pref.mokoKey] || mokoChars.heartping;
   const lemei = mokoChars.lemei;
+  // 孩子自定义的名字优先（存于 cert_pref.name），否则回退到账号显示名
+  const shownName = pref.name?.trim() || data.childName;
 
   return (
     <div>
@@ -124,13 +129,24 @@ export default function Certificate({
               ))}
             </div>
           </div>
+          <div>
+            <div className="font-bold text-moko-violet mb-2">✏️ 写上你的名字</div>
+            <input
+              value={pref.name ?? ''}
+              maxLength={8}
+              onChange={(e) => save({ ...pref, name: e.target.value })}
+              placeholder="例如：程程"
+              className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none text-lg"
+            />
+            <div className="text-xs text-gray-400 mt-1">名字会显示在奖状上，爸爸妈妈打印时也会用这个名字～</div>
+          </div>
           <p className="text-xs text-gray-400">你的选择已保存到云端，爸爸妈妈打印的奖状也会用这个样式～</p>
         </div>
       )}
 
       <div
-        id="print-cert"
-        className={`rounded-3xl p-8 border-8 border-double ${theme.border} bg-gradient-to-br ${theme.bg} text-center shadow-2xl relative`}
+        id={printable ? 'print-cert' : undefined}
+        className={`rounded-3xl p-8 border-8 border-double ${theme.border} bg-gradient-to-br ${theme.bg} text-center shadow-2xl relative ${printable ? '' : 'no-print'}`}
       >
         {/* 真实萌可图案：孩子自选的萌可 + 乐美公主 */}
         <div className="flex items-center justify-center gap-3 mb-3">
@@ -141,7 +157,7 @@ export default function Certificate({
         <h2 className="text-2xl font-black text-moko-violet">学 习 之 星 奖 状</h2>
         <div className="text-sm text-gray-500 mb-6">Certificate of Achievement</div>
         <p className="text-lg text-gray-700 leading-relaxed mb-4">
-          亲爱的 <span className="font-black text-moko-rose text-xl">{data.childName}</span> 小朋友：
+          亲爱的 <span className="font-black text-moko-rose text-xl">{shownName}</span> 小朋友：
         </p>
         <p className="text-base text-gray-700 leading-relaxed mb-6 text-left mx-auto max-w-md">
           在 <span className="font-bold">{data.weekLabel}</span> 这一周里，你表现超棒！
