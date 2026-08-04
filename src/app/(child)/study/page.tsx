@@ -1,9 +1,6 @@
 import Link from 'next/link';
 import ReviewBadge from '@/components/ReviewBadge';
 import { MokoHelper } from '@/components/MokoHelper';
-import { STUDY_MODULES, SUBJECT_META } from '@/lib/study-modules';
-import { ModuleCover } from '@/components/study/ModuleCover';
-import { ModuleStars } from '@/components/study/ModuleStars';
 
 const cards = [
   {
@@ -32,34 +29,7 @@ const cards = [
   },
 ];
 
-// 首页精选模块（每个学科挑几个最受欢迎的，直接点进小课堂）
-const FEATURED: { subject: string; key: string }[] = [
-  { subject: 'chinese', key: 'pinyin' },
-  { subject: 'chinese', key: 'characters' },
-  { subject: 'chinese', key: 'poems' },
-  { subject: 'chinese', key: 'pinyin-blend' },
-  { subject: 'chinese', key: 'strokes-order' },
-  { subject: 'chinese', key: 'reading' },
-  { subject: 'chinese', key: 'sentence' },
-  { subject: 'chinese', key: 'school-prep' },
-  { subject: 'chinese', key: 'word-form' },
-  { subject: 'chinese', key: 'finger-read' },
-  { subject: 'chinese', key: 'poem-fun' },
-  { subject: 'chinese', key: 'my-day' },
-  { subject: 'math', key: 'count' },
-  { subject: 'math', key: 'calc' },
-  { subject: 'math', key: 'compare' },
-  { subject: 'math', key: 'word-problem' },
-  { subject: 'math', key: 'ordinal' },
-  { subject: 'math', key: 'clock-half' },
-  { subject: 'math', key: 'compare-more' },
-  { subject: 'math', key: 'calendar' },
-  { subject: 'english', key: 'letters' },
-  { subject: 'english', key: 'words' },
-  { subject: 'english', key: 'speak' },
-  { subject: 'english', key: 'phonics' },
-  { subject: 'english', key: 'sentences' },
-];
+// 三大主学科卡片已各自承载本学科全部小课堂；首页不再重复罗列，避免「精选小课堂」与学科页内容重复。
 
 const TOOLS = [
   { href: '/study/talk', emoji: '🗣️', title: '看图说话', sub: '看场景说 3 句话，录下自己的声音' },
@@ -98,32 +68,6 @@ export default function StudyPage() {
             <p className="text-sm opacity-90 text-center leading-relaxed">{s.sub}</p>
           </Link>
         ))}
-      </div>
-
-      {/* 精选热门模块：直接点进小课堂，不用层层点 */}
-      <h2 className="text-2xl font-black text-moko-violet mt-10 mb-3">⭐ 精选小课堂</h2>
-      <div className="grid sm:grid-cols-3 gap-4">
-        {FEATURED.map((f) => {
-          const mod = STUDY_MODULES[f.subject]?.find((m) => m.key === f.key);
-          if (!mod) return null;
-          const meta = SUBJECT_META[f.subject];
-          return (
-            <Link
-              key={`${f.subject}-${f.key}`}
-              href={`/study/${f.subject}/${f.key}`}
-              className="rounded-2xl overflow-hidden shadow-lg border-2 border-moko-purple/10 bg-white hover:scale-[1.03] transition block"
-            >
-              <ModuleCover subject={f.subject} moduleKey={f.key} emoji={mod.emoji} color={mod.color} />
-              <div className="p-3">
-                <div className="font-black text-base text-gray-800">{mod.label}</div>
-                <div className="text-[11px] text-gray-400 mt-0.5 leading-snug">{meta.label} · {mod.desc}</div>
-                <div className="mt-1.5">
-                  <ModuleStars subject={f.subject} moduleKey={f.key} />
-                </div>
-              </div>
-            </Link>
-          );
-        })}
       </div>
 
       {/* 趣味表达与练习 */}

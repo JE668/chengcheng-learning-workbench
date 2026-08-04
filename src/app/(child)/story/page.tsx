@@ -30,13 +30,22 @@ export default function StoryPage() {
   const [quizSpeaking, setQuizSpeaking] = useState(false);
   const [quizWrong, setQuizWrong] = useState(false);
   const [quizRight, setQuizRight] = useState(false);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
 
   async function load() {
-    const r = await fetch('/api/story/progress');
-    const j = await r.json();
-    setProgress(j);
-    setReadSet(new Set(j.read || []));
-    setQuizSet(new Set(j.quiz || []));
+    setLoadErr(null);
+    try {
+      const r = await fetch('/api/story/progress');
+      const j = await r.json();
+      if (!j || !Array.isArray(j.captured)) {
+        throw new Error(typeof j?.error === 'string' ? j.error : '数据格式异常');
+      }
+      setProgress(j);
+      setReadSet(new Set(j.read || []));
+      setQuizSet(new Set(j.quiz || []));
+    } catch (e) {
+      setLoadErr((e as Error)?.message || '故事加载失败了，点这里重试');
+    }
   }
 
   useEffect(() => { load(); }, []);
@@ -197,7 +206,23 @@ export default function StoryPage() {
   }, [active, readSet, quizSet]);
 
   if (!progress) {
-    return <div className="max-w-3xl mx-auto py-20 text-center text-gray-400">故事加载中…</div>;
+    return (
+      <div className="max-w-3xl mx-auto py-20 text-center">
+        {loadErr ? (
+          <div className="space-y-4">
+            <p className="text-gray-500 font-bold">😣 {loadErr}</p>
+            <button
+              onClick={load}
+              className="px-6 py-2.5 rounded-full bg-moko-violet text-white font-bold shadow hover:scale-105 transition"
+            >
+              重新加载
+            </button>
+          </div>
+        ) : (
+          <div className="text-gray-400">故事加载中…</div>
+        )}
+      </div>
+    );
   }
 
   return (

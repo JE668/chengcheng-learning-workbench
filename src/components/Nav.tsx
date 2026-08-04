@@ -41,7 +41,7 @@ export default function Nav({ user }: { user: User }) {
     return (
       <Link
         href={href}
-        className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-lg font-bold transition ${
+        className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl text-lg font-bold transition ${
           active
             ? 'bg-white text-moko-rose shadow-lg scale-105'
             : 'text-white/90 hover:bg-white/20'
@@ -64,7 +64,7 @@ export default function Nav({ user }: { user: User }) {
             <p className="text-xs opacity-80">{user.displayName} · {user.role === 'parent' ? '爸爸妈妈' : '小朋友'}</p>
           </div>
         </div>
-        <nav className="flex-1 space-y-2 min-h-0 overflow-y-auto pr-1">
+        <nav className="flex-1 space-y-1 min-h-0 overflow-y-auto no-scrollbar pr-1">
           {links.map((l) => <Item key={l.href} {...l} />)}
         </nav>
         <form action={logoutAction} method="POST">
