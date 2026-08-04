@@ -7,9 +7,8 @@ name: Build and Push Image
 # 推送目标：
 #   1) ghcr.io/je668/...   —— 用内置 GITHUB_TOKEN，零配置，必成功（主推送）
 #   2) ghcr.nju.edu.cn/je668/... —— 南大镜像加速站，需在你的仓库
-#      Settings → Secrets 配置 GHCR_NJU_TOKEN（南大站的推送 token）；
-#      若南大账号不是 GitHub 用户名，再加配 GHCR_NJU_USER。
-#      未配置 GHCR_NJU_TOKEN 时，南大同步步骤自动跳过，不影响 ghcr.io 主推送。
+#      Settings → Secrets 配置 GHCR_NJU_TOKEN（南大站的推送 token）才会同步；
+#      未配置时下面两步自动跳过，不影响 ghcr.io 主推送。
 on:
   push:
     branches: [main]
@@ -58,8 +57,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # 同步到南大镜像加速站（ghcr.nju.edu.cn）：需在你的仓库
-      # Settings → Secrets 配置 GHCR_NJU_TOKEN（南大站的推送 token）。
+      # 同步到南大镜像加速站（ghcr.nju.edu.cn）：需在仓库 Settings → Secrets 配置 GHCR_NJU_TOKEN。
       # 未配置时此步自动跳过，不影响 ghcr.io 主推送。
       - name: Log in to 南大镜像站 (ghcr.nju.edu.cn)
         if: ${{ secrets.GHCR_NJU_TOKEN != '' }}
@@ -67,7 +65,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.nju.edu.cn
-          username: ${{ secrets.GHCR_NJU_USER != '' && secrets.GHCR_NJU_USER || github.actor }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GHCR_NJU_TOKEN }}
 
       - name: Push to 南大镜像站 (ghcr.nju.edu.cn)
