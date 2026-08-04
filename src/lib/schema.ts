@@ -17,6 +17,8 @@ export async function ensureSchema() {
     sql: "SELECT name FROM sqlite_master WHERE type='table' AND name='_schema_meta'",
     args: [],
   });
+  // 仅用于「账号种子 / 初始化标记」的一次性守卫；建表与 ALTER 迁移见下，每次启动都跑。
+  const isNewDb = guard.rows.length === 0;
 
   // 增量表（每次启动都跑，幂等）：剧情「已读」标记——捕捉萌可前必须先读完这一集故事。
   // 放在守卫之前，确保已部署的旧库（_schema_meta 已存在）也能自动补齐该表，无需手动重建。
@@ -154,7 +156,9 @@ export async function ensureSchema() {
     }
   } catch { /* 表未建（全新库），忽略 */ }
 
-  if (guard.rows.length > 0) return;
+  // 注意：建表与 ALTER 迁移每次启动都执行（全部 IF NOT EXISTS / try-catch 幂等），
+  // 不再因 _schema_meta 守卫跳过——否则旧库（早期镜像初始化的）会缺表/缺列，
+  // 导致「还原出厂设置」等接口在缺失的表或列上抛错。仅账号种子受 isNewDb 守卫限制。
 
   await db.batch([
     `CREATE TABLE IF NOT EXISTS users (
@@ -371,6 +375,8 @@ export async function ensureSchema() {
     await db.execute({ sql: 'ALTER TABLE users ADD COLUMN selected_child_id INTEGER', args: [] });
   } catch { /* 列已存在时忽略 */ }
 
+  // —— 以下仅全新库执行：账号种子 + 初始化标记（已部署旧库跳过，避免重复建账号）——
+  if (isNewDb) {
   // 账号迁移：确保 child 用户为 cara / 0000。
   // 遗留的 cheng 自动改名并重置密码，users.id 不变，城堡/打卡等关联数据全部保留。
   const cara = await db.execute({ sql: "SELECT id FROM users WHERE username = 'cara'", args: [] });
@@ -415,7 +421,8 @@ export async function ensureSchema() {
     }
   }
 
-  // 标记初始化完成（供上面的守卫识别，避免每次冷启动重跑整批迁移）
+  // 标记初始化完成（供上面的守卫识别，避免每次冷启动重跑账号种子）
   await db.execute({ sql: 'CREATE TABLE IF NOT EXISTS _schema_meta (initialized INTEGER PRIMARY KEY DEFAULT 1)', args: [] });
   await db.execute({ sql: 'INSERT OR IGNORE INTO _schema_meta (initialized) VALUES (1)', args: [] });
+  }
 }
