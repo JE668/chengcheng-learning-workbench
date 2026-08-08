@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { storyChapters } from '@/lib/story';
 import { mokoImgByName } from '@/lib/moko-imgs';
+import { mokoCollectionByName } from '@/lib/moko-collection';
 import { playTtsEnd } from '@/lib/speak';
+import { CaptureMoment, type CapturePayload } from '@/components/CaptureMoment';
 
 interface Progress {
   captured: string[];
@@ -25,6 +27,7 @@ export default function StoryPage() {
   const [quizSet, setQuizSet] = useState<Set<string>>(new Set());
   const [capturing, setCapturing] = useState(false);
   const [toast, setToast] = useState('');
+  const [justCaught, setJustCaught] = useState<CapturePayload | null>(null);
   const abortRef = useRef(false);
   const quizAbortRef = useRef(false);
   const [quizSpeaking, setQuizSpeaking] = useState(false);
@@ -175,6 +178,15 @@ export default function StoryPage() {
       });
       const j = await r.json();
       if (j.ok) {
+        // 组装捕捉演出数据（优先用轻量集合里的真实口头禅/图片，缺失回退 emoji）
+        const nm = j.mokoName as string;
+        const entry = mokoCollectionByName[nm];
+        setJustCaught({
+          name: nm,
+          img: entry?.img || mokoImgByName[nm] || '',
+          emoji: entry?.emoji || '✨',
+          line: entry?.line,
+        });
         setToast(`🎉 捕捉到${j.mokoName}啦！去看看图鉴吧～`);
         setActive(null);
         stopNarration();
@@ -448,6 +460,8 @@ export default function StoryPage() {
           <Link href="/castle" className="inline-block mt-3 px-6 py-2 rounded-full bg-white text-moko-violet font-black shadow">🏰 进入城堡</Link>
         </div>
       )}
+
+      {justCaught && <CaptureMoment data={justCaught} onClose={() => setJustCaught(null)} />}
     </div>
   );
 }

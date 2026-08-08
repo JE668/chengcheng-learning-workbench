@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { magicShop, starShop, MokoCategories } from '@/lib/moko';
 import { MokoAvatar } from '@/components/MokoAvatar';
+import { SeriesCompleteBanner } from '@/components/SeriesCompleteBanner';
 
 type Stage = 'obtained' | 'settled' | 'playing' | 'friend';
 interface Resident {
@@ -160,13 +161,30 @@ export default function CastlePage() {
           {MokoCategories.filter((c) => c.key !== 'trouble').map((cat) => {
             const items = state.gallery.filter((g) => g.category === cat.key);
             if (!items.length) return null;
+            const ownedCount = items.filter((g) => g.owned).length;
+            const complete = ownedCount === items.length;
             return (
               <div key={cat.key}>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-2xl">{cat.emoji}</span>
                   <h2 className="font-black text-moko-violet text-lg">{cat.label}</h2>
                   <span className="text-xs text-gray-400 hidden sm:inline">{cat.desc}</span>
+                  <span className={`text-[11px] font-black px-2 py-0.5 rounded-full ml-auto ${complete ? 'bg-moko-gold text-white' : 'bg-gray-100 text-gray-500'}`}>
+                    {complete ? '👑 系列全齐' : `${ownedCount}/${items.length}`}
+                  </span>
                 </div>
+
+                {complete && (
+                  <div className="mb-3">
+                    <SeriesCompleteBanner
+                      catKey={cat.key}
+                      label={cat.label}
+                      emoji={cat.emoji}
+                      members={items.map((g) => ({ img: g.img, emoji: g.emoji, name: g.name }))}
+                    />
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {items.map((g) => (
                     <div key={g.key} className={`card-moko text-center ${g.owned ? '' : 'opacity-70'}`}>

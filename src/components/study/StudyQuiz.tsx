@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { speakZh, speakEn, praise } from '@/lib/speak';
+import { speakZh, speakEn } from '@/lib/speak';
+import { speakMokoFeedback, MokoPraiseBanner } from '@/components/study/MokoPraise';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -72,6 +73,7 @@ export function StudyQuiz({
   );
   const [pos, setPos] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
+  const [feedbackLine, setFeedbackLine] = useState(''); // 当前答对/答错时萌可说的一句话（语音与显示共用）
   const [rightCount, setRightCount] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const [roundDone, setRoundDone] = useState(false);
@@ -100,6 +102,7 @@ export function StudyQuiz({
 
   function next() {
     setPicked(null);
+    setFeedbackLine('');
     setPos((p) => p + 1);
   }
 
@@ -115,6 +118,7 @@ export function StudyQuiz({
   function continueRound() {
     setRoundDone(false);
     setPicked(null);
+    setFeedbackLine('');
     attemptsRef.current = 0;
     rightRef.current = 0;
     setAttempts(0);
@@ -132,14 +136,14 @@ export function StudyQuiz({
     setRightCount(rightRef.current);
 
     if (ok) {
-      praise();
+      setFeedbackLine(speakMokoFeedback(subject, true)); // 镇守萌可口号（取代泛泛的随机夸夸，更有角色陪伴感）
       if (attemptsRef.current % roundSize === 0) {
         finishRound();
       } else {
         setTimeout(next, 1300);
       }
     } else {
-      speakZh(`不对哦，正确答案是「${item.answer}」`);
+      setFeedbackLine(speakMokoFeedback(subject, false)); // 镇守萌可鼓励（比通用「不对哦」更温柔友好）
       logM({
         subject,
         kind: item.kind,
@@ -222,14 +226,27 @@ export function StudyQuiz({
           })}
         </div>
         {picked && (
-          <p className={`text-center mt-4 font-bold ${picked === item.answer ? 'text-green-600' : 'text-red-500'}`}>
-            {picked === item.answer ? '🎉 答对啦！' : `💡 正确答案是「${item.answer}」`}
-          </p>
+          <CorrectFeedback subject={subject} ok={picked === item.answer} item={item} line={feedbackLine} />
         )}
       </div>
       <div className={`rounded-2xl p-3 ${color} text-white text-center text-sm font-bold shadow`}>
         换一题继续练，闯关不嫌多～
       </div>
+    </div>
+  );
+}
+
+/**
+ * 答题后的文字反馈：镇守萌可用它的性格口头禅给小朋友贴心的答对 / 答错反馈。
+ * line 来自语音选中的同一句（pick() 里 speakMokoFeedback 返回），保证「听到的 = 看到的」。
+ */
+function CorrectFeedback({ subject, ok, item, line }: { subject: string; ok: boolean; item: QuizItem; line: string }) {
+  return (
+    <div className="space-y-1">
+      <MokoPraiseBanner subject={subject} ok={ok} text={line || (ok ? '真棒！' : '没关系，再试试～')} />
+      {!ok && (
+        <p className="text-center text-xs text-gray-500 mt-1">正确答案是「{item.answer}」</p>
+      )}
     </div>
   );
 }

@@ -102,6 +102,22 @@ body {
 }
 .prosperity-sparkle { background-size: 200% 100%; animation: sparkle 3s linear infinite; }
 
+/* ============ ✨ 捕捉演出（CaptureMoment） ============ */
+
+/* 捕捉瞬间的聚焦光球：radial 暖色一张一收 */
+@keyframes ray {
+  0% { transform: translate(-50%, -50%) scale(.6); opacity: .25; }
+  50% { transform: translate(-50%, -50%) scale(1.15); opacity: .9; }
+  100% { transform: translate(-50%, -50%) scale(.95); opacity: .5; }
+}
+
+/* 萌可立绘背后的捕捉光晕环：金色 box-shadow 脉动 */
+@keyframes mokoCaptureGlow {
+  0%, 100% { box-shadow: 0 0 0 8px rgba(253,224,71,.45), 0 0 30px 9px rgba(251,146,60,.55); }
+  50% { box-shadow: 0 0 0 16px rgba(253,224,71,.65), 0 0 52px 16px rgba(251,146,60,.85); }
+}
+.moko-capture-glow { animation: mokoCaptureGlow 1.6s ease-in-out infinite; }
+
 /* ============ 🖼️ Dashboard 萌可大合照背景 ============ */
 @keyframes mokoFloat {
   0%, 100% { transform: translateY(0) rotate(0deg); }
