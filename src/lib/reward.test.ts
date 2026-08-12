@@ -163,6 +163,12 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
       sql: 'INSERT INTO daily_practice (child_id, day, completed, correct, total, questions) VALUES (?, ?, 0, 0, ?, ?)',
       args: [cid, today, 0, 0, questions.length, JSON.stringify(questions)],
     });
+    const probe = await getDb().execute({
+      sql: 'SELECT questions, day FROM daily_practice WHERE child_id = ? AND day = ?',
+      args: [cid, today],
+    });
+    // eslint-disable-next-line no-console
+    console.log('PROBE child', cid, 'day', today, 'questions=', JSON.stringify(probe.rows[0]?.questions));
 
     const r1 = await submitPractice(cid, questions.map(() => 0));
     expect(r1.ok).toBe(true);
