@@ -113,6 +113,10 @@ body {
 ::-webkit-scrollbar-track { background: #FFF7ED; }
 ::-webkit-scrollbar-thumb { background: #FF8FC6; border-radius: 4px; }
 
+/* 刘海屏顶部安全区：viewportFit=cover 时内容不压状态栏
+   （env() 在桌面端为 0，不影响 PC 布局） */
+body { padding-top: env(safe-area-inset-top); }
+
 /* 侧边栏等不想露出滚动条的容器：隐藏滚动条但保留滚动能力 */
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }

@@ -1,6 +1,8 @@
 import './globals.css';
 import { ensureSchema } from '@/lib/db';
 import PwaRegister from '@/components/PwaRegister';
+import InstallPrompt from '@/components/InstallPrompt';
+import OfflineIndicator from '@/components/OfflineIndicator';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +31,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="zh-CN">
       <body className="min-h-screen bg-moko-cream">
         {children}
+        <OfflineIndicator />
+        <InstallPrompt />
         <PwaRegister />
       </body>
     </html>

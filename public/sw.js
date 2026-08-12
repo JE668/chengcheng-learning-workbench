@@ -1,5 +1,5 @@
 // 程程学习工作台 Service Worker —— 提供基础离线支持
-const CACHE = 'ccwb-v1';
+const CACHE = 'ccwb-v2';
 const SHELL = ['/'];
 
 self.addEventListener('install', (event) => {
