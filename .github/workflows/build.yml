@@ -9,10 +9,19 @@ name: Build and Push Image
 #   2) ghcr.nju.edu.cn/je668/... —— 南大镜像加速站。在仓库 Settings → Secrets 配置
 #      GHCR_NJU_TOKEN（南大站的推送 token）后，下面两步会成功把镜像同步过去；
 #      未配置时这两步自动失败并被 continue-on-error 兜住，不影响 ghcr.io 主推送。
+#
+# 优化：只动文档（md / docs）时跳过镜像构建，省 2~3 分钟；同一分支的旧 run 自动取消。
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
