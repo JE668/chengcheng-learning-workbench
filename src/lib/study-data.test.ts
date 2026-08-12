@@ -119,7 +119,7 @@ describe('数学 · 课本单元与练习模块对齐', () => {
   // 直接读源码取 key，避免在 node 测试环境里 import 一堆 React 组件
   const src = readFileSync(resolve(process.cwd(), 'src/lib/study-modules.ts'), 'utf8');
   const mathBlock = src.slice(src.indexOf('  math: ['), src.indexOf('\n  ],', src.indexOf('  math: [')));
-  const mathKeys = [...mathBlock.matchAll(/key: '(.+?)'/g)].map((m) => m[1]);
+  const mathKeys = Array.from(mathBlock.matchAll(/key: '(.+?)'/g)).map((m) => m[1]);
 
   it('单元编号与课本章节一一对应', () => {
     const chapters = TEXTBOOKS.find((t) => t.key === 'math')!.chapters.map((c) => c.idx);
