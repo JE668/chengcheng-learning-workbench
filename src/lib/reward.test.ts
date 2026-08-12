@@ -135,9 +135,9 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
     const cid = nextChild();
     await insertChild(cid);
     const today = dateStr();
-    // last_settled 设在今天之前，让结算不干扰；预置最近 3 天三科全勤
+    // computeStreak 只统计「昨天及以前」的连续全勤，故预置最近 3 个过去日三科全勤
     await insertCastle(cid, addDays(today, -4), COST_SHIELD + 5);
-    for (const off of [2, 1, 0]) {
+    for (const off of [1, 2, 3]) {
       for (const s of SUBJECTS) await confirmSubject(cid, addDays(today, -off), s);
     }
 
@@ -152,8 +152,14 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
     await insertChild(cid);
     const today = dateStr();
     await insertCastle(cid, today, 0, 0);
-    // 预置「昨天」三科全勤 → 今日完成后连续天数 = 2（命中里程碑）
-    for (const s of SUBJECTS) await confirmSubject(cid, addDays(today, -1), s);
+    const yest = addDays(today, -1);
+    // computePracticeStreak 按 daily_practice.completed=1 计连续天数：
+    // 预置「昨天」一练已完成（且三科全勤），今日再完成 → 连续天数 = 2（命中里程碑）
+    await getDb().execute({
+      sql: 'INSERT INTO daily_practice (child_id, day, completed, correct, total) VALUES (?, ?, 1, 9, 9)',
+      args: [cid, yest],
+    });
+    for (const s of SUBJECTS) await confirmSubject(cid, yest, s);
 
     // 构造今日一练：每科 3 题，答案均为 0
     const questions = SUBJECTS.flatMap((subj) =>
@@ -165,14 +171,6 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
     });
 
     const r1 = await submitPractice(cid, questions.map(() => 0));
-    // eslint-disable-next-line no-console
-    console.log('R1', JSON.stringify(r1));
-    const chk = await getDb().execute({
-      sql: 'SELECT subject, status FROM daily_checkins WHERE child_id = ? AND day = ?',
-      args: [cid, today],
-    });
-    // eslint-disable-next-line no-console
-    console.log('CHK', cid, today, JSON.stringify(chk.rows));
     expect(r1.ok).toBe(true);
     expect(r1.completed).toBe(true);
     expect((await readCastle(cid)).starCoins).toBe(10); // 里程碑 +10
