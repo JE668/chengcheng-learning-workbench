@@ -19,7 +19,7 @@ import { useMistakeLogger } from '@/lib/mistake-logger';
 function CharacterCard({ item }: { item: CharacterItem }) {
   return (
     <div className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-pink/20 text-center">
-      <div className="text-xs text-moko-rose/70 font-bold tracking-wide">{item.pinyin}</div>
+      <div className="text-xs text-moko-rose/70 font-bold tracking-wide">{item.pinyin}{item.altPinyin ? <span className="text-moko-purple/80"> · 又读 {item.altPinyin}</span> : null}</div>
       <div className="text-5xl font-black text-moko-rose mb-2">{item.char}</div>
       <div className="text-sm text-gray-600">{item.meaning}</div>
       <div className="text-xs text-gray-400 mt-1">{item.strokeCount} 画 · {item.phrase}</div>
@@ -321,7 +321,7 @@ export function CharacterQuizModule() {
       <div className="text-center mb-4">
         {q.mode === 'char2mean' ? (
           <>
-            <div className="text-sm font-bold opacity-90">{q.target.pinyin}</div>
+            <div className="text-sm font-bold opacity-90">{q.target.pinyin}{q.target.altPinyin ? <span className="opacity-75"> · 又读 {q.target.altPinyin}</span> : null}</div>
             <div className="text-6xl font-black mb-1">{q.target.char}</div>
             <button
               onClick={() => speakZh(q.target.char)}

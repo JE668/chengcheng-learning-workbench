@@ -217,11 +217,33 @@ export interface CharacterItem {
   meaning: string;
   phrase: string;
   category: string;
+  /** 多音字第二读音（可选），如 了 le/liǎo、着 zhe/zháo。识字卡会展示「又读 xxx」 */
+  altPinyin?: string;
 }
 
 export const CHARACTER_CATEGORIES = ['数字', '自然', '人体', '家庭', '方位', '动作', '颜色', '动物', '植物', '物品'];
 
-export const CHARACTERS: CharacterItem[] = [
+/** 明显的多音字第二读音（仅标一年级会遇到的常见多音字）。
+ *  与 CHARACTERS 主读音拼接后派生到每项 altPinyin，避免改动 290 行数据块。 */
+export const MULTI_READINGS: Record<string, string> = {
+  了: 'liǎo', // le（来了）/ liǎo（了解）
+  着: 'zháo', // zhe（笑着）/ zháo（着火）
+  长: 'zhǎng', // cháng（长短）/ zhǎng（成长）
+  地: 'de', // dì（天地）/ de（轻轻地）
+  得: 'de', // dé（觉得）/ de（跑得快）
+  还: 'huán', // hái（还有）/ huán（归还）
+  只: 'zhǐ', // zhī（一只）/ zhǐ（只有）
+  少: 'shào', // shǎo（多少）/ shào（少年）
+  好: 'hào', // hǎo（好朋友）/ hào（爱好）
+  中: 'zhòng', // zhōng（中国）/ zhòng（中奖）
+  数: 'shǔ', // shù（数学）/ shǔ（数一数）
+  空: 'kòng', // kōng（天空）/ kòng（空地）
+  乐: 'yuè', // lè（快乐）/ yuè（音乐）
+  发: 'fà', // fā（发芽）/ fà（头发）
+  觉: 'jiào', // jué（觉得）/ jiào（睡觉）
+};
+
+const RAW_CHARACTERS: CharacterItem[] = [
   // 数字
   { char: '一', pinyin: 'yī', strokeCount: 1, meaning: '数字 1', phrase: '一个苹果', category: '数字' },
   { char: '二', pinyin: 'èr', strokeCount: 2, meaning: '数字 2', phrase: '二只小鸟', category: '数字' },
@@ -529,6 +551,12 @@ export const CHARACTERS: CharacterItem[] = [
   { char: '高', pinyin: 'gāo', strokeCount: 10, meaning: '高 / 高大', phrase: '高高大树', category: '方位' },
 
 ];
+
+/** 在 RAW_CHARACTERS 基础上，把多音字的第二读音（MULTI_READINGS）派生到 altPinyin。
+ *  这样识字卡 / 识字闯关就能展示「又读 xxx」，而无需改动 290 行的原始数据块。 */
+export const CHARACTERS: CharacterItem[] = RAW_CHARACTERS.map((c) =>
+  MULTI_READINGS[c.char] ? { ...c, altPinyin: MULTI_READINGS[c.char] } : c
+);
 
 /* -------------------- 语文 · 古诗词（小学必背） -------------------- */
 export interface PoemItem {

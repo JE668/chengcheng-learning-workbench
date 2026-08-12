@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CHARACTERS,
   CHINESE_UNITS,
+  MULTI_READINGS,
   EN_UNITS,
   EN_WORD_TOPICS,
   GRADE1_CHAR_UNITS,
@@ -169,6 +170,32 @@ describe('语文 · 课本单元与练习模块对齐', () => {
     const used = new Set(CHINESE_UNITS.flatMap((u) => u.moduleKeys));
     for (const k of chineseKeys) {
       expect(used.has(k), `模块「${k}」没归入任何课本单元`).toBe(true);
+    }
+  });
+});
+
+describe('语文 · 多音字标注（altPinyin）', () => {
+  const charMap = new Map(CHARACTERS.map((c) => [c.char, c]));
+
+  it('MULTI_READINGS 里每个多音字都在生字表里', () => {
+    for (const ch of Object.keys(MULTI_READINGS)) {
+      expect(charMap.has(ch), `多音字「${ch}」不在 CHARACTERS 里`).toBe(true);
+    }
+  });
+
+  it('多音字的 altPinyin 等于第二读音，且与主读音不同', () => {
+    for (const [ch, alt] of Object.entries(MULTI_READINGS)) {
+      const item = charMap.get(ch)!;
+      expect(item.altPinyin, `「${ch}」漏标 altPinyin`).toBe(alt);
+      expect(item.altPinyin).not.toBe(item.pinyin);
+    }
+  });
+
+  it('非多音字不应带 altPinyin', () => {
+    const multi = new Set(Object.keys(MULTI_READINGS));
+    const withAlt = CHARACTERS.filter((c) => c.altPinyin);
+    for (const c of withAlt) {
+      expect(multi.has(c.char), `「${c.char}」带了不该有的 altPinyin`).toBe(true);
     }
   });
 });
