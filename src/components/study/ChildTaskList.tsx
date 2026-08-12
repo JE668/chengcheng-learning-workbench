@@ -91,7 +91,7 @@ function DictationCard({ task, data, onDone }: { task: Task; data: DictData; onD
     return (
       <div className="card-moko text-center">
         <div className="text-4xl mb-2">🎉</div>
-        <h3 className="text-xl font-black text-moko-violet">听写完成！</h3>
+        <h3 className="section-title">听写完成！</h3>
         <p className="text-gray-600 mt-1">会了 {correct} 个，还不会 {wrong} 个（已放进错题本，记得复习哦）</p>
         <div className="text-xs text-moko-rose font-bold mt-2">🎯 获得 {task.points} 积分</div>
       </div>

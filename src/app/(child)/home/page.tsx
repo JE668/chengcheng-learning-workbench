@@ -57,7 +57,7 @@ export default async function HomePage() {
       </div>
 
       {/* 数据大板 */}
-      <h2 className="text-xl font-black text-moko-violet mb-3">我的成长看板 📊</h2>
+      <h2 className="section-title mb-3">我的成长看板 📊</h2>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
         {stats.map((s) => (
           <div key={s.label} className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}>
@@ -71,7 +71,7 @@ export default async function HomePage() {
       {/* 今日一练 · 三科打卡（合并卡片：状态 + 入口合一） */}
       <div className="card-moko mb-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-black text-moko-violet">🎯 今日一练 · 三科打卡</h2>
+          <h2 className="section-title">🎯 今日一练 · 三科打卡</h2>
           <span className="text-sm text-gray-500">每科 3 题全对，自动完成该科打卡 🌟</span>
         </div>
         <CheckinPanel initial={castle.checkins} />
@@ -93,7 +93,7 @@ export default async function HomePage() {
       {/* 我的任务（家长布置，孩子端即时可见） */}
       <div className="card-moko mb-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-black text-moko-violet">📝 我的任务</h2>
+          <h2 className="section-title">📝 我的任务</h2>
           <Link href="/my-tasks" className="text-sm font-bold text-moko-rose">全部 ›</Link>
         </div>
         {pendingTasks.length === 0 ? (
@@ -119,7 +119,7 @@ export default async function HomePage() {
       <div className="grid md:grid-cols-2 gap-6">
         <div className="card-moko bg-gradient-to-br from-indigo-50 to-purple-50">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-black text-moko-violet">🏰 萌可城堡</h2>
+            <h2 className="section-title">🏰 萌可城堡</h2>
             <Link href="/castle" className="text-sm font-bold text-moko-rose">进入 ›</Link>
           </div>
           <div className="flex items-center gap-2 mb-3">
@@ -142,7 +142,7 @@ export default async function HomePage() {
         </div>
 
         <div className="card-moko">
-          <h2 className="text-xl font-black text-moko-violet mb-3">🚀 快捷入口</h2>
+          <h2 className="section-title mb-3">🚀 快捷入口</h2>
           <div className="grid grid-cols-2 gap-3">
             <Link href="/study" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-pink text-white font-black">📚 去学习</Link>
             <Link href="/games" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-blue text-white font-black">🎮 玩游戏</Link>

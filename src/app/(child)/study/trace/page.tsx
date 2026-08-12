@@ -124,7 +124,7 @@ export default function TracePage() {
   return (
     <div className="max-w-3xl mx-auto">
       <Link href="/study" className="text-moko-violet font-black no-underline">‹ 返回学习城堡</Link>
-      <h1 className="text-3xl font-black text-moko-violet mt-2 mb-1">描红跟写 ✍️</h1>
+      <h1 className="page-title mt-2 mb-1">描红跟写 ✍️</h1>
       <p className="text-gray-600 mb-5">
         沿着灰色范字一笔一画描红，写完点「下一个」换字。共 {TRACE_CHARS.length} 个字可以练。
       </p>

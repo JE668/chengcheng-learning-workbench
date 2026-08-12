@@ -26,7 +26,7 @@ export default function AdventurePage() {
       <div className="flex items-center gap-3 mb-4">
         <Link href="/games" className="text-moko-violet font-bold hover:underline">‹ 游戏乐园</Link>
       </div>
-      <h1 className="text-3xl font-black text-moko-violet mb-2">🗺️ 萌可冒险地图</h1>
+      <h1 className="page-title mb-2">🗺️ 萌可冒险地图</h1>
       <p className="text-gray-600 mb-6">
         沿着萌可小路一路闯关！城堡越繁荣，解锁的关卡越多。当前繁荣度：
         <span className="font-black text-moko-rose"> {loaded ? prosperity : '…'}</span>

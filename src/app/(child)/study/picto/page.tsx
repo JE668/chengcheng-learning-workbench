@@ -44,7 +44,7 @@ export default function PictoPage() {
   return (
     <div className="relative max-w-3xl mx-auto min-h-screen p-4">
       <Link href="/study" className="text-sm text-moko-rose font-bold">‹ 返回学习</Link>
-      <h1 className="text-3xl font-black text-moko-violet mt-2 mb-1">🌟 象形字变变变</h1>
+      <h1 className="page-title mt-2 mb-1">🌟 象形字变变变</h1>
       <p className="text-gray-500 mb-4">很多汉字最早就是照着东西的样子画出来的，看看它们怎么从「画」变成「字」！</p>
 
       <div className="card-moko text-center py-6">

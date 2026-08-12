@@ -25,7 +25,7 @@ export default async function MyTasksPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-3xl font-black text-moko-violet mb-2">我的任务 📝</h1>
+      <h1 className="page-title mb-2">我的任务 📝</h1>
       <p className="text-gray-600 mb-4">爸爸妈妈布置的学习任务都在这里，做完一个点亮一个，积分叮咚进账！</p>
       <MokoHelper
         subject="语文"

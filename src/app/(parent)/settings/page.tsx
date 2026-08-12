@@ -62,7 +62,7 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-        <h1 className="text-3xl font-black text-moko-violet">设置 ⚙️</h1>
+        <h1 className="page-title">设置 ⚙️</h1>
         <ChildSwitcher />
       </div>
       <div className="card-moko">

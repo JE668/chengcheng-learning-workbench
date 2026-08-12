@@ -37,7 +37,7 @@ export default async function ChildCertPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-3xl font-black text-moko-violet mb-2">我的奖状 🏆</h1>
+      <h1 className="page-title mb-2">我的奖状 🏆</h1>
       <p className="text-gray-600 mb-4">
         选你最喜欢的萌可和颜色，做成专属奖状！做好后点「申请颁发」，等爸爸妈妈审批通过，就能拿到奖状啦～
       </p>

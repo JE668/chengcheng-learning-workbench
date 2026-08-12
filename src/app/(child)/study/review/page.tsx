@@ -52,13 +52,13 @@ export default function ReviewPage() {
       <div className="flex items-center gap-3 mb-4">
         <Link href="/study" className="text-moko-violet font-bold hover:underline">‹ 学习首页</Link>
       </div>
-      <h1 className="text-3xl font-black text-moko-violet mb-2">📝 我的复习本</h1>
+      <h1 className="page-title mb-2">📝 我的复习本</h1>
       <p className="text-gray-600 mb-6">
         这里收集了之前做错的小题，按照「遗忘曲线」每天帮你复习，记牢就不会再错啦～
       </p>
 
       {loading ? (
-        <div className="text-center text-gray-400 py-16">加载中…</div>
+        <div className="text-center text-gray-400 py-16 flex flex-col items-center justify-center gap-3"><span className="moko-loader"><span></span><span></span><span></span></span>加载中…</div>
       ) : items.length === 0 ? (
         <div className="rounded-3xl p-10 bg-white shadow-lg border-2 border-moko-purple/20 text-center">
           <div className="text-6xl mb-3">🎉</div>

@@ -19,7 +19,7 @@ export default async function RecordPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-3xl font-black text-moko-violet mb-4">学习记录 🏆</h1>
+      <h1 className="page-title mb-4">学习记录 🏆</h1>
       <Link href="/cert" className="block mb-6 rounded-2xl p-4 bg-gradient-to-r from-moko-gold to-moko-rose text-white shadow-lg hover:scale-[1.01] transition">
         <div className="flex items-center justify-between">
           <div>

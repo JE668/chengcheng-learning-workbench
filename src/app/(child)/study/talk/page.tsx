@@ -73,7 +73,7 @@ export default function TalkPage() {
   return (
     <div className="relative max-w-3xl mx-auto min-h-screen p-4">
       <Link href="/study" className="text-sm text-moko-rose font-bold">‹ 返回学习</Link>
-      <h1 className="text-3xl font-black text-moko-violet mt-2 mb-1">🗣️ 看图说话</h1>
+      <h1 className="page-title mt-2 mb-1">🗣️ 看图说话</h1>
       <p className="text-gray-500 mb-4">看看下面的图，试着说 3 句话吧！说给爸爸妈妈听，也可以录下来回放。</p>
 
       <div className="card-moko">

@@ -109,7 +109,7 @@ export default async function ParentMistakesPage({
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-2">
-        <h1 className="text-3xl font-black text-moko-violet">📕 错题本</h1>
+        <h1 className="page-title">📕 错题本</h1>
         <ChildSwitcher />
       </div>
       <p className="text-gray-600 mb-4">这里收集了{childName}在各科练习中做错的小题，点「去练习」就能直接回到出错的模块巩固。</p>

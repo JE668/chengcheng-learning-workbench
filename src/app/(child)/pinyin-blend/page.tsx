@@ -126,7 +126,7 @@ export default function PinyinBlendPage() {
   return (
     <div className="relative max-w-3xl mx-auto min-h-screen p-4">
       <Link href="/home" className="text-sm text-moko-rose font-bold">‹ 返回首页</Link>
-      <h1 className="text-3xl font-black text-moko-violet mt-2 mb-1">🀄 拼音拼读乐园</h1>
+      <h1 className="page-title mt-2 mb-1">🀄 拼音拼读乐园</h1>
       <p className="text-gray-500 mb-4">把声母和韵母拼起来，就能读出好多字啦！</p>
 
       {/* 模式切换 */}

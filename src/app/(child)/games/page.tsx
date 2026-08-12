@@ -5,7 +5,7 @@ import { games, mokoChars } from '@/lib/moko';
 export default function GamesPage() {
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-black text-moko-violet mb-2">萌可游戏乐园 🎮</h1>
+      <h1 className="page-title mb-2">萌可游戏乐园 🎮</h1>
       <p className="text-gray-600 mb-4">完成学习后来玩游戏吧！游戏也有积分奖励哦~</p>
       <Link href="/games/adventure" className="block mb-6 rounded-2xl p-4 bg-gradient-to-r from-moko-purple to-moko-violet text-white shadow-lg hover:scale-[1.02] transition">
         <div className="flex items-center justify-between">

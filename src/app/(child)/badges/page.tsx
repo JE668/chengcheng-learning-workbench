@@ -71,13 +71,13 @@ export default function BadgesPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <Link href="/" className="text-moko-violet font-black no-underline">‹ 返回首页</Link>
-      <h1 className="text-3xl font-black text-moko-violet mt-2 mb-1">我的勋章墙 🏆</h1>
+      <h1 className="page-title mt-2 mb-1">我的勋章墙 🏆</h1>
       <p className="text-gray-600 mb-4">
         每多学一点就能解锁一枚勋章，已经拿到 {earned} / {badges.length} 枚啦！
       </p>
 
       {loading ? (
-        <div className="rounded-3xl p-10 bg-white shadow text-center text-moko-violet font-black">加载中…</div>
+        <div className="rounded-3xl p-10 bg-white shadow flex flex-col items-center justify-center gap-3 text-moko-violet font-black"><span className="moko-loader"><span></span><span></span><span></span></span>加载中…</div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {badges.map((b) => {

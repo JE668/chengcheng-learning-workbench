@@ -90,7 +90,7 @@ export default function PinyinModule() {
       </p>
       {PINYIN_GROUPS.map((g) => (
         <section key={g.group}>
-          <h2 className="text-xl font-black text-moko-violet mb-1">
+          <h2 className="section-title mb-1">
             🔤 {g.group}
           </h2>
           <p className="text-sm text-gray-400 mb-3">{g.sub}</p>

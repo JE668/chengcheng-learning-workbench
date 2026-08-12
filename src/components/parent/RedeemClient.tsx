@@ -82,7 +82,7 @@ export function RedeemClient({ childId }: { childId: number }) {
         <div className="flex flex-col md:flex-row gap-3">
           <input value={reward} onChange={e => setReward(e.target.value)} className="flex-1 rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none" />
           <input type="number" value={cost} onChange={e => setCost(Number(e.target.value))} className="w-24 rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none" />
-          <button onClick={create} className="btn-magic bg-moko-rose text-white">发放</button>
+          <button onClick={create} className="btn btn-primary">发放</button>
         </div>
         <div className="mt-3">
           <div className="text-xs text-gray-500 mb-1.5">快捷模板（点一下填好奖励名和积分）：</div>
@@ -116,12 +116,12 @@ export function RedeemClient({ childId }: { childId: number }) {
               </div>
               {w.status === 'pending' && (
                 <div className="flex gap-2">
-                  <button onClick={() => updateWish(w.id, 'approved')} className="btn-magic bg-moko-mint text-white text-sm">同意兑换目标</button>
-                  <button onClick={() => updateWish(w.id, 'fulfilled')} className="btn-magic bg-moko-gold text-white text-sm">已实现</button>
+                  <button onClick={() => updateWish(w.id, 'approved')} className="btn btn-mint text-sm">同意兑换目标</button>
+                  <button onClick={() => updateWish(w.id, 'fulfilled')} className="btn btn-gold text-sm">已实现</button>
                 </div>
               )}
               {w.status === 'approved' && (
-                <button onClick={() => updateWish(w.id, 'fulfilled')} className="btn-magic bg-moko-gold text-white text-sm">已实现</button>
+                <button onClick={() => updateWish(w.id, 'fulfilled')} className="btn btn-gold text-sm">已实现</button>
               )}
             </div>
           );
@@ -139,8 +139,8 @@ export function RedeemClient({ childId }: { childId: number }) {
             </div>
             {r.status === 'pending' && (
               <div className="flex gap-2">
-                <button onClick={() => update(r.id, 'approved')} className="btn-magic bg-moko-mint text-white text-sm">通过</button>
-                <button onClick={() => update(r.id, 'rejected')} className="btn-magic bg-gray-300 text-white text-sm">拒绝</button>
+                <button onClick={() => update(r.id, 'approved')} className="btn btn-mint text-sm">通过</button>
+                <button onClick={() => update(r.id, 'rejected')} className="btn bg-gray-300 text-white text-sm">拒绝</button>
               </div>
             )}
           </div>

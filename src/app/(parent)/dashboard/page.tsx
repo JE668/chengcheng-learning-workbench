@@ -19,7 +19,7 @@ export default async function DashboardPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-6">
-        <h1 className="text-3xl font-black text-moko-violet">爸爸妈妈看板 📊</h1>
+        <h1 className="page-title">爸爸妈妈看板 📊</h1>
         <ChildSwitcher />
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -36,7 +36,7 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <h2 className="text-xl font-black text-moko-violet mb-3">🏰 萌可城堡（学习联动）</h2>
+      <h2 className="section-title mb-3">🏰 萌可城堡（学习联动）</h2>
       <ParentCastlePanel />
 
       <div className="card-moko mt-6">

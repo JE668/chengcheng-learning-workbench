@@ -37,7 +37,7 @@ export function CharacterModule() {
         if (!items.length) return null;
         return (
           <section key={cat}>
-            <h2 className="text-xl font-black text-moko-violet mb-3">✏️ {cat}</h2>
+            <h2 className="section-title mb-3">✏️ {cat}</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {items.map((c) => (
                 <CharacterCard key={c.char} item={c} />
@@ -55,7 +55,7 @@ function PoemCard({ item }: { item: PoemItem }) {
   return (
     <div className="rounded-2xl p-5 bg-gradient-to-br from-moko-purple/20 to-moko-pink/20 shadow-lg border-2 border-moko-purple/20">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xl font-black text-moko-violet">{item.title}</h3>
+        <h3 className="section-title">{item.title}</h3>
         <span className="text-xs text-gray-500">{item.author}</span>
       </div>
       <p className="text-lg leading-loose text-gray-700 font-medium">
@@ -66,7 +66,7 @@ function PoemCard({ item }: { item: PoemItem }) {
           </span>
         ))}
       </p>
-      <button onClick={() => speakZh(item.lines.join(''))} className="mt-3 btn-magic bg-moko-purple text-white text-sm">
+      <button onClick={() => speakZh(item.lines.join(''))} className="mt-3 btn btn-violet text-sm">
         🔊 朗读古诗
       </button>
     </div>

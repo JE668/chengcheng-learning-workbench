@@ -66,7 +66,7 @@ export function StrokeRadicalModule() {
         </div>
       </section>
       <section>
-        <h2 className="text-xl font-black text-moko-violet mb-1">🧩 常用偏旁部首</h2>
+        <h2 className="section-title mb-1">🧩 常用偏旁部首</h2>
         <p className="text-sm text-gray-500 mb-3">认识偏旁，认字更快哦！</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
           {RADICALS.map((r) => (

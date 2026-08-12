@@ -40,7 +40,7 @@ export default async function ParentCertPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-        <h1 className="text-3xl font-black text-moko-violet">奖状颁发 🎖️</h1>
+        <h1 className="page-title">奖状颁发 🎖️</h1>
         <ChildSwitcher />
       </div>
 
@@ -52,7 +52,7 @@ export default async function ParentCertPage() {
       <div className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-purple/20 mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-black text-moko-violet">奖状预览</h2>
-          <PrintButton className="btn-magic bg-moko-gold text-white text-sm" />
+          <PrintButton className="btn btn-gold text-sm" />
         </div>
         <Certificate data={data} editable={false} initialPref={initialPref} />
       </div>

@@ -29,7 +29,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-moko-pink via-moko-purple to-moko-violet">
       <div className="bg-white rounded-[2.5rem] shadow-2xl p-8 md:p-12 w-full max-w-md text-center">
         <img src="/moko/lemei.jpg" alt="乐美" className="w-28 h-28 rounded-full border-4 border-moko-pink shadow mx-auto mb-4 object-cover" />
-        <h1 className="text-3xl font-black text-moko-violet mb-2">程程学习工作台</h1>
+        <h1 className="page-title mb-2">程程学习工作台</h1>
         <p className="text-gray-500 mb-6">和奇妙萌可一起学习吧 ✨</p>
         <form onSubmit={submit} className="space-y-4">
           <input

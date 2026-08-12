@@ -242,7 +242,7 @@ export default function StoryPage() {
       <div className="flex items-center gap-3 mb-4">
         <Link href="/games" className="text-moko-violet font-bold hover:underline">‹ 游戏乐园</Link>
       </div>
-      <h1 className="text-3xl font-black text-moko-violet mb-2">📜 萌可剧情</h1>
+      <h1 className="page-title mb-2">📜 萌可剧情</h1>
       <p className="text-gray-600 mb-2">
         跟着乐美公主的领航故事，一集一集认识并捕捉萌可。已捕捉
         <span className="font-black text-moko-rose"> {progress.captured.length} </span>/ {progress.total} 只。

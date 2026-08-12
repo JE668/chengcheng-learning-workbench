@@ -58,7 +58,7 @@ export default function CertRequestButton({ initialStatus }: { initialStatus: St
       <button
         onClick={apply}
         disabled={busy}
-        className="btn-magic bg-moko-rose text-white disabled:opacity-60"
+        className="btn btn-primary disabled:opacity-60"
       >
         {busy ? '提交中…' : '🎖️ 申请颁发奖状'}
       </button>

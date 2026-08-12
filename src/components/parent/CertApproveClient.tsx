@@ -36,14 +36,14 @@ export default function CertApproveClient({
           <button
             onClick={() => decide('approved')}
             disabled={busy}
-            className="btn-magic bg-moko-mint text-white text-sm disabled:opacity-60"
+            className="btn btn-mint text-sm disabled:opacity-60"
           >
             通过并颁发
           </button>
           <button
             onClick={() => decide('rejected')}
             disabled={busy}
-            className="btn-magic bg-gray-300 text-white text-sm disabled:opacity-60"
+            className="btn bg-gray-300 text-white text-sm disabled:opacity-60"
           >
             暂不通过
           </button>

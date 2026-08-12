@@ -40,13 +40,13 @@ export default function CoOpPage() {
   return (
     <div className="max-w-3xl mx-auto pb-28">
       <Link href="/" className="text-moko-violet font-black no-underline">‹ 返回首页</Link>
-      <h1 className="text-3xl font-black text-moko-violet mt-2 mb-1">萌可帮帮忙 🤝</h1>
+      <h1 className="page-title mt-2 mb-1">萌可帮帮忙 🤝</h1>
       <p className="text-gray-600 mb-6">和家里的兄弟姐妹一起学习、互相加油，学习更有劲！</p>
 
       {/* 家庭成员 */}
-      <h2 className="text-xl font-black text-moko-violet mb-3">👨‍👩‍👧 我的家庭成员</h2>
+      <h2 className="section-title mb-3">👨‍👩‍👧 我的家庭成员</h2>
       {loading ? (
-        <div className="card-moko text-center text-gray-500 py-4">加载中…</div>
+        <div className="card-moko text-center text-gray-500 py-4 flex flex-col items-center justify-center gap-2"><span className="moko-loader"><span></span><span></span><span></span></span>加载中…</div>
       ) : children.length === 0 ? (
         <div className="card-moko text-center text-gray-500 py-4">还没有添加其他小朋友，让爸爸妈妈在设置里加一个吧！</div>
       ) : (
@@ -68,7 +68,7 @@ export default function CoOpPage() {
       )}
 
       {/* 合作小任务 */}
-      <h2 className="text-xl font-black text-moko-violet mb-3">🎯 一起完成的合作任务</h2>
+      <h2 className="section-title mb-3">🎯 一起完成的合作任务</h2>
       <div className="space-y-3 mb-8">
         {COOP_TASKS.map((t) => (
           <Link

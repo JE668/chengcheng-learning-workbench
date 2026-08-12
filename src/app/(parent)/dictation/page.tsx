@@ -104,7 +104,7 @@ export default function DictationPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <Link href="/tasks" className="text-moko-violet font-black no-underline">‹ 返回任务</Link>
-      <h1 className="text-3xl font-black text-moko-violet mt-2 mb-1">布置听写 / 口算 📝</h1>
+      <h1 className="page-title mt-2 mb-1">布置听写 / 口算 📝</h1>
       <p className="text-gray-600 mb-4">选好科目和内容，孩子端会用语音读出来，写完点「会了/还不会」，不会的自动进错题本。</p>
 
       <div className="card-moko mb-4">

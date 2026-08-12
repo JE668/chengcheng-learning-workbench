@@ -33,7 +33,7 @@ export default function ParentCastlePanel() {
     await load(); router.refresh();
   }
 
-  if (!state) return <div className="card-moko text-center text-moko-violet">城堡数据加载中…</div>;
+  if (!state) return <div className="card-moko text-center text-moko-violet flex flex-col items-center justify-center gap-2"><span className="moko-loader"><span></span><span></span><span></span></span>城堡数据加载中…</div>;
 
   return (
     <div className="space-y-4">

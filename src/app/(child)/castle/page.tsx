@@ -70,7 +70,7 @@ export default function CastlePage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-3xl font-black text-moko-violet">🏰 萌可城堡</h1>
+        <h1 className="page-title">🏰 萌可城堡</h1>
         <div className="text-sm font-bold text-moko-rose">☀️ {state.sunlight} · ⭐ {state.starCoins} · 🛡️ {state.shieldEquipped}</div>
       </div>
 

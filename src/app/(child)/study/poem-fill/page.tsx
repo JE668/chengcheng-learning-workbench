@@ -129,7 +129,7 @@ export default function PoemFillPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <Link href="/study" className="text-moko-violet font-black no-underline">‹ 返回学习城堡</Link>
-      <h1 className="text-3xl font-black text-moko-violet mt-2 mb-1">古诗填空背诵 📜</h1>
+      <h1 className="page-title mt-2 mb-1">古诗填空背诵 📜</h1>
       <p className="text-gray-600 mb-4">
         把缺少的字从下方字卡里点出来补上，全部填对就能听萌可念整首诗啦！
       </p>

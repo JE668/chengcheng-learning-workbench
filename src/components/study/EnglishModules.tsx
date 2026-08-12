@@ -180,7 +180,7 @@ export function WordModule() {
     <div className="space-y-8">
       {Object.entries(EN_WORD_TOPICS).map(([topic, words]) => (
         <section key={topic}>
-          <h2 className="text-xl font-black text-moko-violet mb-3">📚 {topic}</h2>
+          <h2 className="section-title mb-3">📚 {topic}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {words.map((w) => (
               <WordCard key={w.word} item={w} />

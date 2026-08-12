@@ -81,7 +81,7 @@ export default function EyeRest() {
       {showSettings && !showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowSettings(false)}>
           <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-black text-moko-violet mb-3">👀 护眼休息提醒</h3>
+            <h3 className="section-title mb-3">👀 护眼休息提醒</h3>
             <p className="text-sm text-gray-500 mb-4">学习一会儿就让眼睛休息一下，保护视力～（20-20-20 法则：每 20 分钟，看 20 英尺外 20 秒）</p>
             <div className="flex items-center justify-between mb-4">
               <span className="font-bold text-moko-violet">提醒开关</span>
@@ -99,7 +99,7 @@ export default function EyeRest() {
                 ))}
               </div>
             </div>
-            <button onClick={() => { resetTimer(); setShowSettings(false); }} className="w-full btn-magic bg-moko-violet text-white">确定</button>
+            <button onClick={() => { resetTimer(); setShowSettings(false); }} className="w-full btn btn-violet">确定</button>
           </div>
         </div>
       )}

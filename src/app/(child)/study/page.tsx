@@ -41,7 +41,7 @@ const TOOLS = [
 export default function StudyPage() {
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-black text-moko-violet mb-2">学习城堡 📚</h1>
+      <h1 className="page-title mb-2">学习城堡 📚</h1>
       <p className="text-gray-600 mb-4">选择一个学科，开启今天的萌可学习冒险！</p>
       <MokoHelper
         subject="语文"
@@ -96,7 +96,7 @@ export default function StudyPage() {
       >
         <span className="text-5xl">📖</span>
         <div className="flex-1">
-          <h3 className="text-xl font-black text-moko-violet">电子课本 & 英语绘本</h3>
+          <h3 className="section-title">电子课本 & 英语绘本</h3>
           <p className="text-sm text-gray-600">一年级上册语文·数学课本，还有 RAZ 英语绘本跟读</p>
         </div>
         <span className="text-moko-violet font-black text-lg">打开 ›</span>

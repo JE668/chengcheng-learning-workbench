@@ -99,7 +99,7 @@ export default async function ReportsPage() {
     <div className="max-w-3xl mx-auto">
       <div className="no-print">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-          <h1 className="text-3xl font-black text-moko-violet">学习报告 📈</h1>
+          <h1 className="page-title">学习报告 📈</h1>
           <ChildSwitcher />
         </div>
 

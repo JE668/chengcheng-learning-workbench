@@ -57,12 +57,12 @@ export default function ShopPage() {
     await loadWishes();
   }
 
-  if (!state) return <div className="max-w-3xl mx-auto text-center py-20 text-moko-violet font-bold">商城加载中… ✨</div>;
+  if (!state) return <div className="max-w-3xl mx-auto flex flex-col items-center justify-center py-20 gap-3 text-moko-violet font-bold"><span className="moko-loader"><span></span><span></span><span></span></span>商城加载中… ✨</div>;
 
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-3xl font-black text-moko-violet">🛍️ 星星币商城</h1>
+        <h1 className="page-title">🛍️ 星星币商城</h1>
         <div className="text-sm font-bold text-moko-gold">⭐ {state.starCoins}</div>
       </div>
 
@@ -82,7 +82,7 @@ export default function ShopPage() {
             maxLength={100}
             className="flex-1 rounded-2xl border-2 border-moko-pink/30 px-4 py-2 text-sm focus:border-moko-pink outline-none"
           />
-          <button onClick={addWish} className="btn-magic bg-moko-rose text-white text-sm whitespace-nowrap">存进去 💰</button>
+          <button onClick={addWish} className="btn btn-primary text-sm whitespace-nowrap">存进去 💰</button>
         </div>
         <div className="space-y-2">
           {wishes.map((w) => {
@@ -114,7 +114,7 @@ export default function ShopPage() {
               {owned ? (
                 <span className="text-sm font-bold text-green-500">已拥有 ✓</span>
               ) : (
-                <button onClick={() => buy(s.key, s.cost)} disabled={!afford} className={`btn-magic text-white text-sm whitespace-nowrap ${afford ? 'bg-moko-gold' : 'bg-gray-300 cursor-not-allowed'}`}>⭐ {s.cost}</button>
+                <button onClick={() => buy(s.key, s.cost)} disabled={!afford} className={`btn text-white text-sm whitespace-nowrap ${afford ? 'btn-gold' : 'bg-gray-300 cursor-not-allowed'}`}>⭐ {s.cost}</button>
               )}
             </div>
           );

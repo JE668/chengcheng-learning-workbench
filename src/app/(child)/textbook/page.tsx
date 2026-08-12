@@ -9,7 +9,7 @@ export default function TextbookPage() {
       <div className="flex items-center gap-3 mb-4">
         <Link href="/study" className="text-moko-violet font-bold hover:underline">‹ 学习首页</Link>
       </div>
-      <h1 className="text-3xl font-black text-moko-violet mb-2">萌可课本 📖</h1>
+      <h1 className="page-title mb-2">萌可课本 📖</h1>
       <p className="text-gray-600 mb-4">和萌可一起，翻开真正的一年级上册课本，还能读 RAZ 英语绘本～</p>
 
       <MokoHelper

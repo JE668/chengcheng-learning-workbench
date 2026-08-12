@@ -98,7 +98,7 @@ export default function TasksPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-        <h1 className="text-3xl font-black text-moko-violet">学习任务 📝</h1>
+        <h1 className="page-title">学习任务 📝</h1>
         <div className="flex items-center gap-2">
           <Link href="/dictation" className="px-4 py-2 rounded-2xl bg-gradient-to-r from-moko-rose to-moko-pink text-white font-black shadow hover:scale-105 transition text-sm">🎤 布置听写/口算</Link>
           <ChildSwitcher />

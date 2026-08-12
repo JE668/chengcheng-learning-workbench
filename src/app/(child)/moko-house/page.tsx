@@ -58,7 +58,7 @@ export default function MokoHousePage() {
     <div className="max-w-4xl mx-auto">
       <Link href="/" className="text-moko-violet font-black no-underline">‹ 返回首页</Link>
       <div className="flex items-center justify-between mt-2 mb-1">
-        <h1 className="text-3xl font-black text-moko-violet">萌可小屋 🏠</h1>
+        <h1 className="page-title">萌可小屋 🏠</h1>
         <div className="flex gap-2">
           {THEMES.map((t) => (
             <button
@@ -79,7 +79,7 @@ export default function MokoHousePage() {
 
       <div className={`rounded-3xl p-6 shadow-xl border-2 border-white/50 bg-gradient-to-br ${theme.bg} min-h-[420px] flex flex-col`}>
         {loading ? (
-          <div className="flex-1 flex items-center justify-center text-moko-violet font-black">加载中…</div>
+          <div className="flex-1 flex items-center justify-center gap-2 text-moko-violet font-black"><span className="moko-loader"><span></span><span></span><span></span></span>加载中…</div>
         ) : owned.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <div className="text-6xl mb-3">🪺</div>

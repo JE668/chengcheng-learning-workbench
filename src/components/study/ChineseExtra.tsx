@@ -44,10 +44,10 @@ function TextCard({ item }: { item: TextItem }) {
   return (
     <div className="rounded-2xl p-5 bg-gradient-to-br from-moko-purple/15 to-moko-pink/15 shadow-lg border-2 border-moko-purple/20">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xl font-black text-moko-violet">
+        <h3 className="section-title">
           {item.emoji} {item.title}
         </h3>
-        <button onClick={() => speakZh(item.lines.join(''))} className="btn-magic bg-moko-purple text-white text-sm">
+        <button onClick={() => speakZh(item.lines.join(''))} className="btn btn-violet text-sm">
           🔊 读全文
         </button>
       </div>
