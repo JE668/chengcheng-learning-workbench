@@ -17,7 +17,8 @@ body {
 }
 
 .card-moko {
-  @apply bg-white rounded-3xl shadow-xl p-5 border-2 border-white/50;
+  @apply bg-white rounded-3xl p-5 border-2 border-white/50;
+  box-shadow: 0 12px 32px -14px rgba(168, 85, 247, 0.28), 0 4px 14px -10px rgba(15, 23, 42, 0.12);
 }
 
 /* ============ ✨ 通用交互与小组件（统一体验） ============ */
@@ -65,6 +66,47 @@ body {
   .max-w-4xl { max-width: min(72rem, 94vw); }   /* 默认 56rem → 1152px */
   /* 主内容区在两栏布局里多给一点横向呼吸（侧栏固定 256px 不变） */
   main { padding-left: max(2rem, env(safe-area-inset-left)); padding-right: max(2rem, env(safe-area-inset-right)); }
+}
+
+/* ============ ✨ 统一设计语言（精致化基建） ============ */
+
+/* 统一标题层级 */
+.page-title { @apply text-3xl font-black text-moko-violet; }
+.section-title { @apply text-xl font-black text-moko-violet; }
+.subtle { @apply text-sm text-gray-500; }
+
+/* 统一按钮：形状/手感一致，按色系区分 */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-extrabold shadow-lg transition transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
+}
+.btn-primary { @apply bg-gradient-to-r from-moko-pink to-moko-rose text-white; }
+.btn-gold { @apply bg-gradient-to-r from-moko-gold to-moko-yellow text-white; }
+.btn-violet { @apply bg-gradient-to-r from-moko-purple to-moko-violet text-white; }
+.btn-mint { @apply bg-gradient-to-r from-moko-mint to-moko-cyan text-white; }
+.btn-ghost { @apply bg-white text-moko-violet shadow; }
+
+/* 入场微动画：卡片/区块轻轻上浮淡入，提升质感 */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.fade-up { animation: fadeUp 0.5s ease-out both; }
+.fade-up-slow { animation: fadeUp 0.8s ease-out both; }
+
+/* 友好空状态 */
+.empty-state {
+  @apply flex flex-col items-center justify-center text-center py-12 px-6 text-gray-400;
+}
+.empty-state .es-emoji { @apply text-5xl mb-3; }
+.empty-state .es-title { @apply font-black text-moko-violet text-lg; }
+.empty-state .es-desc { @apply text-sm mt-1 max-w-xs; }
+
+/* 童趣柔和底纹（孩子端主区可选叠加） */
+.kids-bg {
+  background:
+    radial-gradient(circle at 12% 16%, rgba(255, 182, 246, 0.22), transparent 42%),
+    radial-gradient(circle at 88% 22%, rgba(165, 180, 252, 0.20), transparent 44%),
+    radial-gradient(circle at 50% 102%, rgba(255, 224, 178, 0.22), transparent 46%);
 }
 
 /* custom scrollbar (用于正文等需要的地方) */
