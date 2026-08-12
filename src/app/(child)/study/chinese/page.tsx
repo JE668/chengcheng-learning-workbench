@@ -15,6 +15,20 @@ export default function ChineseStudyPage() {
       <MokoHelper subject="语文" />
       <h1 className={`text-3xl font-black ${meta.color} mb-2`}>{meta.emoji} {meta.label}</h1>
       <p className="text-gray-600 mb-6">{meta.sub}</p>
+
+      <Link
+        href="/study/dictation"
+        className="block mb-6 rounded-3xl overflow-hidden shadow-xl border-2 border-moko-rose/30 bg-gradient-to-r from-moko-rose to-moko-pink hover:scale-[1.02] transition"
+      >
+        <div className="p-5 flex items-center gap-4">
+          <span className="text-4xl">🎧</span>
+          <div>
+            <div className="text-xl font-black text-white">自己听写</div>
+            <div className="text-sm text-white/80">选单元 · 听语音写一写 · 写错自动进复习本</div>
+          </div>
+        </div>
+      </Link>
+
       <div className="grid md:grid-cols-2 gap-5">
         {modules.map((m) => (
           <Link
