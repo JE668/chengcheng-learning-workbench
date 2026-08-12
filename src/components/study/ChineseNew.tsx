@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
+  CHAR_UNIT_OPTIONS,
   PINYIN_BLEND,
   READING_PASSAGES,
   SCHOOL_ITEMS,
   STROKE_ORDER_CHARS,
+  strokeOrderByChapter,
   type PinyinBlendItem,
 } from '@/lib/study-data';
 import { speakZh, speakPinyin, praise } from '@/lib/speak';
@@ -167,26 +169,57 @@ function StrokeOrderCard({ item, learned, onLearned }: { item: { char: string; p
 }
 
 export function StrokeOrderModule() {
+  const [chapter, setChapter] = useState(0); // 0 = 全册
   const [idx, setIdx] = useState(0);
   const [learned, setLearned] = useState<string[]>([]);
   const { record } = useModuleProgress('chinese', 'strokes-order');
-  const item = STROKE_ORDER_CHARS[idx % STROKE_ORDER_CHARS.length];
+  const chars = useMemo(() => strokeOrderByChapter(chapter), [chapter]);
+  const item = chars[idx % chars.length];
   function learn(char: string) {
     if (learned.includes(char)) return;
     const next = [...learned, char];
     setLearned(next);
     record(Math.min(3, Math.ceil(next.length / 7)));
   }
+  function pickChapter(c: number) {
+    setChapter(c);
+    setIdx(0);
+  }
   return (
     <div className="space-y-4">
-      <StrokeOrderCard item={item} learned={learned.includes(item.char)} onLearned={() => learn(item.char)} />
-      <div className="flex justify-center gap-3">
+      {/* 按课本单元挑字：和识字课文、家长听写用的是同一份生字表 */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
         <button
-          onClick={() => setIdx((i) => i - 1 + STROKE_ORDER_CHARS.length)}
+          onClick={() => pickChapter(0)}
+          className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition active:scale-95 ${
+            chapter === 0 ? 'bg-moko-rose text-white' : 'bg-white text-moko-rose border-2 border-moko-rose/40'
+          }`}
+        >
+          📚 全册 {STROKE_ORDER_CHARS.length} 字
+        </button>
+        {CHAR_UNIT_OPTIONS.filter((u) => u.count > 0).map((u) => (
+          <button
+            key={u.chapter}
+            onClick={() => pickChapter(u.chapter)}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition active:scale-95 ${
+              chapter === u.chapter ? 'bg-moko-rose text-white' : 'bg-white text-moko-rose border-2 border-moko-rose/40'
+            }`}
+          >
+            {u.emoji} 第{u.chapter}单元 {u.count}
+          </button>
+        ))}
+      </div>
+      <StrokeOrderCard item={item} learned={learned.includes(item.char)} onLearned={() => learn(item.char)} />
+      <div className="flex items-center justify-center gap-3">
+        <button
+          onClick={() => setIdx((i) => i - 1 + chars.length)}
           className="px-5 py-2 rounded-full bg-moko-pink/20 text-moko-rose font-bold text-sm active:scale-95 transition"
         >
           ‹ 上一个
         </button>
+        <span className="text-xs text-gray-400 font-bold">
+          {(idx % chars.length) + 1} / {chars.length}
+        </span>
         <button
           onClick={() => setIdx((i) => i + 1)}
           className="px-5 py-2 rounded-full bg-moko-pink/20 text-moko-rose font-bold text-sm active:scale-95 transition"

@@ -484,7 +484,11 @@ export function UnitModule() {
             >
               <span className="text-3xl">{u.emoji}</span>
               <span className="flex-1">
-                <span className="block text-sm text-gray-400">{u.unit}</span>
+                <span className="block text-sm text-gray-400">
+                  {u.unit}
+                  {u.extra ? <span className="ml-1 text-[10px] text-moko-yellow font-bold">拓展</span> : null}
+                  <span className="ml-1 text-[10px] text-gray-300">{words.length} 词</span>
+                </span>
                 <span className="block text-lg font-black text-moko-violet">{u.title}</span>
               </span>
               <span className="text-moko-yellow text-2xl">{isOpen ? '▾' : '▸'}</span>
