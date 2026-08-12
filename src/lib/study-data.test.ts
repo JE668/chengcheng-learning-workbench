@@ -199,3 +199,38 @@ describe('语文 · 多音字标注（altPinyin）', () => {
     }
   });
 });
+
+/* 合法的拼音：小写字母（含ü）+ 声调标注，不夹数字/空格。
+ * 用一个宽松但能挡住明显错值（空串、夹汉字、带空格）的正则。 */
+const PINYIN_RE = /^[a-züāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+$/;
+
+describe('语文 · 生字表结构校验（笔画/释义/拼音）', () => {
+  it('每个字的笔画数在 1–40 之间且为整数', () => {
+    for (const c of CHARACTERS) {
+      expect(Number.isInteger(c.strokeCount), `「${c.char}」笔画不是整数`).toBe(true);
+      expect(c.strokeCount >= 1 && c.strokeCount <= 40, `「${c.char}」笔画 ${c.strokeCount} 越界`).toBe(true);
+    }
+  });
+
+  it('每个字都有非空的释义', () => {
+    // 注意：具体名词（牛/羊/门…）的释义本就可以是单字本身，
+    // 这里只守住「绝不空着」这条硬底线，避免识字卡出现空白释义。
+    for (const c of CHARACTERS) {
+      expect(c.meaning.trim().length > 0, `「${c.char}」释义为空`).toBe(true);
+    }
+  });
+
+  it('主读音是合法拼音', () => {
+    for (const c of CHARACTERS) {
+      expect(PINYIN_RE.test(c.pinyin), `「${c.char}」主读音「${c.pinyin}」非法`).toBe(true);
+    }
+  });
+
+  it('多音字的 altPinyin 也是合法拼音', () => {
+    for (const c of CHARACTERS) {
+      if (c.altPinyin) {
+        expect(PINYIN_RE.test(c.altPinyin), `「${c.char}」altPinyin「${c.altPinyin}」非法`).toBe(true);
+      }
+    }
+  });
+});
