@@ -161,7 +161,7 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
     );
     await getDb().execute({
       sql: 'INSERT INTO daily_practice (child_id, day, completed, correct, total, questions) VALUES (?, ?, 0, 0, ?, ?)',
-      args: [cid, today, questions.length, JSON.stringify(questions)],
+      args: [cid, today, 0, 0, questions.length, JSON.stringify(questions)],
     });
 
     const r1 = await submitPractice(cid, questions.map(() => 0));
