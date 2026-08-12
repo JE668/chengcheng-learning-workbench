@@ -381,18 +381,27 @@ export interface CompareItem {
   rightIcon: string;
 }
 
-export const COMPARE_QUESTIONS: CompareItem[] = [
-  { left: 3, right: 7, type: 'quantity', leftIcon: '🍎', rightIcon: '🍊' },
-  { left: 5, right: 2, type: 'quantity', leftIcon: '🐰', rightIcon: '🥕' },
-  { left: 6, right: 6, type: 'quantity', leftIcon: '⭐', rightIcon: '🌟' },
-  { left: 4, right: 9, type: 'quantity', leftIcon: '🍰', rightIcon: '🍭' },
-  { left: 8, right: 3, type: 'quantity', leftIcon: '🚗', rightIcon: '🚕' },
-  { left: 10, right: 1, type: 'quantity', leftIcon: '🍓', rightIcon: '🫐' },
-  { left: 2, right: 5, type: 'quantity', leftIcon: '🌸', rightIcon: '🌻' },
-  { left: 7, right: 7, type: 'quantity', leftIcon: '🐱', rightIcon: '🐶' },
-  { left: 9, right: 4, type: 'quantity', leftIcon: '🍇', rightIcon: '🍉' },
-  { left: 1, right: 8, type: 'quantity', leftIcon: '🦋', rightIcon: '🐝' },
+// 比较用的可爱图标池（左右随机取不同图标，避免混淆）
+const COMPARE_ICONS = [
+  '🍎', '🍊', '🐰', '🥕', '⭐', '🌟', '🍰', '🍭', '🚗', '🚕',
+  '🍓', '🫐', '🌸', '🌻', '🐱', '🐶', '🍇', '🍉', '🦋', '🐝',
+  '🍌', '🐻', '🍩', '🐥', '🌈', '🍒', '🐸', '🍑', '🐢', '🐟',
 ];
+
+/**
+ * 随机生成一道「比多少」题：左右各 1~10 个、图标随机且不重复。
+ * 替代原先写死的 10 题（循环几轮就重复），每次点开/答对都换新的。
+ */
+export function makeCompareQuestion(): CompareItem {
+  const pool = [...COMPARE_ICONS];
+  const li = Math.floor(Math.random() * pool.length);
+  const leftIcon = pool.splice(li, 1)[0];
+  const ri = Math.floor(Math.random() * pool.length);
+  const rightIcon = pool.splice(ri, 1)[0];
+  const left = Math.floor(Math.random() * 10) + 1;
+  const right = Math.floor(Math.random() * 10) + 1;
+  return { left, right, type: 'quantity', leftIcon, rightIcon };
+}
 
 export interface ShapeItem {
   name: string;

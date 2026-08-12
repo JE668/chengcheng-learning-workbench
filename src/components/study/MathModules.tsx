@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import {
   NUMBER_SENSE,
-  COMPARE_QUESTIONS,
   SHAPES,
   ANGLES,
   makeMathQuestions,
+  makeCompareQuestion,
   type AngleItem,
   type CompareItem,
   type MathQuestion,
@@ -34,9 +34,8 @@ export function NumberSenseModule() {
 
 /* ---------- 比较大小 / 多少 ---------- */
 export function CompareModule() {
-  const [idx, setIdx] = useState(0);
+  const [q, setQ] = useState<CompareItem>(() => makeCompareQuestion());
   const [result, setResult] = useState<'idle' | 'right' | 'wrong'>('idle');
-  const q: CompareItem = COMPARE_QUESTIONS[idx];
   const logM = useMistakeLogger();
 
   function pick(ans: '>' | '<' | '=') {
@@ -44,12 +43,14 @@ export function CompareModule() {
     const ok = ans === correct;
     setResult(ok ? 'right' : 'wrong');
     speakZh(ok ? '答对啦！' : '再想想看～');
-    if (ok)
+    if (ok) {
       setTimeout(() => {
         setResult('idle');
-        setIdx((i) => (i + 1) % COMPARE_QUESTIONS.length);
+        setQ(makeCompareQuestion());
       }, 1200);
-    else logM({ subject: '数学', kind: '比较大小', prompt: `${q.left} ? ${q.right}`, answer: correct, wrong: ans });
+    } else {
+      logM({ subject: '数学', kind: '比较大小', prompt: `${q.left} ? ${q.right}`, answer: correct, wrong: ans });
+    }
   }
 
   return (
