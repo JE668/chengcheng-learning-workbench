@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { CHARACTERS, ALL_EN_WORDS, SPLITS } from '@/lib/study-data';
+import { CHARACTERS, ALL_EN_WORDS, SPLITS, GRADE1_CHAR_UNITS } from '@/lib/study-data';
 
 type Mode = 'char' | 'math' | 'en';
 
@@ -40,6 +40,7 @@ function genMath(n: number): Item[] {
 export default function DictationPage() {
   const [mode, setMode] = useState<Mode>('char');
   const [manual, setManual] = useState('');
+  const [unit, setUnit] = useState(''); // 按单元听写（语文）
   const [count, setCount] = useState(5);
   const [title, setTitle] = useState('');
   const [points, setPoints] = useState(5);
@@ -53,6 +54,15 @@ export default function DictationPage() {
     if (mode === 'math') return genMath(count);
     const lines = manual.split('\n').map((s) => s.trim()).filter(Boolean);
     if (mode === 'char') {
+      // 按单元一键听写：取该单元词语（无词语则用生字）
+      if (unit) {
+        const u = GRADE1_CHAR_UNITS.find((x) => x.unit === unit);
+        if (u) {
+          const list = u.words.length ? u.words : u.chars;
+          const picked = list.slice(0, count);
+          return picked.map((w) => ({ prompt: w, answer: w, kind: 'char' }));
+        }
+      }
       if (lines.length) return lines.map((w) => ({ prompt: w, answer: w, kind: 'char' }));
       return rand(CHARACTERS, count).map((c) => ({ prompt: c.char, answer: c.char, kind: 'char' }));
     }
@@ -112,7 +122,7 @@ export default function DictationPage() {
           {(Object.keys(MODE_META) as Mode[]).map((m) => (
             <button
               key={m}
-              onClick={() => { setMode(m); setPreview([]); }}
+              onClick={() => { setMode(m); setPreview([]); setUnit(''); }}
               className={`flex-1 py-3 rounded-2xl font-black ${mode === m ? 'bg-moko-violet text-white' : 'bg-white text-moko-violet border-2 border-moko-purple/20'}`}
             >
               {MODE_META[m].label}
@@ -130,6 +140,29 @@ export default function DictationPage() {
             placeholder={meta.placeholder}
             className="w-full rounded-2xl border-2 border-moko-purple/20 p-3 text-moko-violet font-bold"
           />
+        )}
+
+        {mode === 'char' && (
+          <div className="mt-3">
+            <label className="text-sm font-bold text-moko-violet">
+              按单元一键听写：
+              <select
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                className="ml-2 rounded-xl border-2 border-moko-purple/20 px-3 py-2 text-moko-violet font-bold bg-white"
+              >
+                <option value="">不按单元（手动 / 随机）</option>
+                {GRADE1_CHAR_UNITS.map((u) => (
+                  <option key={u.unit} value={u.unit}>
+                    {u.unit}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="text-xs text-gray-400 mt-1">
+              选好单元后点「随机生成」，自动按该单元生字/词语布置听写，和课本进度对齐～
+            </p>
+          </div>
         )}
 
         <div className="flex items-center gap-3 mt-3 flex-wrap">
