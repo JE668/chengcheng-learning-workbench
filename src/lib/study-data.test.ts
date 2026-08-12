@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   CHARACTERS,
+  CHINESE_UNITS,
   EN_UNITS,
   EN_WORD_TOPICS,
   GRADE1_CHAR_UNITS,
@@ -139,6 +140,34 @@ describe('数学 · 课本单元与练习模块对齐', () => {
   it('每个数学模块至少归到一个单元，别有练习被漏掉', () => {
     const used = new Set(MATH_UNITS.flatMap((u) => u.moduleKeys));
     for (const k of mathKeys) {
+      expect(used.has(k), `模块「${k}」没归入任何课本单元`).toBe(true);
+    }
+  });
+});
+
+describe('语文 · 课本单元与练习模块对齐', () => {
+  const src = readFileSync(resolve(process.cwd(), 'src/lib/study-modules.ts'), 'utf8');
+  const chineseBlock = src.slice(src.indexOf("  chinese: ["), src.indexOf('\n  ],', src.indexOf('  chinese: [')));
+  const chineseKeys = Array.from(chineseBlock.matchAll(/key: '(.+?)'/g)).map((m) => m[1]);
+
+  it('单元与 GRADE1_CHAR_UNITS 章节一一对应', () => {
+    const chapters = GRADE1_CHAR_UNITS.map((u) => u.chapter);
+    expect(CHINESE_UNITS.map((u) => u.chapter)).toEqual(chapters);
+  });
+
+  it('单元引用的模块 key 都真实存在', () => {
+    expect(chineseKeys.length).toBeGreaterThan(10);
+    for (const u of CHINESE_UNITS) {
+      expect(u.moduleKeys.length, `${u.unit} 没挂练习`).toBeGreaterThan(0);
+      for (const k of u.moduleKeys) {
+        expect(chineseKeys.includes(k), `第 ${u.chapter} 单元引用了不存在的模块「${k}」`).toBe(true);
+      }
+    }
+  });
+
+  it('每个语文模块至少归到一个单元，别有练习被漏掉', () => {
+    const used = new Set(CHINESE_UNITS.flatMap((u) => u.moduleKeys));
+    for (const k of chineseKeys) {
       expect(used.has(k), `模块「${k}」没归入任何课本单元`).toBe(true);
     }
   });

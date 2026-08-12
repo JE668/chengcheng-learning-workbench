@@ -1910,3 +1910,45 @@ export const MATH_UNITS: MathUnit[] = [
 export function mathUnitsOfModule(moduleKey: string): MathUnit[] {
   return MATH_UNITS.filter((u) => u.moduleKeys.includes(moduleKey));
 }
+
+/* ============================================================
+ * 语文 · 按课本单元对齐（与 MATH_UNITS 对称）
+ * ------------------------------------------------------------
+ * 语文模块不像数学那样天然「一单元 = 几个练习」，而是按主题组织
+ * （识字 / 拼音 / 阅读 各自一组模块）。这里按每个单元的「性质」把
+ * 相关模块归到该单元下，让「翻到课本第几单元 → 点开对应练习」也能
+ * 在语文侧一一对上。
+ * 有测试校验：每个 key 都真实存在，且所有语文模块都至少归到一个单元。
+ * ============================================================ */
+export interface ChineseUnit {
+  chapter: number;
+  unit: string; // 课本单元名（与 GRADE1_CHAR_UNITS 对应）
+  emoji: string;
+  goal: string; // 这一单元要掌握什么（取单元导语）
+  moduleKeys: string[];
+}
+
+const CHAR_LESSON: string[] = [
+  'lessons', 'characters', 'quiz', 'word-form', 'strokes-order', 'trace',
+  'strokes', 'sentence', 'school-prep', 'my-day',
+];
+const PINYIN_LESSON: string[] = ['pinyin', 'pinyin-blend', 'characters'];
+const READ_LESSON: string[] = ['texts', 'textchars', 'reading', 'finger-read', 'quiz', 'poems', 'poem-fun'];
+
+/** 由 GRADE1_CHAR_UNITS 派生：按单元性质挑出相关模块 key */
+function deriveChineseUnits(): ChineseUnit[] {
+  return GRADE1_CHAR_UNITS.map((u) => {
+    let keys: string[];
+    if (u.unit.startsWith('汉语拼音')) keys = PINYIN_LESSON;
+    else if (u.unit.startsWith('阅读')) keys = READ_LESSON;
+    else keys = CHAR_LESSON; // 我上学了 / 识字（一）（二）
+    return { chapter: u.chapter, unit: u.unit, emoji: u.emoji, goal: u.text, moduleKeys: keys };
+  });
+}
+
+export const CHINESE_UNITS: ChineseUnit[] = deriveChineseUnits();
+
+/** 某个语文模块归属的课本单元（模块页上标「课本第几单元」用） */
+export function chineseUnitsOfModule(moduleKey: string): ChineseUnit[] {
+  return CHINESE_UNITS.filter((u) => u.moduleKeys.includes(moduleKey));
+}
