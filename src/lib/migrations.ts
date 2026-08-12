@@ -36,7 +36,8 @@ export const MIGRATIONS: Migration[] = [
     name: 'idx_hot_query_columns',
     up: async (db) => {
       await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_daily_checkins_child_day ON daily_checkins(child_id, day)', args: [] });
-      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_completions_child_day ON completions(child_id, day)', args: [] });
+      // completions 用 created_at（DATETIME）存时间，按天统计时由 DATE(created_at,'localtime') 派生，故索引落到 created_at
+      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_completions_child_created ON completions(child_id, created_at)', args: [] });
       await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_daily_practice_child_day ON daily_practice(child_id, day)', args: [] });
     },
   },
