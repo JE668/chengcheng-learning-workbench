@@ -165,6 +165,14 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
     });
 
     const r1 = await submitPractice(cid, questions.map(() => 0));
+    // eslint-disable-next-line no-console
+    console.log('R1', JSON.stringify(r1));
+    const chk = await getDb().execute({
+      sql: 'SELECT subject, status FROM daily_checkins WHERE child_id = ? AND day = ?',
+      args: [cid, today],
+    });
+    // eslint-disable-next-line no-console
+    console.log('CHK', cid, today, JSON.stringify(chk.rows));
     expect(r1.ok).toBe(true);
     expect(r1.completed).toBe(true);
     expect((await readCastle(cid)).starCoins).toBe(10); // 里程碑 +10
