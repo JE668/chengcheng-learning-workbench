@@ -204,7 +204,7 @@ export default async function ReportsPage() {
           resolvedCount,
           mokoCount,
           earnedBadges: earnedBadges.map((b) => ({ emoji: b.emoji, name: b.name })),
-          date: fmt(now),
+          date: dateStr(now),
         }}
         editable={false}
         initialPref={initialPref}
