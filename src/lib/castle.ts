@@ -1,6 +1,7 @@
 import { getDb } from './db';
 import { dateStr, addDays } from './date';
 import { mokoCollection, COLLECTIBLE_MOKO_NAMES } from './moko-collection';
+import { COST_SPRAY, COST_SHIELD } from './economy';
 import {
   mokoChars,
   subjectMokoKey,
@@ -364,14 +365,14 @@ export async function buy(childId: number, itemKey: string) {
   await ensureCastle(childId);
   const row = await getRow(childId);
   if (itemKey === 'spray') {
-    const cost = 5;
+    const cost = COST_SPRAY;
     if (Number(row?.sunlight ?? 0) < cost) return { ok: false, message: '阳光能量不足' };
     await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight - ? WHERE child_id = ?', args: [cost, childId] });
     await db.execute({ sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1', args: [childId, 'spray'] });
     return { ok: true, message: '购买魔法喷雾成功！' };
   }
   if (itemKey === 'shield') {
-    const cost = 10;
+    const cost = COST_SHIELD;
     const streak = await computeStreak(childId, dateStr());
     if (streak < SHIELD_STREAK_REQ) return { ok: false, message: `需连续打卡 ${SHIELD_STREAK_REQ} 天才能兑换护盾（当前 ${streak} 天）` };
     if (Number(row?.sunlight ?? 0) < cost) return { ok: false, message: '阳光能量不足' };

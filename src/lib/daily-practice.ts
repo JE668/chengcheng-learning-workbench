@@ -5,6 +5,7 @@ import { mokoChars, subjectMokoKey, SUN_PER_SUBJECT } from './moko';
 import { mokoCollection } from './moko-collection';
 import { getDueMistakes, reviewMistake, type MistakeRow } from './mistakes';
 import { dateStr, addDays } from './date';
+import { MILESTONE_DAYS } from './economy';
 import type { Subject } from './types';
 
 /**
@@ -12,8 +13,8 @@ import type { Subject } from './types';
  * 设计意图：前期密集奖赏帮孩子建立习惯——第 2~7 天几乎每天解锁一只新萌可，
  * 之后间隔逐步拉开（10/14/21…90），形成「衰减奖励曲线」，既容易上手又不至于一次发完。
  * 注意：三科全对当天本就会各召唤一只学科萌可（爱心/正正/唱唱），这里的里程碑是「额外惊喜」。
+ * 常量值集中在 src/lib/economy.ts（MILESTONE_DAYS）。
  */
-export const MILESTONE_DAYS = [2, 3, 4, 5, 6, 7, 10, 14, 21, 30, 45, 60, 90];
 
 /* ----------------------------- 题型定义 ----------------------------- */
 export type PracticeQuestion =

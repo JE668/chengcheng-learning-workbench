@@ -311,14 +311,13 @@ export const games: {
 
 /** 萌可成长时长（分钟级，便于孩子体验，可在设置里调整） */
 export const GROWTH_MIN = { settled: 10, playing: 30, friend: 60 };
-/** 成为好朋友后每日可收获的星星币 */
-export const STAR_PER_FRIEND = 5;
-/** 单科打卡奖励 */
-export const SUN_PER_SUBJECT = 1;
-/** 集齐三科额外繁荣度 */
-export const PROSPERITY_BONUS = 5;
-/** 护盾兑换所需连续打卡天数 */
-export const SHIELD_STREAK_REQ = 3;
+// 经济常量已统一收口到 src/lib/economy.ts（单一事实来源），此处再导出以保持兼容。
+export {
+  STAR_PER_FRIEND,
+  SUN_PER_SUBJECT,
+  PROSPERITY_BONUS,
+  SHIELD_STREAK_REQ,
+} from './economy';
 
 /** 魔法商店（阳光能量消费） */
 export const magicShop = [
