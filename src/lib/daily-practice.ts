@@ -143,8 +143,8 @@ function genPinyinQ(): PracticeQuestion {
   const t = randInt(1, 4);
   const han = tones[t - 1];
   // 选项去重（保留互异字符串），answer 下标基于去重后的 options，确保唯一正确项
-  const options = shuffle([...new Set(marked)]);
-  const answer = options.indexOf(han);
+  const options = shuffle(Array.from(new Set(marked)));
+  const answer = options.indexOf(marked[t - 1]);
   return {
     id: `py-${base}-${t}`,
     kind: 'pinyin',
