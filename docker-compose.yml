@@ -12,6 +12,8 @@ services:
       - HOSTNAME=0.0.0.0
       # 时区：避免容器内默认 UTC 导致 dateStr()（本地时间）算出的「今天」与北京时间差一天
       - TZ=Asia/Shanghai
+      # 定时结算鉴权密钥（见 .env 的 CRON_SECRET）；compose 会自动用同目录 .env 注入
+      - CRON_SECRET=${CRON_SECRET}
       - TURSO_URL=file:/data/local.db
       # 如改用 Turso 云端（可选，非必须），取消下面两行并删掉上面的本地 TURSO_URL：
       # - TURSO_URL=libsql://xxxx.turso.io
