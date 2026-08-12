@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
+import { safeJson } from '@/lib/safe-json';
 import { getChildTasks, setChildTask, getModuleProgressAll } from '@/lib/progress-store';
 import { getDb } from '@/lib/db-core';
 import { MOKO_TASKS } from '@/lib/moko-tasks';
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
 
   let body: { key?: string; done?: boolean };
   try {
-    body = await req.json();
+    body = await safeJson(req, {});
   } catch {
     return NextResponse.json({ error: '请求格式错误' }, { status: 400 });
   }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { safeJson } from '@/lib/safe-json';
 import { getCurrentUser } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'parent') return NextResponse.json({ error: '无权限' }, { status: 403 });
-  const { title, subject, description, points } = await req.json();
+  const { title, subject, description, points } = await safeJson(req, {});
   const db = getDb();
   await db.execute({
     sql: 'INSERT INTO tasks (title, subject, description, points, created_by) VALUES (?, ?, ?, ?, ?)',

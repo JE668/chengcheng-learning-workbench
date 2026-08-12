@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { safeJson } from '@/lib/safe-json';
 import { getCurrentUser, hashPassword } from '@/lib/auth';
 
 const MIN_PASSWORD_LEN = 4;
@@ -8,7 +9,7 @@ export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'parent') return NextResponse.json({ error: '无权限' }, { status: 403 });
 
-  const { childUsername, newPassword } = await req.json();
+  const { childUsername, newPassword } = await safeJson(req, {});
   if (!childUsername || typeof childUsername !== 'string') {
     return NextResponse.json({ error: '缺少孩子用户名' }, { status: 400 });
   }

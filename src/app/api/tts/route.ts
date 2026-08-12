@@ -31,6 +31,7 @@
  * ───────────────────────────────────────────────────────────────────────────
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { safeJson } from '@/lib/safe-json';
 import { createHash } from 'node:crypto';
 import WebSocket from 'ws';
 
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
   let rate = '';
   let pause = 0;
   try {
-    const body = await req.json();
+    const body = await safeJson(req, {});
     text = typeof body.text === 'string' ? body.text : '';
     lang = body.lang === 'en' ? 'en' : 'zh';
     if (typeof body.rate === 'string' && body.rate.trim()) rate = body.rate.trim();

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { safeJson } from '@/lib/safe-json';
 import { getCurrentUser } from '@/lib/auth';
 import { getChapter } from '@/lib/story';
 
@@ -8,7 +9,7 @@ export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'child') return NextResponse.json({ error: '无权限' }, { status: 403 });
 
-  const { chapterId } = await req.json();
+  const { chapterId } = await safeJson(req, {});
   const chapter = getChapter(chapterId);
   if (!chapter) return NextResponse.json({ error: '章节不存在' }, { status: 404 });
 

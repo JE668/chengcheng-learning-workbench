@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
+import { safeJson } from '@/lib/safe-json';
 import { getDb } from '@/lib/db';
 
 // 保存当前孩子的奖状自定义（萌可 + 主题），存到 users.cert_pref。
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
   }
   let body: { mokoKey?: string; theme?: string } = {};
   try {
-    body = await req.json();
+    body = await safeJson(req, {});
   } catch {
     /* ignore */
   }

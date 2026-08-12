@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { safeJson } from '@/lib/safe-json';
 import { getCurrentUser } from '@/lib/auth';
 import { getChildId } from '@/lib/db';
 
@@ -9,7 +10,7 @@ export async function PATCH(req: NextRequest) {
   if (!user || user.role !== 'parent') return NextResponse.json({ error: '无权限' }, { status: 403 });
 
   const childId = (await getChildId(user)) ?? 0;
-  const { id, status } = await req.json();
+  const { id, status } = await safeJson(req, {});
   if (!id || (status !== 'approved' && status !== 'rejected')) {
     return NextResponse.json({ error: '参数错误' }, { status: 400 });
   }

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, getChildPoints } from '@/lib/db';
+import { safeJson } from '@/lib/safe-json';
 import { getCurrentUser } from '@/lib/auth';
 import { dateStr, LOCAL_DAY_COL } from '@/lib/date';
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'child') return NextResponse.json({ error: '无权限' }, { status: 403 });
-  const { gameId, score } = await req.json();
+  const { gameId, score } = await safeJson(req, {});
   const points = Math.max(0, Math.floor(Number(score) || 0));
   if (!gameId) return NextResponse.json({ error: '缺少游戏标识' }, { status: 400 });
 

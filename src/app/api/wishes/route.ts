@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, getChildId } from '@/lib/db';
+import { safeJson } from '@/lib/safe-json';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 
 /** 列出当前孩子（家长=选中的孩子）的愿望清单 */
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
   if (user.role !== 'child' && user.role !== 'parent') return NextResponse.json({ error: '无权限' }, { status: 403 });
   let text = '';
   try {
-    const body = await req.json();
+    const body = await safeJson(req, {});
     text = typeof body.text === 'string' ? body.text : '';
   } catch {
     return NextResponse.json({ error: 'invalid body' }, { status: 400 });
@@ -47,7 +48,7 @@ export async function PATCH(req: NextRequest) {
   let id = 0;
   let status = '';
   try {
-    const body = await req.json();
+    const body = await safeJson(req, {});
     id = Number(body.id);
     status = typeof body.status === 'string' ? body.status : '';
   } catch {

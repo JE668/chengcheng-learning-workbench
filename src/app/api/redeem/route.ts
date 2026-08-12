@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, getChildPoints, getChildId } from '@/lib/db';
+import { safeJson } from '@/lib/safe-json';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 
 export async function GET() {
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
   let rewardName: unknown;
   let cost: unknown;
   try {
-    const body = await req.json();
+    const body = await safeJson(req, {});
     rewardName = body?.rewardName;
     cost = body?.cost;
   } catch {
@@ -61,7 +62,7 @@ export async function PATCH(req: NextRequest) {
   if (!user || user.role !== 'parent') return NextResponse.json({ error: '无权限' }, { status: 403 });
   const childId = await resolveChildId(user);
   if (!childId) return NextResponse.json({ error: '没有孩子账号' }, { status: 404 });
-  const { id, status } = await req.json();
+  const { id, status } = await safeJson(req, {});
   const db = getDb();
   // 越权防护：只能审批自己孩子的兑换申请（按 child_id 收敛，而非任意 id）
   const res = await db.execute({

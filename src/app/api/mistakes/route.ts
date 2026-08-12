@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
+import { safeJson } from '@/lib/safe-json';
 import { getChildId, getDb } from '@/lib/db';
 
 function localDate(offset = 0): string {
@@ -33,7 +34,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'child') return NextResponse.json({ error: '只有孩子可以记录' }, { status: 403 });
-  const body = await req.json();
+  const body = await safeJson(req, {});
   const { subject, kind, prompt, answer, wrong, source_module, chapter } = body as {
     subject?: string; kind?: string; prompt?: string; answer?: string; wrong?: string;
     source_module?: string; chapter?: string;

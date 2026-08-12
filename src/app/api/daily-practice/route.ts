@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
+import { safeJson } from '@/lib/safe-json';
 import { getTodayPractice, submitPractice } from '@/lib/daily-practice';
 
 export const runtime = 'nodejs';
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
   if (!childId) return NextResponse.json({ error: '没有孩子账号' }, { status: 404 });
   let body: { answers?: number[] };
   try {
-    body = await req.json();
+    body = await safeJson(req, {});
   } catch {
     return NextResponse.json({ error: '请求格式错误' }, { status: 400 });
   }

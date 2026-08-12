@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { safeJson } from '@/lib/safe-json';
 import { getCurrentUser } from '@/lib/auth';
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
@@ -10,7 +11,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   // 越权防护：只能改自己创建的任务
   const own = await db.execute({ sql: 'SELECT 1 FROM tasks WHERE id = ? AND created_by = ?', args: [id, user.id] });
   if (!own.rows.length) return NextResponse.json({ error: '无权限' }, { status: 403 });
-  const { title, subject, description, points } = await req.json();
+  const { title, subject, description, points } = await safeJson(req, {});
   await db.execute({
     sql: 'UPDATE tasks SET title = ?, subject = ?, description = ?, points = ? WHERE id = ?',
     args: [title, subject, description || '', Number(points) || 5, id],
