@@ -153,12 +153,14 @@ function genMathQ(hard = false): PracticeQuestion {
   const isAdd = Math.random() < 0.6;
   let a: number, b: number, ans: number, prompt: string;
   if (isAdd) {
-    a = randInt(0, hard ? 20 : 12);
-    b = randInt(0, hard ? 20 : 12);
+    // 基础：10 以内；加难：20 以内
+    a = randInt(0, hard ? 20 : 10);
+    b = randInt(0, hard ? 20 : 10);
     ans = a + b;
     prompt = `${a} + ${b} = ?`;
   } else {
-    a = randInt(2, hard ? 30 : 18);
+    // 基础：10 以内减法；加难：20 以内减法
+    a = randInt(1, hard ? 20 : 10);
     b = randInt(0, a);
     ans = a - b;
     prompt = `${a} − ${b} = ?`;
@@ -181,8 +183,7 @@ function genMathQ(hard = false): PracticeQuestion {
   };
 }
 
-function genEnglishQ(): PracticeQuestion {
-  const w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
+function genEnglishQ(w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)]): PracticeQuestion {
   const distractors = shuffle(ALL_EN_WORDS.filter((x) => x.word !== w.word)).slice(0, 3);
   const options = shuffle([w, ...distractors]);
   const answer = options.indexOf(w);
@@ -291,19 +292,20 @@ async function generateQuestions(childId: number): Promise<PracticeQuestion[]> {
   } catch {
     /* 错题本还没建表/查询失败时，不影响正常出题 */
   }
-  // 语文：听写 10 题（听音选字）
-  for (let i = 0; i < 10; i++) qs.push(genDictationQ());
+  // 语文：听写 7 题（听音选字）+ 拼音 3 题（看字选声调），合计 10 题
+  for (let i = 0; i < 7; i++) qs.push(genDictationQ());
+  for (let i = 0; i < 3; i++) qs.push(genPinyinQ());
   // 数学：口算 10 题（选择，前 5 题基础、后 5 题加难）
   for (let i = 0; i < 5; i++) qs.push(genMathQ(false));
   for (let i = 0; i < 5; i++) qs.push(genMathQ(true));
-  // 英语：听音选词 5 题
+  // 英语：听音选词 5 题（按单词去重，避免同一单词在一天里重复出现）
   const usedEn = new Set<string>();
   for (let i = 0; i < 5; i++) {
     let w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
     let guard = 0;
     while (usedEn.has(w.word) && guard++ < 20) w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
     usedEn.add(w.word);
-    qs.push(genEnglishQ());
+    qs.push(genEnglishQ(w));
   }
   return qs;
 }

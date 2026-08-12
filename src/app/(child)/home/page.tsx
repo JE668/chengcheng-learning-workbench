@@ -83,7 +83,7 @@ export default async function HomePage() {
             </div>
           ) : (
             <Link href="/daily-practice" className="block text-center py-3 rounded-2xl bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black text-lg hover:scale-105 transition">
-              ▶ 开始今日一练（语文 3 + 数学 3 + 英语 3）
+              ▶ 开始今日一练（语文 · 数学 · 英语）
             </Link>
           )}
         </div>

@@ -74,17 +74,26 @@ export default function Nav({ user }: { user: User }) {
         </form>
       </aside>
 
-      {/* mobile bottom bar */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-gradient-to-r from-moko-purple to-moko-violet px-2 pb-2 pt-2 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
-        <div className="flex justify-around overflow-x-auto whitespace-nowrap">
-          {links.map((l) => (
-            <Link key={l.href} href={l.href} className={`flex flex-col items-center p-2 rounded-xl flex-shrink-0 ${pathname === l.href || pathname.startsWith(l.href + '/') ? 'bg-white text-moko-rose' : 'text-white/90'}`}>
-              <span className="text-2xl">{l.icon}</span>
-              <span className="text-xs font-bold">{l.label}</span>
-            </Link>
-          ))}
-          <form action="/api/auth/logout" method="POST" className="flex flex-col items-center p-2 text-white/90 flex-shrink-0">
-            <button className="flex flex-col items-center"><span className="text-2xl">🚪</span><span className="text-xs font-bold">退出</span></button>
+      {/* mobile bottom bar：图标化，加大触控区，激活态更清晰 */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-gradient-to-r from-moko-purple to-moko-violet px-2 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
+        <div className="flex gap-1 overflow-x-auto no-scrollbar">
+          {links.map((l) => {
+            const active = pathname === l.href || pathname.startsWith(l.href + '/');
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                aria-label={l.label}
+                className={`flex flex-col items-center justify-center flex-shrink-0 w-14 py-1.5 rounded-2xl transition tap ${active ? 'bg-white text-moko-rose shadow' : 'text-white/90 hover:bg-white/15'}`}
+              >
+                <span className="text-2xl leading-none">{l.icon}</span>
+              </Link>
+            );
+          })}
+          <form action="/api/auth/logout" method="POST" className="flex-shrink-0">
+            <button aria-label="退出" className="flex flex-col items-center justify-center w-14 py-1.5 rounded-2xl text-white/90 hover:bg-white/15 tap">
+              <span className="text-2xl leading-none">🚪</span>
+            </button>
           </form>
         </div>
       </nav>

@@ -95,7 +95,12 @@ export default function DailyPracticePage() {
   }, [allAnswered, selected]);
 
   if (loading) {
-    return <div className="max-w-2xl mx-auto p-10 text-center text-moko-violet font-bold">萌可正在准备今天的练习…</div>;
+    return (
+      <div className="max-w-2xl mx-auto p-10 flex flex-col items-center gap-3 text-moko-violet font-bold">
+        <span className="moko-loader"><span></span><span></span><span></span></span>
+        <span>萌可正在准备今天的练习…</span>
+      </div>
+    );
   }
 
   // 已完成（当天）
