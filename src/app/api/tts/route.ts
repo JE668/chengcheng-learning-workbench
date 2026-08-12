@@ -107,8 +107,8 @@ export async function POST(req: NextRequest) {
   if (!text.trim()) return NextResponse.json({ error: 'missing text' }, { status: 400 });
   // 防止超长文本把微软接口/内存打爆
   if (text.length > 500) text = text.slice(0, 500);
-  // 未指定则按语言给一个适合一年级小朋友的偏慢语速
-  if (!rate) rate = lang === 'en' ? '-20%' : '-20%';
+  // 未指定则按语言给一个适合一年级小朋友的偏慢、清晰的语速
+  if (!rate) rate = lang === 'en' ? '-35%' : '-35%';
 
   try {
     // 协议第 2~3 步：取动态安全令牌，并拼出带令牌的 WebSocket 握手地址。

@@ -64,12 +64,12 @@ function toEdgeRate(wsRate: number): string {
   return pct === 0 ? '+0%' : `${pct}%`;
 }
 
-export function speakZh(text: string, rate = 0.8) {
-  void playTts(text, 'zh', { wsRate: rate, pitch: 1.05 });
+export function speakZh(text: string, rate = 0.65) {
+  void playTts(text, 'zh', { wsRate: rate, pitch: 1.1 });
 }
 
-export function speakEn(text: string, rate = 0.75) {
-  void playTts(text, 'en', { wsRate: rate, pitch: 1.0 });
+export function speakEn(text: string, rate = 0.65) {
+  void playTts(text, 'en', { wsRate: rate, pitch: 1.05 });
 }
 
 /**
@@ -194,12 +194,12 @@ function speakEnd(text: string, lang: string, rate: number, pitch: number): Prom
  * 中文神经嗓音读这个汉字时，音节和声调都正确，小朋友听起来就是标准的拼音。
  * - syllable：保留以兼容调用点；
  * - han：可选，从例词里取的第一个汉字，优先用它发音；
- * - wsRate 用最慢稳定档（0.5，约 Edge -50%），并在音节后追加约 400ms 静音停顿，
- *   使单个拼音总时长接近 1 秒，方便小朋友听清并跟读。
+ * - wsRate 用最慢稳定档（0.45，约 Edge -55%），并在音节后追加约 700ms 静音停顿，
+ *   使单个拼音总时长接近 1.3 秒，方便小朋友听清并跟读。
  */
 export function speakPinyin(syllable: string, _tone = 0, han?: string) {
   const text = han && /[\u4e00-\u9fff]/.test(han) ? han : syllable;
-  void playTts(text, 'zh', { wsRate: 0.5, pitch: 1.1, pauseMs: 400 });
+  void playTts(text, 'zh', { wsRate: 0.45, pitch: 1.15, pauseMs: 700 });
 }
 
 const PRAISES = [

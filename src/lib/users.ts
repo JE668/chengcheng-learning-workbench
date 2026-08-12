@@ -49,8 +49,8 @@ export async function getChildPoints(childId: number): Promise<number> {
     args: [childId],
   });
   const spent = await db.execute({
-    sql: 'SELECT COALESCE(SUM(cost),0) AS total FROM redemptions WHERE child_id = ? AND status = ?',
-    args: [childId, 'approved'],
+    sql: 'SELECT COALESCE(SUM(cost),0) AS total FROM redemptions WHERE child_id = ? AND status IN (?, ?)',
+    args: [childId, 'pending', 'approved'],
   });
   return Number(earned.rows[0]?.total ?? 0) - Number(spent.rows[0]?.total ?? 0);
 }

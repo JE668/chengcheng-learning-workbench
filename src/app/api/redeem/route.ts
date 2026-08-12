@@ -24,7 +24,15 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: '未登录' }, { status: 401 });
   if (user.role !== 'child' && user.role !== 'parent') return NextResponse.json({ error: '无权限' }, { status: 403 });
 
-  const { rewardName, cost } = await req.json();
+  let rewardName: unknown;
+  let cost: unknown;
+  try {
+    const body = await req.json();
+    rewardName = body?.rewardName;
+    cost = body?.cost;
+  } catch {
+    return NextResponse.json({ error: '请求格式错误' }, { status: 400 });
+  }
   const numCost = Number(cost);
   if (!rewardName || typeof rewardName !== 'string' || !rewardName.trim()) {
     return NextResponse.json({ error: '请输入奖励名称' }, { status: 400 });

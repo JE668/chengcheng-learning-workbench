@@ -130,13 +130,21 @@ function shuffle<T>(arr: T[]): T[] {
 const PINYIN_FULL = Object.keys(PINYIN_TONES).filter((b) => PINYIN_TONES[b].every((t) => t));
 
 function genPinyinQ(): PracticeQuestion {
-  const base = PINYIN_FULL[randInt(0, PINYIN_FULL.length - 1)];
+  // 个别音节不同声调可能返回相同字符串（如轻声/某些音节），
+  // 必须先选出「四个声调互异」的音节，再据此出题，避免正确答案判定错位。
+  let base = PINYIN_FULL[randInt(0, PINYIN_FULL.length - 1)];
+  let marked = [1, 2, 3, 4].map((tn) => applyTone(base, tn));
+  let guard = 0;
+  while (new Set(marked).size < 4 && guard++ < 20) {
+    base = PINYIN_FULL[randInt(0, PINYIN_FULL.length - 1)];
+    marked = [1, 2, 3, 4].map((tn) => applyTone(base, tn));
+  }
   const tones = PINYIN_TONES[base];
   const t = randInt(1, 4);
   const han = tones[t - 1];
-  const marked = [1, 2, 3, 4].map((tn) => applyTone(base, tn));
-  const options = shuffle(marked);
-  const answer = options.indexOf(marked[t - 1]);
+  // 选项去重（保留互异字符串），answer 下标基于去重后的 options，确保唯一正确项
+  const options = shuffle([...new Set(marked)]);
+  const answer = options.indexOf(han);
   return {
     id: `py-${base}-${t}`,
     kind: 'pinyin',
@@ -421,15 +429,9 @@ export async function submitPractice(childId: number, answers: number[]): Promis
     const already = doneSet.has(s);
     const passed = subCorrect === subTotal;
     if (passed && !already) {
-      await confirm(childId, today, s);
+      await confirm(childId, today, s); // confirm 内部已统一发放捕捉券
       newlyMokos.push(mokoChars[subjectMokoKey[s]]?.name ?? '萌可');
       sunlightGain += SUN_PER_SUBJECT;
-      // 每确认一科发 1 张捕捉券（剧情解锁下一集萌可时使用）
-      await db.execute({
-        sql: `INSERT INTO capture_tickets (child_id, total, used) VALUES (?, 1, 0)
-              ON CONFLICT(child_id) DO UPDATE SET total = total + 1`,
-        args: [childId],
-      });
     }
     // 已确认的科始终视为完成；只有「未确认且本次没全对」才标记为待重练
     const status: SubjectStatus = already ? 'already' : passed ? 'passed' : 'failed';

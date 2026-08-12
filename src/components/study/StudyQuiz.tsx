@@ -76,11 +76,13 @@ export function StudyQuiz({
   const [feedbackLine, setFeedbackLine] = useState(''); // 当前答对/答错时萌可说的一句话（语音与显示共用）
   const [rightCount, setRightCount] = useState(0);
   const [attempts, setAttempts] = useState(0);
+  const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [roundDone, setRoundDone] = useState(false);
   const [roundStars, setRoundStars] = useState(0);
   const [roundAcc, setRoundAcc] = useState(0);
   const attemptsRef = useRef(0);
   const rightRef = useRef(0);
+  const answeredRef = useRef(0);
   const logM = useMistakeLogger();
 
   const item = items[order[pos % order.length]];
@@ -121,8 +123,10 @@ export function StudyQuiz({
     setFeedbackLine('');
     attemptsRef.current = 0;
     rightRef.current = 0;
+    answeredRef.current = 0;
     setAttempts(0);
     setRightCount(0);
+    setQuestionsAnswered(0);
     setPos((p) => p + 1);
   }
 
@@ -131,13 +135,19 @@ export function StudyQuiz({
     setPicked(opt);
     const ok = opt === item.answer;
     attemptsRef.current += 1;
-    if (ok) rightRef.current += 1;
+    if (ok) {
+      rightRef.current += 1;
+      // 仅在「答对并切到下一题」时计入已答题数，重试不计入，
+      // 这样一轮严格是 roundSize 道不同题，题头计数也不会跳变。
+      answeredRef.current += 1;
+    }
     setAttempts(attemptsRef.current);
     setRightCount(rightRef.current);
+    setQuestionsAnswered(answeredRef.current);
 
     if (ok) {
       setFeedbackLine(speakMokoFeedback(subject, true)); // 镇守萌可口号（取代泛泛的随机夸夸，更有角色陪伴感）
-      if (attemptsRef.current % roundSize === 0) {
+      if (answeredRef.current % roundSize === 0) {
         finishRound();
       } else {
         setTimeout(next, 1300);
@@ -191,7 +201,7 @@ export function StudyQuiz({
       <div className="rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-blue/10">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-bold text-gray-400">
-            已答对 {rightCount} · 正确率 {progressPct}%{moduleKey ? ` · 本轮第 ${Math.min(attempts + 1, roundSize)}/${roundSize} 题` : ''}
+            已答对 {rightCount} · 正确率 {progressPct}%{moduleKey ? ` · 本轮第 ${Math.min(questionsAnswered + 1, roundSize)}/${roundSize} 题` : ''}
           </span>
           {item.speak || item.speakEn ? (
             <button

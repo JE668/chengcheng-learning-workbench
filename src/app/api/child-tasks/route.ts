@@ -60,6 +60,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: '请求格式错误' }, { status: 400 });
   }
   if (!body.key) return NextResponse.json({ error: '缺少 key' }, { status: 400 });
+  // 白名单校验：key 必须属于已知萌可小任务，防止写入任意脏数据
+  if (!MOKO_TASKS.some((t) => t.key === body.key)) {
+    return NextResponse.json({ error: '未知任务' }, { status: 400 });
+  }
 
   // 服务端二次校验：没达成学习凭证就不许标记完成（前端按钮禁用只是第一道防线）
   const task = MOKO_TASKS.find((t) => t.key === body.key);

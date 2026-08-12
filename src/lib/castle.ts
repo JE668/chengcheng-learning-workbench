@@ -117,9 +117,14 @@ async function getRow(childId: number) {
 
 async function ensureCastle(childId: number) {
   const db = getDb();
+  // 关键修复：last_settled_day 初始化为「创建日前一天」。
+  // 原实现设为今天，导致 settleCastle 的结算窗口 [last_settled+1, 昨天] 恒为空，
+  // 城堡创建当天漏打卡的惩罚（捣蛋萌可/藏星星币/吓跑萌可）永远不会触发。
+  // 设为前一天后，创建当天会在次日被正确结算。
+  const initSettledDay = addDays(dateStr(), -1);
   await db.execute({
     sql: 'INSERT OR IGNORE INTO castle_state (child_id, sunlight, star_coins, prosperity, last_settled_day) VALUES (?, 0, 0, 0, ?)',
-    args: [childId, dateStr()],
+    args: [childId, initSettledDay],
   });
   // 引导萌可（乐美公主）初始即好朋友
   await db.execute({
@@ -332,6 +337,13 @@ export async function confirm(childId: number, day: string, subject: Subject) {
 
   // 当天三科全部确认 → 城堡繁荣度提升
   if (day === today) {
+    // 每确认一科（今天）发 1 张捕捉券（剧情解锁下一集萌可时使用）。
+    // 收口到 confirm：家长手动确认、每日一练自动确认都走这里，避免重复发券。
+    await db.execute({
+      sql: `INSERT INTO capture_tickets (child_id, total, used) VALUES (?, 1, 0)
+            ON CONFLICT(child_id) DO UPDATE SET total = total + 1`,
+      args: [childId],
+    });
     const c = await db.execute({
       sql: `SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'`,
       args: [childId, today],

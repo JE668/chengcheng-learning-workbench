@@ -12,7 +12,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `登录太频繁，请 ${limit.retryAfter} 秒后再试` }, { status: 429 });
   }
 
-  const { username, password } = await req.json();
+  let username: unknown;
+  let password: unknown;
+  try {
+    const body = await req.json();
+    username = body?.username;
+    password = body?.password;
+  } catch {
+    return NextResponse.json({ error: '请求格式错误' }, { status: 400 });
+  }
+  if (typeof username !== 'string' || typeof password !== 'string' || !username.trim() || !password) {
+    return NextResponse.json({ error: '请输入用户名和密码' }, { status: 400 });
+  }
   const db = getDb();
   const res = await db.execute({ sql: 'SELECT * FROM users WHERE username = ?', args: [username] });
   const row = res.rows[0];
