@@ -148,6 +148,23 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
     expect((await readCastle(cid)).sunlight).toBe(COST_SHIELD + 5 - COST_SHIELD);
   });
 
+  it('confirm 幂等：同一科当天重复确认只发一次（阳光不翻倍）', async () => {
+    const cid = nextChild();
+    await insertChild(cid);
+    await insertCastle(cid, dateStr());
+    const today = dateStr();
+
+    const r1 = await confirm(cid, today, '语文');
+    expect(r1.ok).toBe(true);
+    const r2 = await confirm(cid, today, '语文');
+    expect(r2.ok).toBe(false); // 该科今天已确认
+
+    // 两次调用后阳光仍只 +SUN_PER_SUBJECT（无重复发放）
+    const c = await readCastle(cid);
+    expect(c.sunlight).toBe(SUN_PER_SUBJECT);
+    expect(await readTickets(cid)).toBe(TICKET_PER_SUBJECT);
+  });
+
   it('submitPractice 里程碑（第 2 天连续一练）→ 额外 +10 星星币且只发一次', async () => {
     const cid = nextChild();
     await insertChild(cid);

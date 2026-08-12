@@ -298,65 +298,80 @@ export async function confirm(childId: number, day: string, subject: Subject) {
   const today = dateStr();
   // 防御：未传/非法 day 时默认今天，避免写出 day="undefined" 的假行
   if (!day || day === 'undefined') day = today;
-  const existing = await db.execute({
-    sql: 'SELECT status FROM daily_checkins WHERE child_id = ? AND day = ? AND subject = ?',
-    args: [childId, day, subject],
-  });
-  const status = existing.rows[0]?.status;
-  if (status === 'confirmed') return { ok: false, message: '该科今天已确认' };
 
-  await db.execute({
-    sql: `INSERT INTO daily_checkins (child_id, day, subject, status, confirmed_at)
-          VALUES (?, ?, ?, 'confirmed', CURRENT_TIMESTAMP)
-          ON CONFLICT(child_id, day, subject) DO UPDATE SET status = 'confirmed', confirmed_at = CURRENT_TIMESTAMP`,
-    args: [childId, day, subject],
-  });
+  // 并发双发防护：用「写锁事务」把「读确认状态 → 发奖」整体串行化。
+  // 后到的并发请求会在 BEGIN IMMEDIATE 处阻塞，等前者提交后读到已确认状态而幂等返回，
+  // 杜绝同一科被并发确认两次导致阳光/萌可/捕捉券重复发放（TOCTOU）。
+  await db.execute('BEGIN IMMEDIATE');
+  try {
+    const existing = await db.execute({
+      sql: 'SELECT status FROM daily_checkins WHERE child_id = ? AND day = ? AND subject = ?',
+      args: [childId, day, subject],
+    });
+    const status = existing.rows[0]?.status;
+    if (status === 'confirmed') {
+      await db.execute('COMMIT');
+      return { ok: false, message: '该科今天已确认' };
+    }
 
-  // 🌟 学习-城堡联动：完成单科 → 1 阳光能量 + 1 对应学科萌可
-  await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight + ? WHERE child_id = ?', args: [SUN_PER_SUBJECT, childId] });
-  await awardSubjectMoko(childId, subject);
-  const mokoName = mokoChars[subjectMokoKey[subject]]?.name ?? '萌可';
-  const subjectEmoji: Record<Subject, string> = { 语文: '❤️', 数学: '💪', 英语: '🎵' };
-  await logGrowthEvent(childId, 'checkin', subjectEmoji[subject] ?? '🌟', `「${subject}」打卡成功`,
-    `阳光能量 +${SUN_PER_SUBJECT}，召唤 ${mokoName} 入驻城堡`);
-
-  // 当天三科全部确认 → 城堡繁荣度提升
-  if (day === today) {
-    // 每确认一科（今天）发 1 张捕捉券（剧情解锁下一集萌可时使用）。
-    // 收口到 confirm：家长手动确认、每日一练自动确认都走这里，避免重复发券。
     await db.execute({
-      sql: `INSERT INTO capture_tickets (child_id, total, used) VALUES (?, 1, 0)
-            ON CONFLICT(child_id) DO UPDATE SET total = total + 1`,
-      args: [childId],
+      sql: `INSERT INTO daily_checkins (child_id, day, subject, status, confirmed_at)
+            VALUES (?, ?, ?, 'confirmed', CURRENT_TIMESTAMP)
+            ON CONFLICT(child_id, day, subject) DO UPDATE SET status = 'confirmed', confirmed_at = CURRENT_TIMESTAMP`,
+      args: [childId, day, subject],
     });
-    const c = await db.execute({
-      sql: `SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'`,
-      args: [childId, today],
-    });
-    if (Number(c.rows[0]?.n) === 3) {
-      await db.execute({ sql: 'UPDATE castle_state SET prosperity = prosperity + ? WHERE child_id = ?', args: [PROSPERITY_BONUS, childId] });
-      await logGrowthEvent(childId, 'prosperity', '🏰', '三科全勤！城堡升级', `繁荣度 +${PROSPERITY_BONUS}，萌可们更开心啦`);
-    }
-  } else {
-    // 补作业：若该过去日期现已三科全确认且仍有未捉回的捣蛋萌可 → 可领取魔法喷雾
-    const c = await db.execute({
-      sql: `SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'`,
-      args: [childId, day],
-    });
-    const trouble = await db.execute({
-      sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ? AND day = ? AND resolved = 0',
-      args: [childId, day],
-    });
-    if (Number(c.rows[0]?.n) === 3 && Number(trouble.rows[0]?.n) > 0) {
+
+    // 🌟 学习-城堡联动：完成单科 → 1 阳光能量 + 1 对应学科萌可
+    await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight + ? WHERE child_id = ?', args: [SUN_PER_SUBJECT, childId] });
+    await awardSubjectMoko(childId, subject);
+    const mokoName = mokoChars[subjectMokoKey[subject]]?.name ?? '萌可';
+    const subjectEmoji: Record<Subject, string> = { 语文: '❤️', 数学: '💪', 英语: '🎵' };
+    await logGrowthEvent(childId, 'checkin', subjectEmoji[subject] ?? '🌟', `「${subject}」打卡成功`,
+      `阳光能量 +${SUN_PER_SUBJECT}，召唤 ${mokoName} 入驻城堡`);
+
+    // 当天三科全部确认 → 城堡繁荣度提升
+    if (day === today) {
+      // 每确认一科（今天）发 1 张捕捉券（剧情解锁下一集萌可时使用）。
+      // 收口到 confirm：家长手动确认、每日一练自动确认都走这里，避免重复发券。
       await db.execute({
-        sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1',
-        args: [childId, 'spray'],
+        sql: `INSERT INTO capture_tickets (child_id, total, used) VALUES (?, 1, 0)
+              ON CONFLICT(child_id) DO UPDATE SET total = total + 1`,
+        args: [childId],
       });
-      await logGrowthEvent(childId, 'rescue', '🧴', '补作业完成，乐美来帮忙！', '捣蛋萌可溜进城堡捣乱，乐美送来魔法喷雾，快帮她把捣蛋萌可捉回去！');
-      return { ok: true, message: '补作业完成！乐美送来 1 瓶魔法喷雾，去背包帮她把捣蛋萌可捉回去吧～' };
+      const c = await db.execute({
+        sql: `SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'`,
+        args: [childId, today],
+      });
+      if (Number(c.rows[0]?.n) === 3) {
+        await db.execute({ sql: 'UPDATE castle_state SET prosperity = prosperity + ? WHERE child_id = ?', args: [PROSPERITY_BONUS, childId] });
+        await logGrowthEvent(childId, 'prosperity', '🏰', '三科全勤！城堡升级', `繁荣度 +${PROSPERITY_BONUS}，萌可们更开心啦`);
+      }
+    } else {
+      // 补作业：若该过去日期现已三科全确认且仍有未捉回的捣蛋萌可 → 可领取魔法喷雾
+      const c = await db.execute({
+        sql: `SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'`,
+        args: [childId, day],
+      });
+      const trouble = await db.execute({
+        sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ? AND day = ? AND resolved = 0',
+        args: [childId, day],
+      });
+      if (Number(c.rows[0]?.n) === 3 && Number(trouble.rows[0]?.n) > 0) {
+        await db.execute({
+          sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1',
+          args: [childId, 'spray'],
+        });
+        await logGrowthEvent(childId, 'rescue', '🧴', '补作业完成，乐美来帮忙！', '捣蛋萌可溜进城堡捣乱，乐美送来魔法喷雾，快帮她把捣蛋萌可捉回去！');
+        await db.execute('COMMIT');
+        return { ok: true, message: '补作业完成！乐美送来 1 瓶魔法喷雾，去背包帮她把捣蛋萌可捉回去吧～' };
+      }
     }
+    await db.execute('COMMIT');
+    return { ok: true, message: `确认「${subject}」完成，获得 ${SUN_PER_SUBJECT} 阳光能量 + 1 只萌可！` };
+  } catch (e) {
+    await db.execute('ROLLBACK');
+    throw e;
   }
-  return { ok: true, message: `确认「${subject}」完成，获得 ${SUN_PER_SUBJECT} 阳光能量 + 1 只萌可！` };
 }
 
 /* ----------------------------- 道具：购买 / 使用 ----------------------------- */
