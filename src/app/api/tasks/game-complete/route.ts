@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, getChildPoints } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
-
-// 与全站一致的本地日期格式（YYYY-MM-DD），用于「每个游戏每天仅计分一次」。
-function dateStr(d: Date = new Date()): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+import { dateStr, LOCAL_DAY_COL } from '@/lib/date';
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
@@ -20,12 +13,12 @@ export async function POST(req: NextRequest) {
   const db = getDb();
   const today = dateStr();
   // 防重放刷分：同一孩子同一游戏当天只计分一次。
-  // 注意：created_at 是 UTC 的 CURRENT_TIMESTAMP，用 'localtime' 折算到服务器本地日期，
+  // 注意：created_at 是 UTC 的 CURRENT_TIMESTAMP，用 LOCAL_DAY_COL（'localtime'）折算到服务器本地日期，
   // 与上文 today（本地日期）对齐，避免部署在 UTC 服务器时「每日一次」跨时区错位。
   const res = await db.execute({
     sql: `INSERT INTO completions (child_id, points, source)
           SELECT ?, ?, ?
-          WHERE NOT EXISTS (SELECT 1 FROM completions WHERE child_id = ? AND source = ? AND DATE(created_at, 'localtime') = ?)`,
+          WHERE NOT EXISTS (SELECT 1 FROM completions WHERE child_id = ? AND source = ? AND ${LOCAL_DAY_COL} = ?)`,
     args: [user.id, points, String(gameId), user.id, String(gameId), today],
   });
   if (Number(res.rowsAffected ?? 0) === 0) {

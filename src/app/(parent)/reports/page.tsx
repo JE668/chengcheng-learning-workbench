@@ -2,24 +2,10 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildId } from '@/lib/db';
 import { getBadges, getMokoProgress } from '@/lib/castle';
+import { dateStr, mondayOf, LOCAL_DAY_COL } from '@/lib/date';
 import PrintButton from '@/components/PrintButton';
 import Certificate from '@/components/Certificate';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
-
-function fmt(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-function mondayOf(d: Date): Date {
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const m = new Date(d);
-  m.setDate(d.getDate() + diff);
-  m.setHours(0, 0, 0, 0);
-  return m;
-}
 
 // 解析 users.cert_pref（JSON 字符串），非法/为空时返回 null
 function parsePref(raw: unknown): { mokoKey: string; theme: string } | null {
@@ -50,13 +36,13 @@ export default async function ReportsPage() {
   const weekStart = mondayOf(now);
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 6);
-  const ws = fmt(weekStart);
-  const we = fmt(weekEnd);
+  const ws = dateStr(weekStart);
+  const we = dateStr(weekEnd);
 
   const daily = c ? await db.execute({
-    sql: `SELECT DATE(c.created_at, 'localtime') as day, SUM(c.points) as total
-          FROM completions c WHERE c.child_id = ? AND DATE(c.created_at, 'localtime') BETWEEN ? AND ?
-          GROUP BY DATE(c.created_at, 'localtime') ORDER BY day DESC`,
+    sql: `SELECT ${LOCAL_DAY_COL} as day, SUM(c.points) as total
+          FROM completions c WHERE c.child_id = ? AND ${LOCAL_DAY_COL} BETWEEN ? AND ?
+          GROUP BY ${LOCAL_DAY_COL} ORDER BY day DESC`,
     args: [childId, ws, we],
   }) : { rows: [] };
 

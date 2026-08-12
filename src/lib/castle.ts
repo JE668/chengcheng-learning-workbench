@@ -1,4 +1,5 @@
 import { getDb } from './db';
+import { dateStr, addDays } from './date';
 import { mokoCollection, COLLECTIBLE_MOKO_NAMES } from './moko-collection';
 import {
   mokoChars,
@@ -55,23 +56,6 @@ export async function getGrowthDiary(childId: number, limit = 24): Promise<Growt
 }
 
 const SUBJECTS: Subject[] = ['语文', '数学', '英语'];
-
-/* ----------------------------- 时间工具 ----------------------------- */
-function dateStr(d: Date = new Date()): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-function parseDate(s: string): Date {
-  const [y, m, d] = s.split('-').map(Number);
-  return new Date(y, m - 1, d);
-}
-function addDays(s: string, n: number): string {
-  const d = parseDate(s);
-  d.setDate(d.getDate() + n);
-  return dateStr(d);
-}
 
 /* ----------------------------- 类型定义 ----------------------------- */
 export type MokoStage = 'obtained' | 'settled' | 'playing' | 'friend';
@@ -657,4 +641,4 @@ export async function getMokoProgress(childId: number): Promise<{ owned: number;
   return { owned, total, percent };
 }
 
-export { STAGE_LABEL, dateStr };
+export { STAGE_LABEL };

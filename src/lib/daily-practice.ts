@@ -4,6 +4,7 @@ import { PINYIN_TONES, applyTone, ALL_EN_WORDS, CHARACTERS } from './study-data'
 import { mokoChars, subjectMokoKey, SUN_PER_SUBJECT } from './moko';
 import { mokoCollection } from './moko-collection';
 import { getDueMistakes, reviewMistake, type MistakeRow } from './mistakes';
+import { dateStr, addDays } from './date';
 import type { Subject } from './types';
 
 /**
@@ -99,20 +100,6 @@ export interface PracticeSubmitResult {
   milestone?: { mokoKey: string; mokoName: string; img: string };
   /** 本次提交发放的捕捉券数量（每确认一科 1 张，来自 confirm 的今日分支） */
   tickets?: number;
-}
-
-/* ----------------------------- 时间工具（本地副本，避免改动 castle 导出面） ----------------------------- */
-function dateStr(d: Date = new Date()): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-function addDays(s: string, n: number): string {
-  const [y, m, d] = s.split('-').map(Number);
-  const dt = new Date(y, m - 1, d);
-  dt.setDate(dt.getDate() + n);
-  return dateStr(dt);
 }
 
 /* ----------------------------- 抽题工具 ----------------------------- */
