@@ -24,6 +24,7 @@ import {
 } from '@/components/study/MathNew';
 import { EnglishPhonicsModule, EnglishSentenceModule } from '@/components/study/EnglishNew';
 import { MathTableModule } from '@/components/study/MathTable';
+import { BorrowModule, PictureEquationModule } from '@/components/study/MathRegroup';
 import { EnListenPicModule, EnInitialSoundModule, EnTprModule } from '@/components/study/EnglishListen';
 import { WordFormModule } from '@/components/study/ChineseWordForm';
 import { FingerReadModule } from '@/components/study/ChineseFingerRead';
@@ -80,6 +81,8 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'compare-more', label: '比轻重长短', emoji: '⚖️', desc: '谁更重谁更长', Component: CompareMoreModule, color: 'bg-moko-blue' },
     { key: 'calendar', label: '星期日历', emoji: '📅', desc: '星期·日历·天气', Component: CalendarModule, color: 'bg-moko-blue' },
     { key: 'mult-table', label: '乘法口诀树', emoji: '🌳', desc: '萌可陪你背会九九乘法口诀', Component: MathTableModule, color: 'bg-moko-blue' },
+    { key: 'borrow', label: '退位减法', emoji: '➖', desc: '20 以内退位减，借一当十', Component: BorrowModule, color: 'bg-moko-rose' },
+    { key: 'pic-eq', label: '看图列式', emoji: '🖼️', desc: '看图画，列出加法算式', Component: PictureEquationModule, color: 'bg-moko-blue' },
   ],
   english: [
     { key: 'letters', label: '字母乐园', emoji: '🔤', desc: 'A ~ Z 认读', Component: LetterModule, color: 'bg-moko-yellow' },

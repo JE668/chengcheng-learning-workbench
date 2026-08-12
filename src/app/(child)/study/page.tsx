@@ -36,6 +36,7 @@ const TOOLS = [
   { href: '/study/picto', emoji: '🌟', title: '象形字变变变', sub: '汉字怎么从「画」变成「字」' },
   { href: '/study/trace', emoji: '✍️', title: '描红跟写', sub: '米字格描红范字，听读音记字形' },
   { href: '/study/poem-fill', emoji: '📜', title: '古诗填空背诵', sub: '从字卡补全古诗，填对听萌可念' },
+  { href: '/study/eye', emoji: '💆', title: '护眼小操', sub: '四节眼保健操，看书久了做一遍' },
 ];
 
 export default function StudyPage() {
