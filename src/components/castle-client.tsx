@@ -71,7 +71,7 @@ export function HarvestBtn() {
   }
   return (
     <div className="inline-flex flex-col items-start gap-1">
-      <button onClick={harvest} disabled={busy} className="btn-magic bg-moko-gold text-white">
+      <button onClick={harvest} disabled={busy} className="btn btn-gold">
         {busy ? '收获中…' : '⭐ 收获星星币'}
       </button>
       {msg && <span className="text-xs text-moko-violet font-semibold">{msg}</span>}

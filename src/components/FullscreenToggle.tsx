@@ -24,8 +24,9 @@ export default function FullscreenToggle() {
       if (!document.fullscreenElement) {
         await document.documentElement.requestFullscreen();
         // 全屏下才允许锁定横屏（安卓 Chrome 行为）；失败不影响全屏本身
+        // screen.orientation.lock 非标准 TS DOM 类型，运行时在支持的浏览器上存在
         try {
-          await screen.orientation.lock('landscape');
+          await (screen.orientation as unknown as { lock: (o: string) => Promise<void> }).lock('landscape');
         } catch {
           /* 不支持或已拒绝：忽略，保持全屏即可 */
         }

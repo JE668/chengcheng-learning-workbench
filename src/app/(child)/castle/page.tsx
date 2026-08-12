@@ -59,7 +59,13 @@ export default function CastlePage() {
     } catch { setMsg('网络错误'); } finally { setBusy(false); }
   }
 
-  if (!state) return <div className="max-w-4xl mx-auto text-center py-20 text-moko-violet font-bold">城堡加载中… ✨</div>;
+  if (!state)
+    return (
+      <div className="max-w-4xl mx-auto flex flex-col items-center justify-center py-24 text-moko-violet">
+        <span className="moko-loader mb-3"><span></span><span></span><span></span></span>
+        <span className="font-bold">城堡加载中… ✨</span>
+      </div>
+    );
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -79,7 +85,7 @@ export default function CastlePage() {
         </div>
         <div className="flex items-center justify-between mt-2">
           <span className="text-xs text-gray-500">连续打卡 {state.streakDays} 天</span>
-          <button onClick={() => act('/api/castle/harvest')} disabled={busy} className="btn-magic bg-moko-gold text-white text-sm">⭐ 收获星星币</button>
+          <button onClick={() => act('/api/castle/harvest')} disabled={busy} className="btn btn-gold text-sm">⭐ 收获星星币</button>
         </div>
       </div>
 
@@ -155,7 +161,7 @@ export default function CastlePage() {
       {tab === 'gallery' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="font-black text-moko-violet text-lg">📖 萌可图鉴</h2>
+            <h2 className="section-title">📖 萌可图鉴</h2>
             <span className="text-sm text-gray-500">共 {state.gallery.length} 种　已收集 {state.gallery.filter((g) => g.owned).length}</span>
           </div>
           {MokoCategories.filter((c) => c.key !== 'trouble').map((cat) => {
@@ -167,7 +173,7 @@ export default function CastlePage() {
               <div key={cat.key}>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-2xl">{cat.emoji}</span>
-                  <h2 className="font-black text-moko-violet text-lg">{cat.label}</h2>
+                  <h2 className="section-title">{cat.label}</h2>
                   <span className="text-xs text-gray-400 hidden sm:inline">{cat.desc}</span>
                   <span className={`text-[11px] font-black px-2 py-0.5 rounded-full ml-auto ${complete ? 'bg-moko-gold text-white' : 'bg-gray-100 text-gray-500'}`}>
                     {complete ? '👑 系列全齐' : `${ownedCount}/${items.length}`}
@@ -203,7 +209,7 @@ export default function CastlePage() {
       {/* ===== 魔法商店（阳光） ===== */}
       {tab === 'shop' && (
         <div className="space-y-3">
-          <h2 className="font-black text-moko-violet text-lg">🧪 魔法商店（阳光能量）</h2>
+          <h2 className="section-title">🧪 魔法商店（阳光能量）</h2>
           {magicShop.map((s) => (
             <div key={s.key} className="card-moko flex items-center gap-3">
               <div className="text-4xl">{s.icon}</div>
@@ -212,7 +218,7 @@ export default function CastlePage() {
                 <div className="text-xs text-gray-500">{s.desc}</div>
                 {s.key === 'shield' && !state.canBuyShield && <div className="text-xs text-red-400">需连续打卡 3 天（当前 {state.streakDays} 天）</div>}
               </div>
-              <button onClick={() => act('/api/castle/buy', { itemKey: s.key })} disabled={busy} className="btn-magic bg-moko-yellow text-white text-sm whitespace-nowrap">☀️ {s.cost}</button>
+              <button onClick={() => act('/api/castle/buy', { itemKey: s.key })} disabled={busy} className="btn btn-gold text-sm whitespace-nowrap">☀️ {s.cost}</button>
             </div>
           ))}
         </div>
@@ -221,13 +227,13 @@ export default function CastlePage() {
       {/* ===== 背包 ===== */}
       {tab === 'bag' && (
         <div className="space-y-3">
-          <h2 className="font-black text-moko-violet text-lg">🎒 魔法背包</h2>
+          <h2 className="section-title">🎒 魔法背包</h2>
           <div className="card-moko text-sm text-gray-600">星星币余额：⭐ {state.starCoins}　护盾已装备：🛡️ {state.shieldEquipped}</div>
           {Number(state.inventory.spray || 0) > 0 && (
             <div className="rounded-3xl p-4 shadow-lg border-2 border-green-100 bg-green-50 flex items-center gap-3">
               <div className="text-4xl">🧴</div>
               <div className="flex-1"><div className="font-bold text-moko-violet">魔法喷雾 ×{state.inventory.spray}</div><div className="text-xs text-gray-500">捉回捣蛋萌可 + 安抚萌可 + 找回星星币</div></div>
-              <button onClick={() => act('/api/castle/use-item', { itemKey: 'spray' })} disabled={busy} className="btn-magic bg-green-500 text-white text-sm">帮乐美捉回</button>
+              <button onClick={() => act('/api/castle/use-item', { itemKey: 'spray' })} disabled={busy} className="btn btn-mint text-sm">帮乐美捉回</button>
             </div>
           )}
           {Number(state.inventory.shield || 0) > 0 && (
@@ -243,7 +249,7 @@ export default function CastlePage() {
       {/* ===== 成就 ===== */}
       {tab === 'achv' && (
         <div>
-          <h2 className="font-black text-moko-violet text-lg mb-3">🏅 我的成就徽章</h2>
+          <h2 className="section-title mb-3">🏅 我的成就徽章</h2>
           <p className="text-xs text-gray-500 mb-3">每解锁一只萌可、每次坚持打卡，都会点亮一枚徽章！</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {badges.map((b) => (
