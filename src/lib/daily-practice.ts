@@ -6,6 +6,7 @@ import { mokoCollection } from './moko-collection';
 import { getDueMistakes, reviewMistake, type MistakeRow } from './mistakes';
 import { dateStr, addDays } from './date';
 import { MILESTONE_DAYS } from './economy';
+import { safeJsonParse } from './safe-json';
 import type { Subject } from './types';
 
 /**
@@ -347,7 +348,9 @@ export async function getTodayPractice(childId: number, generate = false): Promi
   if (!row) {
     return { completed: false, correct: 0, total: 0, questions: [], practiceStreak: streak, nextMilestone };
   }
-  const questions: PracticeQuestion[] = row.questions ? JSON.parse(String(row.questions)) : [];
+  const questions: PracticeQuestion[] = row.questions
+    ? safeJsonParse<PracticeQuestion[]>(String(row.questions), [])
+    : [];
   return {
     completed: Number(row.completed) === 1,
     correct: Number(row.correct),
@@ -375,7 +378,7 @@ export async function submitPractice(childId: number, answers: number[]): Promis
     });
     row = (await db.execute({ sql: 'SELECT * FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, today] })).rows[0];
   }
-  const questions: PracticeQuestion[] = JSON.parse(String(row.questions));
+  const questions: PracticeQuestion[] = safeJsonParse<PracticeQuestion[]>(String(row.questions), []);
   const total = questions.length;
 
   // 按学科归类题目
