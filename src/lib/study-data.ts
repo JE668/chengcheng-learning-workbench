@@ -455,7 +455,7 @@ const RAW_CHARACTERS: CharacterItem[] = [
   { char: '朋', pinyin: 'péng', strokeCount: 8, meaning: '朋友', phrase: '亲朋', category: '家庭' },
   { char: '友', pinyin: 'yǒu', strokeCount: 4, meaning: '朋友', phrase: '好友', category: '家庭' },
   { char: '尾', pinyin: 'wěi', strokeCount: 7, meaning: '尾巴', phrase: '尾羽', category: '动物' },
-  { char: '巴', pinyin: 'ba', strokeCount: 4, meaning: '尾巴', phrase: '巴掌', category: '动物' },
+  { char: '巴', pinyin: 'bā', strokeCount: 4, meaning: '尾巴', phrase: '巴掌', category: '动物' },
   { char: '谁', pinyin: 'shuí', strokeCount: 10, meaning: '谁', phrase: '谁知', category: '动作' },
   { char: '长', pinyin: 'cháng', strokeCount: 4, meaning: '长短', phrase: '长高', category: '方位' },
   { char: '短', pinyin: 'duǎn', strokeCount: 12, meaning: '短', phrase: '短发', category: '方位' },
@@ -1309,7 +1309,7 @@ export interface WordProblemItem {
   emoji: string;
 }
 export const WORD_PROBLEMS: WordProblemItem[] = [
-  { text: '小明有 3 颗糖，妈妈又给了 5 颗，现在有几颗？', options: ['7', '8', '9'], answer: '7', emoji: '🍬' },
+  { text: '小明有 3 颗糖，妈妈又给了 5 颗，现在有几颗？', options: ['7', '8', '9'], answer: '8', emoji: '🍬' },
   { text: '池塘里有 8 只鸭子，游走 3 只，还剩几只？', options: ['5', '6', '4'], answer: '5', emoji: '🦆' },
   { text: '树上原有 6 只鸟，又飞来 4 只，一共有几只？', options: ['10', '9', '11'], answer: '10', emoji: '🐦' },
   { text: '程程有 10 块饼干，吃了 2 块，还剩几块？', options: ['8', '7', '9'], answer: '8', emoji: '🍪' },
@@ -1354,7 +1354,6 @@ export const CVC_WORDS: CvcItem[] = [
   { word: 'leg', sound: 'l-e-g', emoji: '🦵', cn: '腿' },
   { word: 'net', sound: 'n-e-t', emoji: '🕸️', cn: '网' },
   { word: 'big', sound: 'b-i-g', emoji: '🐘', cn: '大的' },
-  { word: 'pig', sound: 'p-i-g', emoji: '🐷', cn: '猪' },
   { word: 'pin', sound: 'p-i-n', emoji: '📌', cn: '别针' },
   { word: 'fin', sound: 'f-i-n', emoji: '🐟', cn: '鱼鳍' },
   { word: 'sit', sound: 's-i-t', emoji: '🪑', cn: '坐' },

@@ -12,6 +12,8 @@ import {
   STROKE_ORDER_CHARS,
   TEXTBOOK_CHARACTERS,
   WORD_FORM,
+  WORD_PROBLEMS,
+  CVC_WORDS,
   buildUnitWordItems,
   strokeOrderByChapter,
   textbookCharsUpTo,
@@ -231,6 +233,31 @@ describe('语文 · 生字表结构校验（笔画/释义/拼音）', () => {
       if (c.altPinyin) {
         expect(PINYIN_RE.test(c.altPinyin), `「${c.char}」altPinyin「${c.altPinyin}」非法`).toBe(true);
       }
+    }
+  });
+});
+
+describe('数学 · 应用题答案自洽', () => {
+  it('每条应用题的答案都在选项里，且选项都是纯数字', () => {
+    for (const p of WORD_PROBLEMS) {
+      expect(p.options.every((o) => /^\d+$/.test(o)), `题目「${p.text}」有非数字选项`).toBe(true);
+      expect(p.options.includes(p.answer), `题目「${p.text}」答案「${p.answer}」不在选项里`).toBe(true);
+    }
+  });
+
+  it('具体回归：3+5=8，不能误写成 7', () => {
+    const first = WORD_PROBLEMS[0];
+    expect(first.text).toContain('3 颗糖');
+    expect(first.answer).toBe('8');
+  });
+});
+
+describe('英语 · CVC 词无重复', () => {
+  it('CVC_WORDS 里每个单词只出现一次', () => {
+    const seen = new Set<string>();
+    for (const w of CVC_WORDS) {
+      expect(seen.has(w.word), `CVC 单词「${w.word}」重复`).toBe(false);
+      seen.add(w.word);
     }
   });
 });
