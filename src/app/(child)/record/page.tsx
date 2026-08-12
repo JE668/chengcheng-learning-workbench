@@ -3,6 +3,7 @@ import { getDb, getChildPoints } from '@/lib/db';
 import { getGrowthDiary } from '@/lib/castle';
 import Link from 'next/link';
 import GrowthTree from '@/components/GrowthTree';
+import { EmptyState } from '@/components/EmptyState';
 
 export default async function RecordPage() {
   const user = await getCurrentUser();
@@ -48,7 +49,7 @@ export default async function RecordPage() {
       <h2 className="text-2xl font-black text-moko-violet mb-3">📔 萌可成长日记</h2>
       <div className="card-moko mb-8">
         {diary.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">还没有日记，快去完成打卡，和萌可们一起写故事吧！</p>
+          <EmptyState emoji="📔" title="还没有日记" desc="快去完成打卡，和萌可们一起写成长故事吧！" />
         ) : (
           <ol className="relative border-l-4 border-moko-pink/40 ml-3 space-y-4">
             {diary.map((e) => (

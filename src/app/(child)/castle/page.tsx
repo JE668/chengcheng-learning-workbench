@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { magicShop, starShop, MokoCategories } from '@/lib/moko';
 import { MokoAvatar } from '@/components/MokoAvatar';
 import { SeriesCompleteBanner } from '@/components/SeriesCompleteBanner';
+import { EmptyState } from '@/components/EmptyState';
 
 type Stage = 'obtained' | 'settled' | 'playing' | 'friend';
 interface Resident {
@@ -148,7 +149,7 @@ export default function CastlePage() {
                   {r.stage === 'friend' && <div className="text-xs text-moko-mint font-bold mt-1">产出 ⭐</div>}
                 </div>
               ))}
-              {state.residents.length === 0 && <p className="text-gray-500">还没有萌可入驻，去完成今日打卡召唤它们吧！</p>}
+              {state.residents.length === 0 && <EmptyState emoji="🧸" title="还没有萌可入驻" desc="去完成「今日一练」打卡，就能召唤第一只萌可啦！" />}
             </div>
           </div>
           {state.troublemakers.length > 0 && (
@@ -242,7 +243,7 @@ export default function CastlePage() {
           {starShop.filter((s) => Number(state.inventory[s.key] || 0) > 0).map((s) => (
             <div key={s.key} className="card-moko flex items-center gap-3"><div className="text-4xl">{s.icon}</div><div className="flex-1"><div className="font-bold text-moko-violet">{s.name} ×{state.inventory[s.key]}</div><div className="text-xs text-gray-500">已拥有</div></div></div>
           ))}
-          {Object.keys(state.inventory).length === 0 && <div className="card-moko text-gray-500 text-center">背包还是空的，去商店逛逛吧！</div>}
+          {Object.keys(state.inventory).length === 0 && <EmptyState emoji="🎒" title="背包还是空的" desc="去魔法商店用阳光能量兑换好物吧！" />}
         </div>
       )}
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { REWARD_TEMPLATES } from '@/lib/moko';
+import { EmptyState } from '@/components/EmptyState';
 
 interface RedemptionItem {
   id: number;
@@ -145,7 +146,7 @@ export function RedeemClient({ childId }: { childId: number }) {
             )}
           </div>
         ))}
-        {items.length === 0 && <div className="card-moko text-gray-500">暂无兑换记录</div>}
+        {items.length === 0 && <EmptyState emoji="🎁" title="暂无兑换记录" desc="孩子提交兑换申请后，会在这里出现待你审核。" />}
       </div>
     </div>
   );

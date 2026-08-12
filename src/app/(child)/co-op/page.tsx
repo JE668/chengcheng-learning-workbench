@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { speakZh } from '@/lib/speak';
+import { EmptyState } from '@/components/EmptyState';
 
 interface Child {
   id: string;
@@ -48,7 +49,7 @@ export default function CoOpPage() {
       {loading ? (
         <div className="card-moko text-center text-gray-500 py-4 flex flex-col items-center justify-center gap-2"><span className="moko-loader"><span></span><span></span><span></span></span>加载中…</div>
       ) : children.length === 0 ? (
-        <div className="card-moko text-center text-gray-500 py-4">还没有添加其他小朋友，让爸爸妈妈在设置里加一个吧！</div>
+        <EmptyState emoji="👧" title="还没有其他小朋友" desc="让爸爸妈妈在「设置」里加一个兄弟姐妹，就能一起合作学习啦！" />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
           {children.map((c) => (

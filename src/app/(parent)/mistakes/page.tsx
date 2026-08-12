@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildId } from '@/lib/db';
 import { STUDY_MODULES } from '@/lib/study-modules';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
+import { EmptyState } from '@/components/EmptyState';
 
 export const dynamic = 'force-dynamic';
 
@@ -148,7 +149,7 @@ export default async function ParentMistakesPage({
       {total === 0 ? (
         <div className="rounded-3xl p-10 bg-white shadow-lg border-2 border-moko-purple/20 text-center">
           <div className="text-6xl mb-3">🌟</div>
-          <div className="text-xl font-black text-moko-violet">还没有错题记录</div>
+          <EmptyState emoji="🌟" title="还没有错题记录" desc="孩子的掌握情况很棒！做错的题会自动出现在这里，方便针对性复习。" />
           <p className="text-gray-500 mt-2">程程练习时做错的小题会自动出现在这里哦～</p>
         </div>
       ) : (

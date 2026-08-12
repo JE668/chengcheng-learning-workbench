@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { starShop } from '@/lib/moko';
+import { EmptyState } from '@/components/EmptyState';
 
 interface StateView {
   starCoins: number;
@@ -94,7 +95,7 @@ export default function ShopPage() {
               </div>
             );
           })}
-          {wishes.length === 0 && <div className="text-center text-sm text-gray-400 py-2">存钱罐还是空的，写下第一个愿望吧～</div>}
+          {wishes.length === 0 && <EmptyState emoji="🐷" title="存钱罐还是空的" desc="写下第一个愿望吧～" />}
         </div>
       </div>
 

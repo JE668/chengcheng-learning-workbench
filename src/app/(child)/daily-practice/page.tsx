@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { GuideModal } from '@/components/GuideModal';
+import { EmptyState } from '@/components/EmptyState';
 import { playTts } from '@/lib/speak';
 import type { PracticeDayRecord, PracticeQuestion, PracticeSubmitResult } from '@/lib/daily-practice';
 import { PROSPERITY_BONUS } from '@/lib/moko';
@@ -198,7 +199,11 @@ export default function DailyPracticePage() {
   }
 
   if (!q) {
-    return <div className="max-w-2xl mx-auto p-10 text-center text-moko-violet font-bold">今天暂时没有练习哦～</div>;
+    return (
+      <div className="max-w-2xl mx-auto p-10">
+        <EmptyState emoji="🌙" title="今天暂时没有练习哦～" desc="去「萌可剧情」读个故事，或到城堡看看萌可吧！" />
+      </div>
+    );
   }
 
   const meta = KIND_META[q.kind] ?? FALLBACK_META;

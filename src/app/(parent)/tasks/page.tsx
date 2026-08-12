@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
+import { EmptyState } from '@/components/EmptyState';
 
 type PTask = {
   id: number;
@@ -241,7 +242,7 @@ export default function TasksPage() {
           </div>
         ))}
         {tasks.length === 0 && (
-          <div className="card-moko text-gray-500 text-center py-6">还没有发布任务，在上面填表发布第一个吧！</div>
+          <EmptyState emoji="📝" title="还没有发布任务" desc="在上面填表，发布第一个学习任务给孩子吧！" />
         )}
       </div>
     </div>
