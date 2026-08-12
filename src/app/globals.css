@@ -57,6 +57,16 @@ body {
   40% { transform: scale(1); opacity: 1; }
 }
 
+/* ============ 📱 平板横屏排版优化（小米平板 8 PRO 等宽屏） ============ */
+/* 设备横屏物理分辨率约 3200×2136，CSS 宽约 1280–1600px；
+   以下规则让内容容器在横屏下加宽，避免窄列两侧大片留白。 */
+@media (orientation: landscape) and (min-width: 1024px) {
+  .max-w-2xl { max-width: min(60rem, 94vw); }   /* 默认 42rem → 960px */
+  .max-w-4xl { max-width: min(72rem, 94vw); }   /* 默认 56rem → 1152px */
+  /* 主内容区在两栏布局里多给一点横向呼吸（侧栏固定 256px 不变） */
+  main { padding-left: max(2rem, env(safe-area-inset-left)); padding-right: max(2rem, env(safe-area-inset-right)); }
+}
+
 /* custom scrollbar (用于正文等需要的地方) */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: #FFF7ED; }

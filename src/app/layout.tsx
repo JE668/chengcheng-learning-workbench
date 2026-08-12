@@ -13,11 +13,14 @@ export const metadata = {
     shortcut: '/icon-192.png',
     apple: '/apple-touch-icon.png',
   },
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: '程程学习' },
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: '程程学习' },
 };
 
 export const viewport = {
   themeColor: '#a855f7',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth';
 import Nav from '@/components/Nav';
 import EyeRest from '@/components/EyeRest';
 import Clock from '@/components/Clock';
+import FullscreenToggle from '@/components/FullscreenToggle';
 
 export default async function ChildLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -16,6 +17,7 @@ export default async function ChildLayout({ children }: { children: React.ReactN
       </main>
       <EyeRest />
       <Clock />
+      <FullscreenToggle />
     </div>
   );
 }
