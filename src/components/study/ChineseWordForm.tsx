@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { WORD_FORM } from '@/lib/study-data';
+import { WORD_FORM, buildUnitWordItems } from '@/lib/study-data';
 import { StudyQuiz, type QuizItem } from './StudyQuiz';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -40,6 +40,23 @@ function buildItems(): QuizItem[] {
       options: shuffle([it.sentenceOk, ...it.sentenceWrong]),
       answer: it.sentenceOk,
       kind: '造句',
+    });
+  }
+  // 课本生字表派生的组词题：和识字课文、家长听写用的是同一份单元词语，
+  // 手写的 WORD_FORM 只补造句这种没法自动生成的题型。
+  for (const it of buildUnitWordItems()) {
+    items.push({
+      prompt: (
+        <span>
+          给「<b className="text-moko-rose">{it.char}</b>」组一个词，下面哪个对？
+          <span className="block text-xs text-gray-400 font-normal mt-1">课本第 {it.chapter} 单元 · {it.unit}</span>
+        </span>
+      ),
+      speak: `给${it.char}组一个词，下面哪个对`,
+      options: shuffle([it.word, ...it.wrongWords]),
+      answer: it.word,
+      kind: '组词',
+      chapter: it.unit,
     });
   }
   return items;

@@ -5,9 +5,12 @@ import {
   CHARACTERS,
   CHARACTER_CATEGORIES,
   POEMS,
+  TEXTBOOK_CHARACTERS,
   TRACE_CHARS,
+  textbookCharsUpTo,
   type CharacterItem,
   type PoemItem,
+  type TextbookChar,
 } from '@/lib/study-data';
 import { speakZh } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
@@ -213,7 +216,15 @@ const LEVEL_META: Record<DiffLevel, { label: string; emoji: string }> = {
 };
 const LEVEL_ORDER: DiffLevel[] = ['easy', 'medium', 'hard'];
 
-const EASY_CHARS = CHARACTERS.slice(0, 12);
+/**
+ * 题库跟着课本生字表走（与识字课文、家长听写同源）：
+ * 入门只考前两单元（天地人 / 数字 / 自然 / 人体），进阶到第七单元，挑战覆盖全册。
+ */
+const LEVEL_POOL: Record<DiffLevel, TextbookChar[]> = {
+  easy: textbookCharsUpTo(2),
+  medium: textbookCharsUpTo(7),
+  hard: TEXTBOOK_CHARACTERS,
+};
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -226,13 +237,13 @@ function shuffle<T>(arr: T[]): T[] {
 
 interface CharQ {
   mode: 'char2mean' | 'mean2char';
-  target: CharacterItem;
+  target: TextbookChar;
   options: string[];
   answer: string;
 }
 
 function buildQuestion(level: DiffLevel): CharQ {
-  const pool = level === 'easy' ? EASY_CHARS : CHARACTERS;
+  const pool = LEVEL_POOL[level];
   const target = pool[Math.floor(Math.random() * pool.length)];
   if (level === 'hard') {
     const distractors = shuffle(pool.filter((c) => c.char !== target.char))
@@ -240,7 +251,8 @@ function buildQuestion(level: DiffLevel): CharQ {
       .map((c) => c.char);
     return { mode: 'mean2char', target, options: shuffle([target.char, ...distractors]), answer: target.char };
   }
-  const distractors = shuffle(pool.filter((c) => c.char !== target.char))
+  // 释义可能撞车（比如两个字都写「小孩」），撞车的选项会让孩子答对被判错，先过滤掉
+  const distractors = shuffle(pool.filter((c) => c.meaning !== target.meaning))
     .slice(0, 3)
     .map((c) => c.meaning);
   return { mode: 'char2mean', target, options: shuffle([target.meaning, ...distractors]), answer: target.meaning };
@@ -285,7 +297,14 @@ export function CharacterQuizModule() {
       const nw = streak.wrong + 1;
       setStreak({ right: 0, wrong: nw });
       if (nw >= 2 && level !== 'easy') nl = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) - 1];
-      logM({ subject: '语文', kind: '识字', prompt: `${q.target.char} 是什么意思？`, answer: q.target.meaning, wrong: opt });
+      logM({
+        subject: '语文',
+        kind: '识字',
+        prompt: `${q.target.char} 是什么意思？`,
+        answer: q.target.meaning,
+        wrong: opt,
+        chapter: q.target.unit, // 带上课本单元，家长端错题本能看出是哪一单元没过关
+      });
     }
     setTimeout(() => nextRound(nl), ok ? 1400 : 1700);
   }
@@ -313,6 +332,9 @@ export function CharacterQuizModule() {
         ) : (
           <div className="text-base font-bold">哪个字的意思是「{q.target.meaning}」？</div>
         )}
+        <div className="text-[11px] mt-2 opacity-80">
+          课本第 {q.target.chapter} 单元 · {q.target.unit}
+        </div>
       </div>
       <div className={`grid gap-2 ${q.mode === 'mean2char' ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'}`}>
         {q.options.map((opt) => {

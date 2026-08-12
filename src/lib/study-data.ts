@@ -1449,7 +1449,7 @@ export const GRADE1_CHAR_UNITS: CharUnit[] = [
       '对', '云', '雨', '风', '花', '鸟', '虫',
       '六', '七', '八', '九', '十',
     ],
-    words: ['天上', '土地', '人口', '日子', '火山', '田地', '虫子', '雨水', '花鸟', '手足', '日月', '山水', '坐下'],
+    words: ['天上', '土地', '口水', '日子', '火山', '田地', '虫子', '雨水', '花鸟', '手足', '日月', '山水', '坐下'],
   },
   {
     unit: '汉语拼音（一）',
@@ -1465,7 +1465,7 @@ export const GRADE1_CHAR_UNITS: CharUnit[] = [
     emoji: '🔡',
     text: '拼音单元：字、词、句、子，学语文。',
     chars: ['字', '词', '语', '句', '子', '桌', '纸', '文', '数', '学', '音', '乐'],
-    words: ['字词', '句子', '桌子', '废纸', '语文', '数学', '音乐'],
+    words: ['字词', '句子', '桌子', '白纸', '语文', '数学', '音乐'],
   },
   {
     unit: '汉语拼音（三）',
@@ -1473,7 +1473,7 @@ export const GRADE1_CHAR_UNITS: CharUnit[] = [
     emoji: '🔣',
     text: '拼音单元：读儿歌，认生字。',
     chars: ['妹', '奶', '白', '皮', '小', '桥', '台', '雪', '儿', '草', '家', '是', '车', '羊', '走', '也'],
-    words: ['妹妹', '奶奶', '白皮', '小桥', '台子', '雪人', '儿子', '草地', '大家', '马车', '也是'],
+    words: ['妹妹', '奶奶', '皮球', '小桥', '台上', '雪人', '儿子', '草地', '大家', '马车', '也是'],
   },
   {
     unit: '阅读（一）· 秋天·小小的船·江南·四季',
@@ -1486,7 +1486,7 @@ export const GRADE1_CHAR_UNITS: CharUnit[] = [
       '江', '南', '可', '采', '莲', '鱼', '东', '西', '北',
       '尖', '说', '春', '青', '蛙', '夏', '弯', '皮', '地', '就', '冬',
     ],
-    words: ['秋天', '天气', '树叶', '飞机', '开会', '小船', '两头', '看见', '星星', '江南', '莲叶', '东西', '北方', '尖尖', '春天', '青蛙', '夏天', '冬天'],
+    words: ['秋天', '天气', '树叶', '飞机', '开会', '小船', '两头', '看见', '星星', '江南', '莲叶', '东西', '东北', '尖尖的', '春天', '青蛙', '夏天', '冬天'],
   },
   {
     unit: '识字（二）· 画·大小多少·小书包·日月明·升国旗',
@@ -1500,7 +1500,7 @@ export const GRADE1_CHAR_UNITS: CharUnit[] = [
       '明', '力', '男', '尘', '从', '众', '双', '木', '林', '森', '条',
       '升', '国', '旗', '中', '红', '歌', '起', '么', '美', '丽', '立',
     ],
-    words: ['画画', '远近', '听到', '无声', '来去', '多少', '黄牛', '小猫', '苹果', '书包', '尺子', '作业', '本子', '早校', '明月', '力气', '尘土', '树林', '森林', '一条', '升旗', '中国', '红歌', '美丽', '起立'],
+    words: ['画画', '远近', '听到', '无声', '来去', '多少', '黄牛', '小猫', '苹果', '书包', '尺子', '作业', '本子', '早上', '学校', '明月', '力气', '尘土', '树林', '森林', '一条', '升旗', '中国', '红旗', '国歌', '美丽', '起立'],
   },
   {
     unit: '阅读（二）· 影子·比尾巴·青蛙写诗·雨点儿',
@@ -1513,7 +1513,7 @@ export const GRADE1_CHAR_UNITS: CharUnit[] = [
       '写', '诗', '点', '要', '过', '给', '当', '串', '们', '以', '成',
       '数', '彩', '半', '空', '问', '到', '方', '没', '更', '绿', '出', '长',
     ],
-    words: ['影子', '前后', '黑狗', '左右', '朋友', '尾巴', '长短', '一把', '兔子', '公开', '写字', '诗歌', '过来', '当心', '我们', '以后', '成长'],
+    words: ['影子', '前后', '黑狗', '左右', '朋友', '尾巴', '长短', '一把', '兔子', '公鸡', '写字', '诗歌', '过来', '当心', '我们', '以后', '成长'],
   },
   {
     unit: '阅读（三）· 远足·大还是小·项链·雪地·乌鸦·蜗牛',
@@ -1531,4 +1531,90 @@ export const GRADE1_CHAR_UNITS: CharUnit[] = [
     words: ['睡觉', '大海', '老师', '同学', '什么', '天才', '明亮', '时候', '觉得', '自己', '穿衣', '衣服', '快乐', '蓝色', '笑着', '贝壳', '娃娃', '金鱼', '雪花', '参加', '乌鸦', '找到', '办法', '进出', '高处', '孩子', '发芽'],
   },
 ];
+
+/* ============================================================
+ * 生字表派生数据
+ * ------------------------------------------------------------
+ * 识字课文 / 家长听写 / 识字闯关 / 组词造句 共用 GRADE1_CHAR_UNITS 一份表，
+ * 下面这些派生结构负责把「单元 → 字 / 词」翻成各练习模块要的形状：
+ *  · TEXTBOOK_CHARACTERS   给识字闯关按课本顺序出题（只收已有释义的字）
+ *  · buildUnitWordItems()  给组词造句按单元词语出「组词」题
+ * ============================================================ */
+
+const CHAR_META = new Map<string, CharacterItem>(CHARACTERS.map((c) => [c.char, c]));
+
+export interface TextbookChar extends CharacterItem {
+  chapter: number;
+  unit: string;
+}
+
+/**
+ * 课本生字表 ∩ 已有释义的字，按单元先后排列。
+ * 识字闯关需要 meaning 做选项，所以生字表里还没写释义的字先不出题
+ * （想扩题量就往 CHARACTERS 里补该字的 meaning / phrase 即可，无需改模块）。
+ */
+export const TEXTBOOK_CHARACTERS: TextbookChar[] = (() => {
+  const out: TextbookChar[] = [];
+  const seen = new Set<string>();
+  for (const u of GRADE1_CHAR_UNITS) {
+    for (const c of u.chars) {
+      const meta = CHAR_META.get(c);
+      if (!meta || seen.has(c)) continue; // 课本里复现的字（如「了」「们」）只按首次出现的单元收一次
+      seen.add(c);
+      out.push({ ...meta, chapter: u.chapter, unit: u.unit });
+    }
+  }
+  return out;
+})();
+
+/** 取到第 chapter 单元（含）为止的生字，用于难度分层 */
+export function textbookCharsUpTo(chapter: number): TextbookChar[] {
+  return TEXTBOOK_CHARACTERS.filter((c) => c.chapter <= chapter);
+}
+
+/** 由生字表词语派生的「组词」题 */
+export interface UnitWordItem {
+  char: string; // 要组词的字
+  word: string; // 本单元里含该字的词
+  wrongWords: string[]; // 干扰词：来自别的单元，且一定不含该字
+  unit: string;
+  chapter: number;
+}
+
+const ALL_UNIT_WORDS = Array.from(new Set(GRADE1_CHAR_UNITS.flatMap((u) => u.words)));
+
+function pickN<T>(arr: T[], n: number): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a.slice(0, n);
+}
+
+/**
+ * 把生字表的词语变成组词题。
+ * 沿用 WORD_FORM 的铁律：干扰词绝不能含 char 本身，否则也是正确答案。
+ */
+export function buildUnitWordItems(): UnitWordItem[] {
+  const seen = new Set<string>();
+  const items: UnitWordItem[] = [];
+  for (const u of GRADE1_CHAR_UNITS) {
+    const unitChars = new Set(u.chars);
+    for (const word of u.words) {
+      const char = word.split('').find((c) => unitChars.has(c));
+      if (!char) continue;
+      const key = `${char}|${word}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const wrongWords = pickN(
+        ALL_UNIT_WORDS.filter((w) => w !== word && !w.includes(char)),
+        3,
+      );
+      if (wrongWords.length < 3) continue;
+      items.push({ char, word, wrongWords, unit: u.unit, chapter: u.chapter });
+    }
+  }
+  return items;
+}
 
