@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { GuideModal } from '@/components/GuideModal';
 import { playTts } from '@/lib/speak';
 import type { PracticeDayRecord, PracticeQuestion, PracticeSubmitResult } from '@/lib/daily-practice';
+import { PROSPERITY_BONUS } from '@/lib/moko';
 
 const KIND_META: Record<string, { label: string; grad: string; icon: string }> = {
   pinyin: { label: '语文 · 拼音', grad: 'from-moko-pink to-moko-rose', icon: '🔤' },
@@ -133,8 +134,9 @@ export default function DailyPracticePage() {
               <div className="mt-5 space-y-2 text-left bg-white/20 rounded-2xl p-4">
                 <div className="flex items-center gap-2">☀️ <span>阳光能量 +{rw.sunlight}</span></div>
                 <div className="flex items-center gap-2">🧸 <span>召唤 {rw.mokos.join('、')}</span></div>
-                {rw.prosperity && <div className="flex items-center gap-2">🏰 <span>城堡繁荣度 +1</span></div>}
+                {rw.prosperity && <div className="flex items-center gap-2">🏰 <span>城堡繁荣度 +{PROSPERITY_BONUS}</span></div>}
                 <div className="flex items-center gap-2">🔥 <span>已连续完成 {result.practiceStreak} 天</span></div>
+                {(result.tickets ?? 0) > 0 && <div className="flex items-center gap-2">🎟️ <span>捕捉券 +{result.tickets}（去「萌可闯关」读故事、捉萌可吧！）</span></div>}
               </div>
             )}
             {result.milestone && (
@@ -172,6 +174,11 @@ export default function DailyPracticePage() {
             <div className="mt-3 text-left bg-white/20 rounded-2xl p-4 space-y-1">
               <div>☀️ 阳光能量 +{result.rewards.sunlight}</div>
               <div>🧸 召唤 {result.rewards.mokos.join('、')}</div>
+            </div>
+          )}
+          {(result.tickets ?? 0) > 0 && (
+            <div className="mt-3 text-left bg-white/20 rounded-2xl p-4 space-y-1">
+              <div>🎟️ 捕捉券 +{result.tickets}（去「萌可闯关」读故事、捉萌可吧！）</div>
             </div>
           )}
           <button onClick={retry} className="mt-6 px-8 py-3 rounded-full bg-white text-moko-rose font-black hover:scale-105 transition">

@@ -97,6 +97,8 @@ export interface PracticeSubmitResult {
   practiceStreak?: number;
   rewards?: { mokos: string[]; sunlight: number; prosperity: boolean };
   milestone?: { mokoKey: string; mokoName: string; img: string };
+  /** 本次提交发放的捕捉券数量（每确认一科 1 张，来自 confirm 的今日分支） */
+  tickets?: number;
 }
 
 /* ----------------------------- 时间工具（本地副本，避免改动 castle 导出面） ----------------------------- */
@@ -414,6 +416,7 @@ export async function submitPractice(childId: number, answers: number[]): Promis
   const subjects: SubjectResult[] = [];
   const newlyMokos: string[] = [];
   let sunlightGain = 0;
+  let ticketGain = 0;
   let correctTotal = 0;
 
   for (const s of SUBJECTS) {
@@ -432,6 +435,7 @@ export async function submitPractice(childId: number, answers: number[]): Promis
       await confirm(childId, today, s); // confirm 内部已统一发放捕捉券
       newlyMokos.push(mokoChars[subjectMokoKey[s]]?.name ?? '萌可');
       sunlightGain += SUN_PER_SUBJECT;
+      ticketGain += 1;
     }
     // 已确认的科始终视为完成；只有「未确认且本次没全对」才标记为待重练
     const status: SubjectStatus = already ? 'already' : passed ? 'passed' : 'failed';
@@ -459,8 +463,14 @@ export async function submitPractice(childId: number, answers: number[]): Promis
     practiceStreak = await computePracticeStreak(childId, today);
     const stRow = (await db.execute({ sql: 'SELECT streak_rewarded FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, today] })).rows[0];
     if (MILESTONE_DAYS.includes(practiceStreak) && Number(stRow?.streak_rewarded ?? 0) !== 1) {
+      // 先查候选萌可（图鉴里下一只未拥有的 col_ 萌可）
       const ownedKeys = (await db.execute({ sql: 'SELECT moko_key FROM moko_owned WHERE child_id = ?', args: [childId] })).rows.map((r) => String(r.moko_key));
       const candidate = mokoCollection.find((m) => m.key.startsWith('col_') && !ownedKeys.includes(m.key));
+      // +10 星星币与事件日志独立于「是否能再解锁新萌可」，
+      // 否则图鉴集齐后（无候选萌可）里程碑奖励会静默消失。
+      await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + 10 WHERE child_id = ?', args: [childId] });
+      const mokoNote = candidate ? `解锁新萌可「${candidate.name}」，并` : '';
+      await logGrowthEvent(childId, 'milestone', '🌟', `连续 ${practiceStreak} 日一练达成！`, `${mokoNote}收获 10 星星币！`);
       if (candidate) {
         await db.execute({
           sql: `INSERT INTO moko_owned (child_id, moko_key, subject, stage, stage_at, mood, status)
@@ -468,8 +478,6 @@ export async function submitPractice(childId: number, answers: number[]): Promis
                 ON CONFLICT(child_id, moko_key) DO UPDATE SET status = 'resident', mood = 3`,
           args: [childId, candidate.key],
         });
-        await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + 10 WHERE child_id = ?', args: [childId] });
-        await logGrowthEvent(childId, 'milestone', '🌟', `连续 ${practiceStreak} 日一练达成！`, `解锁新萌可「${candidate.name}」，并收获 10 星星币！`);
         milestone = { mokoKey: candidate.key, mokoName: candidate.name ?? '新萌可', img: candidate.img ?? '' };
       }
       await db.execute({ sql: 'UPDATE daily_practice SET streak_rewarded = 1 WHERE child_id = ? AND day = ?', args: [childId, today] });
@@ -487,5 +495,6 @@ export async function submitPractice(childId: number, answers: number[]): Promis
     practiceStreak,
     rewards,
     milestone,
+    tickets: ticketGain,
   };
 }

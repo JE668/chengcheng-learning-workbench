@@ -40,9 +40,9 @@ export async function getCertData(childId: number, childName: string): Promise<C
   const we = fmt(weekEnd);
 
   const daily = await db.execute({
-    sql: `SELECT DATE(c.created_at) as day, SUM(c.points) as total
-          FROM completions c WHERE c.child_id = ? AND DATE(c.created_at) BETWEEN ? AND ?
-          GROUP BY DATE(c.created_at) ORDER BY day DESC`,
+    sql: `SELECT DATE(c.created_at, 'localtime') as day, SUM(c.points) as total
+          FROM completions c WHERE c.child_id = ? AND DATE(c.created_at, 'localtime') BETWEEN ? AND ?
+          GROUP BY DATE(c.created_at, 'localtime') ORDER BY day DESC`,
     args: [childId, ws, we],
   });
   const pointsWeek = daily.rows.reduce((s: number, r) => s + Number(r.total ?? 0), 0);
