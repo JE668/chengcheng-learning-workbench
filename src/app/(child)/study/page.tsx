@@ -1,6 +1,12 @@
 import Link from 'next/link';
 import ReviewBadge from '@/components/ReviewBadge';
 import { MokoHelper } from '@/components/MokoHelper';
+import { getCurrentUser, resolveChildId } from '@/lib/auth';
+import { getModuleProgressAll, getTextbookProgress } from '@/lib/progress-store';
+import { STUDY_MODULES, SUBJECT_META } from '@/lib/study-modules';
+import { GRADE1_CHAR_UNITS } from '@/lib/study-data';
+
+export const dynamic = 'force-dynamic';
 
 const cards = [
   {
@@ -39,7 +45,44 @@ const TOOLS = [
   { href: '/study/eye', emoji: '💆', title: '护眼小操', sub: '四节眼保健操，看书久了做一遍' },
 ];
 
-export default function StudyPage() {
+interface Rec {
+  resumeHref: string;
+  resumeLabel: string;
+  nextHref: string;
+  nextLabel: string;
+}
+
+async function loadRecommend(): Promise<Rec | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const childId = await resolveChildId(user);
+  if (!childId) return null;
+
+  // 继续学习：最近一次玩过的模块
+  const prog = await getModuleProgressAll(childId);
+  const recent = prog
+    .filter((p) => p.lastPlayed > 0)
+    .sort((a, b) => b.lastPlayed - a.lastPlayed)[0];
+  if (!recent) return null;
+
+  const subj = recent.subject as keyof typeof STUDY_MODULES;
+  const mod = STUDY_MODULES[subj]?.find((m) => m.key === recent.moduleKey);
+  if (!mod) return null;
+  const resumeLabel = `${SUBJECT_META[subj]?.label ?? ''} · ${mod.label}`;
+  const resumeHref = `/study/${recent.subject}/${recent.moduleKey}`;
+
+  // 该复习单元：语文课本读到的下一章对应哪个单元
+  const tb = await getTextbookProgress(childId);
+  const readIdx = tb['chinese'] ?? 0;
+  const nextUnit = GRADE1_CHAR_UNITS.find((u) => u.chapter === readIdx + 1);
+  const nextLabel = nextUnit ? `第 ${nextUnit.chapter} 单元 · ${nextUnit.unit}` : '';
+  const nextHref = '/study/chinese';
+
+  return { resumeHref, resumeLabel, nextHref, nextLabel };
+}
+
+export default async function StudyPage() {
+  const rec = await loadRecommend();
   return (
     <div className="max-w-4xl mx-auto fade-up">
       <h1 className="page-title mb-2">学习城堡 📚</h1>
@@ -52,6 +95,29 @@ export default function StudyPage() {
           '遇到难题按「换一句」，萌可随时给你打气，别怕！',
         ]}
       />
+
+      {/* 今日推荐：用已有的进度 / 课本位置，给孩子一个明确的「下一步」 */}
+      {rec && (
+        <div className="mb-6 grid sm:grid-cols-2 gap-4">
+          <Link
+            href={rec.resumeHref}
+            className="block rounded-2xl p-4 bg-gradient-to-r from-moko-rose to-moko-pink text-white shadow-lg hover:scale-[1.02] transition"
+          >
+            <div className="text-xs opacity-90 mb-1">▶ 继续学习</div>
+            <div className="text-lg font-black truncate">{rec.resumeLabel}</div>
+          </Link>
+          {rec.nextLabel && (
+            <Link
+              href={rec.nextHref}
+              className="block rounded-2xl p-4 bg-gradient-to-r from-moko-gold to-moko-yellow text-white shadow-lg hover:scale-[1.02] transition"
+            >
+              <div className="text-xs opacity-90 mb-1">📘 该复习单元</div>
+              <div className="text-lg font-black truncate">{rec.nextLabel}</div>
+            </Link>
+          )}
+        </div>
+      )}
+
       <div className="mb-6">
         <ReviewBadge />
       </div>
