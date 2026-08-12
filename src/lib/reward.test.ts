@@ -143,8 +143,9 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
 
     const ok = await buy(cid, 'shield');
     expect(ok.ok).toBe(true);
-    // 初始 COST_SHIELD+5，三次 confirm 各 +SUN_PER_SUBJECT，buy 扣 COST_SHIELD
-    expect((await readCastle(cid)).sunlight).toBe(COST_SHIELD + 5 + SUN_PER_SUBJECT * 3 - COST_SHIELD);
+    // 预置阳光 = COST_SHIELD+5；本测试用 confirmSubject（直写 daily_checkins）不走 confirm()，故不额外加阳光；
+    // buy 扣 COST_SHIELD 后应剩余 5
+    expect((await readCastle(cid)).sunlight).toBe(COST_SHIELD + 5 - COST_SHIELD);
   });
 
   it('submitPractice 里程碑（第 2 天连续一练）→ 额外 +10 星星币且只发一次', async () => {
