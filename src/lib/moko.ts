@@ -311,18 +311,27 @@ export const games: {
 
 /** 萌可成长时长（分钟级，便于孩子体验，可在设置里调整） */
 export const GROWTH_MIN = { settled: 10, playing: 30, friend: 60 };
-// 经济常量已统一收口到 src/lib/economy.ts（单一事实来源），此处再导出以保持兼容。
+// 经济常量已统一收口到 src/lib/economy.ts（单一事实来源），此处 import 供本文件使用，
+// 并再导出以保持兼容（其他模块仍可从 moko 导入这些常量，无循环依赖）。
+import {
+  STAR_PER_FRIEND,
+  SUN_PER_SUBJECT,
+  PROSPERITY_BONUS,
+  SHIELD_STREAK_REQ,
+  COST_SPRAY,
+  COST_SHIELD,
+} from './economy';
 export {
   STAR_PER_FRIEND,
   SUN_PER_SUBJECT,
   PROSPERITY_BONUS,
   SHIELD_STREAK_REQ,
-} from './economy';
+};
 
 /** 魔法商店（阳光能量消费） */
 export const magicShop = [
-  { key: 'spray', name: '魔法喷雾', cost: 5, icon: '🧴', desc: '帮乐美捉回所有捣蛋萌可 + 安抚全体萌可至满格心情 + 找回被藏星星币的 50%' },
-  { key: 'shield', name: '护盾', cost: 10, icon: '🛡️', desc: `帮乐美挡住一次捣蛋萌可（需连续打卡 ${SHIELD_STREAK_REQ} 天才能兑换，兑换后自动装备）` },
+  { key: 'spray', name: '魔法喷雾', cost: COST_SPRAY, icon: '🧴', desc: '帮乐美捉回所有捣蛋萌可 + 安抚全体萌可至满格心情 + 找回被藏星星币的 50%' },
+  { key: 'shield', name: '护盾', cost: COST_SHIELD, icon: '🛡️', desc: `帮乐美挡住一次捣蛋萌可（需连续打卡 ${SHIELD_STREAK_REQ} 天才能兑换，兑换后自动装备）` },
 ];
 
 /** 星星币商城（长期激励） */
