@@ -122,7 +122,7 @@ export default function TracePage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto fade-up">
       <Link href="/study" className="text-moko-violet font-black no-underline">‹ 返回学习城堡</Link>
       <h1 className="page-title mt-2 mb-1">描红跟写 ✍️</h1>
       <p className="text-gray-600 mb-5">

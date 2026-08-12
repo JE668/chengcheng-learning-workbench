@@ -45,7 +45,7 @@ export default async function HomePage() {
   ];
 
   return (
-    <div className="relative max-w-4xl mx-auto min-h-screen">
+    <div className="relative max-w-4xl mx-auto min-h-screen fade-up">
       <MokoGroupBg />
       {/* 顶部问候 */}
       <div className="card-moko flex items-center gap-5 mb-6 bg-gradient-to-r from-moko-pink to-moko-rose text-white">

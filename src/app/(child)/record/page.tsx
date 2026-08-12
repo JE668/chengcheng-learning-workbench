@@ -19,7 +19,7 @@ export default async function RecordPage() {
   const diary = await getGrowthDiary(user.id, 20);
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto fade-up">
       <h1 className="page-title mb-4">学习记录 🏆</h1>
       <Link href="/cert" className="block mb-6 rounded-2xl p-4 bg-gradient-to-r from-moko-gold to-moko-rose text-white shadow-lg hover:scale-[1.01] transition">
         <div className="flex items-center justify-between">

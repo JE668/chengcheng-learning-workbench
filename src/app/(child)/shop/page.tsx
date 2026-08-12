@@ -61,7 +61,7 @@ export default function ShopPage() {
   if (!state) return <div className="max-w-3xl mx-auto flex flex-col items-center justify-center py-20 gap-3 text-moko-violet font-bold"><span className="moko-loader"><span></span><span></span><span></span></span>商城加载中… ✨</div>;
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto fade-up">
       <div className="flex items-center justify-between mb-4">
         <h1 className="page-title">🛍️ 星星币商城</h1>
         <div className="text-sm font-bold text-moko-gold">⭐ {state.starCoins}</div>

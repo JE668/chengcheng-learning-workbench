@@ -40,7 +40,7 @@ const TOOLS = [
 
 export default function StudyPage() {
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto fade-up">
       <h1 className="page-title mb-2">学习城堡 📚</h1>
       <p className="text-gray-600 mb-4">选择一个学科，开启今天的萌可学习冒险！</p>
       <MokoHelper

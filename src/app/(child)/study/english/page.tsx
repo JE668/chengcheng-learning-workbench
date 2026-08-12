@@ -8,7 +8,7 @@ export default function EnglishStudyPage() {
   const modules = STUDY_MODULES.english;
   const meta = SUBJECT_META.english;
   return (
-    <div className="max-w-4xl mx-auto pb-28">
+    <div className="max-w-4xl mx-auto pb-28 fade-up">
       <div className="flex items-center gap-3 mb-4">
         <Link href="/study" className="text-moko-violet font-bold hover:underline">‹ 学习首页</Link>
       </div>

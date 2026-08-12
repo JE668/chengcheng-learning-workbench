@@ -69,7 +69,7 @@ export default function BadgesPage() {
   const earned = badges.filter((b) => tierFor(b.value, b.tiers) > 0).length;
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto fade-up">
       <Link href="/" className="text-moko-violet font-black no-underline">‹ 返回首页</Link>
       <h1 className="page-title mt-2 mb-1">我的勋章墙 🏆</h1>
       <p className="text-gray-600 mb-4">
