@@ -742,125 +742,6 @@ export const ALL_EN_WORDS: WordItem[] = Object.values(EN_WORD_TOPICS).flat();
    人教版（部编版）小学一年级上册 · 拓展内容
    ============================================================ */
 
-/* -------------------- 语文 · 识字课文（按课本单元） -------------------- */
-export interface CharacterLessonItem {
-  char: string;
-  phrase: string;
-}
-export interface CharacterLesson {
-  lesson: string;
-  emoji: string;
-  text: string;
-  items: CharacterLessonItem[];
-}
-export const CHARACTER_LESSONS: CharacterLesson[] = [
-  {
-    lesson: '识字 1《天地人》',
-    emoji: '🌍',
-    text: '天 地 人 你 我 他',
-    items: [
-      { char: '天', phrase: '天空' },
-      { char: '地', phrase: '大地' },
-      { char: '人', phrase: '人们' },
-      { char: '你', phrase: '你们' },
-      { char: '我', phrase: '我们' },
-      { char: '他', phrase: '他们' },
-    ],
-  },
-  {
-    lesson: '识字 2《金木水火土》',
-    emoji: '🔥',
-    text: '一二三四五，金木水火土。天地分上下，日月照今古。',
-    items: [
-      { char: '金', phrase: '金子' },
-      { char: '木', phrase: '木头' },
-      { char: '水', phrase: '喝水' },
-      { char: '火', phrase: '火苗' },
-      { char: '土', phrase: '泥土' },
-    ],
-  },
-  {
-    lesson: '识字 3《口耳目手足》',
-    emoji: '👀',
-    text: '口 耳 目 手 足 —— 站如松，坐如钟。',
-    items: [
-      { char: '口', phrase: '开口' },
-      { char: '耳', phrase: '耳朵' },
-      { char: '目', phrase: '眼目' },
-      { char: '手', phrase: '小手' },
-      { char: '足', phrase: '足球' },
-      { char: '站', phrase: '站直' },
-      { char: '坐', phrase: '坐好' },
-    ],
-  },
-  {
-    lesson: '识字 4《日月山川》',
-    emoji: '🏔️',
-    text: '日 月 山 川 水 火 田 禾',
-    items: [
-      { char: '川', phrase: '山川' },
-      { char: '禾', phrase: '禾苗' },
-    ],
-  },
-  {
-    lesson: '识字 5《对韵歌》',
-    emoji: '🌧️',
-    text: '云对雨，雪对风，花对树，鸟对虫。',
-    items: [
-      { char: '云', phrase: '白云' },
-      { char: '雨', phrase: '下雨' },
-      { char: '风', phrase: '大风' },
-      { char: '鸟', phrase: '小鸟' },
-      { char: '虫', phrase: '虫子' },
-    ],
-  },
-  {
-    lesson: '识字 6《日月明》',
-    emoji: '💡',
-    text: '日月明，田力男，小大尖，小土尘。二人从，三人众，双木林，三木森。',
-    items: [
-      { char: '明', phrase: '明亮' },
-      { char: '男', phrase: '男孩' },
-      { char: '尖', phrase: '笔尖' },
-      { char: '尘', phrase: '尘土' },
-      { char: '从', phrase: '跟从' },
-      { char: '众', phrase: '众人' },
-      { char: '林', phrase: '树林' },
-      { char: '森', phrase: '森林' },
-    ],
-  },
-  {
-    lesson: '识字 7《小书包》',
-    emoji: '🎒',
-    text: '书包 尺子 作业本 笔 橡皮',
-    items: [
-      { char: '包', phrase: '书包' },
-      { char: '尺', phrase: '尺子' },
-      { char: '作', phrase: '作业' },
-      { char: '业', phrase: '作业' },
-      { char: '本', phrase: '本子' },
-      { char: '课', phrase: '上课' },
-      { char: '早', phrase: '早上' },
-      { char: '校', phrase: '学校' },
-    ],
-  },
-  {
-    lesson: '识字 8《升国旗》',
-    emoji: '🚩',
-    text: '五星红旗，我们的国旗。国歌声中，徐徐升起。',
-    items: [
-      { char: '升', phrase: '升起' },
-      { char: '国', phrase: '国家' },
-      { char: '旗', phrase: '红旗' },
-      { char: '起', phrase: '起立' },
-      { char: '立', phrase: '立正' },
-      { char: '美', phrase: '美丽' },
-      { char: '丽', phrase: '美丽' },
-      { char: '歌', phrase: '唱歌' },
-      { char: '中', phrase: '中国' },
-    ],
-  },
-];
 
 /* -------------------- 语文 · 课文朗读（一年级上册） -------------------- */
 export interface TextItem {
@@ -1541,6 +1422,8 @@ export const MY_DAY: MyDayItem[] = [
 export interface CharUnit {
   unit: string;
   chapter: number; // 对应课本章节 idx
+  emoji: string;
+  text: string; // 单元导语 / 课文句子
   chars: string[]; // 本单元会认字
   words: string[]; // 本单元可听写词语
 }
@@ -1549,12 +1432,16 @@ export const GRADE1_CHAR_UNITS: CharUnit[] = [
   {
     unit: '我上学了',
     chapter: 1,
+    emoji: '🏫',
+    text: '上学歌：太阳当空照，花儿对我笑。爱学习，爱祖国。',
     chars: ['我', '上', '学', '了', '爱', '国', '中', '你', '们'],
     words: ['我们', '上学', '中国', '爱你', '你们'],
   },
   {
     unit: '识字（一）· 天地人',
     chapter: 2,
+    emoji: '🌍',
+    text: '天 地 人 你 我 他；一二三四五，金木水火土。',
     chars: [
       '天', '地', '人', '你', '我', '他', '一', '二', '三', '四', '五', '上', '下',
       '口', '耳', '目', '手', '足', '站', '坐',
@@ -1567,24 +1454,32 @@ export const GRADE1_CHAR_UNITS: CharUnit[] = [
   {
     unit: '汉语拼音（一）',
     chapter: 3,
+    emoji: '🔤',
+    text: '拼音单元：拼一拼、读一读，认识更多字。',
     chars: ['爸', '妈', '马', '土', '不', '画', '打', '棋', '鸡'],
     words: ['爸妈', '马车', '土地', '画画', '打球', '下棋', '小鸡'],
   },
   {
     unit: '汉语拼音（二）',
     chapter: 4,
+    emoji: '🔡',
+    text: '拼音单元：字、词、句、子，学语文。',
     chars: ['字', '词', '语', '句', '子', '桌', '纸', '文', '数', '学', '音', '乐'],
     words: ['字词', '句子', '桌子', '废纸', '语文', '数学', '音乐'],
   },
   {
     unit: '汉语拼音（三）',
     chapter: 5,
+    emoji: '🔣',
+    text: '拼音单元：读儿歌，认生字。',
     chars: ['妹', '奶', '白', '皮', '小', '桥', '台', '雪', '儿', '草', '家', '是', '车', '羊', '走', '也'],
     words: ['妹妹', '奶奶', '白皮', '小桥', '台子', '雪人', '儿子', '草地', '大家', '马车', '也是'],
   },
   {
     unit: '阅读（一）· 秋天·小小的船·江南·四季',
     chapter: 6,
+    emoji: '🍂',
+    text: '秋天来了，小小的船，江南可采莲，四季更替。',
     chars: [
       '秋', '气', '了', '树', '叶', '片', '大', '飞', '会', '个',
       '的', '船', '两', '头', '在', '里', '看', '见', '闪', '星',
@@ -1596,6 +1491,8 @@ export const GRADE1_CHAR_UNITS: CharUnit[] = [
   {
     unit: '识字（二）· 画·大小多少·小书包·日月明·升国旗',
     chapter: 7,
+    emoji: '✏️',
+    text: '画里藏字，大小多少，小书包，日月明，升国旗。',
     chars: [
       '画', '远', '色', '近', '听', '无', '声', '去', '还', '来',
       '多', '少', '黄', '牛', '只', '猫', '边', '鸭', '苹', '果', '杏', '桃',
@@ -1608,6 +1505,8 @@ export const GRADE1_CHAR_UNITS: CharUnit[] = [
   {
     unit: '阅读（二）· 影子·比尾巴·青蛙写诗·雨点儿',
     chapter: 8,
+    emoji: '👣',
+    text: '影子跟着我，比尾巴，青蛙写诗，雨点儿沙沙。',
     chars: [
       '影', '前', '后', '黑', '狗', '左', '右', '它', '好', '朋', '友',
       '尾', '巴', '谁', '长', '短', '把', '伞', '兔', '最', '公',
@@ -1619,6 +1518,8 @@ export const GRADE1_CHAR_UNITS: CharUnit[] = [
   {
     unit: '阅读（三）· 远足·大还是小·项链·雪地·乌鸦·蜗牛',
     chapter: 9,
+    emoji: '🐌',
+    text: '明天要远足，大还是小，项链，雪地里的小画家，乌鸦喝水，小蜗牛。',
     chars: [
       '睡', '那', '海', '真', '老', '师', '吗', '同', '什', '才', '亮',
       '时', '候', '觉', '得', '自', '己', '很', '穿', '衣', '服', '快',
