@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { getDb } from './db-core';
+import { runMigrations } from './migrations';
 
 /**
  * 初始化数据库 schema（幂等）。
@@ -425,4 +426,8 @@ export async function ensureSchema() {
   await db.execute({ sql: 'CREATE TABLE IF NOT EXISTS _schema_meta (initialized INTEGER PRIMARY KEY DEFAULT 1)', args: [] });
   await db.execute({ sql: 'INSERT OR IGNORE INTO _schema_meta (initialized) VALUES (1)', args: [] });
   }
+
+  // 版本化迁移跑道（既有 bootstrap 之上的「未来迁移」入口，见 migrations.ts）。
+  // 全新库与已部署旧库都会在此补齐尚未应用的迁移，且每条只跑一次。
+  await runMigrations(db);
 }
