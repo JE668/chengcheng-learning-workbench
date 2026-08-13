@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { storyChapters } from '@/lib/story';
+import { STUDY_MODULES } from '@/lib/study-modules';
 import { mokoImgByName } from '@/lib/moko-imgs';
 import { mokoCollectionByName } from '@/lib/moko-collection';
 import { playTtsEnd } from '@/lib/speak';
@@ -34,6 +35,42 @@ export default function StoryPage() {
   const [quizWrong, setQuizWrong] = useState(false);
   const [quizRight, setQuizRight] = useState(false);
   const [loadErr, setLoadErr] = useState<string | null>(null);
+  /** 有模块锁定剧情的章节是否已达成（moduleKey → 是否 ≥1 星） */
+  const [moduleDone, setModuleDone] = useState<Record<string, boolean>>({});
+
+  async function loadModuleProgress() {
+    const reqs = storyChapters
+      .filter((c) => c.module)
+      .map(async (c) => {
+        try {
+          const r = await fetch(`/api/module-progress?subject=${encodeURIComponent(c.module!.subject)}&moduleKey=${encodeURIComponent(c.module!.key)}`);
+          const d = await r.json();
+          return { key: c.module!.key, done: (Number(d.stars) || 0) >= 1 } as const;
+        } catch {
+          return { key: c.module!.key, done: true } as const; // 查询失败不卡剧情
+        }
+      });
+    const results = await Promise.all(reqs);
+    const map: Record<string, boolean> = {};
+    for (const x of results) map[x.key] = x.done;
+    setModuleDone(map);
+  }
+
+  useEffect(() => {
+    load();
+    loadModuleProgress();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** 模块绑定章节的解锁判定 + 展示用模块名 */
+  function moduleInfo(c: (typeof storyChapters)[number]) {
+    if (!c.module) return null;
+    const list = STUDY_MODULES[c.module.subject] ?? [];
+    const meta = list.find((m) => m.key === c.module.key);
+    const label = meta?.label ?? c.module.key;
+    const done = !!moduleDone[c.module.key];
+    return { label, done, href: `/study/${c.module.subject}/${c.module.key}` };
+  }
 
   async function load() {
     setLoadErr(null);
@@ -269,17 +306,31 @@ export default function StoryPage() {
           const isQuiz = quizSet.has(c.id);
           const isNext = i === progress.nextIndex;
           const isLocked = i > progress.nextIndex;
+          const mod = moduleInfo(c);
+          const lockedByModule = mod ? !mod.done : false;
           const img = mokoImgByName[c.mokoName];
           const open = active === c.id;
           const isNarrating = narrating === c.id;
 
-          if (isLocked) {
+          if (isLocked || lockedByModule) {
             return (
-              <div key={c.id} className="rounded-3xl p-5 shadow-lg border-2 border-gray-200 bg-gray-100 opacity-80 flex items-center gap-4">
+              <div key={c.id} className="rounded-3xl p-5 shadow-lg border-2 border-gray-200 bg-gray-100 opacity-90 flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-gray-300 flex items-center justify-center text-2xl">🔒</div>
-                <div>
+                <div className="flex-1">
                   <div className="font-black text-gray-500">第 {i + 1} 集 · {c.title}</div>
-                  <div className="text-xs text-gray-400">先捕捉上一集的萌可，就能解锁这一集～</div>
+                  {lockedByModule && mod ? (
+                    <div className="text-xs text-moko-violet mt-1">
+                      先去「{mod.label}」拿一颗⭐，就能解锁这一集～
+                      <Link
+                        href={mod.href}
+                        className="ml-1 inline-block px-2 py-0.5 rounded-full bg-moko-violet/15 text-moko-violet font-bold hover:bg-moko-violet/25 transition"
+                      >
+                        去学习
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-gray-400 mt-1">先捕捉上一集的萌可，就能解锁这一集～</div>
+                  )}
                 </div>
               </div>
             );

@@ -10,6 +10,8 @@ export interface StoryChapter {
   emoji: string;
   gradient: string; // tailwind 渐变类，用于卡片主题色
   scene: string; // 副标题 / 场景
+  /** 先完成对应学习模块（≥1 星）才解锁本集剧情；不设置则默认只受线性推进解锁 */
+  module?: StoryChapterModuleReq;
   paragraphs: string[]; // 剧情文字（适合一年级孩子）
   tip?: string; // 给程程的小提示
   quiz?: StoryQuiz; // 读完故事后的小问题（答对才能捕捉萌可）
@@ -20,6 +22,12 @@ export interface StoryQuiz {
   q: string;
   options: string[];
   answer: number;
+}
+
+/** 解锁条件：先完成某学习模块（拿到 ≥1 星）才能读/捕捉这一集。不设置则默认只受线性推进解锁。 */
+export interface StoryChapterModuleReq {
+  subject: string; // chinese / math / english
+  key: string; // study-modules.ts 里的模块 key
 }
 
 /* ------------------------------------------------------------------ *
@@ -115,6 +123,7 @@ const HERO_CHAPTERS: StoryChapter[] = [
     emoji: '💗',
     gradient: 'from-moko-pink to-moko-rose',
     scene: '第一集 · 皇室萌可',
+    module: { subject: 'chinese', key: 'characters' },
     paragraphs: [
       '程程推开一扇闪闪发光的门，来到了神奇的萌可王国。',
       '一朵粉色的小云飘过来，原来是爱心萌可！她举着爱心镜子说：「啾~ 欢迎你，我们一起用爱心光波，认字读诗吧！」',
@@ -135,6 +144,7 @@ const HERO_CHAPTERS: StoryChapter[] = [
     emoji: '💪',
     gradient: 'from-moko-blue to-moko-cyan',
     scene: '第二集 · 皇室萌可',
+    module: { subject: 'math', key: 'count' },
     paragraphs: [
       '爱心萌可带着程程来到一片数字森林，正正萌可正举着勇气相机等大家。',
       '「哈哈，无所畏惧！」正正萌可说，「加加减减一点都不可怕，我们一起把数字打败！」',
@@ -155,6 +165,7 @@ const HERO_CHAPTERS: StoryChapter[] = [
     emoji: '🎵',
     gradient: 'from-moko-yellow to-moko-gold',
     scene: '第三集 · 皇室萌可',
+    module: { subject: 'english', key: 'letters' },
     paragraphs: [
       '森林尽头的舞台上，唱唱萌可摇着甜心铃铛唱起了歌。',
       '「啦啦啦，唱给世界听！」唱唱萌可用歌声教程程念出了一个个英文字母和单词。',
