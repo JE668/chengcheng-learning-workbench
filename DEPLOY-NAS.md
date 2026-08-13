@@ -105,7 +105,7 @@ cloudflared tunnel --url http://localhost:3000
 ### 飞牛怎么拉到（ghcr 可见性）
 - **公开包（最省事）**：GitHub → 你的头像 → Packages → 该镜像 → Settings → Change visibility → Public。之后飞牛无需登录直接 `pull`。
 - **私有包**：飞牛上先 `docker login ghcr.io -u JE668 -p <你的PAT>`，再 pull（PAT 需 `read:packages` 权限）。
-- **ghcr.io 在大陆拉取慢/受限**：把镜像名换成南大镜像前缀：`ghcr.nju.edu.cn/je668/chengcheng-learning-workbench:latest`（镜像只拉一次会缓存）。
+- **ghcr.io 在大陆拉取慢/受限**：在 Docker 守护进程配置镜像加速源（registry mirror），`image` 名保持 `ghcr.io/je668/chengcheng-learning-workbench:latest` 不变，不要改成第三方镜像站前缀（本仓库只推送 ghcr.io）。（镜像只拉一次会缓存）
 
 ### 日常更新
 GitHub 上 push 代码 → 自动出新镜像 → 飞牛执行：

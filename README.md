@@ -221,7 +221,7 @@ docker compose -f docker-compose.ghcr.yml up -d
 镜像可见性 / 拉取：
 
 - **私有包（当前仓库为私有）**：飞牛上先 `docker login ghcr.io -u JE668 -p <PAT>`（PAT 需 `read:packages` 作用域），再 pull。
-- **ghcr.io 在大陆拉取慢/受限**：把镜像名换成南大镜像 `ghcr.nju.edu.cn/je668/chengcheng-learning-workbench:latest`（镜像只拉一次会缓存）。
+- **ghcr.io 在大陆拉取慢/受限**：在 Docker 守护进程配置镜像加速源（registry mirror），`image` 名保持 `ghcr.io/je668/chengcheng-learning-workbench:latest` 不变（镜像只拉一次会缓存）。
 
 数据库与媒体均走挂载卷（`./data`、`./media/raz`、`./media/textbooks`），重建容器不丢数据。
 完整说明（含本地 build 版、外网访问、日常更新、常见坑）见 **[DEPLOY-NAS.md](./DEPLOY-NAS.md)**。

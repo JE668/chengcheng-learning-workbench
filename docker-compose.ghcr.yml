@@ -9,9 +9,8 @@
 #        docker compose -f docker-compose.ghcr.yml up -d
 #   4) 访问 http://<飞牛内网IP>:3000 （首开自动建库，初始账号 parent/12345678、cara/0000）
 #
-# 若 ghcr.io 在大陆拉取缓慢/受限，可用南大镜像前缀替换镜像名：
-#   image: ghcr.nju.edu.cn/je668/chengcheng-learning-workbench:latest
-# （镜像只拉一次会缓存，无需每次翻墙）
+# 若 ghcr.io 在大陆拉取缓慢/受限，请在 Docker 守护进程配置镜像加速源
+# （registry mirror），image 名保持 ghcr.io/... 不变（镜像只拉一次会缓存）。
 
 services:
   chengcheng:
