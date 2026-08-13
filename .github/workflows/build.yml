@@ -5,10 +5,9 @@ name: Build and Push Image
 # 触发：push 到 main 时自动构建；也可在 Actions 页手动 `workflow_dispatch` 触发。
 #
 # 推送目标：
-#   1) ghcr.io/je668/...   —— 用内置 GITHUB_TOKEN，零配置，必成功（主推送）
-#   2) ghcr.nju.edu.cn/je668/... —— 南大镜像加速站。在仓库 Settings → Secrets 配置
-#      GHCR_NJU_TOKEN（南大站的推送 token）后，下面两步会成功把镜像同步过去；
-#      未配置时这两步自动失败并被 continue-on-error 兜住，不影响 ghcr.io 主推送。
+#   ghcr.io/je668/... —— 用内置 GITHUB_TOKEN，零配置，必成功（唯一推送目标）。
+#   加速拉取镜像请在你的 docker 配置里给 ghcr.io 配镜像加速源（如 NJU 镜像站），
+#   无需（也不建议）把镜像推到第三方镜像站。
 #
 # 优化：只动文档（md / docs）时跳过镜像构建，省 2~3 分钟；同一分支的旧 run 自动取消。
 on:
@@ -49,7 +48,7 @@ jobs:
       # Docker 镜像 tag 必须全小写；GitHub 仓库名 JE668/... 含大写，需转小写
       # 否则报 "repository name must be lowercase"，构建在 tag 校验阶段即失败。
       - name: Lowercase image name
-        run: echo "IMAGE_IO=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"; echo "IMAGE_NJU=ghcr.nju.edu.cn/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+        run: echo "IMAGE_IO=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
       # 主推送：ghcr.io（用内置 GITHUB_TOKEN，零额外配置，必成功）
       - name: Build and push to ghcr.io
@@ -61,28 +60,5 @@ jobs:
           tags: |
             ${{ env.IMAGE_IO }}:latest
             ${{ env.IMAGE_IO }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # 同步到南大镜像加速站（ghcr.nju.edu.cn）：仓库 Settings → Secrets 配置 GHCR_NJU_TOKEN 后生效。
-      # 未配置时下面两步失败但被 continue-on-error 兜住，不影响 ghcr.io 主推送。
-      - name: Login to NJU mirror
-        continue-on-error: true
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.nju.edu.cn
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_NJU_TOKEN }}
-
-      - name: Push to NJU mirror
-        continue-on-error: true
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ${{ env.IMAGE_NJU }}:latest
-            ${{ env.IMAGE_NJU }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
