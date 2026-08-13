@@ -10,6 +10,8 @@ interface MistakeRow {
   prompt: string;
   answer: string;
   wrong: string | null;
+  /** 来源学习模块 key（如 proverbs），用于「去练习」跳转 */
+  source_module: string | null;
   interval_days: number;
   reps: number;
 }
@@ -18,6 +20,12 @@ const subjectEmoji: Record<string, string> = {
   语文: '💗',
   数学: '🔵',
   英语: '💛',
+};
+
+const subjectKey: Record<string, string> = {
+  语文: 'chinese',
+  数学: 'math',
+  英语: 'english',
 };
 
 export default function ReviewPage() {
@@ -104,6 +112,14 @@ export default function ReviewPage() {
                     还不会 💡
                   </button>
                 </div>
+                {it.source_module && (
+                  <Link
+                    href={`/study/${subjectKey[it.subject] ?? 'chinese'}/${it.source_module}`}
+                    className="mt-2 inline-block text-xs px-3 py-1.5 rounded-full bg-moko-purple/10 text-moko-violet font-bold hover:bg-moko-purple/20 transition"
+                  >
+                    📚 去练同类题
+                  </Link>
+                )}
               </div>
             ))}
           </div>
