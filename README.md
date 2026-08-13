@@ -7,6 +7,7 @@
 - Next.js 14 (App Router) + TypeScript + Tailwind CSS
 - 数据库：Turso (LibSQL)，本地/自托管回退到本地 `local.db`（首次启动自动建库，无需手动 seed）
 - 认证：自定义 session cookie（家长/孩子双角色）
+- 学习内容数据：`src/lib/study-data.ts`（单文件，按学科导航注释定位）。**加新年级（一年级下/二年级）时新建 `src/lib/study-data-gradeN.ts`，在现有文件末尾 `export * from './study-data-gradeN'` 聚合**——不拆现有存量，保持 git blame 可追溯和 30+ 个 import 点零改动。
 - 部署：GitHub Actions 自动构建镜像 → GHCR；可一键部署到飞牛 NAS（推荐，零月费）或 Vercel
 
 ## 初始账号
