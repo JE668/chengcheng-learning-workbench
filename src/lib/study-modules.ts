@@ -30,6 +30,15 @@ import { WordFormModule } from '@/components/study/ChineseWordForm';
 import { FingerReadModule } from '@/components/study/ChineseFingerRead';
 import { PoemFunModule } from '@/components/study/PoemFun';
 import { MyDayModule } from '@/components/study/MyDay';
+import {
+  ProverbModule,
+  AntonymModule,
+  QuantifierModule,
+  RiddleModule,
+} from '@/components/study/MokoFun';
+import { NurseryRhymeModule } from '@/components/study/NurseryRhyme';
+import { SafetyModule } from '@/components/study/Safety';
+import { EnSongModule } from '@/components/study/EnSong';
 
 export interface StudyModuleMeta {
   key: string;
@@ -61,6 +70,12 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'finger-read', label: '指读高亮', emoji: '👆', desc: '点字跟读，小手指跟着滑过去', Component: FingerReadModule, color: 'bg-moko-rose' },
     { key: 'poem-fun', label: '古诗游乐场', emoji: '🌙', desc: '诗中有画·诗句排序·飞花令', Component: PoemFunModule, color: 'bg-moko-purple' },
     { key: 'my-day', label: '我的一天', emoji: '🕒', desc: '听一听一天的安排，排排序', Component: MyDayModule, color: 'bg-moko-blue' },
+    { key: 'proverbs', label: '智慧名言', emoji: '📘', desc: '睿智萌可教你谚语：日积月累藏智慧', Component: ProverbModule, color: 'bg-moko-purple' },
+    { key: 'nursery-rhymes', label: '儿歌乐园', emoji: '🎵', desc: '唱唱萌可带你念经典儿歌，和大人一起读', Component: NurseryRhymeModule, color: 'bg-moko-pink' },
+    { key: 'antonyms', label: '反义词', emoji: '😈', desc: '淘气萌可打乱了反义词，快来配对', Component: AntonymModule, color: 'bg-moko-rose' },
+    { key: 'quantifiers', label: '量词宝箱', emoji: '🎁', desc: '宝盒萌可考考你：一（ ）猫？', Component: QuantifierModule, color: 'bg-moko-violet' },
+    { key: 'riddles', label: '谜语宝箱', emoji: '🔍', desc: '好奇萌可出谜语，猜中有惊喜', Component: RiddleModule, color: 'bg-moko-cyan' },
+    { key: 'safety', label: '安全小课堂', emoji: '🌸', desc: '温柔萌可教安全常识，做个安全小卫士', Component: SafetyModule, color: 'bg-moko-mint' },
   ],
   math: [
     { key: 'count', label: '数感启蒙', emoji: '🔟', desc: '1~10 数一数', Component: NumberSenseModule, color: 'bg-moko-blue' },
@@ -95,6 +110,7 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'en-listen-pic', label: '听音选图', emoji: '🖼️', desc: '听英语，选对应的图', Component: EnListenPicModule, color: 'bg-moko-yellow' },
     { key: 'en-initial', label: '首音辨析', emoji: '🔤', desc: '哪个单词以这个音开头', Component: EnInitialSoundModule, color: 'bg-moko-yellow' },
     { key: 'en-tpr', label: 'TPR 动作', emoji: '🏃', desc: '听指令做动作', Component: EnTprModule, color: 'bg-moko-violet' },
+    { key: 'en-songs', label: '英文音乐会', emoji: '🎵', desc: '唱唱萌可带唱英文儿歌，甜心萌可伴舞', Component: EnSongModule, color: 'bg-moko-yellow' },
   ],
 };
 
