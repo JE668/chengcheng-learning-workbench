@@ -66,7 +66,7 @@ export default function ReviewPage() {
       </p>
 
       {loading ? (
-        <div className="text-center text-gray-400 py-16 flex flex-col items-center justify-center gap-3"><span className="moko-loader"><span></span><span></span><span></span></span>加载中…</div>
+        <div className="text-center text-gray-400 py-16 flex flex-col items-center justify-center gap-3"><span className="moko-loader"><span></span><span></span><span></span></span>萌可正在翻找你的错题本…</div>
       ) : items.length === 0 ? (
         <div className="rounded-3xl p-10 bg-white shadow-lg border-2 border-moko-purple/20 text-center">
           <div className="text-6xl mb-3">🎉</div>

@@ -47,7 +47,7 @@ export default function CoOpPage() {
       {/* 家庭成员 */}
       <h2 className="section-title mb-3">👨‍👩‍👧 我的家庭成员</h2>
       {loading ? (
-        <div className="card-moko text-center text-gray-500 py-4 flex flex-col items-center justify-center gap-2"><span className="moko-loader"><span></span><span></span><span></span></span>加载中…</div>
+        <div className="card-moko text-center text-gray-500 py-4 flex flex-col items-center justify-center gap-2"><span className="moko-loader"><span></span><span></span><span></span></span>萌可正在准备帮帮忙…</div>
       ) : children.length === 0 ? (
         <EmptyState emoji="👧" title="还没有其他小朋友" desc="让爸爸妈妈在「设置」里加一个兄弟姐妹，就能一起合作学习啦！" />
       ) : (

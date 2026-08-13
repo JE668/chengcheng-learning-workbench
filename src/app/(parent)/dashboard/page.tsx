@@ -1,5 +1,7 @@
 import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildId, getChildPoints } from '@/lib/db';
+import { getCastleState } from '@/lib/castle';
+import { getTodayPractice } from '@/lib/daily-practice';
 import ParentCastlePanel from '@/components/ParentCastlePanel';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
 
@@ -15,6 +17,31 @@ export default async function DashboardPage() {
   const tasks = await db.execute({ sql: 'SELECT COUNT(*) as n FROM tasks', args: [] });
   const comps = await db.execute({ sql: 'SELECT COUNT(*) as n FROM completions WHERE child_id = ?', args: [cId ?? -1] });
   const pending = await db.execute({ sql: 'SELECT COUNT(*) as n FROM redemptions WHERE status = ?', args: ['pending'] });
+
+  // 今日完成情况
+  let todayDone = false;
+  let todaySubj = { 语文: false, 数学: false, 英语: false };
+  try {
+    if (cId) {
+      const practice = await getTodayPractice(cId, false);
+      todayDone = practice.completed;
+      const checkins = await db.execute({
+        sql: 'SELECT subject FROM daily_checkins WHERE child_id = ? AND day = date() AND status = ?',
+        args: [cId, 'confirmed'],
+      });
+      for (const r of checkins.rows) todaySubj[String(r.subject) as keyof typeof todaySubj] = true;
+    }
+  } catch { /* 建表前或查询失败不影响看板 */ }
+
+  // 萌可收集进度
+  let ownedCount = 0, totalMoko = 0;
+  try {
+    if (cId) {
+      const castle = await getCastleState(cId);
+      ownedCount = castle.gallery.filter((g) => g.owned).length;
+      totalMoko = castle.gallery.length;
+    }
+  } catch { /* 同上 */ }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -38,6 +65,35 @@ export default async function DashboardPage() {
 
       <h2 className="section-title mb-3">🏰 萌可城堡（学习联动）</h2>
       <ParentCastlePanel />
+
+      {totalMoko > 0 && (
+        <div className="rounded-3xl p-4 bg-white shadow-lg border-2 border-moko-yellow/30 mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-bold text-moko-violet">🧸 萌可收集进度</span>
+            <span className="text-sm font-bold text-gray-500">{ownedCount} / {totalMoko}</span>
+          </div>
+          <div className="h-3 rounded-full bg-gray-200 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-moko-pink to-moko-rose transition-all"
+              style={{ width: `${Math.round((ownedCount / totalMoko) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+        {[
+          { label: '今日完成', value: todayDone ? '✅ 已完成' : '⬜ 未完成', color: todayDone ? 'bg-green-500' : 'bg-gray-400' },
+          { label: '语文', value: todaySubj.语文 ? '✅' : '⬜', color: 'bg-moko-rose' },
+          { label: '数学', value: todaySubj.数学 ? '✅' : '⬜', color: 'bg-moko-blue' },
+          { label: '英语', value: todaySubj.英语 ? '✅' : '⬜', color: 'bg-moko-yellow' },
+        ].map((s) => (
+          <div key={s.label} className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}>
+            <div className="text-2xl font-black">{s.value}</div>
+            <div className="text-sm opacity-90">{s.label}</div>
+          </div>
+        ))}
+      </div>
 
       <div className="card-moko mt-6">
         <h2 className="text-xl font-bold text-moko-violet mb-2">💡 使用提示</h2>

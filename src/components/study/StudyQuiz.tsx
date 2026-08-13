@@ -253,6 +253,15 @@ export function StudyQuiz({
 function CorrectFeedback({ subject, ok, item, line }: { subject: string; ok: boolean; item: QuizItem; line: string }) {
   return (
     <div className="space-y-1">
+      {ok && (
+        <div className="flex justify-center gap-1.5 my-1">
+          {['⭐', '🌟', '✨'].map((s, i) => (
+            <span key={i} className="text-2xl animate-bounce" style={{ animationDelay: `${i * 0.15}s` }}>
+              {s}
+            </span>
+          ))}
+        </div>
+      )}
       <MokoPraiseBanner subject={subject} ok={ok} text={line || (ok ? '真棒！' : '没关系，再试试～')} />
       {!ok && (
         <p className="text-center text-xs text-gray-500 mt-1">正确答案是「{item.answer}」</p>
