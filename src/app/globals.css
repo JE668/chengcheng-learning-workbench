@@ -216,6 +216,14 @@ body { padding-top: env(safe-area-inset-top); }
   50% { transform: translateY(-14px) rotate(2deg); }
 }
 .float-moko { animation: mokoFloat 5s ease-in-out infinite; }
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
 .dashboard-bg {
   background: linear-gradient(180deg, rgba(255,247,237,0.92) 0%, rgba(255,247,237,0.7) 100%);
 }
