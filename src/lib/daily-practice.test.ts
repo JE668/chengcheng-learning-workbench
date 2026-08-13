@@ -22,10 +22,14 @@ describe('萌可闯关 → 剧情解锁 闭环', () => {
       ['ch2-courage', DAILY_CORE_MODULE['数学']],
       ['ch3-sing', DAILY_CORE_MODULE['英语']],
     ];
-    for (const [chapterId, target] of pairs) {
+    for (const [chapterId, req] of pairs) {
       const ch = byId.get(chapterId);
       expect(ch, `找不到主线章节 ${chapterId}`).toBeTruthy();
-      expect(ch!.module, `${chapterId} 没有模块解锁绑定`).toEqual(target);
+      // story 用 {subject,key}，daily-practice 用 {subjectKey,moduleKey}，语义归一后比较
+      expect(
+        ch!.module,
+        `${chapterId} 没有模块解锁绑定或与每日一练发星不一致`,
+      ).toEqual({ subject: req.subjectKey, key: req.moduleKey });
     }
   });
 
