@@ -42,12 +42,13 @@ export default function StoryPage() {
     const reqs = storyChapters
       .filter((c) => c.module)
       .map(async (c) => {
+        const mod = c.module;
         try {
-          const r = await fetch(`/api/module-progress?subject=${encodeURIComponent(c.module!.subject)}&moduleKey=${encodeURIComponent(c.module!.key)}`);
+          const r = await fetch(`/api/module-progress?subject=${encodeURIComponent(mod!.subject)}&moduleKey=${encodeURIComponent(mod!.key)}`);
           const d = await r.json();
-          return { key: c.module!.key, done: (Number(d.stars) || 0) >= 1 } as const;
+          return { key: mod!.key, done: (Number(d.stars) || 0) >= 1 } as const;
         } catch {
-          return { key: c.module!.key, done: true } as const; // 查询失败不卡剧情
+          return { key: mod!.key, done: true } as const; // 查询失败不卡剧情
         }
       });
     const results = await Promise.all(reqs);
@@ -64,12 +65,13 @@ export default function StoryPage() {
 
   /** 模块绑定章节的解锁判定 + 展示用模块名 */
   function moduleInfo(c: (typeof storyChapters)[number]) {
-    if (!c.module) return null;
-    const list = STUDY_MODULES[c.module.subject] ?? [];
-    const meta = list.find((m) => m.key === c.module.key);
-    const label = meta?.label ?? c.module.key;
-    const done = !!moduleDone[c.module.key];
-    return { label, done, href: `/study/${c.module.subject}/${c.module.key}` };
+    const mod = c.module;
+    if (!mod) return null;
+    const list = STUDY_MODULES[mod.subject] ?? [];
+    const meta = list.find((m) => m.key === mod.key);
+    const label = meta?.label ?? mod.key;
+    const done = !!moduleDone[mod.key];
+    return { label, done, href: `/study/${mod.subject}/${mod.key}` };
   }
 
   async function load() {
