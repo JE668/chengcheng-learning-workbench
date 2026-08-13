@@ -33,6 +33,8 @@ function buildProverbItems(): QuizItem[] {
       prompt: (
         <span>
           🧙 「{p.first}」<br />后半句是？
+          <br />
+          <span className="text-xs opacity-80">{p.hint}</span>
         </span>
       ),
       speak: `${p.first}，后半句是？`,
