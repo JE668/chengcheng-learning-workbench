@@ -4,10 +4,23 @@ import { PINYIN_TONES, applyTone, ALL_EN_WORDS, CHARACTERS } from './study-data'
 import { mokoChars, subjectMokoKey, SUN_PER_SUBJECT } from './moko';
 import { mokoCollection } from './moko-collection';
 import { getDueMistakes, reviewMistake, type MistakeRow } from './mistakes';
+import { upsertModuleProgress } from './progress-store';
 import { dateStr, addDays } from './date';
 import { MILESTONE_DAYS } from './economy';
 import { safeJsonParse } from './safe-json';
 import type { Subject } from './types';
+
+/**
+ * 每日一练「某科全对 → 点亮该科核心学习模块 1 星」的映射。
+ * 目的：让「萌可闯关」（每日一练）与「萌可剧情」闭环——三科全对打卡后，
+ * 对应学科的镇守萌可剧情（主线第 1~3 集：爱心/正正/唱唱）即可解锁。
+ * 星数取历史最佳，不会覆盖孩子在模块内做题拿到的更高星。
+ */
+export const DAILY_CORE_MODULE: Record<Subject, { subjectKey: string; moduleKey: string }> = {
+  语文: { subjectKey: 'chinese', moduleKey: 'characters' }, // 识字小能手（爱心萌可剧情）
+  数学: { subjectKey: 'math', moduleKey: 'count' }, // 数感启蒙（正正萌可剧情）
+  英语: { subjectKey: 'english', moduleKey: 'letters' }, // 字母乐园（唱唱萌可剧情）
+};
 
 /**
  * 连续一练「额外萌可」里程碑（天数）。
@@ -426,6 +439,15 @@ export async function submitPractice(childId: number, answers: number[]): Promis
     const passed = subCorrect === subTotal;
     if (passed && !already) {
       await confirm(childId, today, s); // confirm 内部已统一发放捕捉券
+      // 每日一练某科全对 → 点亮该科核心模块 1 星（解锁对应萌可剧情，见文件头 DAILY_CORE_MODULE）
+      const core = DAILY_CORE_MODULE[s];
+      if (core) {
+        try {
+          await upsertModuleProgress(childId, core.subjectKey, core.moduleKey, 1);
+        } catch {
+          /* 进度写失败不影响打卡发奖 */
+        }
+      }
       newlyMokos.push(mokoChars[subjectMokoKey[s]]?.name ?? '萌可');
       sunlightGain += SUN_PER_SUBJECT;
       ticketGain += 1;
