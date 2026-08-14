@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { SAFETY_TIPS } from '@/lib/study-data';
 import { useModuleProgress } from '@/lib/module-progress';
 import { speakZh, praise } from '@/lib/speak';
+import { useMistakeLogger } from '@/lib/mistake-logger';
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -20,6 +21,7 @@ function shuffle<T>(arr: T[]): T[] {
  */
 export function SafetyModule() {
   const { record } = useModuleProgress('chinese', 'safety');
+  const logM = useMistakeLogger();
   const order = useMemo(() => shuffle(SAFETY_TIPS.map((_, i) => i)), []);
   const [pos, setPos] = useState(0);
   const [picked, setPicked] = useState<boolean | null>(null);
@@ -36,6 +38,13 @@ export function SafetyModule() {
       setRightCount((c) => c + 1);
     } else {
       speakZh(item.tip, 0.9);
+      logM({
+        subject: '语文',
+        kind: '安全常识',
+        prompt: item.statement,
+        answer: item.isSafe ? '对，安全' : '不对，危险',
+        wrong: v ? '对，安全' : '不对，危险',
+      });
     }
     // 显示提示后自动进入下一题
     setTimeout(() => {

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { NURSERY_RHYMES } from '@/lib/study-data';
 import { useModuleProgress } from '@/lib/module-progress';
 import { speakZh, praise } from '@/lib/speak';
+import { useMistakeLogger } from '@/lib/mistake-logger';
 
 /**
  * 唱唱萌可的儿歌乐园（语文模块）
@@ -12,6 +13,7 @@ import { speakZh, praise } from '@/lib/speak';
  */
 export function NurseryRhymeModule() {
   const { record } = useModuleProgress('chinese', 'nursery-rhymes');
+  const logM = useMistakeLogger();
   const [idx, setIdx] = useState(0);
   const [activeLine, setActiveLine] = useState<number | null>(null);
   const [quizMode, setQuizMode] = useState(false);
@@ -48,6 +50,13 @@ export function NurseryRhymeModule() {
       record(Math.min(3, 1 + rightCount));
     } else {
       speakZh('再想一想哦，唱唱萌可相信你！', 0.85);
+      logM({
+        subject: '语文',
+        kind: '儿歌',
+        prompt: rhyme.question,
+        answer: rhyme.answer,
+        wrong: opt,
+      });
     }
   }
 
