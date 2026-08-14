@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import {
   STROKES,
   RADICALS,
+  STROKE_RULES,
   TEXT_CHAR_LESSONS,
   SPLITS,
   type TextCharLesson,
@@ -56,6 +57,20 @@ function RadicalCard({ radical, name, examples }: { radical: string; name: strin
 export function StrokeRadicalModule() {
   return (
     <div className="space-y-8">
+      <section>
+        <h2 className="text-xl font-black text-moko-rose mb-1">📏 笔顺规则口诀</h2>
+        <p className="text-sm text-gray-500 mb-3">记住口诀，写字就不容易写错顺序啦～</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          {STROKE_RULES.map((r) => (
+            <div key={r.name} className="rounded-2xl p-3 bg-white shadow-lg border-2 border-moko-rose/20 text-center">
+              <div className="text-2xl mb-1">{r.emoji}</div>
+              <div className="font-bold text-moko-rose text-sm">{r.name}</div>
+              <div className="text-xs text-gray-500 mt-1 leading-relaxed">{r.rhyme}</div>
+              <div className="text-xs text-gray-400 mt-1">例字：{r.examples.join(' ')}</div>
+            </div>
+          ))}
+        </div>
+      </section>
       <section>
         <h2 className="text-xl font-black text-moko-rose mb-1">✍️ 基本笔画</h2>
         <p className="text-sm text-gray-500 mb-3">点一点，听一听每一笔怎么写～</p>

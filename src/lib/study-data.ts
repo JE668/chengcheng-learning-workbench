@@ -1178,6 +1178,23 @@ export const RADICALS: RadicalItem[] = [
   { radical: '刂', name: '立刀', examples: ['到', '别', '刻', '剧'] },
 ];
 
+/* -------------------- 语文 · 笔顺规则口诀（书写提示） -------------------- */
+export interface StrokeRule {
+  name: string; // 规则名称
+  rhyme: string; // 顺口溜
+  examples: string[]; // 例字
+  emoji: string;
+}
+export const STROKE_RULES: StrokeRule[] = [
+  { name: '先横后竖', rhyme: '横要平，竖要直，先写横来后写竖。', examples: ['十', '干', '王'], emoji: '一' },
+  { name: '先撇后捺', rhyme: '撇向左，捺向右，先撇后捺字才正。', examples: ['人', '八', '天'], emoji: '丿' },
+  { name: '从上到下', rhyme: '一笔一笔往下写，从上到下不乱跑。', examples: ['三', '云', '草'], emoji: '⬇️' },
+  { name: '从左到右', rhyme: '左边写完写右边，从左到右排排队。', examples: ['川', '奶', '林'], emoji: '➡️' },
+  { name: '先外后内', rhyme: '外面先写框，再写里面小娃娃。', examples: ['月', '用', '风'], emoji: '🔲' },
+  { name: '先中间后两边', rhyme: '中间先站稳，左边右边再跟上。', examples: ['水', '小', '办'], emoji: '🎯' },
+  { name: '先外后内再封口', rhyme: '先写大门框，里头写完再关门。', examples: ['日', '田', '口'], emoji: '🚪' },
+];
+
 /* -------------------- 语文 · 课文生字（一年级上册课文 1~14） -------------------- */
 export interface TextCharItem {
   char: string;
@@ -2049,7 +2066,7 @@ export function chineseUnitsOfModule(moduleKey: string): ChineseUnit[] {
  * 【2025 新版】萌可趣味学园（一年级上册扩充内容）
  * 由萌可角色出题引导：睿智名言（睿智萌可）/ 儿歌乐园（唱唱萌可）/
  * 反义词量词（淘气萌可）/ 谜语宝箱（好奇萌可）/ 安全课堂（温柔萌可）/
- * 英文儿歌（唱唱萌可+甜心萌可）
+ * 英文儿歌（唱唱萌可+甜心萌可）/ 笔顺规则口诀 / 汉字变变变
  * ============================================================ */
 
 /* -------------------- 语文 · 睿智萌可的智慧名言（日积月累·谚语） -------------------- */

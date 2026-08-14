@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRef, useState, useEffect } from 'react';
 import {
   CHARACTERS,
@@ -31,6 +32,12 @@ function CharacterCard({ item, done, onDone }: { item: CharacterItem; done: bool
         >
           🔊 读一读
         </button>
+        <Link
+          href="/study/chinese/strokes-order"
+          className="flex-1 text-xs px-2 py-1 rounded-full bg-moko-violet/10 text-moko-violet border-2 border-moko-violet/30 font-bold text-center inline-flex items-center justify-center"
+        >
+          ✍️ 看笔顺
+        </Link>
         <button
           onClick={onDone}
           disabled={done}
