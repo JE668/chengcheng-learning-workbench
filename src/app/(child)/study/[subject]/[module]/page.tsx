@@ -4,6 +4,7 @@ import { STUDY_MODULES, SUBJECT_META } from '@/lib/study-modules';
 import { StudyModuleProvider } from '@/lib/study-context';
 import { ModuleCover } from '@/components/study/ModuleCover';
 import { ModuleStars } from '@/components/study/ModuleStars';
+import { NextStepGuide } from '@/components/study/NextStepGuide';
 
 export default function StudyModulePage({ params }: { params: { subject: string; module: string } }) {
   const list = STUDY_MODULES[params.subject];
@@ -31,6 +32,7 @@ export default function StudyModulePage({ params }: { params: { subject: string;
       <StudyModuleProvider subject={params.subject} moduleKey={params.module}>
         <C />
       </StudyModuleProvider>
+      <NextStepGuide subject={params.subject} moduleKey={params.module} />
     </div>
   );
 }
