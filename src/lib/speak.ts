@@ -27,16 +27,46 @@ function ensureVoices() {
   );
 }
 
-/** 挑选与目标语言匹配的嗓音，优先女性/儿童友好的中文或英文嗓音 */
+/** 挑选与目标语言匹配的嗓音，优先女性/儿童友好的中文或英文嗓音。
+ *  严格匹配 zh-CN（普通话），避免 Safari 在 iPad 系统设粤语时选到 zh-HK 粤语嗓音。
+ */
 function pickVoice(lang: string): SpeechSynthesisVoice | undefined {
   if (typeof window === 'undefined' || !window.speechSynthesis) return undefined;
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return undefined;
-  const same = voices.filter((x) => x.lang && x.lang.toLowerCase().startsWith(lang.toLowerCase()));
-  const friendly = same.find((x) =>
-    /female|woman|girl|ting|huihui|yaoyao|xiao|mei|child|kids|samantha|zira|google us|microsoft/i.test(x.name),
+  // 严格匹配目标语言前缀（zh-CN 不能匹配到 zh-HK 粤语；en-US 不匹配 en-GB）
+  const target = lang.toLowerCase();
+  const same = voices.filter((x) => {
+    const vl = (x.lang || '').toLowerCase();
+    // 中文：精确匹配 zh-CN（排除 zh-HK 粤语 / zh-TW 台湾），若无 zh-CN 再退而求其次
+    if (target.startsWith('zh')) return vl === 'zh-cn' || vl === 'zh';
+    // 英文：精确匹配 en-US（排除 en-GB 英式）
+    if (target.startsWith('en')) return vl === 'en-us' || vl === 'en';
+    return vl.startsWith(target);
+  });
+  // 若严格匹配无果，放宽到「同语种但非目标方言」（如 zh-HK 也行，至少有声）
+  const wider = same.length
+    ? same
+    : voices.filter((x) => (x.lang || '').toLowerCase().startsWith(target.slice(0, 2)));
+  const friendly = wider.find((x) =>
+    /female|woman|girl|ting|huihui|yaoyao|xiao|mei|child|kids|samantha|zira|google us|microsoft|晓晓|晓颜/i.test(x.name),
   );
-  return friendly ?? same[0] ?? voices.find((x) => x.lang && x.lang.toLowerCase().startsWith(lang.toLowerCase()));
+  return friendly ?? wider[0];
+}
+
+/** 不同浏览器的 Web Speech 对 rate 的解释不同：
+ *  - Safari：rate 0.65 确实明显慢
+ *  - Edge/Chrome：rate 0.65 仍偏快（需要更低才能达到同样效果）
+ *  这里按浏览器类型对 wsRate 做一次校准，使跨设备语速体感一致。
+ */
+function calibrateRate(wsRate: number): number {
+  if (typeof navigator === 'undefined') return wsRate;
+  const ua = navigator.userAgent;
+  // Edge/Chrome 的 Web Speech 引擎对低 rate 不敏感，需要再降约 20%
+  if (/Edg|Chrome/i.test(ua) && !/Safari/i.test(ua.replace(/Edge?\//gi, ''))) {
+    return Math.max(0.1, wsRate * 0.8);
+  }
+  return wsRate;
 }
 
 function speak(text: string, lang: string, rate: number, pitch: number) {
@@ -44,7 +74,7 @@ function speak(text: string, lang: string, rate: number, pitch: number) {
   ensureVoices();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = lang;
-  u.rate = rate;
+  u.rate = calibrateRate(rate);
   u.pitch = pitch;
   const v = pickVoice(lang);
   if (v) u.voice = v;
@@ -88,11 +118,15 @@ export async function playTts(
   const pauseMs = opts.pauseMs ?? 0;
   if (typeof window !== 'undefined' && 'fetch' in window) {
     try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000); // 8s 超时，避免挂太久
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ text, lang, rate: toEdgeRate(wsRate), pause: pauseMs }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
       if (res.ok) {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -106,10 +140,13 @@ export async function playTts(
         return;
       }
     } catch {
-      /* 网络/解析异常 → 降级 */
+      /* 网络/解析异常/超时 → 降级到 Web Speech */
     }
   }
-  speak(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch);
+  // Web Speech 降级；若浏览器不支持 Web Speech，静默失败（不弹 alert 以免打扰孩子）
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    speak(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch);
+  }
 }
 
 /**
@@ -155,7 +192,9 @@ export function playTtsEnd(
   });
 }
 
-/** Web Speech 朗读并在 onend/onerror 时 resolve（含兜底超时） */
+/** Web Speech 朗读并在 onend/onerror 时 resolve（含兜底超时）。
+ *  若浏览器不支持 Web Speech（如某些小米浏览器），直接 resolve（不卡住顺序朗读）。
+ */
 function speakEnd(text: string, lang: string, rate: number, pitch: number): Promise<void> {
   return new Promise<void>((resolve) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
@@ -165,7 +204,7 @@ function speakEnd(text: string, lang: string, rate: number, pitch: number): Prom
     ensureVoices();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = lang;
-    u.rate = rate;
+    u.rate = calibrateRate(rate);
     u.pitch = pitch;
     const v = pickVoice(lang);
     if (v) u.voice = v;
