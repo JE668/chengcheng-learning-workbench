@@ -26,5 +26,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '今天已经玩过这个游戏啦，明天再来挑战！' }, { status: 409 });
   }
   const balance = await getChildPoints(user.id);
-  return NextResponse.json({ ok: true, points: balance, message: `游戏完成，获得 ${points} 积分！` });
+  return NextResponse.json({ ok: true, gained: points, balance, message: `游戏完成，获得 ${points} 积分！` });
 }

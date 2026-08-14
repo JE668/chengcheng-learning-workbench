@@ -22,5 +22,5 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: '已经领取过该任务积分' }, { status: 409 });
   }
   const balance = await getChildPoints(user.id);
-  return NextResponse.json({ ok: true, points: balance, message: `完成「${task.rows[0].title}」，获得 ${points} 积分！` });
+  return NextResponse.json({ ok: true, gained: points, balance, message: `完成「${task.rows[0].title}」，获得 ${points} 积分！` });
 }

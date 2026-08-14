@@ -18,6 +18,11 @@ export const SHIELD_STREAK_REQ = 3;
 /** 捕捉券：每日一练每确认一科发放 1 张（线索提示用，实际发放在 castle.confirm） */
 export const TICKET_PER_SUBJECT = 1;
 
+/** 每日一练每确认一科打卡发的积分（三科全对共 30） */
+export const POINTS_PER_CHECKIN = 10;
+/** 捕捉一只剧情萌可发的积分 */
+export const POINTS_PER_CAPTURE = 10;
+
 /** 魔法商店（阳光能量消费）购买价 */
 export const COST_SPRAY = 5;
 export const COST_SHIELD = 10;

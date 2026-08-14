@@ -1,7 +1,7 @@
 import { getDb } from './db';
 import { dateStr, addDays } from './date';
 import { mokoCollection, COLLECTIBLE_MOKO_NAMES } from './moko-collection';
-import { COST_SPRAY, COST_SHIELD } from './economy';
+import { COST_SPRAY, COST_SHIELD, POINTS_PER_CHECKIN } from './economy';
 import {
   mokoChars,
   subjectMokoKey,
@@ -319,6 +319,12 @@ export async function confirm(childId: number, day: string, subject: Subject) {
             VALUES (?, ?, ?, 'confirmed', CURRENT_TIMESTAMP)
             ON CONFLICT(child_id, day, subject) DO UPDATE SET status = 'confirmed', confirmed_at = CURRENT_TIMESTAMP`,
       args: [childId, day, subject],
+    });
+
+    // 🏅 打卡积分：每确认一科发 POINTS_PER_CHECKIN（事务 + 上方幂等检查保证当天每科只发一次）
+    await db.execute({
+      sql: 'INSERT INTO completions (child_id, points, source) VALUES (?, ?, ?)',
+      args: [childId, POINTS_PER_CHECKIN, `checkin:${subject}`],
     });
 
     // 🌟 学习-城堡联动：完成单科 → 1 阳光能量 + 1 对应学科萌可

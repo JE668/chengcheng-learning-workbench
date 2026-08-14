@@ -1,7 +1,8 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { getDb } from '@/lib/db';
 import { ensureSchema } from '@/lib/db';
-import { getCastleState } from '@/lib/castle';
+import { getCastleState, confirm } from '@/lib/castle';
+import { POINTS_PER_CHECKIN } from '@/lib/economy';
 
 /* —— 与 castle.dateStr / addDays 保持一致的本地日期工具 —— */
 function dateStr(d: Date = new Date()): string {
@@ -119,5 +120,52 @@ describe('castle 核心逻辑：连续打卡与惩罚机制', () => {
       args: [cid],
     });
     expect(Number(fled.rows[0]?.n)).toBeGreaterThan(0);
+  });
+});
+
+describe('打卡积分链路：confirm 每天每科只发一次积分', () => {
+  beforeAll(async () => {
+    await ensureSchema(); // 幂等，确保独立跑本 describe 时表已建好
+  });
+
+  it('单科首次确认 → +POINTS_PER_CHECKIN 积分（source=checkin:科目）', async () => {
+    const cid = nextChild();
+    await insertChild(cid);
+    await insertCastle(cid, dateStr());
+    const r = await confirm(cid, dateStr(), '语文');
+    expect(r.ok).toBe(true);
+    const rows = await getDb().execute({
+      sql: "SELECT COALESCE(SUM(points),0) AS n FROM completions WHERE child_id = ? AND source = ?",
+      args: [cid, 'checkin:语文'],
+    });
+    expect(Number(rows.rows[0]?.n)).toBe(POINTS_PER_CHECKIN);
+  });
+
+  it('同一天重复确认同科 → 幂等，第二次不再加分', async () => {
+    const cid = nextChild();
+    await insertChild(cid);
+    await insertCastle(cid, dateStr());
+    const today = dateStr();
+    await confirm(cid, today, '数学');
+    const second = await confirm(cid, today, '数学');
+    expect(second.ok).toBe(false); // 已确认
+    const rows = await getDb().execute({
+      sql: "SELECT COALESCE(SUM(points),0) AS n FROM completions WHERE child_id = ? AND source = ?",
+      args: [cid, 'checkin:数学'],
+    });
+    expect(Number(rows.rows[0]?.n)).toBe(POINTS_PER_CHECKIN);
+  });
+
+  it('三科全确认 → 共 3 × POINTS_PER_CHECKIN', async () => {
+    const cid = nextChild();
+    await insertChild(cid);
+    await insertCastle(cid, dateStr());
+    const today = dateStr();
+    for (const s of ['语文', '数学', '英语'] as const) await confirm(cid, today, s);
+    const rows = await getDb().execute({
+      sql: "SELECT COALESCE(SUM(points),0) AS n FROM completions WHERE child_id = ? AND source LIKE 'checkin:%'",
+      args: [cid],
+    });
+    expect(Number(rows.rows[0]?.n)).toBe(POINTS_PER_CHECKIN * 3);
   });
 });
