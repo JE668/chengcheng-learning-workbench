@@ -30,6 +30,7 @@ import { WordFormModule } from '@/components/study/ChineseWordForm';
 import { FingerReadModule } from '@/components/study/ChineseFingerRead';
 import { PoemFunModule } from '@/components/study/PoemFun';
 import { MyDayModule } from '@/components/study/MyDay';
+import { CharTransformModule } from '@/components/study/CharTransform';
 import {
   ProverbModule,
   AntonymModule,
@@ -39,6 +40,7 @@ import {
 import { NurseryRhymeModule } from '@/components/study/NurseryRhyme';
 import { SafetyModule } from '@/components/study/Safety';
 import { EnSongModule } from '@/components/study/EnSong';
+import { EnSpellModule } from '@/components/study/EnSpell';
 
 export interface StudyModuleMeta {
   key: string;
@@ -76,6 +78,7 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'quantifiers', label: '量词宝箱', emoji: '🎁', desc: '宝盒萌可考考你：一（ ）猫？', Component: QuantifierModule, color: 'bg-moko-violet' },
     { key: 'riddles', label: '谜语宝箱', emoji: '🔍', desc: '好奇萌可出谜语，猜中有惊喜', Component: RiddleModule, color: 'bg-moko-cyan' },
     { key: 'safety', label: '安全小课堂', emoji: '🌸', desc: '温柔萌可教安全常识，做个安全小卫士', Component: SafetyModule, color: 'bg-moko-mint' },
+    { key: 'char-transform', label: '汉字变变变', emoji: '🔍', desc: '发现汉字规律：人→从→众，木→林→森', Component: CharTransformModule, color: 'bg-moko-rose' },
   ],
   math: [
     { key: 'count', label: '数感启蒙', emoji: '🔟', desc: '1~10 数一数', Component: NumberSenseModule, color: 'bg-moko-blue' },
@@ -111,6 +114,7 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'en-initial', label: '首音辨析', emoji: '🔤', desc: '哪个单词以这个音开头', Component: EnInitialSoundModule, color: 'bg-moko-yellow' },
     { key: 'en-tpr', label: 'TPR 动作', emoji: '🏃', desc: '听指令做动作', Component: EnTprModule, color: 'bg-moko-violet' },
     { key: 'en-songs', label: '英文音乐会', emoji: '🎵', desc: '唱唱萌可带唱英文儿歌，甜心萌可伴舞', Component: EnSongModule, color: 'bg-moko-yellow' },
+    { key: 'en-spell', label: '拼写练习', emoji: '✍️', desc: '看 emoji 猜单词，选出正确的字母填上', Component: EnSpellModule, color: 'bg-moko-yellow' },
   ],
 };
 

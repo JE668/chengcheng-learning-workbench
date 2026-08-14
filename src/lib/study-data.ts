@@ -1195,6 +1195,23 @@ export const STROKE_RULES: StrokeRule[] = [
   { name: '先外后内再封口', rhyme: '先写大门框，里头写完再关门。', examples: ['日', '田', '口'], emoji: '🚪' },
 ];
 
+/* -------------------- 语文 · 汉字变变变（我的发现·汉字规律） -------------------- */
+export interface CharTransform {
+  chars: string[]; // 一组相关的字，如 ['人', '从', '众']
+  title: string; // 规律说明，如「人→从→众」
+  hint: string; // 发现提示
+  emoji: string;
+}
+export const CHAR_TRANSFORMS: CharTransform[] = [
+  { chars: ['人', '从', '众'], title: '人→从→众', hint: '一个人，两个人跟着，三个人就变成一群啦！', emoji: '👥' },
+  { chars: ['木', '林', '森'], title: '木→林→森', hint: '一棵树、两棵树成树林，三棵树就是大森林！', emoji: '🌳' },
+  { chars: ['口', '吕', '品'], title: '口→吕→品', hint: '一个口，两个口，三个口，嘴巴多就是"品"味！', emoji: '👄' },
+  { chars: ['日', '昌', '晶'], title: '日→昌→晶', hint: '一个太阳、两个太阳亮堂堂，三个太阳亮晶晶！', emoji: '☀️' },
+  { chars: ['一', '二', '三'], title: '一→二→三', hint: '一横、两横、三横，数字就是这么变出来的！', emoji: '🔢' },
+  { chars: ['大', '天', '夫'], title: '大→天→夫', hint: '大人头上加一横就是"天"丈夫，一个比一个厉害！', emoji: '🧑' },
+  { chars: ['水', '冰', '淼'], title: '水→冰→淼', hint: '水结成冰，水多多就变成"淼"啦！', emoji: '💧' },
+];
+
 /* -------------------- 语文 · 课文生字（一年级上册课文 1~14） -------------------- */
 export interface TextCharItem {
   char: string;
@@ -2039,7 +2056,7 @@ const CHAR_LESSON: string[] = [
   'lessons', 'characters', 'quiz', 'word-form', 'strokes-order', 'trace',
   'strokes', 'sentence', 'school-prep', 'my-day',
   // 2025 新增：萌可趣味学园（识字/生活类）
-  'proverbs', 'antonyms', 'quantifiers', 'riddles', 'safety',
+  'proverbs', 'antonyms', 'quantifiers', 'riddles', 'safety', 'char-transform',
 ];
 const PINYIN_LESSON: string[] = ['pinyin', 'pinyin-blend', 'characters'];
 const READ_LESSON: string[] = ['texts', 'textchars', 'reading', 'finger-read', 'quiz', 'poems', 'poem-fun', 'nursery-rhymes'];
