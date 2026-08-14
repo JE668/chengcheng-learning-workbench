@@ -54,6 +54,8 @@ describe('castle 核心逻辑：连续打卡与惩罚机制', () => {
     await db.execute({ sql: 'DELETE FROM castle_state', args: [] });
     await db.execute({ sql: 'DELETE FROM moko_owned', args: [] });
     await db.execute({ sql: 'DELETE FROM troublemakers', args: [] });
+    // confirm 会写 completions（打卡积分），先删子行再删 users（外键约束）
+    await db.execute({ sql: 'DELETE FROM completions', args: [] });
     // 先断开 users 自引用外键（parent.selected_child_id / parent_id 指向 child），
     // 否则删 child 会因外键约束失败
     await db.execute({ sql: "UPDATE users SET selected_child_id = NULL, parent_id = NULL", args: [] });

@@ -64,6 +64,9 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
     for (const t of ['daily_checkins', 'castle_state', 'moko_owned', 'troublemakers', 'growth_events', 'capture_tickets', 'daily_practice', 'inventory']) {
       await db.execute({ sql: `DELETE FROM ${t}`, args: [] });
     }
+    // confirm 会写 completions（打卡积分）、redemptions（兑换积分），先删子行再删 users（外键约束）
+    await db.execute({ sql: 'DELETE FROM completions', args: [] });
+    await db.execute({ sql: 'DELETE FROM redemptions', args: [] });
     await db.execute({ sql: "UPDATE users SET selected_child_id = NULL, parent_id = NULL", args: [] });
     await db.execute({ sql: "DELETE FROM users WHERE role IN ('child','parent')", args: [] });
   });
