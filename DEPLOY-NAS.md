@@ -64,10 +64,25 @@ cloudflared tunnel --url http://localhost:3000
 - HTTPS：用 NAS 的证书申请（Let's Encrypt）或反代（Nginx Proxy Manager）给域名签证书。
 - 注意：Vercel 站是 https 才需 NAS https；**整站 NAS 同域，只要你访问用 https 即可**，混合内容问题不存在。
 
+**C. 反向代理 + HTTPS（本项目推荐形态，公网 IP 机器适用）**
+本项目按「反代终止 HTTPS」设计：容器内 Next.js 只监听 http://:3000，前面由 Nginx / Nginx Proxy Manager / Caddy 反代出 443。与 A/B 相比：不暴露 3000 端口、隐藏真实 IP、适合有固定公网 IP 的 NAS（如飞牛）。
+- **登录 cookie 的 secure 标记自动判断**：后端优先看反代透传的 `x-forwarded-proto`（取第一个值）。Nginx Proxy Manager 及 Nginx 默认的 `proxy_set_header X-Forwarded-Proto $scheme;` 都会带上；若你手写配置，务必透传该头——否则容器内按 NODE_ENV=production 仍会给 cookie 打 secure，纯 http 内网访问时浏览器会拒收该 cookie（表现为「登录后立刻回到未登录」）。
+- **媒体与应用同域**：/textbooks、/raz 与被代理的页面同一域名，无混合内容问题。
+- 反代一律把 / 转发到 `http://127.0.0.1:3000` 即可（WebSocket 若启用也可正常穿透，本项目暂未用到 ws 反向场景）。
+
 ## 四、数据持久化（重点）
 - `./data:/data` → 容器里的 `local.db`（账号/城堡/打卡/错题）落在 NAS 卷，**重建容器不丢**。
 - 媒体走挂卷，也不进镜像。
 - 切勿把 `./data` 指向会随容器删除的位置。
+
+### 每日自动备份（推荐）
+容器内自带热备份接口（`VACUUM INTO`，WAL 安全、无需停服）：
+- 触发：`POST /api/cron/backup`，携带 `Authorization: <CRON_SECRET>`（同定时结算密钥）；备份落在 `./data/backups/local-时间戳.db`，默认保留最近 14 份（可加 `BACKUP_KEEP_COUNT` 调整，见 .env.example）。
+- NAS 一键脚本：`scripts/backup-db.sh`（自动读 `.env` 里的 CRON_SECRET 并在容器地址本机触发）。在飞牛「计划任务」里建一条每天 03:00 的定时任务，或 crontab：
+  ```cron
+  0 3 * * * /volume1/你的路径/chengcheng-learning-workbench/scripts/backup-db.sh >> /volume1/你的路径/backup.log 2>&1
+  ```
+- 异地容灾：把 `./data/backups/` 再 rsync 到另一台机器 / 网盘挂载点即可。
 
 ## 五、日常更新
 ```bash
@@ -77,8 +92,9 @@ cloudflared tunnel --url http://localhost:3000
 
 ## 六、常见坑
 - **媒体 404**：检查 docker-compose 里两个媒体挂载路径是否指向真实的 `public/raz`、`public/textbooks`（里面应有 94 个 PDF + 97 个 MP4、16 个课本 PDF）。
+- **媒体需登录才能看**：为避免公开库中被直接遍历/盗链，`/textbooks/`、`/raz/` 下的 PDF/MP4 已加登录门禁——未登录点开页面会跳 `/login`，直链返回 401 JSON（不影响上面 404 的排查）。
 - **容器起不来 / 端口占用**：确认 NAS 的 3000 端口没被别的容器占用（`docker logs chengcheng` 看报错）。
-- **libSQL 原生模块**：镜像用 `node:20-bookworm-slim`（glibc），已包含 libSQL 原生绑定；不要用 alpine 镜像。
+- **libSQL 原生模块**：镜像用 `node:22-bookworm-slim`（glibc），已包含 libSQL 原生绑定；不要用 alpine 镜像。（本地/其他构建也请保持 Node ≥ 22.13：pdfjs-dist@6 在 Node 20 下会导致 PDF 渲染相关页面构建失败。）
 - **TTS**：`api/tts` 走微软 Edge 神经嗓音，需要 NAS 能出网；若纯内网断外网，会自动降级为浏览器 Web Speech。
 
 ## 七、想换载体？

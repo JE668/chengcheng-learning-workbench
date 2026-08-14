@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { getDb, getChildId } from './db';
@@ -50,11 +50,28 @@ export async function cleanupExpiredSessions(): Promise<void> {
   });
 }
 
+/**
+ * 是否给会话 cookie 打 secure 标记：
+ * 自托管通常走 Nginx/Caddy 等反向代理终止 HTTPS，
+ * 应用本身看到的是 http（x-forwarded-proto: https）。
+ * 优先信任反向代理透传的协议头（取第一个值，防伪造头注入），
+ * 无该头时回退到 NODE_ENV === 'production'。
+ */
+function shouldSecureCookie(): boolean {
+  try {
+    const proto = headers().get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase();
+    if (proto === 'https' || proto === 'http') return proto === 'https';
+  } catch {
+    // headers() 在非请求上下文（如 build 期）可能抛错，忽略并回退。
+  }
+  return process.env.NODE_ENV === 'production';
+}
+
 export async function setSessionCookie(userId: number) {
   const token = await createSession(userId);
   cookies().set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: shouldSecureCookie(),
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,
@@ -64,7 +81,7 @@ export async function setSessionCookie(userId: number) {
 export async function clearSessionCookie() {
   const token = cookies().get(COOKIE_NAME)?.value;
   if (token) await deleteSession(token);
-  cookies().set(COOKIE_NAME, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 0 });
+  cookies().set(COOKIE_NAME, '', { httpOnly: true, secure: shouldSecureCookie(), sameSite: 'lax', path: '/', maxAge: 0 });
 }
 
 export async function getCurrentUser(): Promise<User | null> {

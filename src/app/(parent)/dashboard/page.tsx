@@ -26,7 +26,7 @@ export default async function DashboardPage() {
       const practice = await getTodayPractice(cId, false);
       todayDone = practice.completed;
       const checkins = await db.execute({
-        sql: 'SELECT subject FROM daily_checkins WHERE child_id = ? AND day = date() AND status = ?',
+        sql: "SELECT subject FROM daily_checkins WHERE child_id = ? AND day = date('now','localtime') AND status = ?",
         args: [cId, 'confirmed'],
       });
       for (const r of checkins.rows) todaySubj[String(r.subject) as keyof typeof todaySubj] = true;

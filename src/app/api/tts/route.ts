@@ -193,8 +193,10 @@ export async function POST(req: NextRequest) {
         'cache-control': 'public, max-age=86400',
       },
     });
-  } catch {
+  } catch (e) {
     // 合成失败（令牌端点不可达 / 握手 403 / 超时）→ 交由前端降级到 Web Speech
+    // 这里仅记日志供排查（如微软改端点/限流），不影响用户：前端 speak.ts 会自动降级。
+    console.warn('[tts] 合成失败，前端将降级到浏览器 Web Speech：', e instanceof Error ? e.message : String(e));
     return NextResponse.json({ error: 'tts failed' }, { status: 502 });
   }
 }
