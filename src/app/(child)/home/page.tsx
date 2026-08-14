@@ -155,7 +155,7 @@ export default async function HomePage() {
             <Link href="/badges" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-gradient-to-r from-moko-cyan to-moko-blue text-white font-black col-span-2">🥇 勋章墙 · 看看我的成就</Link>
             <GuideModal
               className="col-span-2 rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-cyan text-white font-black cursor-pointer"
-              trigger="📖 攻略说明 · 每日一练怎么玩"
+              trigger="📖 学习攻略 · 积分星星怎么攒"
             />
           </div>
         </div>
