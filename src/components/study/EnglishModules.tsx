@@ -11,6 +11,7 @@ import {
 } from '@/lib/study-data';
 import { speakEn } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
+import { useModuleProgress } from '@/lib/module-progress';
 
 function lev(a: string, b: string): number {
   const m = a.length,
@@ -47,8 +48,8 @@ export function LetterModule() {
   );
 }
 
-/* ---------- 单词（按主题，可点读 + 跟读录音） ---------- */
-function WordCard({ item }: { item: WordItem }) {
+/* ---------- 单词（按主题，可点读 + 跟读录音；可选「我认识」完成标记） ---------- */
+function WordCard({ item, done, onDone }: { item: WordItem; done?: boolean; onDone?: () => void }) {
   const [recording, setRecording] = useState(false);
   const [recordUrl, setRecordUrl] = useState<string | null>(null);
   const [scoring, setScoring] = useState(false);
@@ -125,7 +126,7 @@ function WordCard({ item }: { item: WordItem }) {
   const stars = score === null ? '' : '⭐'.repeat(score) + '☆'.repeat(3 - score);
 
   return (
-    <div className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-yellow/30 text-center">
+    <div className={`rounded-2xl p-4 shadow-lg border-2 text-center transition ${done ? 'bg-green-50 border-green-300' : 'bg-white border-moko-yellow/30'}`}>
       <div className="text-5xl mb-2">{item.emoji}</div>
       <div
         onClick={() => speakEn(item.word)}
@@ -148,6 +149,8 @@ function WordCard({ item }: { item: WordItem }) {
         >
           {recording ? '⏹ 录音' : '🎙️ 跟读'}
         </button>
+      </div>
+      <div className="flex gap-2 mt-2">
         <button
           onClick={scorePronunciation}
           disabled={scoring}
@@ -155,6 +158,15 @@ function WordCard({ item }: { item: WordItem }) {
         >
           {scoring ? '🎯 听…' : '🎯 评发音'}
         </button>
+        {onDone && (
+          <button
+            onClick={onDone}
+            disabled={done}
+            className={`flex-1 py-2 rounded-full font-bold text-sm transition ${done ? 'bg-green-200 text-green-700' : 'bg-moko-yellow/15 text-moko-yellow border-2 border-moko-yellow/40'}`}
+          >
+            {done ? '✅ 认识啦' : '👆 我认识'}
+          </button>
+        )}
       </div>
       {recordUrl && (
         <div className="mt-3">
@@ -176,18 +188,111 @@ function WordCard({ item }: { item: WordItem }) {
 }
 
 export function WordModule() {
-  return (
-    <div className="space-y-8">
-      {Object.entries(EN_WORD_TOPICS).map(([topic, words]) => (
-        <section key={topic}>
-          <h2 className="section-title mb-3">📚 {topic}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {words.map((w) => (
-              <WordCard key={w.word} item={w} />
-            ))}
+  const { record } = useModuleProgress('english', 'words');
+  const [activeTopic, setActiveTopic] = useState<string | null>(null);
+  const [doneTopics, setDoneTopics] = useState<Set<string>>(new Set());
+  const [doneWords, setDoneWords] = useState<Set<string>>(new Set());
+  const [celebrate, setCelebrate] = useState<string | null>(null);
+  const prevDone = useRef(0);
+
+  const topics = Object.keys(EN_WORD_TOPICS);
+  const activeWords = activeTopic ? EN_WORD_TOPICS[activeTopic] ?? [] : [];
+
+  // 完成主题数 → 星：4 主题 1 星、8 主题 2 星、全部 3 星（取历史最佳）
+  useEffect(() => {
+    if (doneTopics.size === prevDone.current) return;
+    prevDone.current = doneTopics.size;
+    if (doneTopics.size > 0) {
+      const stars = doneTopics.size >= topics.length ? 3 : doneTopics.size >= 8 ? 2 : 1;
+      record(stars);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doneTopics.size]);
+
+  // 切换主题时重置已认识
+  useEffect(() => {
+    setDoneWords(new Set());
+    setCelebrate(null);
+  }, [activeTopic]);
+
+  // 当前主题全部认识 → 完成打勾 + 稍候自动返回
+  useEffect(() => {
+    if (!activeTopic || doneTopics.has(activeTopic)) return;
+    if (activeWords.length > 0 && doneWords.size >= activeWords.length) {
+      setDoneTopics((s) => new Set(s).add(activeTopic));
+      setCelebrate(activeTopic);
+      const timer = setTimeout(() => setActiveTopic(null), 1800);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doneWords.size, activeTopic]);
+
+  // 主题详情页
+  if (activeTopic) {
+    const topicDone = doneTopics.has(activeTopic);
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setActiveTopic(null)}
+            className="px-3 py-1.5 rounded-full bg-white text-moko-violet font-bold text-sm shadow border-2 border-moko-violet/20 active:scale-95 transition"
+          >
+            ‹ 返回主题
+          </button>
+          <h2 className="text-xl font-black text-moko-violet">📚 {activeTopic}</h2>
+          <span className="text-sm font-bold text-gray-400">已认识 {doneWords.size}/{activeWords.length}</span>
+        </div>
+
+        {celebrate === activeTopic && (
+          <div className="rounded-2xl p-4 bg-green-100 border-2 border-green-400 text-center text-green-700 font-black text-lg fade-up">
+            🎉「{activeTopic}」全部认识啦！唱唱萌可为你鼓掌～
           </div>
-        </section>
-      ))}
+        )}
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {activeWords.map((w) => (
+            <WordCard
+              key={w.word}
+              item={w}
+              done={doneWords.has(w.word) || topicDone}
+              onDone={() => setDoneWords((s) => new Set(s).add(w.word))}
+            />
+          ))}
+        </div>
+        <p className="text-center text-xs text-gray-400">把每个词点成「我认识」，这一组就完成啦～</p>
+      </div>
+    );
+  }
+
+  // 主题宫格：一次挑一类
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-yellow/20 text-center">
+        <p className="text-gray-600 text-sm">
+          单词按<span className="font-black text-moko-yellow"> 主题 </span>排队啦！一次认一组，认完 4 组拿 1 颗⭐，全认完 3 颗星！
+        </p>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {topics.map((topic) => {
+          const words = EN_WORD_TOPICS[topic];
+          const done = doneTopics.has(topic);
+          const emoji = words[0]?.emoji ?? '🏷️';
+          return (
+            <button
+              key={topic}
+              onClick={() => setActiveTopic(topic)}
+              className={`rounded-3xl p-4 text-center shadow-lg border-2 active:scale-95 transition ${
+                done ? 'bg-green-50 border-green-300' : 'bg-white border-moko-yellow/30 hover:border-moko-yellow'
+              }`}
+            >
+              <div className="text-4xl mb-1">{done ? '✅' : emoji}</div>
+              <div className={`font-black ${done ? 'text-green-600' : 'text-moko-violet'}`}>{topic}</div>
+              <div className={`text-xs mt-1 ${done ? 'text-green-500' : 'text-gray-400'}`}>{done ? '完成啦' : `${words.length} 个词 · 点开认一认`}</div>
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-center text-sm text-gray-400 font-bold">已认完 {doneTopics.size} / {topics.length} 组</p>
     </div>
   );
 }
