@@ -197,3 +197,38 @@ describe('数据结构可编译', () => {
     expect(_typeCheck).toBe(1);
   });
 });
+import { STROKE_RULES, CHAR_TRANSFORMS } from '@/lib/study-data';
+
+describe('语文 · 笔顺规则口诀（STROKE_RULES）', () => {
+  it('共 7 条，字段完整', () => {
+    expect(STROKE_RULES).toHaveLength(7);
+    for (const r of STROKE_RULES) {
+      expect(r.name, '规则名为空').toBeTruthy();
+      expect(r.rhyme, '口诀为空').toBeTruthy();
+      expect(r.examples.length, `${r.name} 缺例字`).toBeGreaterThanOrEqual(2);
+      expect(r.emoji).toBeTruthy();
+    }
+  });
+});
+
+describe('语文 · 汉字变变变（CHAR_TRANSFORMS）', () => {
+  it('共 7 组，每组 3 个字、有规律说明', () => {
+    expect(CHAR_TRANSFORMS).toHaveLength(7);
+    const seen = new Set<string>();
+    for (const t of CHAR_TRANSFORMS) {
+      expect(t.chars.length, `${t.title} 不是 3 个字`).toBe(3);
+      expect(t.title, '规律标题为空').toBeTruthy();
+      expect(t.hint, '提示为空').toBeTruthy();
+      // 每组的字不重复
+      const key = t.chars.join('');
+      expect(seen.has(key), `「${t.title}」的字组重复`).toBe(false);
+      seen.add(key);
+    }
+  });
+
+  it('经典回归：人→从→众、木→林→森 必须存在', () => {
+    const titles = CHAR_TRANSFORMS.map((t) => t.title);
+    expect(titles).toContain('人→从→众');
+    expect(titles).toContain('木→林→森');
+  });
+});
