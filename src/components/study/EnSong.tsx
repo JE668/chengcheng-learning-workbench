@@ -14,6 +14,7 @@ export function EnSongModule() {
   const { record } = useModuleProgress('english', 'en-songs');
   const [idx, setIdx] = useState(0);
   const [tapped, setTapped] = useState<Set<number>>(new Set());
+  const [sungSongs, setSungSongs] = useState<Set<number>>(new Set());
   const song: EnSong = EN_SONGS[idx];
 
   function readLine(lineIdx: number) {
@@ -25,7 +26,7 @@ export function EnSongModule() {
     });
   }
 
-  /** 唱完整首：逐行朗读英文 */
+  /** 唱完整首：逐行朗读英文。唱完后按"已唱过几首"记星（2首1星/4首2星/全唱3星） */
   function singAll() {
     let delay = 0;
     song.lyrics.forEach((line, i) => {
@@ -39,8 +40,14 @@ export function EnSongModule() {
       }, delay);
       delay += 3000;
     });
-    setTimeout(() => praise(), delay);
-    record(Math.min(3, Math.ceil(idx / 2) + 1));
+    setTimeout(() => {
+      praise();
+      const newSung = new Set(sungSongs);
+      newSung.add(idx);
+      setSungSongs(newSung);
+      const stars = newSung.size >= EN_SONGS.length ? 3 : newSung.size >= 4 ? 2 : 1;
+      record(stars);
+    }, delay);
   }
 
   function readKeyword(en: string) {

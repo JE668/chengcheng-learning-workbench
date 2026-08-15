@@ -1,13 +1,38 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CHAR_TRANSFORMS } from '@/lib/study-data';
-import { speakZh } from '@/lib/speak';
+import { speakZh, praise } from '@/lib/speak';
+import { useModuleProgress } from '@/lib/module-progress';
 
 export function CharTransformModule() {
+  const { record } = useModuleProgress('chinese', 'char-transform');
   const [idx, setIdx] = useState(0);
   const t = CHAR_TRANSFORMS[idx];
   const [showHint, setShowHint] = useState(false);
+  const [seenGroups, setSeenGroups] = useState<Set<number>>(new Set());
+  const prevSeen = useRef(0);
+
+  // 每看过一组（展开 hint）就记星：2 组 1 星、4 组 2 星、全部 3 星
+  useEffect(() => {
+    if (seenGroups.size === prevSeen.current) return;
+    prevSeen.current = seenGroups.size;
+    if (seenGroups.size > 0) {
+      const stars = seenGroups.size >= CHAR_TRANSFORMS.length ? 3 : seenGroups.size >= 4 ? 2 : 1;
+      record(stars);
+    }
+  }, [seenGroups.size]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function nextGroup(dir: number) {
+    setIdx((i) => (i + dir + CHAR_TRANSFORMS.length) % CHAR_TRANSFORMS.length);
+    setShowHint(false);
+  }
+
+  function revealHint() {
+    setShowHint(true);
+    praise();
+    setSeenGroups((s) => new Set(s).add(idx));
+  }
 
   return (
     <div className="space-y-4">
@@ -35,7 +60,7 @@ export function CharTransformModule() {
         </div>
         {!showHint ? (
           <button
-            onClick={() => setShowHint(true)}
+            onClick={revealHint}
             className="px-4 py-2 rounded-full bg-moko-rose text-white font-bold text-sm shadow active:scale-95 transition"
           >
             🔍 看看发现了什么？
@@ -49,13 +74,13 @@ export function CharTransformModule() {
 
       <div className="flex justify-center gap-3">
         <button
-          onClick={() => { setIdx((i) => (i - 1 + CHAR_TRANSFORMS.length) % CHAR_TRANSFORMS.length); setShowHint(false); }}
+          onClick={() => nextGroup(-1)}
           className="px-5 py-2 rounded-full bg-gray-100 text-gray-600 font-bold text-sm active:scale-95 transition"
         >
           ⬅️ 上一组
         </button>
         <button
-          onClick={() => { setIdx((i) => (i + 1) % CHAR_TRANSFORMS.length); setShowHint(false); }}
+          onClick={() => nextGroup(1)}
           className="px-5 py-2 rounded-full bg-moko-rose text-white font-bold text-sm active:scale-95 transition"
         >
           下一组 ➡️
