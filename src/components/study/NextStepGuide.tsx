@@ -17,6 +17,7 @@ const NEXT_STEP: Record<string, { subject: string; key: string; reason: string }
   lessons: { subject: 'chinese', key: 'strokes-order', reason: '学了生字，看看笔顺怎么写' },
   proverbs: { subject: 'chinese', key: 'word-form', reason: '学了谚语，试试组词造句' },
   nursery_rhymes: { subject: 'chinese', key: 'finger-read', reason: '念了儿歌，试试指读高亮' },
+  char_transform: { subject: 'chinese', key: 'characters', reason: '字变来变去，回识字小能手认更多' },
   // 数学
   count: { subject: 'math', key: 'compare', reason: '数了数，比比谁多谁少' },
   compare: { subject: 'math', key: 'split', reason: '会比大小了，试试分与合' },
@@ -29,6 +30,7 @@ const NEXT_STEP: Record<string, { subject: string; key: string; reason: string }
   words: { subject: 'english', key: 'sentences', reason: '学了些词，试试连成句子' },
   phonics: { subject: 'english', key: 'words', reason: '学了自然拼读，用单词练练' },
   en_songs: { subject: 'english', key: 'words', reason: '唱了儿歌，认认里面的单词' },
+  en_spell: { subject: 'english', key: 'words', reason: '练了拼写，去单词世界复习' },
 };
 
 export function NextStepGuide({ subject, moduleKey }: { subject: string; moduleKey: string }) {
