@@ -59,11 +59,24 @@ function pickVoice(lang: string): SpeechSynthesisVoice | undefined {
  *  - Edge/Chrome：rate 0.65 仍偏快（需要更低才能达到同样效果）
  *  这里按浏览器类型对 wsRate 做一次校准，使跨设备语速体感一致。
  */
-function calibrateRate(wsRate: number): number {
+/**
+ * 不同浏览器的 Web Speech 对 rate 的解释不同：
+ *  - Safari：rate 0.65 确实明显慢
+ *  - Edge/Chrome：rate 0.65 仍偏快（需要更低才能达到同样效果）
+ *  这里按浏览器类型对 wsRate 做一次校准，使跨设备语速体感一致。
+ *
+ * 注意：Chrome / Edge 的 UA 都自带 "Safari" 字样（例如 Chrome 的 UA 含
+ * "...Chrome/120... Safari/537.36"），所以「排除 Safari」必须用「不含 Chrome
+ * 才算真 Safari」来判断，否则校准分支对所有真实浏览器都进不去（历史版本就是
+ * 这么写成死代码的，导致 Chrome/Edge 始终没被校准）。
+ */
+export function calibrateRate(wsRate: number): number {
   if (typeof navigator === 'undefined') return wsRate;
   const ua = navigator.userAgent;
+  const hasChrome = /Chrome/i.test(ua);
+  const isGenuineSafari = /Safari/i.test(ua) && !hasChrome; // 真 Safari 的 UA 不含 Chrome
   // Edge/Chrome 的 Web Speech 引擎对低 rate 不敏感，需要再降约 20%
-  if (/Edg|Chrome/i.test(ua) && !/Safari/i.test(ua.replace(/Edge?\//gi, ''))) {
+  if ((hasChrome || /Edg/i.test(ua)) && !isGenuineSafari) {
     return Math.max(0.1, wsRate * 0.8);
   }
   return wsRate;

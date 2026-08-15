@@ -90,6 +90,32 @@ describe('castle 核心逻辑：连续打卡与惩罚机制', () => {
     expect(state.streakDays).toBe(1); // 仅昨天连续
   });
 
+  it('惩罚机制：连续两日缺打卡 → 被藏星星币累计（last_stolen 累加而非覆盖）', async () => {
+    const cid = nextChild();
+    await insertChild(cid);
+    const db = getDb();
+    const today = dateStr();
+    // last_settled 设在 today-5，让结算覆盖 today-4 ~ today-1；
+    // 其中 today-4、today-3 整日三科缺（触发惩罚），today-2、today-1 全勤让结算跑完。
+    await insertCastle(cid, addDays(today, -5), 100);
+    for (const off of [2, 1]) {
+      const day = addDays(today, -off);
+      for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, day, subj);
+    }
+
+    await getCastleState(cid); // 触发结算
+
+    const r = await db.execute({
+      sql: 'SELECT last_stolen, star_coins FROM castle_state WHERE child_id = ?',
+      args: [cid],
+    });
+    const lastStolen = Number(r.rows[0]?.last_stolen ?? 0);
+    const starCoins = Number(r.rows[0]?.star_coins ?? 0);
+    // 100 → 第1缺日藏 50（剩 50）→ 第2缺日藏 25（剩 25）；last_stolen 应累计为 75，而非覆盖成 25。
+    expect(starCoins).toBe(25);
+    expect(lastStolen).toBe(75);
+  });
+
   it('惩罚机制：整日三科未完成 → 3 只捣蛋萌可入场 + 被藏一半星星币 + 萌可吓跑', async () => {
     const cid = nextChild();
     await insertChild(cid);

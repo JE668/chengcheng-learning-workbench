@@ -207,11 +207,14 @@ async function applyPenalty(childId: number, day: string, confirmedCount: number
     });
   }
 
-  // ④ 捣蛋萌可把一半星星币藏起来了（捉回后找回）
+  // ④ 捣蛋萌可把一半星星币藏起来了（捉回后找回）。
+  // 改为累加而非覆盖：一次结算可能跨多个漏打卡日，每个漏打卡日都会再藏一笔，
+  // 此前被藏的星星币要等「捉回」才找回，所以 last_stolen 必须累积，否则只记录
+  // 最后一天的量、castSpray 找回金额会偏少。
   if (star > 0) {
     const stolen = Math.floor(star / 2);
     star -= stolen;
-    lastStolen = stolen;
+    lastStolen += stolen;
   }
 
   // 捣蛋萌可把入驻萌可的心情弄糟了（心情值 3 格）

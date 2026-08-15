@@ -67,6 +67,8 @@ async function getSecToken(): Promise<string> {
   // 注意：date 必须同时用于 (a) 请求头 x-client-birth/current 与 (b) GEC 哈希；
   // 二者必须完全一致，否则令牌校验失败、握手返回 403。
   const date = new Date().toUTCString();
+  // 按 UTC 日缓存：令牌只用 date 派生，当天内有效，省掉每次请求的出境 HTTPS 往返。
+  if (cachedSec && cachedSec.date === date) return cachedSec.token;
   const resp = await fetch(SECURITY_URL, {
     headers: { 'x-client-birth': date, 'x-client-current': date },
   });
@@ -74,12 +76,28 @@ async function getSecToken(): Promise<string> {
   const data = (await resp.json()) as { secret?: string };
   if (!data.secret) throw new Error('sec cfg no secret');
   const sha = createHash('sha256').update(`GEC${date}${data.secret}`).digest('base64');
+  cachedSec = { date, token: sha };
   return sha;
 }
 
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 const TTS_LIMIT = { windowSeconds: 60, maxRequests: 30 }; // 每 IP 每分钟 30 次
+
+// ── 性能优化：内存缓存（降低语音延迟的主要手段） ─────────────────────
+// (1) Sec-MS-GEC 安全令牌按 UTC 日缓存：原本每次 TTS 请求都要先向 edge.microsoft.com
+//     发一次 HTTPS 取 secret 再算令牌，等于每次多一趟出境网络往返；令牌本身只用 UTC
+//     日期派生、当天有效，缓存即可省掉这趟请求。
+// (2) 合成结果按 (text,lang,rate,pause) 缓存：儿童学习场景大量重复朗读（同一字母 /
+//     单词 / 夸夸语反复出现），命中缓存直接秒回，彻底绕过微软 WebSocket 握手。
+//     限定上限做 LRU 淘汰，防内存膨胀。Node 持久进程下缓存跨请求复用，收益最大。
+const ttsCache = new Map<string, Buffer>();
+const TTS_CACHE_MAX = 500;
+let cachedSec: { date: string; token: string } | null = null;
+
+function ttsCacheKey(text: string, lang: string, rate: string, pause: number): string {
+  return `${lang}|${rate}|${pause}|${text}`;
+}
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
@@ -110,6 +128,19 @@ export async function POST(req: NextRequest) {
   if (text.length > 500) text = text.slice(0, 500);
   // 未指定则按语言给一个适合一年级小朋友的偏慢、清晰的语速
   if (!rate) rate = lang === 'en' ? '-35%' : '-35%';
+
+  // 命中合成缓存：重复朗读（同一字母 / 单词 / 夸夸语）直接秒回，无需再连微软。
+  const cacheKey = ttsCacheKey(text, lang, rate, pause);
+  const hit = ttsCache.get(cacheKey);
+  if (hit) {
+    // 命中即移到末尾，维持 LRU（热门短语不被淘汰）
+    ttsCache.delete(cacheKey);
+    ttsCache.set(cacheKey, hit);
+    return new NextResponse(new Uint8Array(hit), {
+      status: 200,
+      headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=86400' },
+    });
+  }
 
   try {
     // 协议第 2~3 步：取动态安全令牌，并拼出带令牌的 WebSocket 握手地址。
@@ -184,6 +215,15 @@ export async function POST(req: NextRequest) {
 
       setTimeout(() => done(() => reject(new Error('tts timeout'))), 30000);
     });
+
+    // Buffer 在 Node20 类型下可能是 SharedArrayBuffer 后端，转成普通 Uint8Array 以满足 BodyIn      });
+
+    // 写入合成缓存（限定上限，FIFO 淘汰最旧），供后续重复朗读秒回
+    if (ttsCache.size >= TTS_CACHE_MAX) {
+      const oldest = ttsCache.keys().next().value;
+      if (oldest !== undefined) ttsCache.delete(oldest);
+    }
+    ttsCache.set(cacheKey, audio);
 
     // Buffer 在 Node20 类型下可能是 SharedArrayBuffer 后端，转成普通 Uint8Array 以满足 BodyInit
     return new NextResponse(new Uint8Array(audio), {
