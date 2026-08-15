@@ -142,22 +142,71 @@ export default async function HomePage() {
         </div>
 
         <div className="card-moko">
-          <h2 className="section-title mb-3">🚀 快捷入口</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <Link href="/study" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-pink text-white font-black">📚 去学习</Link>
-            <Link href="/games" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-blue text-white font-black">🎮 玩游戏</Link>
-            <Link href="/castle" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-purple text-white font-black">🏰 城堡</Link>
-            <Link href="/shop" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-gold text-white font-black">🛍️ 商城</Link>
-            <Link href="/record" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-cyan text-white font-black col-span-2">🏆 看记录</Link>
-            <Link href="/record" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-gradient-to-r from-moko-rose to-moko-pink text-white font-black col-span-2">📊 资源明细 · 积分/星星币怎么来的</Link>
-            <Link href="/pinyin-blend" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-rose text-white font-black col-span-2">🀄 拼音拼读 · 拼读乐园</Link>
-            <Link href="/story" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black col-span-2">📜 萌可剧情 · 捕捉萌可</Link>
-            <Link href="/moko-house" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-purple text-white font-black col-span-2">🧸 萌可房间 · 和萌可互动</Link>
-            <Link href="/badges" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-gradient-to-r from-moko-cyan to-moko-blue text-white font-black col-span-2">🥇 勋章墙 · 看看我的成就</Link>
-            <GuideModal
-              className="col-span-2 rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-cyan text-white font-black cursor-pointer"
-              trigger="📖 学习攻略 · 积分星星怎么攒"
-            />
+          <h2 className="section-title mb-1">🚀 按顺序做，资源越来越多！</h2>
+          <p className="text-xs text-gray-400 mb-3">从上往下点，每一步都能攒到东西～</p>
+          <div className="space-y-2">
+            {/* ① 今日一练：积分+阳光+捕捉券+萌可 */}
+            <Link href="/daily-practice" className="flex items-center gap-3 rounded-2xl p-3 shadow border-2 border-moko-gold/30 bg-moko-gold/5 hover:border-moko-gold transition active:scale-95">
+              <span className="text-2xl">①🎯</span>
+              <div className="flex-1 min-w-0">
+                <div className="font-black text-moko-violet">做今日一练</div>
+                <div className="text-xs text-gray-500">积分 +10/科 · 阳光 +1/科 · 捕捉券 +1/科 · 萌可入驻</div>
+              </div>
+              <span className="text-xs text-gray-400">›</span>
+            </Link>
+            {/* ② 学习：模块星 */}
+            <Link href="/study" className="flex items-center gap-3 rounded-2xl p-3 shadow border-2 border-moko-pink/30 bg-moko-pink/5 hover:border-moko-pink transition active:scale-95">
+              <span className="text-2xl">②📚</span>
+              <div className="flex-1 min-w-0">
+                <div className="font-black text-moko-violet">去学习</div>
+                <div className="text-xs text-gray-500">做模块练习拿 ⭐学习星（解锁萌可剧情）</div>
+              </div>
+              <span className="text-xs text-gray-400">›</span>
+            </Link>
+            {/* ③ 游戏：积分 */}
+            <Link href="/games" className="flex items-center gap-3 rounded-2xl p-3 shadow border-2 border-moko-blue/30 bg-moko-blue/5 hover:border-moko-blue transition active:scale-95">
+              <span className="text-2xl">③🎮</span>
+              <div className="flex-1 min-w-0">
+                <div className="font-black text-moko-violet">玩游戏</div>
+                <div className="text-xs text-gray-500">得分就是积分，每天每款 1 次</div>
+              </div>
+              <span className="text-xs text-gray-400">›</span>
+            </Link>
+            {/* ④ 捕捉萌可：积分+城堡萌可 */}
+            <Link href="/story" className="flex items-center gap-3 rounded-2xl p-3 shadow border-2 border-moko-yellow/30 bg-moko-yellow/5 hover:border-moko-yellow transition active:scale-95">
+              <span className="text-2xl">④📜</span>
+              <div className="flex-1 min-w-0">
+                <div className="font-black text-moko-violet">捕捉萌可</div>
+                <div className="text-xs text-gray-500">积分 +10/只 · 萌可入驻城堡（第 2 集起耗捕捉券）</div>
+              </div>
+              <span className="text-xs text-gray-400">›</span>
+            </Link>
+            {/* ⑤ 城堡收获：星星币 */}
+            <Link href="/castle" className="flex items-center gap-3 rounded-2xl p-3 shadow border-2 border-moko-purple/30 bg-moko-purple/5 hover:border-moko-purple transition active:scale-95">
+              <span className="text-2xl">⑤🏰</span>
+              <div className="flex-1 min-w-0">
+                <div className="font-black text-moko-violet">城堡收获</div>
+                <div className="text-xs text-gray-500">好朋友萌可每天送 ⭐星星币 +5/只</div>
+              </div>
+              <span className="text-xs text-gray-400">›</span>
+            </Link>
+            {/* ⑥ 兑换：花资源 */}
+            <div className="grid grid-cols-2 gap-2">
+              <Link href="/shop" className="flex items-center gap-2 rounded-2xl p-3 shadow border-2 border-moko-gold/30 bg-white hover:border-moko-gold transition active:scale-95">
+                <span className="text-xl">🛍️</span>
+                <div className="min-w-0">
+                  <div className="font-bold text-moko-violet text-sm">花星星币</div>
+                  <div className="text-[10px] text-gray-400">去商城</div>
+                </div>
+              </Link>
+              <Link href="/record" className="flex items-center gap-2 rounded-2xl p-3 shadow border-2 border-moko-cyan/30 bg-white hover:border-moko-cyan transition active:scale-95">
+                <span className="text-xl">📊</span>
+                <div className="min-w-0">
+                  <div className="font-bold text-moko-violet text-sm">资源明细</div>
+                  <div className="text-[10px] text-gray-400">看怎么来的</div>
+                </div>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
