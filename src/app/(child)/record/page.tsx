@@ -66,12 +66,24 @@ export default async function RecordPage() {
 
       <h2 className="text-2xl font-black text-moko-violet mb-3">积分明细</h2>
       <div className="space-y-2 mb-8">
-        {comps.rows.map((c, i) => (
-          <div key={i} className="card-moko flex justify-between">
-            <span className="font-medium">{(c.task_title ? String(c.task_title) : c.source ? `游戏/课程：${String(c.source).replace('lesson-', '').replace('task-', '').replace(/-/g, ' ')}` : '学习奖励')}</span>
-            <span className="font-bold text-moko-rose">+{Number(c.points)}</span>
-          </div>
-        ))}
+        {comps.rows.map((c, i) => {
+          let label = '学习奖励';
+          if (c.task_title) {
+            label = `任务：${String(c.task_title)}`;
+          } else if (c.source) {
+            const src = String(c.source);
+            if (src.startsWith('checkin:')) label = `每日一练 · ${src.replace('checkin:', '')} 打卡`;
+            else if (src.startsWith('story:')) label = '捕捉萌可';
+            else if (src.startsWith('game-') || src.startsWith('lesson-') || src.startsWith('task-')) label = `游戏/课程：${src.replace(/^(game|lesson|task)-/, '').replace(/-/g, ' ')}`;
+            else label = src.replace(/-/g, ' ');
+          }
+          return (
+            <div key={i} className="card-moko flex justify-between">
+              <span className="font-medium">{label}</span>
+              <span className="font-bold text-moko-rose">+{Number(c.points)}</span>
+            </div>
+          );
+        })}
         {comps.rows.length === 0 && <div className="card-moko text-gray-500">还没有记录，快去学习吧！</div>}
       </div>
 

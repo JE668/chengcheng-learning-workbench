@@ -37,11 +37,11 @@ export default async function HomePage() {
   }));
 
   const stats = [
-    { label: '我的积分', value: points, icon: '🏅', color: 'bg-moko-rose' },
-    { label: '阳光能量', value: castle.sunlight, icon: '☀️', color: 'bg-moko-yellow' },
-    { label: '星星币', value: castle.starCoins, icon: '⭐', color: 'bg-moko-gold' },
-    { label: '萌可图鉴', value: `${totalMoko} 种`, icon: '🧸', color: 'bg-moko-purple' },
-    { label: '城堡繁荣度', value: castle.prosperity, icon: '🏰', color: 'bg-moko-blue' },
+    { label: '我的积分', value: points, icon: '🏅', color: 'bg-moko-rose', href: '/record' },
+    { label: '阳光能量', value: castle.sunlight, icon: '☀️', color: 'bg-moko-yellow', href: '/castle' },
+    { label: '星星币', value: castle.starCoins, icon: '⭐', color: 'bg-moko-gold', href: '/shop' },
+    { label: '萌可图鉴', value: `${totalMoko} 种`, icon: '🧸', color: 'bg-moko-purple', href: '/castle' },
+    { label: '城堡繁荣度', value: castle.prosperity, icon: '🏰', color: 'bg-moko-blue', href: '/castle' },
   ];
 
   return (
@@ -60,11 +60,11 @@ export default async function HomePage() {
       <h2 className="section-title mb-3">我的成长看板 📊</h2>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
         {stats.map((s) => (
-          <div key={s.label} className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}>
+          <Link key={s.label} href={s.href} className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white hover:scale-105 active:scale-95 transition cursor-pointer`}>
             <div className="text-3xl mb-1">{s.icon}</div>
             <div className="text-2xl font-black leading-tight">{s.value}</div>
-            <div className="text-xs opacity-90 mt-1">{s.label}</div>
-          </div>
+            <div className="text-xs opacity-90 mt-1">{s.label} ›</div>
+          </Link>
         ))}
       </div>
 
@@ -149,6 +149,7 @@ export default async function HomePage() {
             <Link href="/castle" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-purple text-white font-black">🏰 城堡</Link>
             <Link href="/shop" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-gold text-white font-black">🛍️ 商城</Link>
             <Link href="/record" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-cyan text-white font-black col-span-2">🏆 看记录</Link>
+            <Link href="/record" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-gradient-to-r from-moko-rose to-moko-pink text-white font-black col-span-2">📊 资源明细 · 积分/星星币怎么来的</Link>
             <Link href="/pinyin-blend" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-rose text-white font-black col-span-2">🀄 拼音拼读 · 拼读乐园</Link>
             <Link href="/story" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black col-span-2">📜 萌可剧情 · 捕捉萌可</Link>
             <Link href="/moko-house" className="rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center hover:scale-105 transition bg-moko-purple text-white font-black col-span-2">🧸 萌可房间 · 和萌可互动</Link>
