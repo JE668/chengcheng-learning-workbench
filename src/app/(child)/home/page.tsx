@@ -207,6 +207,11 @@ export default async function HomePage() {
                 </div>
               </Link>
             </div>
+            {/* 攻略说明 */}
+            <GuideModal
+              className="w-full rounded-2xl p-3 shadow border-2 border-moko-cyan/30 bg-moko-cyan/5 hover:border-moko-cyan transition active:scale-95 text-center text-moko-cyan font-bold text-sm cursor-pointer"
+              trigger="📖 看攻略：积分/星星币怎么攒？花在哪里？"
+            />
           </div>
         </div>
       </div>
