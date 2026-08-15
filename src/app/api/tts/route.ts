@@ -99,6 +99,44 @@ function ttsCacheKey(text: string, lang: string, rate: string, pause: number): s
   return `${lang}|${rate}|${pause}|${text}`;
 }
 
+// 复用一条到微软的 WebSocket 暖连接，省去每次请求都新建 TLS + WS 握手的固定开销
+// （约 100~300ms，是缓存未命中时首趟延迟的主要来源）。
+// 防御原则：仅在 OPEN 且空闲时复用；任一请求出错/超时即废弃并在下次重建，当前请求
+// 回退到新建连接——行为不会劣于「每次新建」。客户端另有 8s 超时，即便服务端偶发卡住，
+// 用户也已降级到浏览器原生 Web Speech，不会更慢。
+let pooledWs: WebSocket | null = null;
+
+function acquireWs(sec: string): WebSocket {
+  if (pooledWs && pooledWs.readyState === WebSocket.OPEN) {
+    const ws = pooledWs;
+    pooledWs = null; // 取出占用，避免并发复用同一条连接
+    return ws;
+  }
+  // 旧连接已不可用，先回收再新建
+  if (pooledWs) {
+    try {
+      pooledWs.terminate();
+    } catch {
+      /* ignore */
+    }
+    pooledWs = null;
+  }
+  const wsUrl =
+    `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1` +
+    `?TrustedClientToken=${TRUSTED_TOKEN}` +
+    `&Sec-MS-GEC=${encodeURIComponent(sec)}` +
+    `&Sec-MS-GEC-Version=1` +
+    `&ConnectionId=${uuid()}`;
+  return new WebSocket(wsUrl, {
+    host: 'speech.platform.bing.com',
+    origin: 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.66 Safari/537.36 Edg/103.0.1264.44',
+    },
+  });
+}
+
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
   const limit = rateLimit(`tts:${ip}`, TTS_LIMIT);
@@ -145,51 +183,24 @@ export async function POST(req: NextRequest) {
   try {
     // 协议第 2~3 步：取动态安全令牌，并拼出带令牌的 WebSocket 握手地址。
     const sec = await getSecToken();
-    const wsUrl =
-      `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1` +
-      `?TrustedClientToken=${TRUSTED_TOKEN}` +
-      `&Sec-MS-GEC=${encodeURIComponent(sec)}` +
-      `&Sec-MS-GEC-Version=1` +
-      `&ConnectionId=${uuid()}`;
-
     const audio = await new Promise<Buffer>((resolve, reject) => {
-      const ws = new WebSocket(wsUrl, {
-        host: 'speech.platform.bing.com',
-        origin: 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.66 Safari/537.36 Edg/103.0.1264.44',
-        },
-      });
+      // 优先复用空闲暖连接（见 acquireWs），省去 TLS + WS 握手固定开销。
+      const ws = acquireWs(sec);
       const chunks: Buffer[] = [];
       let settled = false;
+      let sent = false;
+
       const done = (fn: () => void) => {
         if (settled) return;
         settled = true;
         fn();
       };
 
-      ws.on('message', (raw: WebSocket.RawData, isBinary: boolean) => {
-        // 文本消息：微软用 "turn.end" 标记整段语音合成结束 → 收尾并返回。
-        if (!isBinary) {
-          const s = raw.toString('utf8');
-          if (s.includes('turn.end')) {
-            done(() => {
-              ws.close();
-              resolve(Buffer.concat(chunks));
-            });
-          }
-          return;
-        }
-        // 二进制消息：音频帧被包在 "Path:audio\r\n" 分隔头之后；
-        // 按该分隔符切掉头，剩余即 MP3 数据，多帧累加即为完整音频。
-        const buf = Buffer.from(raw as Buffer);
-        const sep = 'Path:audio\r\n';
-        const i = buf.indexOf(sep);
-        if (i >= 0) chunks.push(buf.subarray(i + sep.length));
-      });
-      ws.on('error', (e) => done(() => reject(e)));
-      ws.on('open', () => {
+      // 发送 speech.config + SSML（每次合成都重发 config，幂等无害）。
+      // sent 守卫避免在「已 OPEN 的复用连接」上因 'open' 不触发而漏发、或因复用+新建重复发。
+      const sendSsml = () => {
+        if (sent) return;
+        sent = true;
         const cfg =
           `X-Timestamp:${new Date()}\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n` +
           JSON.stringify({
@@ -211,9 +222,61 @@ export async function POST(req: NextRequest) {
           `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>` +
           `<voice name='${VOICE[lang]}'><prosody pitch='+0Hz' rate='${rate}' volume='+0%'>${text}</prosody>${pause > 0 ? `<break time='${pause}ms'/>` : ''}</voice></speak>`;
         ws.send(ssml, { compress: true }, (e) => e && done(() => reject(e)));
-      });
+      };
 
-      setTimeout(() => done(() => reject(new Error('tts timeout'))), 30000);
+      ws.on('message', (raw: WebSocket.RawData, isBinary: boolean) => {
+        // 文本消息：微软用 "turn.end" 标记整段语音合成结束 → 收尾并返回。
+        if (!isBinary) {
+          const s = raw.toString('utf8');
+          if (s.includes('turn.end')) {
+            done(() => {
+              // 合成成功：摘掉本次监听，把连接放回池中复用（保持 OPEN，下次免握手）。
+              try {
+                ws.removeAllListeners();
+              } catch {
+                /* ignore */
+              }
+              pooledWs = ws;
+              resolve(Buffer.concat(chunks));
+            });
+          }
+          return;
+        }
+        // 二进制消息：音频帧被包在 "Path:audio\r\n" 分隔头之后；
+        // 按该分隔符切掉头，剩余即 MP3 数据，多帧累加即为完整音频。
+        const buf = Buffer.from(raw as Buffer);
+        const sep = 'Path:audio\r\n';
+        const i = buf.indexOf(sep);
+        if (i >= 0) chunks.push(buf.subarray(i + sep.length));
+      });
+      ws.on('error', (e) =>
+        done(() => {
+          try {
+            ws.terminate();
+          } catch {
+            /* ignore */
+          }
+          if (pooledWs === ws) pooledWs = null;
+          reject(e);
+        }),
+      );
+      ws.on('open', () => sendSsml());
+      // 复用连接已处于 OPEN，'open' 事件不会再触发，需立即发送
+      if (ws.readyState === WebSocket.OPEN) sendSsml();
+
+      setTimeout(
+        () =>
+          done(() => {
+            try {
+              ws.terminate();
+            } catch {
+              /* ignore */
+            }
+            if (pooledWs === ws) pooledWs = null;
+            reject(new Error('tts timeout'));
+          }),
+        30000,
+      );
     });
 
     // Buffer 在 Node20 类型下可能是 SharedArrayBuffer 后端，转成普通 Uint8Array 以满足 BodyIn      });
