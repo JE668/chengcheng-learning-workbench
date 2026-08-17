@@ -468,7 +468,7 @@ export async function useTimeGlass(
     args: [childId, 'timeglass'],
   });
   if (!inv.rows.length || Number(inv.rows[0].qty) <= 0) {
-    return { ok: false, message: '没有时光沙漏，去星星币商店购买吧～' };
+    return { ok: false, message: '没有时光沙漏，请爸爸妈妈在家长端送给你吧～' };
   }
 
   // 检查该日该科是否已打卡（幂等：已打卡则不消耗道具）

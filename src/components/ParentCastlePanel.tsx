@@ -33,6 +33,14 @@ export default function ParentCastlePanel() {
     await load(); router.refresh();
   }
 
+  async function giftTimeGlass() {
+    setMsg('');
+    const r = await fetch('/api/castle/gift-item', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ itemKey: 'timeglass' }) });
+    const j = await r.json();
+    setMsg(j.message || (j.ok ? '已发放' : (j.error || '')));
+    await load(); router.refresh();
+  }
+
   if (!state) return <div className="card-moko text-center text-moko-violet flex flex-col items-center justify-center gap-2"><span className="moko-loader"><span></span><span></span><span></span></span>城堡数据加载中…</div>;
 
   return (
@@ -100,6 +108,18 @@ export default function ParentCastlePanel() {
           </div>
         </div>
       )}
+      {/* 送时光沙漏（家长直接赠送，不消耗孩子资源） */}
+      <div className="rounded-3xl p-4 shadow-lg border-2 border-moko-violet/20 bg-moko-violet/5 flex items-center gap-3">
+        <div className="text-4xl">⏳</div>
+        <div className="flex-1">
+          <div className="font-bold text-moko-violet">送孩子一个时光沙漏</div>
+          <div className="text-xs text-gray-500">孩子收到后可在城堡背包里使用，选一个漏做的日期补打卡。不消耗孩子的星星币。</div>
+        </div>
+        <button onClick={giftTimeGlass} className="px-4 py-2 rounded-full bg-moko-violet text-white font-bold text-sm shadow active:scale-95 transition">
+          赠送
+        </button>
+      </div>
+
       {msg && <p className="text-sm text-moko-violet font-semibold">{msg}</p>}
     </div>
   );

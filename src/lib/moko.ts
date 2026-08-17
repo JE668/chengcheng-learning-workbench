@@ -320,7 +320,6 @@ import {
   SHIELD_STREAK_REQ,
   COST_SPRAY,
   COST_SHIELD,
-  COST_TIMEGLASS,
 } from './economy';
 export {
   STAR_PER_FRIEND,
@@ -342,7 +341,6 @@ export const starShop = [
   { key: 'outfit', name: '🎀 专属萌可装扮', cost: 60, icon: '🎀', desc: '给喜欢的萌可换上可爱装扮' },
   { key: 'skin_star', name: '🏰 星空城堡皮肤', cost: 80, icon: '🌌', desc: '把城堡变成梦幻星空主题' },
   { key: 'skin_candy', name: '🍬 糖果城堡皮肤', cost: 80, icon: '🍬', desc: '把城堡变成甜甜蜜糖主题' },
-  { key: 'timeglass', name: '⏳ 时光沙漏', cost: COST_TIMEGLASS, icon: '⏳', desc: '使用后可选一个过去漏做的日期补打卡（一科），弥补漏打卡的损失' },
 ];
 
 /**
