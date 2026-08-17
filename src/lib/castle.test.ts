@@ -149,6 +149,30 @@ describe('castle 核心逻辑：连续打卡与惩罚机制', () => {
     });
     expect(Number(fled.rows[0]?.n)).toBeGreaterThan(0);
   });
+
+  it('建城堡当天确认三科 → 当天不结算（结算只到昨天），streak 仍为 0', async () => {
+    const cid = nextChild();
+    await insertChild(cid);
+    const today = dateStr();
+    // 复刻 ensureCastle 行为：last_settled 初始化为创建前一天
+    await insertCastle(cid, addDays(today, -1));
+    for (const s of ['语文', '数学', '英语'] as const) await confirmSubject(cid, today, s);
+    const state = await getCastleState(cid);
+    // 今天的三科要等「明天」结算，故当天 streak 与阳光都不变（防止当天打卡被重复结算）
+    expect(state.streakDays).toBe(0);
+  });
+
+  it('getCastleState 重复调用幂等，不会重复结算导致 streak 翻倍', async () => {
+    const cid = nextChild();
+    await insertChild(cid);
+    const today = dateStr();
+    await insertCastle(cid, addDays(today, -2));
+    for (const s of ['语文', '数学', '英语'] as const) await confirmSubject(cid, addDays(today, -1), s);
+    const first = await getCastleState(cid);
+    const second = await getCastleState(cid);
+    expect(first.streakDays).toBe(1); // 昨天全勤，结算一次 → 1
+    expect(second.streakDays).toBe(1); // 再调一次不应变成 2
+  });
 });
 
 describe('打卡积分链路：confirm 每天每科只发一次积分', () => {

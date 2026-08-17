@@ -114,26 +114,6 @@ export function calibrateRate(wsRate: number): number {
   return wsRate;
 }
 
-function speak(text: string, lang: string, rate: number, pitch: number) {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return;
-  ensureVoices();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang;
-  u.rate = calibrateRate(rate);
-  u.pitch = pitch;
-  const v = pickVoice(lang);
-  if (!v) return; // 该设备无对应语种嗓音（如 iPad 只装了粤语），不强行用错误方言误导孩子
-  u.voice = v;
-
-  const fire = () => {
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
-  };
-  // 嗓音未就绪时，等 voiceschanged 再播，避免首句被吞
-  if (voicesReady) fire();
-  else window.speechSynthesis.addEventListener('voiceschanged', fire, { once: true });
-}
-
 /** Web Speech 的语速(0~2) ↔ Edge 百分比 的近似映射：1.0 = 100% = +0% */
 function toEdgeRate(wsRate: number): string {
   const pct = Math.round((wsRate - 1) * 100);
@@ -149,11 +129,95 @@ export function speakEn(text: string, rate = 0.55) {
 }
 
 /**
- * 朗读主流程：
- * 1) 优先请求服务端 /api/tts（Edge 神经嗓音，跨设备音质一致）；
- * 2) 任意失败（离线 / 合成服务异常 / 网络错误）降级到浏览器原生 Web Speech。
- * wsRate 同时用于：(a) Web Speech 降级时的语速；(b) 推算 Edge 的 relative rate。
+ * 朗读主流程（兼顾「首句零延迟」与「重复高音质」）：
+ * - 若本机存在目标语种嗓音（如 Edge/Chrome/Android 的 zh-CN），且本句尚未用服务端合成过：
+ *   ① 先用浏览器原生 Web Speech **即时出声**（零网络往返，首句秒出，专治「语音延迟高」）；
+ *   ② 同时后台静默预热服务端缓存（不播放），供后续重复朗读走高质量 Edge 神经嗓音。
+ * - 若本机无对应语种嗓音（如 iPad 只装了粤语）、或本句已在服务端缓存过：
+ *   直接走服务端 /api/tts（普通话 zh-CN-XiaoxiaoNeural 兜底，跨设备音质一致）。
+ * 任一路径失败都降级到 Web Speech（再失败则静默，不弹 alert 以免打扰孩子）。
  */
+const serverCached = new Set<string>();
+const cacheKey = (text: string, lang: string) => `${lang}|${text}`;
+
+/** 本机是否拥有与目标语种严格匹配的嗓音（排除粤语/台式/英式）。 */
+function langVoiceExists(lang: 'zh' | 'en'): boolean {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return false;
+  ensureVoices();
+  // 嗓音列表可能尚未加载（首屏），保守起见走服务端，等 voiceschanged 后再本地优先
+  if (!window.speechSynthesis.getVoices().length) return false;
+  return pickVoice(lang === 'zh' ? 'zh-CN' : 'en-US') !== undefined;
+}
+
+/** 后台预热服务端 TTS 缓存：取到音频即记入 serverCached，但不播放（避免与本地首句叠音）。 */
+function warmServerCache(
+  text: string,
+  lang: 'zh' | 'en',
+  opts: { wsRate?: number; pitch?: number; pauseMs?: number },
+) {
+  const wsRate = opts.wsRate ?? 0.8;
+  const pauseMs = opts.pauseMs ?? 0;
+  if (typeof window === 'undefined' || !('fetch' in window)) return;
+  fetch('/api/tts', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ text, lang, rate: toEdgeRate(wsRate), pause: pauseMs }),
+  })
+    .then((r) => {
+      if (r.ok) serverCached.add(cacheKey(text, lang));
+    })
+    .catch(() => {});
+}
+
+/** 走服务端 /api/tts 播放，并在结束时 resolve；失败降级到 Web Speech。 */
+function playServerAudio(
+  text: string,
+  lang: 'zh' | 'en',
+  opts: { wsRate?: number; pitch?: number; pauseMs?: number },
+): Promise<void> {
+  const wsRate = opts.wsRate ?? 0.8;
+  const pitch = opts.pitch ?? 1.05;
+  const pauseMs = opts.pauseMs ?? 0;
+  const fallback = () => speakEnd(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch);
+  return new Promise<void>((resolve) => {
+    if (typeof window === 'undefined' || !('fetch' in window)) {
+      fallback().then(resolve);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000); // 8s 超时，避免挂太久
+    fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text, lang, rate: toEdgeRate(wsRate), pause: pauseMs }),
+      signal: controller.signal,
+    })
+      .then((res) => {
+        clearTimeout(timer);
+        if (!res.ok) throw new Error();
+        return res.blob();
+      })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+          serverCached.add(cacheKey(text, lang));
+          resolve();
+        };
+        audio.onerror = () => {
+          URL.revokeObjectURL(url);
+          fallback().then(resolve);
+        };
+        audio.play().catch(() => fallback().then(resolve));
+      })
+      .catch(() => {
+        clearTimeout(timer);
+        fallback().then(resolve);
+      });
+  });
+}
+
 export async function playTts(
   text: string,
   lang: 'zh' | 'en',
@@ -161,81 +225,27 @@ export async function playTts(
 ) {
   const wsRate = opts.wsRate ?? 0.8;
   const pitch = opts.pitch ?? 1.05;
-  const pauseMs = opts.pauseMs ?? 0;
-  if (typeof window !== 'undefined' && 'fetch' in window) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 8000); // 8s 超时，避免挂太久
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text, lang, rate: toEdgeRate(wsRate), pause: pauseMs }),
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audio.onended = () => URL.revokeObjectURL(url);
-        audio.onerror = () => {
-          URL.revokeObjectURL(url);
-          speak(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch);
-        };
-        await audio.play();
-        return;
-      }
-    } catch {
-      /* 网络/解析异常/超时 → 降级到 Web Speech */
-    }
+  // 本机有对应语种嗓音且本句是首次朗读 → 本地即时出声 + 后台预热服务端缓存
+  if (langVoiceExists(lang) && !serverCached.has(cacheKey(text, lang))) {
+    const local = speakEnd(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch);
+    warmServerCache(text, lang, opts);
+    await local;
+    return;
   }
-  // Web Speech 降级；若浏览器不支持 Web Speech，静默失败（不弹 alert 以免打扰孩子）
-  if (typeof window !== 'undefined' && window.speechSynthesis) {
-    speak(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch);
-  }
+  // 否则（无本地嗓音 / 已缓存）走服务端高质量
+  await playServerAudio(text, lang, opts);
 }
 
 /**
- * 朗读并在「播放结束」时 resolve 的 Promise 版本——用于剧情段落按顺序连读，
- * 保证上一句读完再开始下一句，不会叠在一起。
- * - Edge 路径：监听 audio.onended；失败/出错降级到 Web Speech 并同样等 onend。
- * - Web Speech 路径：监听 utterance.onend / onerror，并加 30s 兜底超时，避免卡死。
+ * 朗读并在「播放结束」时 resolve 的 Promise 版本——用于剧情段落/答题反馈按顺序连读，
+ * 保证上一句读完再开始下一句，不会叠在一起。直接复用 playTts（其本身即在语音结束时 resolve）。
  */
 export function playTtsEnd(
   text: string,
   lang: 'zh' | 'en',
   opts: { wsRate?: number; pitch?: number; pauseMs?: number } = {},
 ): Promise<void> {
-  const wsRate = opts.wsRate ?? 0.8;
-  const pitch = opts.pitch ?? 1.05;
-  const pauseMs = opts.pauseMs ?? 0;
-  return new Promise<void>((resolve) => {
-    const fallback = () => speakEnd(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch).then(resolve);
-    if (typeof window !== 'undefined' && 'fetch' in window) {
-      fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text, lang, rate: toEdgeRate(wsRate), pause: pauseMs }),
-      })
-        .then((res) => (res.ok ? res.blob() : Promise.reject()))
-        .then((blob) => {
-          const url = URL.createObjectURL(blob);
-          const audio = new Audio(url);
-          audio.onended = () => {
-            URL.revokeObjectURL(url);
-            resolve();
-          };
-          audio.onerror = () => {
-            URL.revokeObjectURL(url);
-            fallback();
-          };
-          audio.play().catch(fallback);
-        })
-        .catch(fallback);
-    } else {
-      fallback();
-    }
-  });
+  return playTts(text, lang, opts);
 }
 
 /** Web Speech 朗读并在 onend/onerror 时 resolve（含兜底超时）。

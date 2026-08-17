@@ -11,6 +11,16 @@ import { safeJsonParse } from './safe-json';
 import type { Subject } from './types';
 
 /**
+ * 每日一练单科通过门槛：正确题数 ≥ 总题数 × 80%（ceil 向上取整，即允许错 1 题）。
+ * 例：5 题需对 4 题（ceil(5×0.8)=4），1 题需对 1 题，0 题直接不通过。
+ * 抽成纯函数便于单测覆盖边界，避免「改了判定却没测到」的回归。
+ */
+export function passThreshold(correct: number, total: number): boolean {
+  if (total <= 0) return false;
+  return correct >= Math.ceil(total * 0.8);
+}
+
+/**
  * 每日一练「某科全对 → 点亮该科核心学习模块 1 星」的映射。
  * 目的：让「萌可闯关」（每日一练）与「萌可剧情」闭环——三科全对打卡后，
  * 对应学科的镇守萌可剧情（主线第 1~3 集：爱心/正正/唱唱）即可解锁。
@@ -659,7 +669,7 @@ export async function submitPractice(childId: number, answers: number[]): Promis
 
     const already = doneSet.has(s);
     // 通过门槛：≥80% 即算通过（允许错 1 题），降低挫败感。
-    const passed = subCorrect >= Math.ceil(subTotal * 0.8);
+    const passed = passThreshold(subCorrect, subTotal);
     if (passed && !already) {
       await confirm(childId, today, s); // confirm 内部已统一发放捕捉券
       // 每日一练某科全对 → 点亮该科核心模块 1 星（解锁对应萌可剧情，见文件头 DAILY_CORE_MODULE）

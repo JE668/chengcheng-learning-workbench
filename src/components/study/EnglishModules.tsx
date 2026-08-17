@@ -93,10 +93,23 @@ function WordCard({ item, done, onDone }: { item: WordItem; done?: boolean; onDo
       alert('当前浏览器不支持发音评测，可以继续用「跟读」录音哦～');
       return;
     }
+    let rec: any;
+    try {
+      rec = new (SR as new () => any)();
+    } catch {
+      alert('发音评测启动失败，可以继续用「跟读」录音哦～');
+      return;
+    }
     setScoring(true);
     setScore(null);
     setHeard('');
-    const rec = new (SR as new () => any)();
+    // 兜底：部分浏览器(尤其 iPad Safari) onend 永不触发会导致按钮卡在「评测中」，
+    // 用 8s 安全计时强制结束，避免界面卡死。
+    const safety = setTimeout(() => setScoring(false), 8000);
+    const finish = () => {
+      clearTimeout(safety);
+      setScoring(false);
+    };
     rec.lang = 'en-US';
     rec.interimResults = false;
     rec.maxAlternatives = 1;
@@ -113,14 +126,19 @@ function WordCard({ item, done, onDone }: { item: WordItem; done?: boolean; onDo
       }
       setScore(s);
       if (s < 2) logM({ subject: '英语', kind: '单词', prompt: item.word, answer: item.word, wrong: text });
-      setScoring(false);
+      finish();
     };
     rec.onerror = () => {
-      setScoring(false);
+      finish();
       alert('没听清，再试一次吧～');
     };
-    rec.onend = () => setScoring(false);
-    rec.start();
+    rec.onend = finish;
+    try {
+      rec.start();
+    } catch {
+      finish();
+      alert('发音评测启动失败，可以继续用「跟读」录音哦～');
+    }
   }
 
   const stars = score === null ? '' : '⭐'.repeat(score) + '☆'.repeat(3 - score);
@@ -469,10 +487,23 @@ export function EnSpeakModule() {
       alert('当前浏览器不支持发音评测，可以继续用「跟读」录音哦～');
       return;
     }
+    let rec: any;
+    try {
+      rec = new (SR as new () => any)();
+    } catch {
+      alert('发音评测启动失败，可以继续用「跟读」录音哦～');
+      return;
+    }
     setScoring(true);
     setScore(null);
     setHeard('');
-    const rec = new (SR as new () => any)();
+    // 兜底：部分浏览器(尤其 iPad Safari) onend 永不触发会导致按钮卡在「评测中」，
+    // 用 8s 安全计时强制结束，避免界面卡死。
+    const safety = setTimeout(() => setScoring(false), 8000);
+    const finish = () => {
+      clearTimeout(safety);
+      setScoring(false);
+    };
     rec.lang = 'en-US';
     rec.interimResults = false;
     rec.maxAlternatives = 1;
@@ -489,14 +520,19 @@ export function EnSpeakModule() {
       }
       setScore(s);
       if (s < 2) logM({ subject: '英语', kind: '口语', prompt: item.word, answer: item.word, wrong: text });
-      setScoring(false);
+      finish();
     };
     rec.onerror = () => {
-      setScoring(false);
+      finish();
       alert('没听清，再试一次吧～');
     };
-    rec.onend = () => setScoring(false);
-    rec.start();
+    rec.onend = finish;
+    try {
+      rec.start();
+    } catch {
+      finish();
+      alert('发音评测启动失败，可以继续用「跟读」录音哦～');
+    }
   }
 
   const stars = score === null ? '' : '⭐'.repeat(score) + '☆'.repeat(3 - score);
