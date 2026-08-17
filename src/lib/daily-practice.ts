@@ -384,6 +384,26 @@ function genClockQ(): PracticeQuestion {
   };
 }
 
+/** 英语看图选词题（看 emoji 选对应单词，和听音选词不同：有视觉提示） */
+function genEnPicQ(): PracticeQuestion {
+  const w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
+  const distractors = shuffle(ALL_EN_WORDS.filter((x) => x.word !== w.word)).slice(0, 3);
+  const options = shuffle([w, ...distractors]);
+  const answer = options.indexOf(w);
+  return {
+    id: `en-pic-${w.word}`,
+    kind: 'english',
+    subject: '英语',
+    prompt: `${w.emoji} 这个图片是哪个单词？`,
+    word: w.word,
+    cn: w.cn,
+    emoji: w.emoji,
+    options: options.map((o) => o.word),
+    answer,
+    explain: `${w.emoji} ${w.word} = ${w.cn}`,
+  };
+}
+
 /** 英语首字母题 */
 function genEnInitialQ(): PracticeQuestion {
   const w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
@@ -499,20 +519,28 @@ async function generateQuestions(childId: number): Promise<PracticeQuestion[]> {
   ];
   const mathPick = shuffleArr(mathPool).slice(0, 10);
   for (const fn of mathPick) qs.push(fn());
-  // 英语 5 题：听音选词 + 首字母 + 句型，每天随机
+  // 英语 5 题：听音选词 + 看图选词 + 首字母，每天随机组合
   const usedEn = new Set<string>();
-  for (let i = 0; i < 5; i++) {
-    // 70% 听音选词 + 30% 其他题型
-    if (Math.random() < 0.7 || i >= 3) {
+  const enPool: (() => PracticeQuestion)[] = [
+    () => { // 听音选词
       let w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
-      let guard = 0;
-      while (usedEn.has(w.word) && guard++ < 20) w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
+      let g = 0;
+      while (usedEn.has(w.word) && g++ < 20) w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
       usedEn.add(w.word);
-      qs.push(genEnglishQ(w));
-    } else {
-      qs.push(genEnInitialQ());
-    }
-  }
+      return genEnglishQ(w);
+    },
+    () => genEnPicQ(),    // 看图选词
+    () => genEnInitialQ(), // 首字母
+    () => { // 再来一道听音选词（占大头）
+      let w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
+      let g = 0;
+      while (usedEn.has(w.word) && g++ < 20) w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
+      usedEn.add(w.word);
+      return genEnglishQ(w);
+    },
+    () => genEnPicQ(),    // 再来一道看图选词
+  ];
+  for (const fn of enPool) qs.push(fn());
   return qs;
 }
 

@@ -252,7 +252,11 @@ export default function DailyPracticePage() {
           {q.kind === 'english' && (
             <>
               <div className="text-6xl mb-2">{q.emoji}</div>
-              <button onClick={() => playTts(q.word, 'en')} className="text-sm bg-white/30 rounded-full px-3 py-1">🔊 听一听</button>
+              {q.cn && <div className="text-sm opacity-80 mb-1">{q.cn}</div>}
+              <div className="flex gap-2 justify-center">
+                <button onClick={() => playTts(q.word, 'en')} className="text-sm bg-white/30 rounded-full px-3 py-1">🔊 听一听</button>
+                <button onClick={() => playTts(q.word, 'en')} className="text-sm bg-moko-pink/30 rounded-full px-3 py-1">🎙️ 跟读</button>
+              </div>
             </>
           )}
           {q.kind === 'mistake' && (
