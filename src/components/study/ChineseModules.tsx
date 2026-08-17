@@ -186,6 +186,47 @@ export function CharacterModule() {
 
 /* ---------- 古诗 ---------- */
 function PoemCard({ item }: { item: PoemItem }) {
+  const [reciting, setReciting] = useState(false);
+  const [reciteScore, setReciteScore] = useState<number | null>(null);
+  const [reciteText, setReciteText] = useState('');
+
+  /** 录音背诵检测：用 SpeechRecognition 识别孩子念的字，和原诗比对 */
+  function startRecite() {
+    const SR =
+      (window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+    if (!SR) {
+      setReciteScore(-1); // 不支持语音识别
+      return;
+    }
+    setReciting(true);
+    setReciteScore(null);
+    setReciteText('');
+    const rec = new (SR as new () => any)();
+    rec.lang = 'zh-CN';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e: any) => {
+      const text = String(e.results[0][0].transcript).replace(/[，。、；：""''！？\s]/g, '');
+      setReciteText(text);
+      // 取原诗所有汉字
+      const target = item.lines.join('').replace(/[，。、；：""''！？\s]/g, '');
+      // 计算原诗中有多少字出现在孩子念的内容里
+      let hit = 0;
+      for (const ch of target) {
+        if (text.includes(ch)) hit++;
+      }
+      const ratio = target.length > 0 ? hit / target.length : 0;
+      setReciteScore(ratio >= 0.8 ? 3 : ratio >= 0.6 ? 2 : ratio >= 0.4 ? 1 : 0);
+      setReciting(false);
+    };
+    rec.onerror = () => { setReciting(false); setReciteScore(-2); };
+    rec.onend = () => setReciting(false);
+    rec.start();
+  }
+
+  const stars = reciteScore !== null && reciteScore > 0 ? '⭐'.repeat(reciteScore) + '☆'.repeat(3 - reciteScore) : '';
+
   return (
     <div className="rounded-2xl p-5 bg-gradient-to-br from-moko-purple/20 to-moko-pink/20 shadow-lg border-2 border-moko-purple/20">
       <div className="flex items-center justify-between mb-2">
@@ -200,19 +241,49 @@ function PoemCard({ item }: { item: PoemItem }) {
           </span>
         ))}
       </p>
-      <button onClick={() => speakZh(item.lines.join(''))} className="mt-3 btn btn-violet text-sm">
-        🔊 朗读古诗
-      </button>
+      <div className="flex gap-2 mt-3">
+        <button onClick={() => speakZh(item.lines.join(''))} className="flex-1 btn btn-violet text-sm">
+          🔊 朗读古诗
+        </button>
+        <button
+          onClick={startRecite}
+          disabled={reciting}
+          className={`flex-1 py-2 rounded-full font-bold text-sm transition ${reciting ? 'bg-red-400 text-white' : 'bg-moko-rose text-white'}`}
+        >
+          {reciting ? '⏹ 背诵中…' : '🎙️ 我来背诵'}
+        </button>
+      </div>
+      {reciteScore === -1 && <p className="text-xs text-gray-400 mt-2">当前浏览器不支持语音识别，可以念给爸爸妈妈听哦～</p>}
+      {reciteScore === -2 && <p className="text-xs text-gray-400 mt-2">没听清楚，再试一次吧～</p>}
+      {reciteScore !== null && reciteScore > 0 && (
+        <div className="mt-2 rounded-xl bg-moko-yellow/10 p-2 text-sm">
+          <div className="text-2xl">{stars}</div>
+          <p className="text-xs text-gray-500 mt-1">
+            {reciteScore >= 3 ? '背得真好！爱心萌可给你点赞！' : reciteScore >= 2 ? '不错，再练几遍更熟！' : '加油，多读几遍再来背！'}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
 
 export function PoemModule() {
+  const [idx, setIdx] = useState(0);
+  const poem = POEMS[idx];
   return (
-    <div className="grid md:grid-cols-2 gap-4">
-      {POEMS.map((p) => (
-        <PoemCard key={p.title} item={p} />
-      ))}
+    <div className="space-y-4">
+      <div className="text-center text-sm text-gray-400">第 {idx + 1} / {POEMS.length} 首 · 一首一首读，慢慢来</div>
+      <PoemCard key={poem.title} item={poem} />
+      <div className="flex justify-center gap-3">
+        <button
+          onClick={() => setIdx((i) => (i - 1 + POEMS.length) % POEMS.length)}
+          className="rounded-2xl px-5 py-2 bg-white shadow text-moko-violet font-black hover:scale-105 transition"
+        >‹ 上一首</button>
+        <button
+          onClick={() => setIdx((i) => (i + 1) % POEMS.length)}
+          className="rounded-2xl px-5 py-2 bg-moko-purple text-white font-black shadow hover:scale-105 transition"
+        >下一首 ›</button>
+      </div>
     </div>
   );
 }
