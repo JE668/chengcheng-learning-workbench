@@ -1,6 +1,6 @@
 import { getDb } from './db';
 import { confirm, logGrowthEvent } from './castle';
-import { PINYIN_TONES, applyTone, ALL_EN_WORDS, CHARACTERS } from './study-data';
+import { PINYIN_TONES, applyTone, ALL_EN_WORDS, CHARACTERS, PROVERBS, ANTONYMS, RIDDLES, WORD_PROBLEMS, ORDINALS, CLOCKS, EN_SENTENCES } from './study-data';
 import { mokoChars, subjectMokoKey, SUN_PER_SUBJECT } from './moko';
 import { mokoCollection } from './moko-collection';
 import { getDueMistakes, reviewMistake, type MistakeRow } from './mistakes';
@@ -233,6 +233,178 @@ function genDictationQ(): PracticeQuestion {
   };
 }
 
+/* ===== 新增题型：每天随机出不同类型，保持新鲜感 ===== */
+
+function shuffleArr<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/** 识字题：看释义选字 */
+function genChineseQuizQ(): PracticeQuestion {
+  const c = CHARACTERS[randInt(0, CHARACTERS.length - 1)];
+  const distractors = shuffle(CHARACTERS.filter((x) => x.meaning !== c.meaning)).slice(0, 3).map((x) => x.char);
+  const options = shuffle([c.char, ...distractors]);
+  const answer = options.indexOf(c.char);
+  return {
+    id: `qz-${c.char}`,
+    kind: 'dictation',
+    subject: '语文',
+    prompt: `哪个字的意思是「${c.meaning}」？`,
+    han: c.char,
+    options,
+    answer,
+    explain: `「${c.char}」意思是${c.meaning}`,
+  };
+}
+
+/** 反义词题 */
+function genAntonymQ(): PracticeQuestion {
+  const a = ANTONYMS[randInt(0, ANTONYMS.length - 1)];
+  const distractors = shuffle(ANTONYMS.filter((x) => x.b !== a.b).map((x) => x.b)).slice(0, 3);
+  const options = shuffle([a.b, ...distractors]);
+  const answer = options.indexOf(a.b);
+  return {
+    id: `ant-${a.a}`,
+    kind: 'dictation',
+    subject: '语文',
+    prompt: `「${a.a}」的反义词是？`,
+    han: a.a,
+    options,
+    answer,
+    explain: `「${a.a}」的反义词是「${a.b}」`,
+  };
+}
+
+/** 谚语配对题 */
+function genProverbQ(): PracticeQuestion {
+  const p = PROVERBS[randInt(0, PROVERBS.length - 1)];
+  const distractors = shuffle(PROVERBS.filter((x) => x.second !== p.second).map((x) => x.second)).slice(0, 3);
+  const options = shuffle([p.second, ...distractors]);
+  const answer = options.indexOf(p.second);
+  return {
+    id: `pv-${p.first}`,
+    kind: 'dictation',
+    subject: '语文',
+    prompt: `「${p.first}」后半句是？`,
+    han: p.first,
+    options,
+    answer,
+    explain: `${p.first}，${p.second}`,
+  };
+}
+
+/** 谜语题 */
+function genRiddleQ(): PracticeQuestion {
+  const r = RIDDLES[randInt(0, RIDDLES.length - 1)];
+  const options = shuffle([...r.options]);
+  const answer = options.indexOf(r.answer);
+  return {
+    id: `rd-${r.riddle.slice(0, 4)}`,
+    kind: 'dictation',
+    subject: '语文',
+    prompt: r.riddle,
+    han: r.answer,
+    options,
+    answer,
+    explain: `谜底是「${r.answer}」`,
+  };
+}
+
+/** 应用题 */
+function genWordProblemQ(): PracticeQuestion {
+  const p = WORD_PROBLEMS[randInt(0, WORD_PROBLEMS.length - 1)];
+  const options = shuffle([...p.options]);
+  const answer = options.indexOf(p.answer);
+  return {
+    id: `wp-${p.text.slice(0, 4)}`,
+    kind: 'math',
+    subject: '数学',
+    prompt: p.text,
+    options,
+    answer,
+    explain: `答案是 ${p.answer}`,
+  };
+}
+
+/** 序数题 */
+function genOrdinalQ(): PracticeQuestion {
+  const o = ORDINALS[randInt(0, ORDINALS.length - 1)];
+  const options = ['第1', '第2', '第3', '第4', '第5'].slice(0, 4);
+  if (!options.includes(o.answer)) options[0] = o.answer;
+  const shuffled = shuffle([...options]);
+  const answer = shuffled.indexOf(o.answer);
+  return {
+    id: `od-${o.ask}`,
+    kind: 'math',
+    subject: '数学',
+    prompt: o.question,
+    options: shuffled,
+    answer,
+    explain: o.answer,
+  };
+}
+
+/** 比大小题 */
+function genCompareQ(): PracticeQuestion {
+  const a = randInt(0, 10);
+  const b = randInt(0, 10);
+  const correct = a > b ? '>' : a < b ? '<' : '=';
+  const options = shuffle(['>', '<', '=']);
+  const answer = options.indexOf(correct);
+  return {
+    id: `cmp-${a}-${b}`,
+    kind: 'math',
+    subject: '数学',
+    prompt: `${a} __ ${b}（填 > < 或 =）`,
+    options,
+    answer,
+    explain: `${a} ${correct} ${b}`,
+  };
+}
+
+/** 钟表题 */
+function genClockQ(): PracticeQuestion {
+  const c = CLOCKS[randInt(0, CLOCKS.length - 1)];
+  const distractors = shuffle(CLOCKS.filter((x) => x.hour !== c.hour)).slice(0, 3).map((x) => x.label);
+  const options = shuffle([c.label, ...distractors]);
+  const answer = options.indexOf(c.label);
+  return {
+    id: `ck-${c.hour}`,
+    kind: 'math',
+    subject: '数学',
+    prompt: `${c.emoji} 这是几点？`,
+    options,
+    answer,
+    explain: c.label,
+  };
+}
+
+/** 英语首字母题 */
+function genEnInitialQ(): PracticeQuestion {
+  const w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
+  const first = w.word[0].toUpperCase();
+  const distractors = shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.replace(first, '').split('')).slice(0, 3);
+  const options = shuffle([first, ...distractors]);
+  const answer = options.indexOf(first);
+  return {
+    id: `en-init-${w.word}`,
+    kind: 'english',
+    subject: '英语',
+    prompt: `${w.emoji} ${w.word} 以哪个字母开头？`,
+    word: w.word,
+    cn: w.cn,
+    emoji: w.emoji,
+    options,
+    answer,
+    explain: `${w.word} 以 ${first} 开头`,
+  };
+}
+
 /* —— 错题复习题：从到期错题生成，放在一练最前面 —— */
 
 /** 粗略判断答案「形状」，只有同形状的选项混在一起才不别扭（数字 / 英文 / N 个汉字 / emoji…） */
@@ -294,7 +466,7 @@ function genMistakeQ(m: MistakeRow, pool: MistakeRow[]): PracticeQuestion | null
 
 async function generateQuestions(childId: number): Promise<PracticeQuestion[]> {
   const qs: PracticeQuestion[] = [];
-  // 0) 错题优先：今天到期的错题最多抽 2 题排在最前面，让「错题本 → 每日一练」闭环自动跑起来
+  // 0) 错题优先：今天到期的错题最多抽 2 题排在最前面
   try {
     const due = await getDueMistakes(childId, 6);
     for (const m of due) {
@@ -305,20 +477,41 @@ async function generateQuestions(childId: number): Promise<PracticeQuestion[]> {
   } catch {
     /* 错题本还没建表/查询失败时，不影响正常出题 */
   }
-  // 语文：听写 7 题（听音选字）+ 拼音 3 题（看字选声调），合计 10 题
-  for (let i = 0; i < 7; i++) qs.push(genDictationQ());
-  for (let i = 0; i < 3; i++) qs.push(genPinyinQ());
-  // 数学：口算 10 题（选择，前 5 题基础、后 5 题加难）
-  for (let i = 0; i < 5; i++) qs.push(genMathQ(false));
-  for (let i = 0; i < 5; i++) qs.push(genMathQ(true));
-  // 英语：听音选词 5 题（按单词去重，避免同一单词在一天里重复出现）
+  // 语文 10 题：每天随机出不同题型组合（听写/拼音/识字/古诗/应用），保持新鲜感
+  const zhPool: (() => PracticeQuestion)[] = [
+    genDictationQ, genDictationQ, genDictationQ,  // 听写占大头
+    genPinyinQ, genPinyinQ,                         // 拼音
+    () => genChineseQuizQ(),                         // 识字（看释义选字）
+    () => genAntonymQ(),                             // 反义词
+    () => genProverbQ(),                             // 谚语配对
+    () => genRiddleQ(),                             // 谜语
+  ];
+  const zhPick = shuffleArr(zhPool).slice(0, 10);
+  for (const fn of zhPick) qs.push(fn());
+  // 数学 10 题：基础+应用题混合，每天随机
+  const mathPool: (() => PracticeQuestion)[] = [
+    () => genMathQ(false), () => genMathQ(false), () => genMathQ(false), () => genMathQ(false),
+    () => genMathQ(false), () => genMathQ(false),  // 6 道基础口算
+    () => genWordProblemQ(),                         // 应用题
+    () => genOrdinalQ(),                             // 序数
+    () => genCompareQ(),                             // 比大小
+    () => genClockQ(),                               // 钟表
+  ];
+  const mathPick = shuffleArr(mathPool).slice(0, 10);
+  for (const fn of mathPick) qs.push(fn());
+  // 英语 5 题：听音选词 + 首字母 + 句型，每天随机
   const usedEn = new Set<string>();
   for (let i = 0; i < 5; i++) {
-    let w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
-    let guard = 0;
-    while (usedEn.has(w.word) && guard++ < 20) w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
-    usedEn.add(w.word);
-    qs.push(genEnglishQ(w));
+    // 70% 听音选词 + 30% 其他题型
+    if (Math.random() < 0.7 || i >= 3) {
+      let w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
+      let guard = 0;
+      while (usedEn.has(w.word) && guard++ < 20) w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
+      usedEn.add(w.word);
+      qs.push(genEnglishQ(w));
+    } else {
+      qs.push(genEnInitialQ());
+    }
   }
   return qs;
 }
@@ -426,7 +619,8 @@ export async function submitPractice(childId: number, answers: number[]): Promis
   let correctTotal = 0;
 
   for (const s of SUBJECTS) {
-    const qs = bySubject[s];
+    // 只取非错题的本学科题目来算通过率（错题重练不计入通过判定）
+    const qs = bySubject[s].filter((q) => q.kind !== 'mistake');
     const subTotal = qs.length;
     let subCorrect = 0;
     for (const q of qs) {
@@ -436,8 +630,7 @@ export async function submitPractice(childId: number, answers: number[]): Promis
     correctTotal += subCorrect;
 
     const already = doneSet.has(s);
-    // 通过门槛：一年级孩子不必 100% 全对——允许错 1~2 题（≥80% 即算通过），
-    // 降低挫败感，让孩子更容易拿到打卡奖励和模块星。
+    // 通过门槛：≥80% 即算通过（允许错 1 题），降低挫败感。
     const passed = subCorrect >= Math.ceil(subTotal * 0.8);
     if (passed && !already) {
       await confirm(childId, today, s); // confirm 内部已统一发放捕捉券
