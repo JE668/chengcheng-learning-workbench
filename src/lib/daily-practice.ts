@@ -436,7 +436,9 @@ export async function submitPractice(childId: number, answers: number[]): Promis
     correctTotal += subCorrect;
 
     const already = doneSet.has(s);
-    const passed = subCorrect === subTotal;
+    // 通过门槛：一年级孩子不必 100% 全对——允许错 1~2 题（≥80% 即算通过），
+    // 降低挫败感，让孩子更容易拿到打卡奖励和模块星。
+    const passed = subCorrect >= Math.ceil(subTotal * 0.8);
     if (passed && !already) {
       await confirm(childId, today, s); // confirm 内部已统一发放捕捉券
       // 每日一练某科全对 → 点亮该科核心模块 1 星（解锁对应萌可剧情，见文件头 DAILY_CORE_MODULE）

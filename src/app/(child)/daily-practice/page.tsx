@@ -229,6 +229,8 @@ export default function DailyPracticePage() {
         <div className="h-3 rounded-full bg-gray-100 overflow-hidden">
           <div className="h-full bg-gradient-to-r from-moko-pink to-moko-rose transition-all" style={{ width: `${((idx + 1) / (data?.questions.length ?? 1)) * 100}%` }} />
         </div>
+        {/* 通过门槛提示 */}
+        <p className="text-xs text-gray-400 mt-1 text-center">💡 答对 80% 以上就算通过（允许错 1~2 题），做错可以重选哦～</p>
       </div>
 
       {/* 题目卡片 */}
@@ -295,7 +297,7 @@ export default function DailyPracticePage() {
           })}
         </div>
 
-        {isWrong && <p className="text-center text-sm mt-3 bg-red-500/80 rounded-full py-1">再想想，点一下正确的选项吧～</p>}
+        {isWrong && <p className="text-center text-sm mt-3 bg-moko-yellow/80 text-moko-violet rounded-full py-1">没关系，再想想，点一下正确的选项吧～答错可以重选哦！</p>}
         {isCorrect && <p className="text-center text-sm mt-3 bg-green-500/80 rounded-full py-1">答对啦！{q.explain}</p>}
       </div>
 
