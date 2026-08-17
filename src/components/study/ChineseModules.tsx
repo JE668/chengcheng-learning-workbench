@@ -461,10 +461,13 @@ function buildQuestion(level: DiffLevel): CharQ {
 }
 
 export function CharacterQuizModule() {
+  const { record } = useModuleProgress('chinese', 'quiz');
   const [level, setLevel] = useState<DiffLevel>('easy');
   const [q, setQ] = useState<CharQ>(() => buildQuestion('easy'));
   const [picked, setPicked] = useState<string | null>(null);
   const [streak, setStreak] = useState({ right: 0, wrong: 0 });
+  const [totalCorrect, setTotalCorrect] = useState(0);
+  const [totalAnswered, setTotalAnswered] = useState(0);
   const logM = useMistakeLogger();
 
   useEffect(() => {
@@ -490,6 +493,16 @@ export function CharacterQuizModule() {
     setPicked(opt);
     const ok = opt === q.answer;
     speakZh(ok ? '答对啦！' : `不对哦，${q.target.char} 是 ${q.target.meaning}`);
+    const newCorrect = totalCorrect + (ok ? 1 : 0);
+    const newAnswered = totalAnswered + 1;
+    setTotalCorrect(newCorrect);
+    setTotalAnswered(newAnswered);
+    // 每答 8 题结算一次星（做够就至少 1 星，≥70% 给 2 星，≥90% 给 3 星）
+    if (newAnswered >= 8 && newAnswered % 8 === 0) {
+      const acc = newCorrect / newAnswered;
+      const stars = acc >= 0.9 ? 3 : acc >= 0.7 ? 2 : 1;
+      record(stars);
+    }
     let nl = level;
     if (ok) {
       const nr = streak.right + 1;
