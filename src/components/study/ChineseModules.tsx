@@ -186,43 +186,105 @@ export function CharacterModule() {
 
 /* ---------- 古诗 ---------- */
 function PoemCard({ item }: { item: PoemItem }) {
-  const [reciting, setReciting] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [reciteScore, setReciteScore] = useState<number | null>(null);
   const [reciteText, setReciteText] = useState('');
+  const [micError, setMicError] = useState('');
+  const mrRef = useRef<MediaRecorder | null>(null);
+  const srRef = useRef<any>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const urlRef = useRef<string | null>(null);
 
-  /** 录音背诵检测：用 SpeechRecognition 识别孩子念的字，和原诗比对 */
-  function startRecite() {
-    const SR =
-      (window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).SpeechRecognition ||
-      (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
-    if (!SR) {
-      setReciteScore(-1); // 不支持语音识别
-      return;
-    }
-    setReciting(true);
+  /** 我来背诵：
+   *  - 用 MediaRecorder 真正录音 → 可「停止」、可「回放」（核心需求）；
+   *  - 同时 best-effort 跑 SpeechRecognition 给背诵打分，识别不可用/失败都不影响录音与回放。
+   *  原实现只依赖 SpeechRecognition：在 iPad Safari 等环境 rec.start() 可能抛错或 onend 永不
+   *  触发，导致「背诵中…」卡死且根本没有回放——本次改为录音为主、识别为辅。 */
+  async function startRecite() {
+    setMicError('');
     setReciteScore(null);
     setReciteText('');
-    const rec = new (SR as new () => any)();
-    rec.lang = 'zh-CN';
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    rec.onresult = (e: any) => {
-      const text = String(e.results[0][0].transcript).replace(/[，。、；：""''！？\s]/g, '');
-      setReciteText(text);
-      // 取原诗所有汉字
-      const target = item.lines.join('').replace(/[，。、；：""''！？\s]/g, '');
-      // 计算原诗中有多少字出现在孩子念的内容里
-      let hit = 0;
-      for (const ch of target) {
-        if (text.includes(ch)) hit++;
+    if (urlRef.current) {
+      URL.revokeObjectURL(urlRef.current);
+      urlRef.current = null;
+    }
+    setAudioUrl(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // ① 录音（核心：供回放）
+      const mr = new MediaRecorder(stream);
+      chunksRef.current = [];
+      mr.ondataavailable = (e: BlobEvent) => {
+        if (e.data && e.data.size) chunksRef.current.push(e.data);
+      };
+      mr.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        urlRef.current = url;
+        setAudioUrl(url);
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mr.start();
+      mrRef.current = mr;
+      setRecording(true);
+      // 防止意外一直录：最长 60s 自动停止
+      timerRef.current = setTimeout(stopRecite, 60000);
+
+      // ② 尽力而为的语音识别打分（失败/不支持都不影响上面的录音与回放）
+      const SR =
+        (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any }).SpeechRecognition ||
+        (window as unknown as { webkitSpeechRecognition?: any }).webkitSpeechRecognition;
+      if (SR) {
+        try {
+          const rec = new SR();
+          rec.lang = 'zh-CN';
+          rec.interimResults = false;
+          rec.maxAlternatives = 1;
+          rec.onresult = (e: any) => {
+            const text = String(e.results[0][0].transcript).replace(/[，。、；：""''！？\s]/g, '');
+            setReciteText(text);
+            // 取原诗所有汉字
+            const target = item.lines.join('').replace(/[，。、；：""''！？\s]/g, '');
+            // 计算原诗中有多少字出现在孩子念的内容里
+            let hit = 0;
+            for (const ch of target) {
+              if (text.includes(ch)) hit++;
+            }
+            const ratio = target.length > 0 ? hit / target.length : 0;
+            setReciteScore(ratio >= 0.8 ? 3 : ratio >= 0.6 ? 2 : ratio >= 0.4 ? 1 : 0);
+          };
+          rec.onerror = () => {};
+          rec.start();
+          srRef.current = rec;
+        } catch {
+          /* 识别不可用则跳过打分 */
+        }
       }
-      const ratio = target.length > 0 ? hit / target.length : 0;
-      setReciteScore(ratio >= 0.8 ? 3 : ratio >= 0.6 ? 2 : ratio >= 0.4 ? 1 : 0);
-      setReciting(false);
-    };
-    rec.onerror = () => { setReciting(false); setReciteScore(-2); };
-    rec.onend = () => setReciting(false);
-    rec.start();
+    } catch {
+      setMicError('需要麦克风权限才能录音哦～请在 https 或 localhost 下访问，并在浏览器弹窗里允许麦克风。');
+    }
+  }
+
+  function stopRecite() {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    try {
+      mrRef.current?.stop();
+    } catch {
+      /* ignore */
+    }
+    try {
+      srRef.current?.stop?.();
+    } catch {
+      /* ignore */
+    }
+    mrRef.current = null;
+    srRef.current = null;
+    setRecording(false);
   }
 
   const stars = reciteScore !== null && reciteScore > 0 ? '⭐'.repeat(reciteScore) + '☆'.repeat(3 - reciteScore) : '';
@@ -245,16 +307,30 @@ function PoemCard({ item }: { item: PoemItem }) {
         <button onClick={() => speakZh(item.lines.join(''))} className="flex-1 btn btn-violet text-sm">
           🔊 朗读古诗
         </button>
-        <button
-          onClick={startRecite}
-          disabled={reciting}
-          className={`flex-1 py-2 rounded-full font-bold text-sm transition ${reciting ? 'bg-red-400 text-white' : 'bg-moko-rose text-white'}`}
-        >
-          {reciting ? '⏹ 背诵中…' : '🎙️ 我来背诵'}
-        </button>
+        {recording ? (
+          <button
+            onClick={stopRecite}
+            className="flex-1 py-2 rounded-full font-bold text-sm transition bg-red-500 text-white animate-pulse"
+          >
+            ⏹ 停止录音
+          </button>
+        ) : (
+          <button
+            onClick={startRecite}
+            className="flex-1 py-2 rounded-full font-bold text-sm transition bg-moko-rose text-white"
+          >
+            🎙️ 我来背诵
+          </button>
+        )}
       </div>
-      {reciteScore === -1 && <p className="text-xs text-gray-400 mt-2">当前浏览器不支持语音识别，可以念给爸爸妈妈听哦～</p>}
-      {reciteScore === -2 && <p className="text-xs text-gray-400 mt-2">没听清楚，再试一次吧～</p>}
+      {micError && <p className="text-xs text-red-400 mt-2">{micError}</p>}
+      {audioUrl && (
+        <div className="mt-2 rounded-xl bg-white/60 p-2">
+          <p className="text-xs text-gray-500 mb-1">▶ 回放我的背诵：</p>
+          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+          <audio controls src={audioUrl} className="w-full" />
+        </div>
+      )}
       {reciteScore !== null && reciteScore > 0 && (
         <div className="mt-2 rounded-xl bg-moko-yellow/10 p-2 text-sm">
           <div className="text-2xl">{stars}</div>
