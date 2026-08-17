@@ -27,6 +27,9 @@ export const POINTS_PER_CAPTURE = 10;
 export const COST_SPRAY = 5;
 export const COST_SHIELD = 10;
 
+/** 时光沙漏（星星币购买，使用后可补打卡一天） */
+export const COST_TIMEGLASS = 15;
+
 /** 连续一练「额外萌可」里程碑（天数）。见 daily-practice.ts 设计说明。 */
 export const MILESTONE_DAYS = [2, 3, 4, 5, 6, 7, 10, 14, 21, 30, 45, 60, 90];
 

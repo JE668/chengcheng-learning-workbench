@@ -240,6 +240,9 @@ export default function CastlePage() {
           {Number(state.inventory.shield || 0) > 0 && (
             <div className="card-moko flex items-center gap-3"><div className="text-4xl">🛡️</div><div className="flex-1"><div className="font-bold text-moko-violet">护盾 ×{state.inventory.shield}</div><div className="text-xs text-gray-500">已自动装备，能帮乐美挡住一次捣蛋萌可</div></div></div>
           )}
+          {Number(state.inventory.timeglass || 0) > 0 && (
+            <TimeGlassCard count={Number(state.inventory.timeglass)} busy={busy} onUse={(day, subject) => act('/api/castle/use-item', { itemKey: 'timeglass', day, subject })} />
+          )}
           {starShop.filter((s) => Number(state.inventory[s.key] || 0) > 0).map((s) => (
             <div key={s.key} className="card-moko flex items-center gap-3"><div className="text-4xl">{s.icon}</div><div className="flex-1"><div className="font-bold text-moko-violet">{s.name} ×{state.inventory[s.key]}</div><div className="text-xs text-gray-500">已拥有</div></div></div>
           ))}
@@ -261,6 +264,61 @@ export default function CastlePage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 时光沙漏使用卡：选日期+科目，补打卡 */
+function TimeGlassCard({ count, busy, onUse }: { count: number; busy: boolean; onUse: (day: string, subject: string) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const [day, setDay] = useState('');
+  const [subject, setSubject] = useState('语文');
+
+  // 默认选昨天
+  useEffect(() => {
+    if (!day) {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      setDay(d.toISOString().slice(0, 10));
+    }
+  }, []);
+
+  return (
+    <div className="rounded-3xl p-4 shadow-lg border-2 border-moko-violet/20 bg-moko-violet/5">
+      <div className="flex items-center gap-3">
+        <div className="text-4xl">⏳</div>
+        <div className="flex-1">
+          <div className="font-bold text-moko-violet">时光沙漏 ×{count}</div>
+          <div className="text-xs text-gray-500">选一个过去漏做的日期+科目，直接补打卡，拿到对应奖励</div>
+        </div>
+        <button onClick={() => setExpanded((e) => !e)} disabled={busy} className="btn btn-violet text-sm">
+          {expanded ? '收起' : '使用'}
+        </button>
+      </div>
+      {expanded && (
+        <div className="mt-3 space-y-2 fade-up">
+          <div>
+            <label className="text-xs text-gray-500 font-bold">补打卡日期</label>
+            <input type="date" value={day} onChange={(e) => setDay(e.target.value)} max={new Date().toISOString().slice(0, 10)}
+              className="block w-full mt-1 rounded-xl border-2 border-moko-violet/20 px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 font-bold">科目</label>
+            <div className="flex gap-2 mt-1">
+              {['语文', '数学', '英语'].map((s) => (
+                <button key={s} onClick={() => setSubject(s)} disabled={busy}
+                  className={`px-3 py-1.5 rounded-full text-sm font-bold transition ${subject === s ? 'bg-moko-violet text-white' : 'bg-white text-moko-violet border-2 border-moko-violet/20'}`}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button onClick={() => onUse(day, subject)} disabled={busy || !day}
+            className="w-full py-2.5 rounded-full bg-gradient-to-r from-moko-violet to-moko-purple text-white font-black text-sm active:scale-95 transition disabled:opacity-50">
+            ⏳ 确认补打卡
+          </button>
         </div>
       )}
     </div>

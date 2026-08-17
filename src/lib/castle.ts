@@ -449,6 +449,58 @@ export async function castSpray(childId: number) {
   return { ok: true, message: `太棒了！和乐美一起捉回捣蛋萌可，找回 ${returnCoins} 星星币～` };
 }
 
+/**
+ * 使用时光沙漏：选一个过去漏做的日期+科目，直接补打卡。
+ * 内部调用 confirm（补作业分支），享受同样的发奖逻辑（阳光+萌可+积分+繁荣度）。
+ * 道具消耗在 confirm 之前扣，confirm 失败不退道具（避免反复刷）。
+ */
+export async function useTimeGlass(
+  childId: number,
+  day: string,
+  subject: Subject,
+): Promise<{ ok: boolean; message: string }> {
+  const db = getDb();
+  await ensureCastle(childId);
+
+  // 检查道具
+  const inv = await db.execute({
+    sql: 'SELECT qty FROM inventory WHERE child_id = ? AND item_key = ?',
+    args: [childId, 'timeglass'],
+  });
+  if (!inv.rows.length || Number(inv.rows[0].qty) <= 0) {
+    return { ok: false, message: '没有时光沙漏，去星星币商店购买吧～' };
+  }
+
+  // 检查该日该科是否已打卡（幂等：已打卡则不消耗道具）
+  const existing = await db.execute({
+    sql: "SELECT status FROM daily_checkins WHERE child_id = ? AND day = ? AND subject = ?",
+    args: [childId, day, subject],
+  });
+  if (existing.rows.length && String(existing.rows[0].status) === 'confirmed') {
+    return { ok: false, message: `${day} 的 ${subject} 已经打卡过了，不用补～` };
+  }
+
+  // 消耗道具
+  await db.execute({
+    sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?',
+    args: [childId, 'timeglass'],
+  });
+
+  // 补打卡（走 confirm 的补作业分支，发放对应奖励）
+  const res = await confirm(childId, day, subject);
+  if (res.ok) {
+    await logGrowthEvent(
+      childId,
+      'repair',
+      '⏳',
+      `用时光沙漏补打卡 ${subject}`,
+      `${day} 的 ${subject} 补打卡成功，拿到对应奖励！`,
+    );
+    return { ok: true, message: `⏳ 时光沙漏生效！${day} 的 ${subject} 补打卡成功，奖励已发放～` };
+  }
+  return res;
+}
+
 /** 收获星星币（好朋友阶段萌可每日产出） */
 export async function harvest(childId: number) {
   const db = getDb();
