@@ -27,31 +27,63 @@ function ensureVoices() {
   );
 }
 
+/**
+ * Safari / iOS 严格自动播放策略：fetch('/api/tts').then(blob => audio.play())
+ * 这种「异步链」不被当作用户手势，Safari 会直接拦截 → 服务端 TTS 明明返回了音频却
+ * 没声音（且 play() 被 reject 后会误触发 Web Speech 降级，Safari 上同样可能静音）。
+ * 解决办法：在首次用户交互（pointerdown / touchstart / click / keydown）时，用一段
+ * 静音 mp3 解锁整个页面的音频会话；解锁后程序化的 audio.play() 即可正常出声。
+ * （Edge 等浏览器对此更宽松，但统一解锁无副作用。）
+ */
+let audioUnlocked = false;
+function unlockAudioOnce() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  try {
+    const silent = new Audio(
+      'data:audio/mpeg;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA',
+    );
+    silent.volume = 0;
+    const p = silent.play();
+    if (p && typeof (p as { catch?: () => void }).catch === 'function') {
+      (p as Promise<void>).catch(() => {});
+    }
+  } catch {
+    /* 解锁失败不影响后续逻辑，最坏只是 Safari 仍可能静音 */
+  }
+}
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  const evs = ['pointerdown', 'touchstart', 'click', 'keydown'];
+  const onFirst = () => {
+    unlockAudioOnce();
+    evs.forEach((e) => document.removeEventListener(e, onFirst));
+  };
+  evs.forEach((e) => document.addEventListener(e, onFirst, { passive: true }));
+}
+
 /** 挑选与目标语言匹配的嗓音，优先女性/儿童友好的中文或英文嗓音。
- *  严格匹配 zh-CN（普通话），避免 Safari 在 iPad 系统设粤语时选到 zh-HK 粤语嗓音。
+ *  刻意排除粤语(zh-HK)、台式(zh-TW)、英式(en-GB)——学习内容是普通话，选到粤语会教错发音。
+ *  iPad 系统语言设成香港时本地往往只有 zh-HK 嗓音，此时「宁可 Web Speech 不出声」也别用
+ *  粤语误导孩子；真正的普通话由服务端 TTS（zh-CN-XiaoxiaoNeural）兜底。
  */
 function pickVoice(lang: string): SpeechSynthesisVoice | undefined {
   if (typeof window === 'undefined' || !window.speechSynthesis) return undefined;
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return undefined;
-  // 严格匹配目标语言前缀（zh-CN 不能匹配到 zh-HK 粤语；en-US 不匹配 en-GB）
   const target = lang.toLowerCase();
-  const same = voices.filter((x) => {
+  const exclude = (vl: string) =>
+    vl.startsWith('zh-hk') || vl.startsWith('zh-tw') || vl.startsWith('en-gb');
+  const match = (x: SpeechSynthesisVoice) => {
     const vl = (x.lang || '').toLowerCase();
-    // 中文：精确匹配 zh-CN（排除 zh-HK 粤语 / zh-TW 台湾），若无 zh-CN 再退而求其次
-    if (target.startsWith('zh')) return vl === 'zh-cn' || vl === 'zh';
-    // 英文：精确匹配 en-US（排除 en-GB 英式）
-    if (target.startsWith('en')) return vl === 'en-us' || vl === 'en';
-    return vl.startsWith(target);
-  });
-  // 若严格匹配无果，放宽到「同语种但非目标方言」（如 zh-HK 也行，至少有声）
-  const wider = same.length
-    ? same
-    : voices.filter((x) => (x.lang || '').toLowerCase().startsWith(target.slice(0, 2)));
-  const friendly = wider.find((x) =>
+    if (target.startsWith('zh')) return (vl === 'zh-cn' || vl === 'zh') && !exclude(vl);
+    if (target.startsWith('en')) return (vl === 'en-us' || vl === 'en') && !exclude(vl);
+    return vl.startsWith(target) && !exclude(vl);
+  };
+  const pool = voices.filter(match);
+  const friendly = pool.find((x) =>
     /female|woman|girl|ting|huihui|yaoyao|xiao|mei|child|kids|samantha|zira|google us|microsoft|晓晓|晓颜/i.test(x.name),
   );
-  return friendly ?? wider[0];
+  return friendly ?? pool[0];
 }
 
 /** 不同浏览器的 Web Speech 对 rate 的解释不同：
@@ -90,7 +122,8 @@ function speak(text: string, lang: string, rate: number, pitch: number) {
   u.rate = calibrateRate(rate);
   u.pitch = pitch;
   const v = pickVoice(lang);
-  if (v) u.voice = v;
+  if (!v) return; // 该设备无对应语种嗓音（如 iPad 只装了粤语），不强行用错误方言误导孩子
+  u.voice = v;
 
   const fire = () => {
     window.speechSynthesis.cancel();
@@ -219,14 +252,18 @@ function speakEnd(text: string, lang: string, rate: number, pitch: number): Prom
     u.lang = lang;
     u.rate = calibrateRate(rate);
     u.pitch = pitch;
-    const v = pickVoice(lang);
-    if (v) u.voice = v;
     let done = false;
     const finish = () => {
       if (done) return;
       done = true;
       resolve();
     };
+    const v = pickVoice(lang);
+    if (!v) {
+      finish(); // 该设备无对应语种嗓音，不强行用错误方言；直接结束，不卡住顺序朗读
+      return;
+    }
+    u.voice = v;
     u.onend = finish;
     u.onerror = finish;
     const fire = () => {
