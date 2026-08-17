@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
   // 防止超长文本把微软接口/内存打爆
   if (text.length > 500) text = text.slice(0, 500);
   // 未指定则按语言给一个适合一年级小朋友的偏慢、清晰的语速
-  if (!rate) rate = lang === 'en' ? '-35%' : '-35%';
+  if (!rate) rate = lang === 'en' ? '-45%' : '-45%';
 
   // 命中合成缓存：重复朗读（同一字母 / 单词 / 夸夸语）直接秒回，无需再连微软。
   const cacheKey = ttsCacheKey(text, lang, rate, pause);

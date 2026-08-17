@@ -107,11 +107,11 @@ function toEdgeRate(wsRate: number): string {
   return pct === 0 ? '+0%' : `${pct}%`;
 }
 
-export function speakZh(text: string, rate = 0.65) {
+export function speakZh(text: string, rate = 0.55) {
   void playTts(text, 'zh', { wsRate: rate, pitch: 1.1 });
 }
 
-export function speakEn(text: string, rate = 0.65) {
+export function speakEn(text: string, rate = 0.55) {
   void playTts(text, 'en', { wsRate: rate, pitch: 1.05 });
 }
 
@@ -265,7 +265,7 @@ const PRAISES = [
 ];
 
 /** 随机夸夸语音（答对/完成时给孩子情绪反馈） */
-export function praise(rate = 0.85) {
+export function praise(rate = 0.7) {
   const text = PRAISES[Math.floor(Math.random() * PRAISES.length)];
   speakZh(text, rate);
 }

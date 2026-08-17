@@ -110,7 +110,9 @@ export function StudyQuiz({
 
   function finishRound() {
     const acc = attemptsRef.current > 0 ? rightRef.current / attemptsRef.current : 0;
-    const stars = acc >= 0.9 ? 3 : acc >= 0.7 ? 2 : acc >= 0.5 ? 1 : 0;
+    // 星获取门槛调低：做够一轮就至少 1 星（参与奖，保护一年级孩子积极性）；
+    // 正确率 ≥70% 给 2 星，≥90% 给 3 星。
+    const stars = acc >= 0.9 ? 3 : acc >= 0.7 ? 2 : 1;
     if (moduleKey) progress.record(stars);
     setRoundAcc(Math.round(acc * 100));
     setRoundStars(stars);
