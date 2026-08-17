@@ -1,7 +1,5 @@
 'use client';
 
-import { speakZh } from '@/lib/speak';
-
 /**
  * 学科镇守萌可的「答题反馈」——答题瞬间的专属口头禅 + 鼓励。
  *
@@ -66,16 +64,15 @@ function pick<T>(arr: T[]): T {
 }
 
 /**
- * 播放「答对 / 答错」的萌可语音反馈，并返回实际选中的文案。
- * 供调用方把同一句语音也展示到界面上，保证孩子「听到的 = 看到的」。
+ * 随机取一条镇守萌可的反馈文案（仅取文案，不负责发音）。
+ * 发音交给调用方用 playTtsEnd 等「读完再切题」的方式播放，
+ * 保证孩子听得到完整一句，不会被下一题 / 重做的朗读盖住。
  * @param subject 学科
  * @param ok 是否答对
  */
-export function speakMokoFeedback(subject: string, ok: boolean): string {
+export function pickMokoLine(subject: string, ok: boolean): string {
   const m = getMokoPraise(subject);
-  const line = pick(ok ? m.correct : m.wrong);
-  speakZh(`${m.name}说：${line}`, 0.85);
-  return line;
+  return pick(ok ? m.correct : m.wrong);
 }
 
 /**

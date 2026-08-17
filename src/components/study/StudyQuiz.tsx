@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { speakZh, speakEn } from '@/lib/speak';
-import { speakMokoFeedback, MokoPraiseBanner } from '@/components/study/MokoPraise';
+import { speakZh, speakEn, playTtsEnd } from '@/lib/speak';
+import { pickMokoLine, getMokoPraise, MokoPraiseBanner } from '@/components/study/MokoPraise';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -44,6 +44,11 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+/** 等语音读完，但最多等 ms 毫秒（TTS 异常 / 慢时不卡住切题） */
+function waitSpeechEnd(p: Promise<void>, ms: number): Promise<void> {
+  return Promise.race([p, new Promise<void>((resolve) => setTimeout(resolve, ms))]);
+}
+
 /**
  * 通用选择题练习组件：自动打乱选项、朗读题目、记录错题、进度与夸夸。
  * 12 个幼小衔接模块里大部分（应用题 / 阅读理解 / 序数 / 比轻重 / 星期 / 英语句型 …）
@@ -83,6 +88,7 @@ export function StudyQuiz({
   const attemptsRef = useRef(0);
   const rightRef = useRef(0);
   const answeredRef = useRef(0);
+  const feedbackGen = useRef(0); // 每次作答自增，避免旧反馈的「读完回调」误改当前状态
   const logM = useMistakeLogger();
 
   const item = items[order[pos % order.length]];
@@ -134,6 +140,7 @@ export function StudyQuiz({
 
   function pick(opt: string) {
     if (picked) return;
+    const gen = ++feedbackGen.current;
     setPicked(opt);
     const ok = opt === item.answer;
     attemptsRef.current += 1;
@@ -148,14 +155,22 @@ export function StudyQuiz({
     setQuestionsAnswered(answeredRef.current);
 
     if (ok) {
-      setFeedbackLine(speakMokoFeedback(subject, true)); // 镇守萌可口号（取代泛泛的随机夸夸，更有角色陪伴感）
+      const line = pickMokoLine(subject, true);
+      setFeedbackLine(line); // 镇守萌可口号（取代泛泛的随机夸夸，更有角色陪伴感）
       if (answeredRef.current % roundSize === 0) {
         finishRound();
       } else {
-        setTimeout(next, 1300);
+        // 等萌可把这句夸夸读完，再切下一题并朗读新题，避免被新题朗读盖住
+        void waitSpeechEnd(
+          playTtsEnd(`爱心萌可说：${line} ${getMokoPraise(subject).sign}`, 'zh', { wsRate: 0.85 }),
+          4500,
+        ).then(() => {
+          if (feedbackGen.current === gen) next();
+        });
       }
     } else {
-      setFeedbackLine(speakMokoFeedback(subject, false)); // 镇守萌可鼓励（比通用「不对哦」更温柔友好）
+      const line = pickMokoLine(subject, false);
+      setFeedbackLine(line); // 镇守萌可鼓励（比通用「不对哦」更温柔友好）
       logM({
         subject,
         kind: item.kind,
@@ -164,7 +179,13 @@ export function StudyQuiz({
         wrong: opt,
         chapter: item.chapter,
       });
-      setTimeout(() => setPicked(null), 1600);
+      // 等萌可鼓励读完再撤掉反馈条（期间选项禁用，孩子不会误触重做导致两句叠加）
+      void waitSpeechEnd(
+        playTtsEnd(`爱心萌可说：${line} ${getMokoPraise(subject).sign}`, 'zh', { wsRate: 0.85 }),
+        4500,
+      ).then(() => {
+        if (feedbackGen.current === gen) setPicked(null);
+      });
     }
   }
 
@@ -250,7 +271,7 @@ export function StudyQuiz({
 
 /**
  * 答题后的文字反馈：镇守萌可用它的性格口头禅给小朋友贴心的答对 / 答错反馈。
- * line 来自语音选中的同一句（pick() 里 speakMokoFeedback 返回），保证「听到的 = 看到的」。
+ * line 来自语音选中的同一句（pick() 里 pickMokoLine 返回），保证「听到的 = 看到的」。
  */
 function CorrectFeedback({ subject, ok, item, line }: { subject: string; ok: boolean; item: QuizItem; line: string }) {
   return (
