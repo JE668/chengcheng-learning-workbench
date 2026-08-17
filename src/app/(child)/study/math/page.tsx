@@ -52,25 +52,28 @@ export default function MathStudyPage() {
         </div>
       </section>
 
-      <h2 className="section-title mb-3">🎠 全部练习</h2>
-      <div className="grid md:grid-cols-2 gap-5">
-        {modules.map((m) => (
-          <Link
-            key={m.key}
-            href={`/study/math/${m.key}`}
-            className="rounded-3xl overflow-hidden shadow-xl border-2 border-moko-purple/10 bg-white hover:scale-[1.03] transition block"
-          >
-            <ModuleCover subject="math" moduleKey={m.key} emoji={m.emoji} color={m.color} />
-            <div className="p-4">
-              <h2 className="text-xl font-black text-gray-800">{m.label}</h2>
-              <p className="text-xs text-gray-500 mt-1 leading-snug">{m.desc}</p>
-              <div className="mt-2">
-                <ModuleStars subject="math" moduleKey={m.key} />
+      {/* 趣味拓展（不在课本单元内的萌可主题模块） */}
+      <section className="mb-8">
+        <h2 className="section-title mb-3">✨ 萌可趣味挑战</h2>
+        <p className="text-xs text-gray-400 mb-3">课本之外的好玩挑战，和萌可们一起探索吧～</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {modules.filter((m) => !MATH_UNITS.some((u) => u.moduleKeys.includes(m.key))).map((m) => (
+            <Link
+              key={m.key}
+              href={`/study/math/${m.key}`}
+              className="rounded-2xl overflow-hidden shadow-lg border-2 border-moko-purple/10 bg-white hover:scale-[1.03] transition block"
+            >
+              <ModuleCover subject="math" moduleKey={m.key} emoji={m.emoji} color={m.color} />
+              <div className="p-2.5">
+                <h3 className="text-sm font-black text-gray-800">{m.label}</h3>
+                <div className="mt-1">
+                  <ModuleStars subject="math" moduleKey={m.key} />
+                </div>
               </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
