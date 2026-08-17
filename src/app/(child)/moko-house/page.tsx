@@ -56,7 +56,7 @@ export default function MokoHousePage() {
 
   return (
     <div className="max-w-4xl mx-auto fade-up">
-      <Link href="/" className="text-moko-violet font-black no-underline">‹ 返回首页</Link>
+      <Link href="/home" className="text-moko-violet font-black no-underline">‹ 返回首页</Link>
       <div className="flex items-center justify-between mt-2 mb-1">
         <h1 className="page-title">萌可小屋 🏠</h1>
         <div className="flex gap-2">

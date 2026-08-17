@@ -40,7 +40,7 @@ export default function CoOpPage() {
 
   return (
     <div className="max-w-3xl mx-auto pb-28 fade-up">
-      <Link href="/" className="text-moko-violet font-black no-underline">‹ 返回首页</Link>
+      <Link href="/home" className="text-moko-violet font-black no-underline">‹ 返回首页</Link>
       <h1 className="page-title mt-2 mb-1">萌可帮帮忙 🤝</h1>
       <p className="text-gray-600 mb-6">和家里的兄弟姐妹一起学习、互相加油，学习更有劲！</p>
 

@@ -70,7 +70,7 @@ export default function BadgesPage() {
 
   return (
     <div className="max-w-4xl mx-auto fade-up">
-      <Link href="/" className="text-moko-violet font-black no-underline">‹ 返回首页</Link>
+      <Link href="/home" className="text-moko-violet font-black no-underline">‹ 返回首页</Link>
       <h1 className="page-title mt-2 mb-1">我的勋章墙 🏆</h1>
       <p className="text-gray-600 mb-4">
         每多学一点就能解锁一枚勋章，已经拿到 {earned} / {badges.length} 枚啦！
