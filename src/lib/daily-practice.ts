@@ -73,6 +73,8 @@ export type PracticeQuestion =
       options: string[];
       answer: number;
       explain: string;
+      /** 首字母题：靠听音 + emoji 猜首字母，题干与页面都不显示英文单词，避免「直接看词选首字母」变傻题 */
+      subtype?: 'initial';
     }
   | {
       id: string;
@@ -414,8 +416,9 @@ function genEnPicQ(): PracticeQuestion {
   };
 }
 
-/** 英语首字母题 */
-function genEnInitialQ(): PracticeQuestion {
+/** 英语首字母题：听音辨字母。题干/页面都不显示英文单词，只给 emoji + 听音按钮，
+ *  让孩子凭读音想首字母——而不是把 color 写在眼前直接看首字母。 */
+export function genEnInitialQ(): Extract<PracticeQuestion, { kind: 'english' }> {
   const w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
   const first = w.word[0].toUpperCase();
   const distractors = shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.replace(first, '').split('')).slice(0, 3);
@@ -424,8 +427,9 @@ function genEnInitialQ(): PracticeQuestion {
   return {
     id: `en-init-${w.word}`,
     kind: 'english',
+    subtype: 'initial',
     subject: '英语',
-    prompt: `${w.emoji} ${w.word} 以哪个字母开头？`,
+    prompt: '听一听，这个单词以哪个字母开头？',
     word: w.word,
     cn: w.cn,
     emoji: w.emoji,

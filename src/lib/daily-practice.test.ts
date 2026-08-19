@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DAILY_CORE_MODULE } from './daily-practice';
+import { DAILY_CORE_MODULE, genEnInitialQ } from './daily-practice';
 import { storyChapters } from './story';
 import { STUDY_MODULES } from './study-modules';
 
@@ -41,6 +41,21 @@ describe('萌可闯关 → 剧情解锁 闭环', () => {
         metas!.some((m) => m.key === req.moduleKey),
         `${req.subjectKey}/${req.moduleKey} 在 STUDY_MODULES 中不存在`,
       ).toBe(true);
+    }
+  });
+});
+
+describe('英语首字母题：题干不泄露英文单词（防止「直接看词选首字母」变傻题）', () => {
+  it('prompt 不含单词原文、选项是单字母、正确答案即首字母大写', () => {
+    for (let i = 0; i < 100; i++) {
+      const q = genEnInitialQ();
+      expect(q.subtype).toBe('initial');
+      expect(q.word).toBeTruthy();
+      // 关键断言：color 绝不能写在题干里，否则孩子看一眼就知道首字母
+      expect(q.prompt).not.toContain(q.word);
+      // 首字母题本质是「选字母」，选项应仅为单个大写字母
+      expect(q.options.every((o) => /^[A-Z]$/.test(o))).toBe(true);
+      expect(q.options[q.answer]).toBe(q.word[0].toUpperCase());
     }
   });
 });
