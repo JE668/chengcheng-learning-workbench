@@ -2,14 +2,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { calibrateRate, playTts, playTtsEnd } from '@/lib/speak';
 
 /** 在 node 环境里拼出最小可用的浏览器语音环境，返回「本地播了什么」与「fetch 是否被调」。 */
-function installBrowser(opts: { zhCN: boolean }) {
+function installBrowser(opts: { zhCN: boolean; start?: boolean }) {
   const spoken: any[] = [];
+  const fireStart = opts.start ?? true; // 默认 onstart 会触发（本地真正出声）；false 模拟 iPad 首句不响
   class FakeUtterance {
     lang = '';
     text = '';
     rate = 1;
     pitch = 1;
     voice: any = null;
+    onstart: (() => void) | null = null;
     onend: (() => void) | null = null;
     onerror: (() => void) | null = null;
     constructor(t: string) {
@@ -20,7 +22,10 @@ function installBrowser(opts: { zhCN: boolean }) {
     getVoices: () => (opts.zhCN ? [{ lang: 'zh-CN', name: 'Xiaoxiao' }] : []),
     speak: (u: any) => {
       spoken.push(u);
-      queueMicrotask(() => u.onend && u.onend());
+      queueMicrotask(() => {
+        if (fireStart) u.onstart && u.onstart();
+        u.onend && u.onend();
+      });
     },
     cancel: () => {},
   };
@@ -85,16 +90,16 @@ describe('calibrateRate：仅 Edge/Chrome 校准，真 Safari 不校准', () => 
   });
 });
 
-describe('playTts：首句本地出声 + iPad 无普通话嗓音守卫', () => {
+describe('playTts：首句本地出声 + iPad 无普通话嗓音守卫 + 本地不响降级', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('本机有 zh-CN 嗓音 → 首句走本地 Web Speech 即时出声，且不依赖服务端', async () => {
+  it('本机有 zh-CN 嗓音且本地真正出声 → 首句走本地 Web Speech，同时后台预热服务端缓存', async () => {
     const { spoken, fetchMock } = installBrowser({ zhCN: true });
     await playTts('你好', 'zh');
     expect(spoken.length).toBe(1);
     expect(spoken[0].lang).toBe('zh-CN');
     expect(spoken[0].text).toBe('你好');
-    // 首次会后台预热服务端缓存（fetch 被调用于预热），但本地已先出声，不阻塞
+    // 本地已出声；首次会后台预热服务端缓存（fetch 被调用于预热），但不阻塞
     expect(fetchMock).toHaveBeenCalled();
   });
 
@@ -103,6 +108,14 @@ describe('playTts：首句本地出声 + iPad 无普通话嗓音守卫', () => {
     await playTts('你好', 'zh');
     expect(spoken.length).toBe(0); // 没用本地嗓音（避免用粤语误导孩子）
     expect(fetchMock).toHaveBeenCalled(); // 改走服务端普通话
+  });
+
+  it('本机有嗓音但本地首句不响（iPad Safari onstart 不触发）→ 降级服务端兜底，不静音、不卡死', async () => {
+    // 用与前面用例不同的文本，避免命中跨用例持久化的 serverCached 而直接走服务端
+    const { spoken, fetchMock } = installBrowser({ zhCN: true, start: false });
+    await expect(playTts('苹果', 'zh')).resolves.toBeUndefined();
+    expect(spoken.length).toBe(1); // 本地确实尝试过 speak（但没真正出声）
+    expect(fetchMock).toHaveBeenCalled(); // 判定本地未出声后改走服务端
   });
 
   it('playTtsEnd 在语音结束时 resolve，可用于顺序连读', async () => {

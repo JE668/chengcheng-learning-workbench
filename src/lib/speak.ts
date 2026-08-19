@@ -178,10 +178,12 @@ function playServerAudio(
   const wsRate = opts.wsRate ?? 0.8;
   const pitch = opts.pitch ?? 1.05;
   const pauseMs = opts.pauseMs ?? 0;
-  const fallback = () => speakEnd(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch);
   return new Promise<void>((resolve) => {
+    // fallback 必须在执行器内部定义，否则引用不到上面的 resolve
+    const fallback = () =>
+      speakEnd(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch).then(() => resolve());
     if (typeof window === 'undefined' || !('fetch' in window)) {
-      fallback().then(resolve);
+      fallback();
       return;
     }
     const controller = new AbortController();
@@ -207,13 +209,13 @@ function playServerAudio(
         };
         audio.onerror = () => {
           URL.revokeObjectURL(url);
-          fallback().then(resolve);
+          fallback();
         };
-        audio.play().catch(() => fallback().then(resolve));
+        audio.play().catch(() => fallback());
       })
       .catch(() => {
         clearTimeout(timer);
-        fallback().then(resolve);
+        fallback();
       });
   });
 }
@@ -225,14 +227,18 @@ export async function playTts(
 ) {
   const wsRate = opts.wsRate ?? 0.8;
   const pitch = opts.pitch ?? 1.05;
-  // 本机有对应语种嗓音且本句是首次朗读 → 本地即时出声 + 后台预热服务端缓存
+  // 本机有对应语种嗓音且本句是首次朗读 → 本地即时出声 + 后台预热服务端缓存。
+  // speakEnd 返回「是否真正出声」：iPad Safari 等设备上本地 Web Speech 首句常不触发
+  // onstart/onend（静音），此时立即降级服务端兜底，保证「一定有声音」，而非静默失败。
   if (langVoiceExists(lang) && !serverCached.has(cacheKey(text, lang))) {
-    const local = speakEnd(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch);
-    warmServerCache(text, lang, opts);
-    await local;
-    return;
+    const played = await speakEnd(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch);
+    if (played) {
+      warmServerCache(text, lang, opts);
+      return;
+    }
+    // 本地没真正出声 → 降级服务端高质量（普通话神经嗓音兜底）
   }
-  // 否则（无本地嗓音 / 已缓存）走服务端高质量
+  // 否则（无本地嗓音 / 已缓存 / 本地未出声）走服务端高质量
   await playServerAudio(text, lang, opts);
 }
 
@@ -248,13 +254,17 @@ export function playTtsEnd(
   return playTts(text, lang, opts);
 }
 
-/** Web Speech 朗读并在 onend/onerror 时 resolve（含兜底超时）。
- *  若浏览器不支持 Web Speech（如某些小米浏览器），直接 resolve（不卡住顺序朗读）。
+/**
+ * 用浏览器原生 Web Speech 朗读，resolve 时返回「是否真正出声」。
+ * - 返回 true：onstart 已触发（确有声音发出），用于「首句即时出声」主路径；
+ * - 返回 false：无对应嗓音 / 报错 / 启动守卫超时（1.5s 内 onstart 未触发，
+ *   iPad Safari 首句常见静音场景）→ 调用方据此降级服务端，避免静默失败。
+ * 无论成功失败都及时 resolve，绝不卡住顺序朗读。
  */
-function speakEnd(text: string, lang: string, rate: number, pitch: number): Promise<void> {
-  return new Promise<void>((resolve) => {
+function speakEnd(text: string, lang: string, rate: number, pitch: number): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
-      resolve();
+      resolve(false);
       return;
     }
     ensureVoices();
@@ -263,27 +273,46 @@ function speakEnd(text: string, lang: string, rate: number, pitch: number): Prom
     u.rate = calibrateRate(rate);
     u.pitch = pitch;
     let done = false;
-    const finish = () => {
+    let started = false;
+    const finish = (ok: boolean) => {
       if (done) return;
       done = true;
-      resolve();
+      clearTimeout(startTimer);
+      resolve(ok);
     };
     const v = pickVoice(lang);
     if (!v) {
-      finish(); // 该设备无对应语种嗓音，不强行用错误方言；直接结束，不卡住顺序朗读
+      finish(false); // 该设备无对应语种嗓音，不强行用错误方言；结束并交由服务端兜底
       return;
     }
     u.voice = v;
-    u.onend = finish;
-    u.onerror = finish;
-    const fire = () => {
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
+    u.onstart = () => {
+      started = true;
+      clearTimeout(startTimer);
     };
-    if (voicesReady) fire();
+    u.onend = () => finish(true);
+    // 已开始(onstart 触发过)才算成功；若中途报错但已出声，仍视为成功，不误触发降级
+    u.onerror = () => finish(started);
+    const fire = () => {
+      try {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+      } catch {
+        finish(false);
+      }
+    };
+    // 启动守卫：1.5s 内 onstart 未触发（iOS 首句不响）→ 判定本地失败，立即降级服务端。
+    // 非 flaky 设备上 onstart 近乎瞬时触发，本守卫不引入可感知延迟。
+    const startTimer = setTimeout(() => {
+      if (!started) finish(false);
+    }, 1500);
+    // 只要本机已加载出嗓音就立即播；仅在嗓音尚未就绪时才等 voiceschanged。
+    // 不依赖模块级 voicesReady 标志，避免「标志卡在 false 且 voiceschanged 不再触发」
+    // 导致永不发声。
+    if (window.speechSynthesis.getVoices().length > 0) fire();
     else window.speechSynthesis.addEventListener('voiceschanged', fire, { once: true });
-    // 兜底：最长朗读 30s，避免个别引擎不触发 onend 时卡住顺序朗读
-    setTimeout(finish, 30000);
+    // 兜底总超时：最长朗读 30s，避免个别引擎不触发 onend 时卡住顺序朗读
+    setTimeout(() => finish(started), 30000);
   });
 }
 

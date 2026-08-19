@@ -23,8 +23,8 @@ const RAW = (process.env.NEXT_PUBLIC_MEDIA_BASE || '').trim().replace(/\/+$/, ''
 
 /** 把应用内的媒体相对路径（如 /raz/books/x.pdf）解析为最终 URL。 */
 export function mediaUrl(path: string): string {
-  if (!RAW) return path; // 同源：原样返回
   const p = path.startsWith('/') ? path : `/${path}`;
+  if (!RAW) return `/api/media${p}`; // 同源：走带 Range + 登录软闸的媒体路由
   return `${RAW}${p}`;
 }
 
