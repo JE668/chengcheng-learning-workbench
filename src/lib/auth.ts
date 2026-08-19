@@ -64,7 +64,9 @@ function shouldSecureCookie(): boolean {
   } catch {
     // headers() 在非请求上下文（如 build 期）可能抛错，忽略并回退。
   }
-  return process.env.NODE_ENV === 'production';
+  // 未知协议（直连且无 x-forwarded-proto 头，如纯 http 局域网访问）时默认 false：
+  // 若误设为 true，浏览器会拒绝存储 secure cookie，导致登录态无法保持、反复跳登录。
+  return false;
 }
 
 export async function setSessionCookie(userId: number) {
