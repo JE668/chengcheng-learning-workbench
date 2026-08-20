@@ -6,11 +6,16 @@
 // （实测返回 400 "Our services aren't available"），导致 /api/tts 永远 502。
 // Piper 是开源离线神经语音，中文(晓晓同级) + 英文都有，完全不依赖外网。
 //
-// 下载源：二进制从 GitHub release（已验证 200 可达）；模型优先走 hf-mirror.com
-// （HuggingFace 的国内镜像，NAS 在中国网络可达性最高），HF 官方与 modelscope 备选。
+// 下载源：二进制从 GitHub release（已验证 200 可达）；
+// 模型优先走 HuggingFace 官方仓库（构建在 GitHub Actions 美区 runner 上必通），
+// 国内 NAS 本地构建时回退到 hf-mirror.com（HF 国内镜像）。
+// 注意：piper-voices 已从 GitHub 原仓库( rhasspy/piper-voices 404 )迁移，
+// 现以 HuggingFace 仓库 rhasspy/piper-voices 为准，路径结构为
+//   <lang>/<lang_region>/<speaker>/<quality>/<voice>.onnx
+// （无 voices/ 前缀，且多一层质量目录）。
 
 import { spawnSync } from 'node:child_process';
-import { writeFileSync, mkdirSync, existsSync, rmSync, readFileSync, chmodSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync, rmSync, readFileSync, chmodSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -20,22 +25,28 @@ const MODELS_DIR = join(PIPER_DIR, 'models');
 const BIN_RELEASE =
   'https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz';
 
-// 模型下载源（按顺序尝试，首个成功即止）。路径遵循 piper-voices 仓库结构。
+// 模型下载源（按顺序尝试，首个成功即止）。
 const MODEL_SOURCES = [
-  'https://hf-mirror.com/rhasspy/piper-voices/resolve/main',
-  'https://huggingface.co/rhasspy/piper-voices/resolve/main',
-  'https://modelscope.cn/models/AI-ModelScope/piper-voices/resolve/master',
+  'https://huggingface.co/rhasspy/piper-voices/resolve/main', // GitHub Actions(美) 构建必通
+  'https://hf-mirror.com/rhasspy/piper-voices/resolve/main', // 国内 NAS 本地构建可达
 ];
 
+// 路径遵循 HF 仓库结构：<lang>/<lang_region>/<speaker>/<quality>/<voice>
 const VOICES = [
-  { lang: 'zh', dir: 'zh_CN', name: 'zh_CN-huayan-medium' },
-  { lang: 'en', dir: 'en_US', name: 'en_US-lessac-medium' },
+  { lang: 'zh', name: 'zh_CN-huayan-medium', path: 'zh/zh_CN/huayan/medium/zh_CN-huayan-medium' },
+  { lang: 'en', name: 'en_US-lessac-medium', path: 'en/en_US/lessac/medium/en_US-lessac-medium' },
 ];
 
-async function download(url, dest) {
+// 模型文件最小体积（LFS 指针文件/错误页通常远小于此），低于则视为下载失败。
+const MIN_MODEL_BYTES = 1024 * 1024;
+
+async function download(url, dest, minBytes = 0) {
   const res = await fetch(url, { redirect: 'follow' });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const buf = Buffer.from(await res.arrayBuffer());
+  if (minBytes > 0 && buf.length < minBytes) {
+    throw new Error(`文件过小(${buf.length}B)，疑似错误页/LFS指针`);
+  }
   writeFileSync(dest, buf);
   return buf.length;
 }
@@ -73,16 +84,16 @@ function extractTar(tarPath, destDir) {
       mkdirSync(outDir, { recursive: true });
       const onnx = join(outDir, `${v.name}.onnx`);
       const json = join(outDir, `${v.name}.onnx.json`);
-      if (existsSync(onnx) && existsSync(json)) {
+      if (existsSync(onnx) && existsSync(json) && statSync(onnx).size >= MIN_MODEL_BYTES) {
         console.log(`[fetch-piper] ${v.name} already present, skip`);
         continue;
       }
       let ok = false;
       for (const base of MODEL_SOURCES) {
-        const uo = `${base}/voices/${v.lang}/${v.dir}/${v.name}/${v.name}.onnx`;
-        const uj = `${base}/voices/${v.lang}/${v.dir}/${v.name}/${v.name}.onnx.json`;
+        const uo = `${base}/${v.path}.onnx`;
+        const uj = `${base}/${v.path}.onnx.json`;
         try {
-          const no = await download(uo, onnx);
+          const no = await download(uo, onnx, MIN_MODEL_BYTES);
           const nj = await download(uj, json);
           console.log(`[fetch-piper] ${v.name} installed from ${base} (onnx ${no}B, json ${nj}B)`);
           ok = true;
@@ -95,11 +106,18 @@ function extractTar(tarPath, destDir) {
       if (!ok) console.log(`[fetch-piper] WARN: ${v.name} not installed -> /api/tts 将回退微软 TTS`);
     }
 
-    // 3) 确保 nextjs 运行用户可读可执行
+    // 3) 确保 nextjs 运行用户可读可执行，并验证二进制可运行
     try {
       spawnSync('chmod', ['-R', 'a+rX', PIPER_DIR], { stdio: 'inherit' });
     } catch {
       /* ignore */
+    }
+    try {
+      const r = spawnSync(binPath, ['--version'], { encoding: 'utf8' });
+      if (r.status === 0) console.log(`[fetch-piper] binary check OK: ${r.stdout.trim()}`);
+      else console.log(`[fetch-piper] WARN: piper --version 失败(status ${r.status})，运行时可能缺库`);
+    } catch (e) {
+      console.log(`[fetch-piper] WARN: 无法验证 piper 二进制: ${e instanceof Error ? e.message : String(e)}`);
     }
     console.log('[fetch-piper] done');
   } catch (e) {
