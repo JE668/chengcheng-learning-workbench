@@ -28,11 +28,23 @@ const subjectKey: Record<string, string> = {
   英语: 'english',
 };
 
+/** 把正确答案和干扰项混在一起打乱 */
+function shuffleAns(answer: string, distractors: string[]): string[] {
+  const opts = [answer, ...distractors.filter((d) => d !== answer)];
+  const uniq = [...new Set(opts)].slice(0, 4);
+  for (let i = uniq.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [uniq[i], uniq[j]] = [uniq[j], uniq[i]];
+  }
+  return uniq;
+}
+
 export default function ReviewPage() {
   const [items, setItems] = useState<MistakeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [revealed, setRevealed] = useState<Record<number, boolean>>({});
   const [done, setDone] = useState(0);
+  const [pickedAns, setPickedAns] = useState<Record<number, string>>({});
 
   async function load() {
     const r = await fetch('/api/mistakes');
@@ -88,15 +100,35 @@ export default function ReviewPage() {
                 {revealed[it.id] ? (
                   <div className="mt-2 text-sm">
                     <span className="text-green-600 font-bold">正确答案：{it.answer}</span>
-                    {it.wrong && <span className="text-red-400 ml-2">（你写的：{it.wrong}）</span>}
+                    {it.wrong && <span className="text-red-400 ml-2">（上次写错：{it.wrong}）</span>}
+                    {pickedAns[it.id] && pickedAns[it.id] !== it.answer && (
+                      <span className="text-red-500 ml-2">（这次选了：{pickedAns[it.id]}）</span>
+                    )}
                   </div>
                 ) : (
-                  <button
-                    onClick={() => setRevealed((p) => ({ ...p, [it.id]: true }))}
-                    className="mt-2 text-sm px-3 py-1 rounded-full bg-moko-purple/10 text-moko-violet font-bold"
-                  >
-                    显示答案
-                  </button>
+                  <div className="mt-3 space-y-2">
+                    {/* 把答案和干扰项混在一起做选择题 */}
+                    {(() => {
+                      const opts = shuffleAns(it.answer, items.filter((x) => x.id !== it.id && x.subject === it.subject).map((x) => x.answer).slice(0, 3));
+                      return opts.map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => {
+                            setPickedAns((p) => ({ ...p, [it.id]: opt }));
+                            setRevealed((p) => ({ ...p, [it.id]: true }));
+                            if (opt === it.answer) { setDone((n) => n + 1); }
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-xl font-bold text-sm transition ${
+                            pickedAns[it.id] === opt
+                              ? opt === it.answer ? 'bg-green-100 text-green-700 border-2 border-green-500' : 'bg-red-100 text-red-600 border-2 border-red-500'
+                              : 'bg-gray-50 text-gray-700 border-2 border-gray-200 hover:border-moko-purple/30'
+                          }`}
+                        >
+                          {opt}
+                        </button>
+                      ));
+                    })()}
+                  </div>
                 )}
                 <div className="flex gap-2 mt-3">
                   <button

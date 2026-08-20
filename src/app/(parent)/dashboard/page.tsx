@@ -63,6 +63,35 @@ export default async function DashboardPage() {
         ))}
       </div>
 
+      {/* 今日学情摘要 */}
+      {cId && (() => {
+        const subjects = [
+          { name: '语文', done: todaySubj.语文, icon: '📕', color: 'bg-moko-rose' },
+          { name: '数学', done: todaySubj.数学, icon: '🔢', color: 'bg-moko-blue' },
+          { name: '英语', done: todaySubj.英语, icon: '🔤', color: 'bg-moko-yellow' },
+        ];
+        const doneCount = subjects.filter((s) => s.done).length;
+        return (
+          <div className="rounded-3xl p-5 bg-white shadow-lg border-2 border-moko-purple/20 mb-4 mt-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-bold text-moko-violet">📋 今日学情</span>
+              <span className={`text-sm font-bold px-3 py-1 rounded-full ${todayDone ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                {todayDone ? '今日已完成 🎉' : `${doneCount}/3 科已打卡`}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {subjects.map((s) => (
+                <div key={s.name} className={`rounded-2xl p-3 text-center ${s.done ? s.color + ' text-white' : 'bg-gray-50 text-gray-400'}`}>
+                  <div className="text-2xl mb-1">{s.done ? '✅' : s.icon}</div>
+                  <div className="font-bold text-sm">{s.name}</div>
+                  <div className="text-xs">{s.done ? '已打卡' : '未完成'}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       <h2 className="section-title mb-3">🏰 萌可城堡（学习联动）</h2>
       <ParentCastlePanel />
 

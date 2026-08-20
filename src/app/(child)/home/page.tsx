@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildPoints } from '@/lib/db';
 import { getCastleState } from '@/lib/castle';
 import { getTodayPractice } from '@/lib/daily-practice';
+import { getModuleProgressAll } from '@/lib/progress-store';
 import Link from 'next/link';
 import { CheckinPanel, HarvestBtn } from '@/components/castle-client';
 import { GuideModal } from '@/components/GuideModal';
@@ -14,7 +15,7 @@ export default async function HomePage() {
   const db = getDb();
 
   // 并行拉取，减少串行等待（首页加载提速）
-  const [points, castle, practice, taskRes] = await Promise.all([
+  const [points, castle, practice, taskRes, modProg] = await Promise.all([
     getChildPoints(user.id),
     getCastleState(user.id),
     getTodayPractice(user.id, false),
@@ -26,7 +27,13 @@ export default async function HomePage() {
             ORDER BY t.created_at DESC LIMIT 5`,
       args: [user.id],
     }),
+    getModuleProgressAll(user.id),
   ]);
+  // 今日已学模块（last_played 是 epoch ms，取今天 00:00 以后的）
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayModules = modProg.filter((p) => p.lastPlayed >= todayStart.getTime());
+  const todayStars = todayModules.reduce((sum, p) => sum + p.stars, 0);
   const ownedCount = castle.gallery.filter((g) => g.owned).length;
   const totalMoko = castle.gallery.length;
   const pendingTasks = taskRes.rows.map((r) => ({
@@ -67,6 +74,23 @@ export default async function HomePage() {
           </Link>
         ))}
       </div>
+
+      {/* 今日学习进度 */}
+      {todayModules.length > 0 && (
+        <div className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-purple/15 mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-bold text-moko-violet">📚 今日已学 {todayModules.length} 个模块</span>
+            <span className="text-sm font-bold text-moko-gold">⭐ {todayStars}</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {todayModules.slice(0, 8).map((m) => (
+              <span key={m.subject + m.moduleKey} className="px-2 py-1 rounded-full bg-moko-purple/10 text-moko-violet text-xs font-bold">
+                {m.subject === 'chinese' ? '📖' : m.subject === 'math' ? '🔢' : '🔤'} {m.moduleKey} {'⭐'.repeat(m.stars)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 今日一练 · 三科打卡（合并卡片：状态 + 入口合一） */}
       <div className="card-moko mb-6">
