@@ -34,6 +34,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { safeJson } from '@/lib/safe-json';
 import { createHash } from 'node:crypto';
 import WebSocket from 'ws';
+import { spawn } from 'node:child_process';
+import { existsSync, readFileSync, unlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 // Edge 在线 TTS 需要 Node 运行时（WebSocket 连微软服务，不能用 Edge/浏览器运行时）
 export const runtime = 'nodejs';
@@ -91,8 +95,88 @@ const TTS_LIMIT = { windowSeconds: 60, maxRequests: 30 }; // 每 IP 每分钟 30
 // (2) 合成结果按 (text,lang,rate,pause) 缓存：儿童学习场景大量重复朗读（同一字母 /
 //     单词 / 夸夸语反复出现），命中缓存直接秒回，彻底绕过微软 WebSocket 握手。
 //     限定上限做 LRU 淘汰，防内存膨胀。Node 持久进程下缓存跨请求复用，收益最大。
-const ttsCache = new Map<string, Buffer>();
+const ttsCache = new Map<string, { audio: Buffer; type: string }>();
 const TTS_CACHE_MAX = 500;
+
+// ── 离线 TTS：Piper ───────────────────────────────────────────────────────────
+// 国内网络连不上微软免费 TTS（实测 400 拒服），Piper 是开源离线神经语音，
+// 中文(zh_CN-huayan-medium) + 英文(en_US-lessac-medium) 都有，完全不依赖外网。
+// 镜像构建时由 scripts/fetch-piper.mjs 把二进制与模型装进 /opt/piper；
+// 装不上时下面两个路径不存在，synthesizeWithPiper 直接返回 null，回退微软。
+const PIPER_BIN = '/opt/piper/piper';
+const PIPER_MODELS: Record<string, string> = {
+  zh: '/opt/piper/models/zh/zh_CN-huayan-medium.onnx',
+  en: '/opt/piper/models/en/en_US-lessac-medium.onnx',
+};
+
+/** 把 Edge 风格语速("-45%" / "+0%") 映射成 Piper 的 length_scale（越大越慢）。 */
+function rateToLengthScale(rate: string): number {
+  const m = /([+-]?\d+)%/.exec(rate);
+  const pct = m ? parseInt(m[1], 10) : 0;
+  const speed = 1 + pct / 100; // -45% => 0.55
+  const ls = 1 / Math.max(0.1, speed); // 慢速 => 更大的 length_scale
+  return Math.min(3, Math.max(0.5, Number(ls.toFixed(2))));
+}
+
+/** 离线合成：成功返回 wav Buffer，任何失败返回 null（交由调用方回退）。 */
+function synthesizeWithPiper(text: string, lang: string, rate: string): Promise<Buffer | null> {
+  const model = PIPER_MODELS[lang];
+  if (!model || !existsSync(PIPER_BIN) || !existsSync(model)) return Promise.resolve(null);
+  return new Promise<Buffer | null>((resolve) => {
+    const tmp = join(
+      tmpdir(),
+      `piper_${Date.now()}_${Math.random().toString(36).slice(2)}.wav`,
+    );
+    const args = [
+      '--model',
+      model,
+      '--output_file',
+      tmp,
+      '--length_scale',
+      String(rateToLengthScale(rate)),
+    ];
+    const p = spawn(PIPER_BIN, args, { stdio: ['pipe', 'ignore', 'ignore'] });
+    let settled = false;
+    const finish = (buf: Buffer | null) => {
+      if (settled) return;
+      settled = true;
+      try {
+        if (existsSync(tmp)) unlinkSync(tmp);
+      } catch {
+        /* ignore */
+      }
+      resolve(buf);
+    };
+    try {
+      p.stdin.write(text);
+      p.stdin.end();
+    } catch {
+      finish(null);
+      return;
+    }
+    p.on('error', () => finish(null));
+    p.on('close', (code) => {
+      if (code === 0 && existsSync(tmp)) {
+        try {
+          const b = readFileSync(tmp);
+          finish(b);
+        } catch {
+          finish(null);
+        }
+      } else {
+        finish(null);
+      }
+    });
+    setTimeout(() => {
+      try {
+        p.kill();
+      } catch {
+        /* ignore */
+      }
+      finish(null);
+    }, 20000);
+  });
+}
 let cachedSec: { date: string; token: string } | null = null;
 
 function ttsCacheKey(text: string, lang: string, rate: string, pause: number): string {
@@ -174,13 +258,28 @@ export async function POST(req: NextRequest) {
     // 命中即移到末尾，维持 LRU（热门短语不被淘汰）
     ttsCache.delete(cacheKey);
     ttsCache.set(cacheKey, hit);
-    return new NextResponse(new Uint8Array(hit), {
+    return new NextResponse(new Uint8Array(hit.audio), {
       status: 200,
-      headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=86400' },
+      headers: { 'content-type': hit.type, 'cache-control': 'public, max-age=86400' },
     });
   }
 
   try {
+    // 优先离线 Piper：国内网络/无外网均可用，语速由 rate 映射为 length_scale。
+    // 失败（二进制或模型缺失 / 合成出错）返回 null，自动回退微软 TTS。
+    const piperAudio = await synthesizeWithPiper(text, lang, rate);
+    if (piperAudio) {
+      if (ttsCache.size >= TTS_CACHE_MAX) {
+        const oldest = ttsCache.keys().next().value;
+        if (oldest !== undefined) ttsCache.delete(oldest);
+      }
+      ttsCache.set(cacheKey, { audio: piperAudio, type: 'audio/wav' });
+      return new NextResponse(new Uint8Array(piperAudio), {
+        status: 200,
+        headers: { 'content-type': 'audio/wav', 'cache-control': 'public, max-age=86400' },
+      });
+    }
+
     // 协议第 2~3 步：取动态安全令牌，并拼出带令牌的 WebSocket 握手地址。
     const sec = await getSecToken();
     const audio = await new Promise<Buffer>((resolve, reject) => {
@@ -286,7 +385,7 @@ export async function POST(req: NextRequest) {
       const oldest = ttsCache.keys().next().value;
       if (oldest !== undefined) ttsCache.delete(oldest);
     }
-    ttsCache.set(cacheKey, audio);
+    ttsCache.set(cacheKey, { audio, type: 'audio/mpeg' });
 
     // Buffer 在 Node20 类型下可能是 SharedArrayBuffer 后端，转成普通 Uint8Array 以满足 BodyInit
     return new NextResponse(new Uint8Array(audio), {

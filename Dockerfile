@@ -27,6 +27,11 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
+# 2.5) 拉取 Piper 离线 TTS（二进制 + 中英模型），构建失败也不中断镜像。
+#      国内网络无法稳定连微软免费 TTS（实测 400 拒服），Piper 离线合成是安卓/Edge
+#      中文嗓音的可靠来源。装不上时 /api/tts 自动回退微软（当前行为），站点照常起。
+RUN node scripts/fetch-piper.mjs || true
+
 # 3) 构建产物就绪，移除 dev 依赖（next start 运行时不需要 tailwind/eslint/typescript）
 RUN npm prune --omit=dev
 
