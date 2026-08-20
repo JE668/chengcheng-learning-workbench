@@ -36,10 +36,23 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasSession = req.cookies.has(COOKIE_NAME);
 
-  // 受保护媒体（课本 PDF / RAZ 视频）：软闸——未登录直接取资源则拦下。
-  // 导航请求（人在地址栏敲 URL）跳登录页；接口式请求（<img>/<video>/fetch）返回 401。
+  // 判断请求是否来自「同源页面」（忽略协议，host 一致即算同源）。
+  // 用于软闸放行：同源页面内的 <video>/<img>/fetch 自带同源 Referer，应放行；
+  // 只有无 Referer 也无 session 的裸取（外人猜 URL）才拦截。
+  const referer = req.headers.get('referer');
+  const sameOrigin =
+    !!referer && (() => {
+      try {
+        return new URL(referer).host.toLowerCase() === req.nextUrl.host.toLowerCase();
+      } catch {
+        return false;
+      }
+    })();
+
+  // 受保护媒体（课本 PDF / RAZ 视频）：软闸——未登录且非同源页面请求则拦下。
+  // 导航请求（人在地址栏敲 URL 且既无登录也无同源 Referer）跳登录页；接口式请求返回 401。
   if (PROTECTED_MEDIA_PREFIXES.some((p) => pathname.startsWith(p))) {
-    if (!hasSession) {
+    if (!hasSession && !sameOrigin) {
       if (req.headers.get('sec-fetch-mode') === 'navigate') {
         const url = req.nextUrl.clone();
         url.pathname = '/login';

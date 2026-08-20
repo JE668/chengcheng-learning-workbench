@@ -36,6 +36,22 @@ function getCookie(req: Request, name: string): string | undefined {
 }
 
 /**
+ * 判断请求是否来自「同源页面」。
+ * 只比对 host（含端口），忽略协议（http/https 都算同源：局域网直连是 http，
+ * 反代对外是 https，都是自家）。用于软闸放行：同源页面内的 <video>/<img>/fetch
+ * 自带同源 Referer，说明是「自家人打开的页面」，应放行；只有无 Referer 也无
+ * cookie 的裸取（外人猜 URL）才拦截，保留防盗链本意。
+ */
+function isSameOriginReferer(referer: string | null, host: string | null): boolean {
+  if (!referer || !host) return false;
+  try {
+    return new URL(referer).host.toLowerCase() === host.toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
+/**
  * 把本地可读流桥接成 Web ReadableStream（用于 Range 分段流式返回）。
  * 视频分段必须流式，不能整文件读进内存（否则大视频爆内存）。
  * 用 node:stream 的 Readable.toWeb 产出与 DOM ReadableStream 类型一致的流，
@@ -57,9 +73,13 @@ function nodeToWeb(node: Readable): ReadableStream<Uint8Array> {
  * @param rootDir   媒体根目录，默认 process.cwd()/public（部署时即 /app/public）
  */
 export async function serveMedia(req: Request, relPath: string, rootDir?: string): Promise<Response> {
-  // 1) 登录软闸
+  // 1) 登录软闸：无 session 且非同源页面请求 → 401（防外人裸取 URL 下载）。
+  //    已登录、或同源页面内发起的请求（<video>/<img>/fetch 自带同源 Referer）均放行，
+  //    避免把孩子平板（登录态过期但未登录）误挡成黑屏——这正是「加了防盗链后播不了」的根因。
   const session = getCookie(req, COOKIE_NAME);
-  if (!session) {
+  const referer = req.headers.get('referer');
+  const host = req.headers.get('host');
+  if (!session && !isSameOriginReferer(referer, host)) {
     return new Response(JSON.stringify({ error: '未登录或登录已过期' }), {
       status: 401,
       headers: { 'content-type': 'application/json; charset=utf-8' },

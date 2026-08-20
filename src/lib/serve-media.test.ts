@@ -7,10 +7,11 @@ import { parseByteRange } from './media-range';
 
 const COOKIE = 'session=abc123';
 
-function req(rel: string, opts: { range?: string; cookie?: string } = {}) {
-  const headers: Record<string, string> = {};
+function req(rel: string, opts: { range?: string; cookie?: string; referer?: string; host?: string } = {}) {
+  const headers: Record<string, string> = { host: opts.host ?? 'localhost' };
   if (opts.range) headers.range = opts.range;
   if (opts.cookie) headers.cookie = opts.cookie;
+  if (opts.referer) headers.referer = opts.referer;
   return new Request(`http://localhost/api/media/${rel}`, { headers });
 }
 
@@ -56,6 +57,24 @@ describe('serveMedia（受保护媒体路由核心）', () => {
 
   it('无 session cookie → 401', async () => {
     const res = await serveMedia(req('raz/videos/A.mp4'), 'raz/videos/A.mp4', dir);
+    expect(res.status).toBe(401);
+  });
+
+  it('无 session 但有同源 Referer（页面内 <video> 发起）→ 放行 200', async () => {
+    const res = await serveMedia(
+      req('raz/videos/A.mp4', { referer: 'http://localhost/study/moko' }),
+      'raz/videos/A.mp4',
+      dir,
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('无 session 且跨域 Referer → 401（仍防裸取）', async () => {
+    const res = await serveMedia(
+      req('raz/videos/A.mp4', { referer: 'https://evil.example.com/x' }),
+      'raz/videos/A.mp4',
+      dir,
+    );
     expect(res.status).toBe(401);
   });
 
