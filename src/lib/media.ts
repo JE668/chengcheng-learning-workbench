@@ -24,7 +24,8 @@ const RAW = (process.env.NEXT_PUBLIC_MEDIA_BASE || '').trim().replace(/\/+$/, ''
 /** 把应用内的媒体相对路径（如 /raz/books/x.pdf）解析为最终 URL。 */
 export function mediaUrl(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`;
-  if (!RAW) return `/api/media${p}`; // 同源：走带登录软闸的媒体路由（整文件 200，不依赖 Range）
+  if (!RAW) return p; // 同源：直接走 public/ 静态直出（Range 由标准静态服务器/Next 原生处理，
+  // 比 /api/media 的流式 206 更不易被反代缓冲破坏；防盗链由 middleware 的 /raz、/textbooks 软闸负责）。
   return `${RAW}${p}`;
 }
 
