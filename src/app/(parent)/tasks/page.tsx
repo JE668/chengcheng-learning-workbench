@@ -149,6 +149,7 @@ export default function TasksPage() {
             </div>
           </form>
         ) : (
+          <>
           <form onSubmit={submit} className="space-y-4">
             {msg && <div className="mb-2 p-3 rounded-2xl bg-moko-mint text-white font-bold text-center">{msg}</div>}
             <div>
@@ -195,9 +196,24 @@ export default function TasksPage() {
               发布任务
             </button>
           </form>
+          {/* 一键布置每日一练 */}
+          <button
+            onClick={async () => {
+              const res = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: '完成今日一练（语文+数学+英语）', subject: '语文', description: '去「萌可闯关」做完今天的三科练习，做对 80% 就算通过！', points: 10 }),
+              });
+              if (res.ok) { setMsg('已布置「完成今日一练」任务（+10 积分），孩子端马上能看到～'); await load(); }
+              else setMsg('布置失败，可能已布置过');
+            }}
+            className="w-full mt-3 py-2.5 bg-moko-gold text-white font-bold rounded-2xl shadow hover:scale-[1.02] transition text-sm"
+          >
+            ⚡ 一键布置「完成今日一练」（+10 积分）
+          </button>
+          </>
         )}
       </div>
-
       <h2 className="text-2xl font-black text-moko-violet mb-3">已发布任务（{tasks.length}）</h2>
       <div className="space-y-2">
         {tasks.map((t) => (

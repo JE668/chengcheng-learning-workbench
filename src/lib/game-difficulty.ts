@@ -55,6 +55,15 @@ export function setGameLevel(gameId: string, level: number) {
   writeRec(gameId, { ...rec, level });
 }
 
+/** 读取某游戏的历史最高分（localStorage） */
+export function getGameBest(gameId: string): number {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const raw = localStorage.getItem(PREFIX + gameId + ':best');
+    return raw ? Number(raw) || 0 : 0;
+  } catch { return 0; }
+}
+
 /**
  * 一局结束后根据成绩调整难度，返回下次开局的建议档位：
  * - 已有历史且本次成绩 ≥ 历史均值 → 升一档；
@@ -72,5 +81,10 @@ export function recordGameResult(gameId: string, score: number, maxLevels: numbe
     else if (score < baseline * 0.5) level = Math.max(1, level - 1);
   }
   writeRec(gameId, { level, avg, plays });
+  // 记录历史最高分
+  try {
+    const best = getGameBest(gameId);
+    if (score > best) localStorage.setItem(PREFIX + gameId + ':best', String(score));
+  } catch { /* */ }
   return level;
 }

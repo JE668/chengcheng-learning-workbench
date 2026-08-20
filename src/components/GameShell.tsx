@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { mokoChars } from '@/lib/moko';
-import { getGameLevel, setGameLevel, recordGameResult } from '@/lib/game-difficulty';
+import { getGameLevel, setGameLevel, recordGameResult, getGameBest } from '@/lib/game-difficulty';
 
 export default function GameShell({
   gameId,
@@ -109,6 +109,7 @@ export default function GameShell({
           <div className="text-6xl mb-4">🎉</div>
           <h2 className="text-2xl font-extrabold text-moko-violet mb-2">挑战完成！</h2>
           <p className="text-xl text-moko-rose font-bold mb-4">{msg || `获得 ${score} 积分！`}</p>
+          <p className="text-sm text-gray-400 mb-4">🏆 历史最高分：{Math.max(getGameBest(gameId), score)} 分</p>
           <button
             onClick={() => {
               setFinished(false);

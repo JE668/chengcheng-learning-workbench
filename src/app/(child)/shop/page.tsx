@@ -105,12 +105,22 @@ export default function ShopPage() {
         {starShop.map((s) => {
           const owned = Number(state.inventory[s.key] || 0) > 0;
           const afford = state.starCoins >= s.cost;
+          const isSkin = s.key.startsWith('skin_');
+          const skinPreview: Record<string, string> = {
+            skin_star: 'bg-gradient-to-br from-indigo-400 to-purple-600',
+            skin_candy: 'bg-gradient-to-br from-pink-300 to-orange-300',
+          };
           return (
             <div key={s.key} className="card-moko flex items-center gap-3">
               <div className="text-4xl">{s.icon}</div>
               <div className="flex-1">
                 <div className="font-bold text-moko-violet">{s.name}</div>
                 <div className="text-xs text-gray-500">{s.desc}</div>
+                {isSkin && (
+                  <div className={`mt-1.5 h-8 rounded-lg ${skinPreview[s.key] ?? 'bg-gray-200'} flex items-center justify-center`}>
+                    <span className="text-xs text-white/80 font-bold">预览效果</span>
+                  </div>
+                )}
               </div>
               {owned ? (
                 <span className="text-sm font-bold text-green-500">已拥有 ✓</span>
