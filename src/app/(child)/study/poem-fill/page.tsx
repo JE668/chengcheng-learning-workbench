@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { POEMS, CHARACTERS } from '@/lib/study-data';
 import { speakZh, praise } from '@/lib/speak';
 import { trackActivity } from '@/lib/activity';
+import { useModuleProgress } from '@/lib/module-progress';
+import { ModuleStars } from '@/components/study/ModuleStars';
 
 const PUNCT = new Set(['，', '。', '？', '！', '、', '；', '：', '“', '”', '《', '》']);
 
@@ -66,6 +68,8 @@ function shuffle<T>(arr: T[]): T[] {
 export default function PoemFillPage() {
   const [pIdx, setPIdx] = useState(0);
   const poem = POEMS[pIdx];
+  // 古诗填空（poem-fill）关卡进度：每首填对记 3 星，让孩子看到累计星星
+  const { record: recordPoemFill } = useModuleProgress('chinese', 'poem-fill');
 
   const lines = useMemo(() => buildLines(poem.lines), [poem]);
   const blankCount = useMemo(() => lines.flat().filter((t) => t.kind === 'blank').length, [lines]);
@@ -114,6 +118,7 @@ export default function PoemFillPage() {
       setConsumed((prev) => new Set(prev).add(cardIdx));
       if (ns.every((s) => s !== null)) {
         setSolved(true);
+        recordPoemFill(3);
         trackActivity('poem');
         setTimeout(() => speakZh(poem.lines.join(''), 0.7), 500);
         setTimeout(() => praise(), 1200);
@@ -129,7 +134,10 @@ export default function PoemFillPage() {
   return (
     <div className="max-w-3xl mx-auto fade-up">
       <Link href="/study" className="text-moko-violet font-black no-underline">‹ 返回学习城堡</Link>
-      <h1 className="page-title mt-2 mb-1">古诗填空背诵 📜</h1>
+      <div className="flex items-center justify-between mt-2 mb-1">
+        <h1 className="page-title">古诗填空背诵 📜</h1>
+        <ModuleStars subject="chinese" moduleKey="poem-fill" />
+      </div>
       <p className="text-gray-600 mb-4">
         把缺少的字从下方字卡里点出来补上，全部填对就能听萌可念整首诗啦！
       </p>

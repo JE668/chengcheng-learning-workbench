@@ -16,6 +16,7 @@ import {
 import { speakZh } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { useModuleProgress } from '@/lib/module-progress';
+import { ModuleStars } from '@/components/study/ModuleStars';
 
 /* ---------- 识字（按类别，一屏一类） ---------- */
 function CharacterCard({ item, done, onDone }: { item: CharacterItem; done: boolean; onDone: () => void }) {
@@ -191,6 +192,8 @@ function PoemCard({ item }: { item: PoemItem }) {
   const [reciteScore, setReciteScore] = useState<number | null>(null);
   const [reciteText, setReciteText] = useState('');
   const [micError, setMicError] = useState('');
+  // 古诗诵读（poems）关卡进度：背诵打分后记录星数，让孩子在中文城堡看到累计星星
+  const { record: recordPoemStars } = useModuleProgress('chinese', 'poems');
   const mrRef = useRef<MediaRecorder | null>(null);
   const srRef = useRef<any>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -253,7 +256,9 @@ function PoemCard({ item }: { item: PoemItem }) {
               if (text.includes(ch)) hit++;
             }
             const ratio = target.length > 0 ? hit / target.length : 0;
-            setReciteScore(ratio >= 0.8 ? 3 : ratio >= 0.6 ? 2 : ratio >= 0.4 ? 1 : 0);
+            const score = ratio >= 0.8 ? 3 : ratio >= 0.6 ? 2 : ratio >= 0.4 ? 1 : 0;
+            setReciteScore(score);
+            if (score > 0) recordPoemStars(score);
           };
           rec.onerror = () => {};
           rec.start();
@@ -348,7 +353,10 @@ export function PoemModule() {
   const poem = POEMS[idx];
   return (
     <div className="space-y-4">
-      <div className="text-center text-sm text-gray-400">第 {idx + 1} / {POEMS.length} 首 · 一首一首读，慢慢来</div>
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-gray-400">第 {idx + 1} / {POEMS.length} 首 · 一首一首读，慢慢来</div>
+        <ModuleStars subject="chinese" moduleKey="poems" />
+      </div>
       <PoemCard key={poem.title} item={poem} />
       <div className="flex justify-center gap-3">
         <button

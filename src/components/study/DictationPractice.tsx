@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { GRADE1_CHAR_UNITS, CHARACTERS } from '@/lib/study-data';
 import { speakZh } from '@/lib/speak';
+import { useModuleProgress } from '@/lib/module-progress';
+import { ModuleStars } from '@/components/study/ModuleStars';
 
 type Mode = 'char' | 'pinyin';
 
@@ -55,6 +57,8 @@ export default function DictationPractice() {
   const [unit, setUnit] = useState('ALL');
   const [mode, setMode] = useState<Mode>('char');
   const [count, setCount] = useState(8);
+  // 默写（dictation）关卡进度：每轮结束按正确率记星，让孩子看到累计星星
+  const { record: recordDictation } = useModuleProgress('chinese', 'dictation');
 
   const [phase, setPhase] = useState<'setup' | 'play' | 'done'>('setup');
   const [items, setItems] = useState<Item[]>([]);
@@ -85,6 +89,15 @@ export default function DictationPractice() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx, phase]);
+
+  // 每轮听写结束：按正确率记星（done 阶段只进入一次，避免重复记）
+  useEffect(() => {
+    if (phase !== 'done') return;
+    const acc = items.length ? Math.round((score / items.length) * 100) : 0;
+    const s = acc >= 90 ? 3 : acc >= 70 ? 2 : acc >= 50 ? 1 : 0;
+    if (s > 0) recordDictation(s);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   async function logMistake(wrong: string) {
     try {
@@ -202,7 +215,11 @@ export default function DictationPractice() {
               </span>
             ))}
           </div>
-          <p className="text-gray-600 mb-4">写对了 {score} / {items.length} 个，正确率 {acc}%</p>
+          <p className="text-gray-600 mb-1">写对了 {score} / {items.length} 个，正确率 {acc}%</p>
+          <div className="flex items-center justify-center gap-1 mb-4 text-sm text-moko-violet">
+            <span>累计星星</span>
+            <ModuleStars subject="chinese" moduleKey="dictation" />
+          </div>
           <div className="flex gap-2 justify-center">
             <button onClick={start} className="px-6 py-2 rounded-full bg-moko-yellow text-white font-bold text-sm active:scale-95 transition">
               再来一轮 ›

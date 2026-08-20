@@ -138,7 +138,13 @@ export default async function HomePage() {
           {castle.troublemakers.length > 0 && (
             <p className="text-sm text-red-500 font-semibold mb-2">⚠️ {castle.troublemakers.length} 只捣蛋萌可溜进城堡！快用魔法喷雾和乐美一起把它们捉回去～</p>
           )}
-          <HarvestBtn />
+          <HarvestBtn
+            info={{
+              harvestableStars: castle.harvestableStars,
+              friendTotal: castle.friendTotal,
+              friendHarvestedToday: castle.friendHarvestedToday,
+            }}
+          />
         </div>
 
         <div className="card-moko">

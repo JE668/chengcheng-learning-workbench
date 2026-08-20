@@ -91,6 +91,12 @@ export interface CastleStateView {
   missedDays: { day: string; missed: Subject[]; hasTrouble: boolean }[];
   canBuyShield: boolean;
   noStarToday: boolean;
+  /** 今日可收获的星星币数（尚未收获的 friend 萌可数 × STAR_PER_FRIEND） */
+  harvestableStars: number;
+  /** 成为好朋友的萌可总数（每天每只可收获一次） */
+  friendTotal: number;
+  /** 今天已经收获过的 friend 萌可数 */
+  friendHarvestedToday: number;
 }
 
 /* ----------------------------- 基础读写 ----------------------------- */
@@ -648,10 +654,19 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
     .map(([day, v]) => ({ day, missed: v.missed, hasTrouble: troubleDaySet.has(day) }))
     .slice(0, 14);
 
+  // 星星币收获可视化：friend 萌可每天可收获一次（+STAR_PER_FRIEND/只）
+  const friendRows = owned.rows.filter((r) => r.status === 'resident' && r.stage === 'friend');
+  const friendTotal = friendRows.length;
+  const friendHarvestedToday = friendRows.filter((r) => String(r.last_harvest_day) === today).length;
+  const harvestableStars = (friendTotal - friendHarvestedToday) * STAR_PER_FRIEND;
+
   return {
     today,
     sunlight,
     starCoins,
+    harvestableStars,
+    friendTotal,
+    friendHarvestedToday,
     prosperity,
     streakDays,
     shieldEquipped,

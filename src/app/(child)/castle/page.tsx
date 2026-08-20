@@ -23,6 +23,7 @@ interface StateView {
   inventory: Record<string, number>;
   missedDays: { day: string; missed: string[]; hasTrouble: boolean }[];
   canBuyShield: boolean; noStarToday: boolean;
+  harvestableStars: number; friendTotal: number; friendHarvestedToday: number;
 }
 const STAGE_LABEL: Record<Stage, string> = { obtained: '刚解锁', settled: '入驻城堡', playing: '开心玩耍', friend: '好朋友' };
 const TABS = [['hall', '🏰 大厅'], ['gallery', '📖 图鉴'], ['shop', '🛍️ 商店'], ['bag', '🎒 背包'], ['achv', '🏅 成就']] as const;
@@ -84,9 +85,39 @@ export default function CastlePage() {
           </div>
           <span className="text-sm font-bold text-moko-violet">{state.prosperity}</span>
         </div>
+        <div className="mt-3 rounded-2xl bg-moko-gold/10 border-2 border-moko-gold/30 p-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-bold text-moko-violet">⭐ 今日可收获星星币</span>
+            <span className="font-black text-moko-gold">{state.harvestableStars} 颗</span>
+          </div>
+          {state.friendTotal > 0 ? (
+            <>
+              <div className="mt-2 h-2 rounded-full bg-white/70 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-moko-gold to-moko-yellow"
+                  style={{ width: `${Math.min(100, (state.friendHarvestedToday / state.friendTotal) * 100)}%` }}
+                />
+              </div>
+              <div className="mt-1 text-[11px] text-gray-500 text-right">
+                {state.harvestableStars > 0
+                  ? `还有 ${state.friendTotal - state.friendHarvestedToday} 只萌可没收获～`
+                  : '今天都收完啦，明天再来 🌙'}
+                （${state.friendHarvestedToday}/${state.friendTotal} 只已收）
+              </div>
+            </>
+          ) : (
+            <div className="mt-1 text-[11px] text-gray-500">成为好朋友的萌可才能每天产星星币哦～</div>
+          )}
+        </div>
         <div className="flex items-center justify-between mt-2">
           <span className="text-xs text-gray-500">连续打卡 {state.streakDays} 天</span>
-          <button onClick={() => act('/api/castle/harvest')} disabled={busy} className="btn btn-gold text-sm">⭐ 收获星星币</button>
+          <button
+            onClick={() => act('/api/castle/harvest')}
+            disabled={busy || (state.friendTotal > 0 && state.harvestableStars === 0)}
+            className="btn btn-gold text-sm"
+          >
+            {state.harvestableStars > 0 ? `⭐ 收获 ${state.harvestableStars} 颗` : '⭐ 收获星星币'}
+          </button>
         </div>
       </div>
 
