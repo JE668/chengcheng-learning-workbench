@@ -1,6 +1,7 @@
 import { createReadStream, promises as fsp } from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
+import { parseByteRange, type ByteRange } from './media-range';
 
 /** 登录软闸用的 cookie 名，须与 middleware.ts 的 COOKIE_NAME 保持一致。 */
 const COOKIE_NAME = 'session';
@@ -48,13 +49,10 @@ function nodeToWeb(node: Readable): ReadableStream<Uint8Array> {
  * 受保护媒体的统一服务逻辑（同源 /api/media 背后调用）：
  *  - 登录软闸：无 session cookie → 401（与 middleware 一致，防裸取）；
  *  - 目录穿越防护：relPath 必须落在 rootDir 内，否则 403；
- *  - 始终「整文件 200 流式返回」，**不依赖 HTTP Range**：
- *    部分反代（如 lucky）会破坏 <video> 的 Range/206 流式，导致视频加载不出；
- *    而 PDF 走整文件 GET 能正常代理。让视频也走整文件 200，行为与 PDF 一致，
- *    从而绕开反代对 Range 的破坏。代价是视频不可拖动进度（seek）。
+ *  - HTTP Range：支持 `bytes=start-end`，返回 206 + Content-Range，让 <video> 正常流式播放；
  *  - 同源返回标准 Response，既能在 Next 路由里用，也能在 vitest 里直接用 Node 的 Request 测。
  *
- * @param req       标准 Request（取 cookie）
+ * @param req       标准 Request（取 Range 头与 cookie）
  * @param relPath   媒体相对路径，如 "raz/videos/AA-01.mp4"
  * @param rootDir   媒体根目录，默认 process.cwd()/public（部署时即 /app/public）
  */
@@ -88,18 +86,34 @@ export async function serveMedia(req: Request, relPath: string, rootDir?: string
   const ext = path.extname(abs).toLowerCase();
   const contentType = MIME[ext] ?? 'application/octet-stream';
   const total = stat.size;
+  const range = parseByteRange(req.headers.get('range'), total);
 
-  // 始终整文件 200 流式返回：绕开反代对 Range/206 的破坏（见文件头注释）。
   const headers: Record<string, string> = {
     'content-type': contentType,
+    'accept-ranges': 'bytes',
     'cache-control': 'private, max-age=86400',
     'content-disposition': 'inline',
-    'content-length': String(total),
   };
 
+  if (range) {
+    const { start, end } = range;
+    const chunkSize = end - start + 1;
+    const node = createReadStream(abs, { start, end });
+    headers['content-range'] = `bytes ${start}-${end}/${total}`;
+    headers['content-length'] = String(chunkSize);
+    return new Response(nodeToWeb(node), {
+      status: 206,
+      headers,
+    });
+  }
+
+  // 整文件（无 Range / 非法 Range）
   const node = createReadStream(abs);
+  headers['content-length'] = String(total);
   return new Response(nodeToWeb(node), {
     status: 200,
     headers,
   });
 }
+
+export type { ByteRange };
