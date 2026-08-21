@@ -5,6 +5,13 @@
 # next build 报 “Module not found: Can't resolve '@/lib/moko'” 等伪错误。
 FROM node:22-bookworm-slim
 
+# 安装 Python + ONNX Runtime 依赖（Kokoro TTS 需要）
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-pip python3-dev \
+    libsndfile1 ffmpeg \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip3 install --break-system-packages kokoro-onnx soundfile numpy==1.26.4
+
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
@@ -27,10 +34,10 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# 2.5) 拉取 Piper 离线 TTS（二进制 + 中英模型），构建失败也不中断镜像。
-#      国内网络无法稳定连微软免费 TTS（实测 400 拒服），Piper 离线合成是安卓/Edge
-#      中文嗓音的可靠来源。装不上时 /api/tts 自动回退微软（当前行为），站点照常起。
-RUN node scripts/fetch-piper.mjs || true
+# 2.5) 拉取 Kokoro 离线 TTS 模型（替代已废弃的 Piper）。
+#      Kokoro 音质优于 Piper，完全离线不依赖外网，是国内网络最稳定的中文 TTS 方案。
+#      构建失败也不中断镜像，运行时 /api/tts 会自动回退到 Edge 在线 TTS。
+RUN node scripts/fetch-kokoro.mjs || true
 
 # 3) 构建产物就绪，移除 dev 依赖（next start 运行时不需要 tailwind/eslint/typescript）
 RUN npm prune --omit=dev

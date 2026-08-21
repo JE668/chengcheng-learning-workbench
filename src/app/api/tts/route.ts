@@ -2,54 +2,63 @@
  * ───────────────────────────────────────────────────────────────────────────
  * 服务端中文/英文 TTS —— 手写版「微软 Edge 在线神经语音」客户端
  * ───────────────────────────────────────────────────────────────────────────
- * 背景：本项目没有采购任何付费 TTS，而是直接对接微软给 Edge 浏览器
- *       「大声朗读 (Read Aloud)」功能用的那个【免费公开】在线 TTS 服务。
+ * 合成链路（按可靠性优先）：
+ *   1) 【Kokoro 离线神经语音】——首选。ONNX Runtime 推理，中文(af_bella) + 英文(af_sarah)
+ *      模型已在镜像构建期装进 /opt/kokoro（见 scripts/fetch-kokoro.mjs 与 Dockerfile）。
+ *      完全不依赖外网，是国内网络下最稳的普通话来源；跨设备音质一致。
+ *   2) 【Edge 在线神经语音（晓晓/ Aria）】——Kokoro 不可用时的兜底。
+ *      手写对接微软给 Edge「大声朗读」用的免费公开 TTS（与 edge-tts 等包同一后端）。
+ *      国内网络常被拒（实测返回 "Our services aren't available"），故仅作次级兜底。
+ *   3) 【浏览器原生 Web Speech】——服务端两条路都失败时，前端 speak.ts 自动降级。
  *
- * 重要：这与 npm 上的 @micro/edge-tts / edge-tts / edge-tts-client 等包
- *       **连的是同一个后端、同一批神经嗓音**（zh-CN-XiaoxiaoNeural 晓晓、
- *       en-US-AriaNeural 等），因此音质完全相同。那些包本质就是把下面这套
- *       协议封装了一遍；这里手写是为了：
- *         (1) 不引入额外 TTS 专用依赖（仅用已在用的 ws）；
- *         (2) 能在 SSML 里插入 <break> 把单个拼音拉长到约 1 秒（拼音跟读需要）；
- *         (3) 完全可控。
+ * 为什么 Kokoro 优先：项目部署在国内 NAS，微软免费 TTS 端点经常被拒（geo-block），
+ * 一旦失败只能靠浏览器 Web Speech，而部分设备（iPad 设成香港/仅粤语、个别安卓/
+ * 平板无普通话嗓音、Safari 首句静音）根本没有可用的普通话嗓音 → 整段静音。
+ * Kokoro 离线合成彻底绕开外网，保证「服务端一定有普通话音频」。
  *
- * 协议简述（均为微软公开端点，无鉴权账号，靠固定 client token + 动态安全令牌）：
- *   1. 先 GET https://edge.microsoft.com/tts/cfg/security 取 secret；
- *   2. 用 sha256("GEC" + UTC日期 + secret) 算出 Sec-MS-GEC 令牌（防滥用校验）；
- *   3. 用 wss://speech.platform.bing.com/... 的 WebSocket 握手，
- *      查询串带 TrustedClientToken + Sec-MS-GEC + Sec-MS-GEC-Version；
- *   4. 先发 speech.config，再发一段 SSML（指定嗓音/语速/音调/停顿）；
- *   5. 服务端把 MP3 音频帧用 "Path:audio\r\n" 分隔符嵌在二进制消息里回流，
- *      我们按该分隔符切片拼成完整 MP3 返回前端。
- *
- * 前端 speak.ts 会优先调用本路由，任何失败（离线 / 令牌端点不可达 / 握手 403 /
- * 超时）都降级到浏览器原生 Web Speech，保证朗读永远可用。
- *
- * 维护提醒：若微软改了令牌端点或握手参数，本文件需同步调整；
- *           npm 包则会由作者先踩坑修复。两者脆弱性本质相同（都用同一个
- *           固定的 TRUSTED_TOKEN 与扩展 UA）。
+ * 注意：Kokoro Python 脚本是 CPU 推理，NAS 上约 200-500ms/句（短文本）；
+ * 若 Python 环境异常，自动回退 Edge → Web Speech，行为与改动前一致。
  * ───────────────────────────────────────────────────────────────────────────
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { safeJson } from '@/lib/safe-json';
 import { createHash } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { readFile, unlink } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import WebSocket from 'ws';
+import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 // Edge 在线 TTS 需要 Node 运行时（WebSocket 连微软服务，不能用 Edge/浏览器运行时）
 export const runtime = 'nodejs';
 // 每次按文本实时合成，不应被构建期缓存
 export const dynamic = 'force-dynamic';
 
+// ── Kokoro 离线 TTS（首选）─────────────────────────────────────────────────
+const KOKORO_DIR = process.env.KOKORO_DIR || '/opt/kokoro';
+const KOKORO_MODEL = join(KOKORO_DIR, 'kokoro-v1.0.onnx');
+const KOKORO_VOICES = join(KOKORO_DIR, 'voices-v1.0.bin');
+const KOKORO_SCRIPT = join(process.cwd(), 'scripts', 'kokoro-tts.py');
+
+// 选定的神经嗓音（Kokoro 多音色库）：
+//   中文 → af_bella（自然女声，适合学习）；英文 → af_sarah（清晰女声）。
+const VOICE_KOKORO: Record<string, string> = {
+  zh: 'af_bella',
+  en: 'af_sarah',
+};
+
+// ── Edge 在线 TTS（兜底）─────────────────────────────────────────────────
 // TrustedClientToken：Edge 浏览器「大声朗读」客户端写死的一个公开固定 token，
 // 微软官方 Read Aloud 就带这个值。@micro/edge-tts 等包内部用的也是它（非机密）。
 const TRUSTED_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
-// 取安全令牌 secret 的端点（见上方协议第 1 步）。
+// 取安全令牌 secret 的端点（见下方协议第 1 步）。
 const SECURITY_URL = 'https://edge.microsoft.com/tts/cfg/security';
 
 // 选定的神经嗓音（与 @micro/edge-tts 等包可调用的同一批微软在线嗓音）：
 //   中文 → 晓晓 XiaoxiaoNeural（自然女声）；英文 → Aria AriaNeural（清晰女声）。
-// 想换嗓音直接改这里即可（如中文换成云野 YunyangNeural 男声）。
-const VOICE: Record<string, string> = {
+const VOICE_EDGE: Record<string, string> = {
   zh: 'zh-CN-XiaoxiaoNeural',
   en: 'en-US-AriaNeural',
 };
@@ -79,8 +88,6 @@ async function getSecToken(): Promise<string> {
   cachedSec = { date, token: sha };
   return sha;
 }
-
-import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 const TTS_LIMIT = { windowSeconds: 60, maxRequests: 30 }; // 每 IP 每分钟 30 次
 
@@ -137,6 +144,161 @@ function acquireWs(sec: string): WebSocket {
   });
 }
 
+/**
+ * 用 Kokoro 离线合成音频（首选路径）。
+ * 返回 { data, type }，type 为 audio/wav。
+ * 任何异常（模型缺失/Python 报错）均抛出，由调用方降级到 Edge。
+ */
+async function synthesizeWithKokoro(
+  text: string,
+  lang: 'zh' | 'en',
+  rate: number,
+): Promise<{ data: Buffer; type: string }> {
+  if (!existsSync(KOKORO_MODEL) || !existsSync(KOKORO_VOICES) || !existsSync(KOKORO_SCRIPT)) {
+    throw new Error('kokoro 模型或脚本缺失');
+  }
+
+  // 语速映射：Kokoro speed 0.5-2.0，对应 Edge rate -50%~+100%
+  // rate=0.55 (Edge -45%) ≈ speed=1.35；rate=0.8 (Edge -20%) ≈ speed=1.0
+  const speed = Math.max(0.5, Math.min(2.0, 1 / rate));
+
+  const out = join(tmpdir(), `kokoro-${uuid()}.wav`);
+
+  return new Promise((resolve, reject) => {
+    const p = spawn('python3', [
+      KOKORO_SCRIPT,
+      '--model', KOKORO_MODEL,
+      '--voices', KOKORO_VOICES,
+      '--voice', VOICE_KOKORO[lang],
+      '--lang', lang,
+      '--speed', String(speed),
+    ], { stdio: ['pipe', 'ignore', 'pipe'] });
+
+    p.stdin.write(text);
+    p.stdin.end();
+
+    let err = '';
+    p.stderr.on('data', (d) => (err += String(d)));
+    p.on('error', reject);
+    p.on('close', async (code) => {
+      if (code !== 0) {
+        reject(new Error(`kokoro 退出码 ${code}: ${err.slice(0, 200)}`));
+        return;
+      }
+      try {
+        const data = await readFile(out);
+        await unlink(out).catch(() => {});
+        resolve({ data, type: 'audio/wav' });
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+}
+
+/**
+ * 用 Edge 在线 TTS 合成音频（兜底路径）。
+ * 返回 { data, type }，type 为 audio/mpeg。
+ */
+async function synthesizeWithEdge(
+  text: string,
+  lang: 'zh' | 'en',
+  rate: string,
+  pause: number,
+): Promise<{ data: Buffer; type: string }> {
+  const sec = await getSecToken();
+  const audio = await new Promise<Buffer>((resolve, reject) => {
+    const ws = acquireWs(sec);
+    const chunks: Buffer[] = [];
+    let settled = false;
+    let sent = false;
+
+    const done = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      fn();
+    };
+
+    const sendSsml = () => {
+      if (sent) return;
+      sent = true;
+      const cfg =
+        `X-Timestamp:${new Date()}\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n` +
+        JSON.stringify({
+          context: {
+            synthesis: {
+              audio: {
+                metadataoptions: { sentenceBoundaryEnabled: false, wordBoundaryEnabled: false },
+                outputFormat: 'audio-24khz-48kbitrate-mono-mp3',
+              },
+            },
+          },
+        });
+      ws.send(cfg, { compress: true }, (e) => e && done(() => reject(e)));
+
+      const ssml =
+        `X-RequestId:${uuid()}\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:${new Date()}Z\r\nPath:ssml\r\n\r\n` +
+        `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>` +
+        `<voice name='${VOICE_EDGE[lang]}'><prosody pitch='+0Hz' rate='${rate}' volume='+0%'>${text}</prosody>${pause > 0 ? `<break time='${pause}ms'/>` : ''}</voice></speak>`;
+      ws.send(ssml, { compress: true }, (e) => e && done(() => reject(e)));
+    };
+
+    ws.on('message', (raw: WebSocket.RawData, isBinary: boolean) => {
+      if (!isBinary) {
+        const s = raw.toString('utf8');
+        if (s.includes('turn.end')) {
+          done(() => {
+            try {
+              ws.removeAllListeners();
+            } catch {
+              /* ignore */
+            }
+            pooledWs = ws;
+            resolve(Buffer.concat(chunks));
+          });
+        }
+        return;
+      }
+      const buf = Buffer.from(raw as Buffer);
+      const sep = 'Path:audio\r\n';
+      const i = buf.indexOf(sep);
+      if (i >= 0) chunks.push(buf.subarray(i + sep.length));
+    });
+    ws.on('error', (e) =>
+      done(() => {
+        try {
+          ws.terminate();
+        } catch {
+          /* ignore */
+        }
+        if (pooledWs === ws) pooledWs = null;
+        reject(e);
+      }),
+    );
+    ws.on('open', () => sendSsml());
+    if (ws.readyState === WebSocket.OPEN) sendSsml();
+
+    setTimeout(
+      () =>
+        done(() => {
+          try {
+            ws.terminate();
+          } catch {
+            /* ignore */
+          }
+          if (pooledWs === ws) pooledWs = null;
+          reject(new Error('tts timeout'));
+        }),
+      30000,
+    );
+  });
+
+  return { data: audio, type: 'audio/mpeg' };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 入口
+// ═══════════════════════════════════════════════════════════════════════════
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
   const limit = rateLimit(`tts:${ip}`, TTS_LIMIT);
@@ -145,7 +307,7 @@ export async function POST(req: NextRequest) {
   }
 
   let text = '';
-  let lang = 'zh';
+  let lang: 'zh' | 'en' = 'zh';
   let rate = '';
   let pause = 0;
   try {
@@ -181,125 +343,43 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // 协议第 2~3 步：取动态安全令牌，并拼出带令牌的 WebSocket 握手地址。
-    const sec = await getSecToken();
-    const audio = await new Promise<Buffer>((resolve, reject) => {
-      // 优先复用空闲暖连接（见 acquireWs），省去 TLS + WS 握手固定开销。
-      const ws = acquireWs(sec);
-      const chunks: Buffer[] = [];
-      let settled = false;
-      let sent = false;
-
-      const done = (fn: () => void) => {
-        if (settled) return;
-        settled = true;
-        fn();
-      };
-
-      // 发送 speech.config + SSML（每次合成都重发 config，幂等无害）。
-      // sent 守卫避免在「已 OPEN 的复用连接」上因 'open' 不触发而漏发、或因复用+新建重复发。
-      const sendSsml = () => {
-        if (sent) return;
-        sent = true;
-        const cfg =
-          `X-Timestamp:${new Date()}\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n` +
-          JSON.stringify({
-            context: {
-              synthesis: {
-                audio: {
-                  metadataoptions: { sentenceBoundaryEnabled: false, wordBoundaryEnabled: false },
-                  outputFormat: 'audio-24khz-48kbitrate-mono-mp3',
-                },
-              },
-            },
-          });
-        ws.send(cfg, { compress: true }, (e) => e && done(() => reject(e)));
-
-        // 协议第 4 步：构造 SSML，指定神经嗓音(VOICE)、语速(rate)、<break> 静音停顿。
-        // 注意：<break time> 是拼音跟读的关键——在单个音节后插入静音，使总时长接近 1 秒。
-        const ssml =
-          `X-RequestId:${uuid()}\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:${new Date()}Z\r\nPath:ssml\r\n\r\n` +
-          `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>` +
-          `<voice name='${VOICE[lang]}'><prosody pitch='+0Hz' rate='${rate}' volume='+0%'>${text}</prosody>${pause > 0 ? `<break time='${pause}ms'/>` : ''}</voice></speak>`;
-        ws.send(ssml, { compress: true }, (e) => e && done(() => reject(e)));
-      };
-
-      ws.on('message', (raw: WebSocket.RawData, isBinary: boolean) => {
-        // 文本消息：微软用 "turn.end" 标记整段语音合成结束 → 收尾并返回。
-        if (!isBinary) {
-          const s = raw.toString('utf8');
-          if (s.includes('turn.end')) {
-            done(() => {
-              // 合成成功：摘掉本次监听，把连接放回池中复用（保持 OPEN，下次免握手）。
-              try {
-                ws.removeAllListeners();
-              } catch {
-                /* ignore */
-              }
-              pooledWs = ws;
-              resolve(Buffer.concat(chunks));
-            });
-          }
-          return;
-        }
-        // 二进制消息：音频帧被包在 "Path:audio\r\n" 分隔头之后；
-        // 按该分隔符切掉头，剩余即 MP3 数据，多帧累加即为完整音频。
-        const buf = Buffer.from(raw as Buffer);
-        const sep = 'Path:audio\r\n';
-        const i = buf.indexOf(sep);
-        if (i >= 0) chunks.push(buf.subarray(i + sep.length));
-      });
-      ws.on('error', (e) =>
-        done(() => {
-          try {
-            ws.terminate();
-          } catch {
-            /* ignore */
-          }
-          if (pooledWs === ws) pooledWs = null;
-          reject(e);
-        }),
+    // 主路径：Kokoro 离线合成（国内网络最稳、跨设备一致、不依赖外网）。
+    // 任何失败（模型缺失/Python 报错）→ 回退 Edge 在线 TTS。
+    let result: { data: Buffer; type: string };
+    try {
+      // rate 格式转换：Edge 的 "-45%" 需要转成 Kokoro 的 speed 数值
+      const rateMatch = /([+-]?\d+(?:\.\d+)?)\s*%/.exec(rate);
+      const pct = rateMatch ? parseFloat(rateMatch[1]) : 0;
+      const speed = 1 + pct / 100; // -45% -> 0.55
+      result = await synthesizeWithKokoro(text, lang, Math.max(0.5, Math.min(2.0, 1 / speed)));
+    } catch (e) {
+      console.warn(
+        '[tts] Kokoro 不可用，回退 Edge 在线 TTS：',
+        e instanceof Error ? e.message : String(e),
       );
-      ws.on('open', () => sendSsml());
-      // 复用连接已处于 OPEN，'open' 事件不会再触发，需立即发送
-      if (ws.readyState === WebSocket.OPEN) sendSsml();
-
-      setTimeout(
-        () =>
-          done(() => {
-            try {
-              ws.terminate();
-            } catch {
-              /* ignore */
-            }
-            if (pooledWs === ws) pooledWs = null;
-            reject(new Error('tts timeout'));
-          }),
-        30000,
-      );
-    });
-
-    // Buffer 在 Node20 类型下可能是 SharedArrayBuffer 后端，转成普通 Uint8Array 以满足 BodyIn      });
+      result = await synthesizeWithEdge(text, lang, rate, pause);
+    }
 
     // 写入合成缓存（限定上限，FIFO 淘汰最旧），供后续重复朗读秒回
     if (ttsCache.size >= TTS_CACHE_MAX) {
       const oldest = ttsCache.keys().next().value;
       if (oldest !== undefined) ttsCache.delete(oldest);
     }
-    ttsCache.set(cacheKey, audio);
+    ttsCache.set(cacheKey, result.data);
 
-    // Buffer 在 Node20 类型下可能是 SharedArrayBuffer 后端，转成普通 Uint8Array 以满足 BodyInit
-    return new NextResponse(new Uint8Array(audio), {
+    return new NextResponse(new Uint8Array(result.data), {
       status: 200,
       headers: {
-        'content-type': 'audio/mpeg',
+        'content-type': result.type,
         'cache-control': 'public, max-age=86400',
       },
     });
   } catch (e) {
-    // 合成失败（令牌端点不可达 / 握手 403 / 超时）→ 交由前端降级到 Web Speech
-    // 这里仅记日志供排查（如微软改端点/限流），不影响用户：前端 speak.ts 会自动降级。
-    console.warn('[tts] 合成失败，前端将降级到浏览器 Web Speech：', e instanceof Error ? e.message : String(e));
+    // 合成失败（Kokoro 与 Edge 均不可用）→ 交由前端降级到 Web Speech
+    console.warn(
+      '[tts] 合成失败（Kokoro 与 Edge 均不可用），前端将降级到浏览器 Web Speech：',
+      e instanceof Error ? e.message : String(e),
+    );
     return NextResponse.json({ error: 'tts failed' }, { status: 502 });
   }
 }
