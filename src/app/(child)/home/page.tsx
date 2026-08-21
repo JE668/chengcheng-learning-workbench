@@ -27,7 +27,7 @@ export default async function HomePage() {
             LEFT JOIN completions c ON c.task_id = t.id AND c.child_id = ?
             WHERE c.task_id IS NULL
             ORDER BY t.created_at DESC LIMIT 5`,
-      args: [user.id, todayStr],
+      args: [user.id],
     }),
     getModuleProgressAll(user.id),
   ]);
@@ -39,7 +39,7 @@ export default async function HomePage() {
   const practiceDone = practice.completed;
   const todayCheckins = await db.execute({
     sql: 'SELECT subject FROM daily_checkins WHERE child_id = ? AND day = ? AND status = ?',
-    args: [user.id, todayStr],
+    args: [user.id, todayStr, 'confirmed'],
   });
   const checkedSubjects = new Set(todayCheckins.rows.map((r) => String(r.subject)));
   const todayGamesRes = await db.execute({
