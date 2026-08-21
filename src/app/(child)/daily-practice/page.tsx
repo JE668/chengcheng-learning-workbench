@@ -33,6 +33,8 @@ export default function DailyPracticePage() {
   const [selected, setSelected] = useState<number[]>([]);
   const [result, setResult] = useState<PracticeSubmitResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // 时光沙漏：是否拥有（已完成态下显示「再做一次」按钮用）
+  const [hasTimeGlass, setHasTimeGlass] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -54,6 +56,17 @@ export default function DailyPracticePage() {
   useEffect(() => {
     if (q && !data?.completed && !result) autoPlay(q);
   }, [q]);
+
+  // 拉取是否拥有时光沙漏（控制已完成态下「再做一次」按钮显隐）
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch('/api/castle/state');
+        const j = await r.json();
+        setHasTimeGlass(Number(j.inventory?.timeglass ?? 0) > 0);
+      } catch { /* */ }
+    })();
+  }, []);
 
   const allAnswered = !!data && selected.length === data.questions.length && selected.every((s) => s !== -1);
 
@@ -112,17 +125,6 @@ export default function DailyPracticePage() {
   }
 
   // 已完成（当天）
-  const [hasTimeGlass, setHasTimeGlass] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const r = await fetch('/api/castle/state');
-        const j = await r.json();
-        setHasTimeGlass(Number(j.inventory?.timeglass ?? 0) > 0);
-      } catch { /* */ }
-    })();
-  }, []);
 
   if (data?.completed && !result) {
     return (
