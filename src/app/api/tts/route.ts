@@ -201,7 +201,7 @@ async function getKokoroServe(): Promise<KokoroServeState> {
   ], { stdio: ['pipe', 'pipe', 'pipe'] });
 
   // stderr 用来监听 "ready" 信号和错误日志
-  state.proc.stderr.on('data', (d) => {
+  state.proc!.stderr.on('data', (d) => {
     const msg = String(d);
     state.errBuf += msg;
     if (msg.includes('ready')) {
@@ -213,7 +213,7 @@ async function getKokoroServe(): Promise<KokoroServeState> {
 
   // stdout 逐行读取 JSON 响应
   let partial = '';
-  state.proc.stdout.on('data', (d) => {
+  state.proc!.stdout.on('data', (d) => {
     partial += String(d);
     // 处理所有完整行
     let idx;
@@ -292,7 +292,7 @@ function flushKokoroQueue(state: KokoroServeState): void {
   while (state.pendingQueue.length > 0) {
     const item = state.pendingQueue[0];
     try {
-      state.proc.stdin.write(item.line + '\n');
+      state.proc!.stdin.write(item.line + '\n');
       state.pendingQueue.shift();
     } catch {
       state.pendingQueue.shift();
