@@ -35,17 +35,16 @@ export default async function HomePage() {
   const todayModules = modProg.filter((p) => p.lastPlayed >= todayStart.getTime());
   const todayStars = todayModules.reduce((sum, p) => sum + p.stars, 0);
   // 今日完成状态（快捷入口 ✓ 标记）
-  const practice = await getTodayPractice(childId, false);
   const practiceDone = practice.completed;
   const todayCheckins = await db.execute({
     sql: "SELECT subject FROM daily_checkins WHERE child_id = ? AND day = date('now','localtime') AND status = 'confirmed'",
-    args: [childId],
+    args: [user.id],
   });
   const checkedSubjects = new Set(todayCheckins.rows.map((r) => String(r.subject)));
   const todayDate = new Date().toISOString().split('T')[0];
   const todayGamesRes = await db.execute({
     sql: 'SELECT DISTINCT game_id FROM completions WHERE child_id = ? AND created_at >= ?',
-    args: [childId, todayDate],
+    args: [user.id, todayDate],
   });
   const playedGames = todayGamesRes.rows.length;
 

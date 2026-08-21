@@ -6,6 +6,7 @@ import { magicShop, starShop, MokoCategories } from '@/lib/moko';
 import { MokoAvatar } from '@/components/MokoAvatar';
 import { SeriesCompleteBanner } from '@/components/SeriesCompleteBanner';
 import { EmptyState } from '@/components/EmptyState';
+import { HarvestBtn } from '@/components/castle-client';
 
 type Stage = 'obtained' | 'settled' | 'playing' | 'friend';
 interface Resident {

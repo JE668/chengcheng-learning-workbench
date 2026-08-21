@@ -43,6 +43,7 @@ export interface CastleStateView {
   inventory: Record<string, number>;
   missedDays: { day: string; missed: Subject[]; hasTrouble: boolean }[];
   canBuyShield: boolean;
+  freezeCount: number;
   noStarToday: boolean;
   harvestableStars: number;
   friendTotal: number;

@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
         for (const row of rows) {
           const r = row as Record<string, unknown>;
           const placeholders = cols.map(() => '?').join(', ');
-          const values = cols.map((c) => (r[c] === undefined || r[c] === null ? null : r[c]));
+          const values = cols.map((c) => (r[c] === undefined || r[c] === null ? null : r[c])) as (string | number | boolean | null)[];
           await db.execute({
             sql: 'INSERT INTO ' + t + ' (' + cols.join(', ') + ') VALUES (' + placeholders + ')',
             args: values as unknown[],

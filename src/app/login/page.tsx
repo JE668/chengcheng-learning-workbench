@@ -29,7 +29,7 @@ export default function LoginPage() {
     if (user === 'cara') {
       setPassword('0000');
       // 自动提交
-      setTimeout(() => document.getElementById('login-form')?.requestSubmit(), 100);
+      setTimeout(() => (document.getElementById('login-form') as HTMLFormElement)?.requestSubmit(), 100);
     }
   }
 

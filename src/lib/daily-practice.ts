@@ -58,6 +58,7 @@ export type PracticeQuestion =
       kind: 'math';
       subject: Subject;
       prompt: string;
+      han?: string;
       options: string[];
       answer: number;
       explain: string;
