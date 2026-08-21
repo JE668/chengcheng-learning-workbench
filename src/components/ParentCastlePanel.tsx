@@ -131,18 +131,40 @@ export default function ParentCastlePanel() {
       {/* 家长发放资源 */}
       <div className="rounded-3xl p-4 shadow-lg border-2 border-moko-gold/20 bg-moko-gold/5">
         <div className="font-bold text-moko-violet mb-2">🎁 发放资源</div>
-        <p className="text-xs text-gray-500 mb-3">直接给孩子发放阳光能量、星星币或捕捉券（不消耗任何东西）</p>
-        <div className="grid grid-cols-3 gap-2">
-          <button onClick={() => grant('sunlight', 3)} className="py-2 rounded-xl bg-moko-yellow text-white font-bold text-sm shadow active:scale-95 transition">
-            ☀️ +3 阳光
-          </button>
-          <button onClick={() => grant('starCoins', 5)} className="py-2 rounded-xl bg-moko-gold text-white font-bold text-sm shadow active:scale-95 transition">
-            ⭐ +5 星星币
-          </button>
-          <button onClick={() => grant('tickets', 1)} className="py-2 rounded-xl bg-moko-purple text-white font-bold text-sm shadow active:scale-95 transition">
-            🎟️ +1 捕捉券
-          </button>
+        <p className="text-xs text-gray-500 mb-3">直接给孩子发放资源（不消耗任何东西），测试消耗后可以补回来 👇</p>
+        <div className="space-y-3">
+          {/* 阳光能量 */}
+          <div>
+            <div className="text-xs font-bold text-moko-violet mb-1.5">☀️ 阳光能量</div>
+            <div className="grid grid-cols-4 gap-2">
+              <button onClick={() => grant('sunlight', 3)} className="py-2 rounded-xl bg-moko-yellow text-white font-bold text-sm shadow active:scale-95 transition">+3</button>
+              <button onClick={() => grant('sunlight', 10)} className="py-2 rounded-xl bg-moko-yellow text-white font-bold text-sm shadow active:scale-95 transition">+10</button>
+              <button onClick={() => grant('sunlight', 30)} className="py-2 rounded-xl bg-moko-yellow text-white font-bold text-sm shadow active:scale-95 transition">+30</button>
+              <button onClick={() => grant('sunlight', 100)} className="py-2 rounded-xl bg-moko-yellow text-white font-bold text-sm shadow active:scale-95 transition">+100</button>
+            </div>
+          </div>
+          {/* 星星币 */}
+          <div>
+            <div className="text-xs font-bold text-moko-violet mb-1.5">⭐ 星星币</div>
+            <div className="grid grid-cols-4 gap-2">
+              <button onClick={() => grant('starCoins', 5)} className="py-2 rounded-xl bg-moko-gold text-white font-bold text-sm shadow active:scale-95 transition">+5</button>
+              <button onClick={() => grant('starCoins', 20)} className="py-2 rounded-xl bg-moko-gold text-white font-bold text-sm shadow active:scale-95 transition">+20</button>
+              <button onClick={() => grant('starCoins', 50)} className="py-2 rounded-xl bg-moko-gold text-white font-bold text-sm shadow active:scale-95 transition">+50</button>
+              <button onClick={() => grant('starCoins', 200)} className="py-2 rounded-xl bg-moko-gold text-white font-bold text-sm shadow active:scale-95 transition">+200</button>
+            </div>
+          </div>
+          {/* 捕捉券 */}
+          <div>
+            <div className="text-xs font-bold text-moko-violet mb-1.5">🎟️ 捕捉券</div>
+            <div className="grid grid-cols-4 gap-2">
+              <button onClick={() => grant('tickets', 1)} className="py-2 rounded-xl bg-moko-purple text-white font-bold text-sm shadow active:scale-95 transition">+1</button>
+              <button onClick={() => grant('tickets', 3)} className="py-2 rounded-xl bg-moko-purple text-white font-bold text-sm shadow active:scale-95 transition">+3</button>
+              <button onClick={() => grant('tickets', 10)} className="py-2 rounded-xl bg-moko-purple text-white font-bold text-sm shadow active:scale-95 transition">+10</button>
+              <button onClick={() => grant('tickets', 30)} className="py-2 rounded-xl bg-moko-purple text-white font-bold text-sm shadow active:scale-95 transition">+30</button>
+            </div>
+          </div>
         </div>
+        <p className="text-xs text-gray-400 mt-2">💡 测试消耗后，点对应按钮即可补回。上限 100，超出会自动截断。</p>
       </div>
 
       {msg && <p className="text-sm text-moko-violet font-semibold">{msg}</p>}

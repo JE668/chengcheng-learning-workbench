@@ -34,6 +34,21 @@ export default async function HomePage() {
   todayStart.setHours(0, 0, 0, 0);
   const todayModules = modProg.filter((p) => p.lastPlayed >= todayStart.getTime());
   const todayStars = todayModules.reduce((sum, p) => sum + p.stars, 0);
+  // 今日完成状态（快捷入口 ✓ 标记）
+  const practice = await getTodayPractice(childId, false);
+  const practiceDone = practice.completed;
+  const todayCheckins = await db.execute({
+    sql: "SELECT subject FROM daily_checkins WHERE child_id = ? AND day = date('now','localtime') AND status = 'confirmed'",
+    args: [childId],
+  });
+  const checkedSubjects = new Set(todayCheckins.rows.map((r) => String(r.subject)));
+  const todayDate = new Date().toISOString().split('T')[0];
+  const todayGamesRes = await db.execute({
+    sql: 'SELECT DISTINCT game_id FROM completions WHERE child_id = ? AND created_at >= ?',
+    args: [childId, todayDate],
+  });
+  const playedGames = todayGamesRes.rows.length;
+
   const ownedCount = castle.gallery.filter((g) => g.owned).length;
   const totalMoko = castle.gallery.length;
   const pendingTasks = taskRes.rows.map((r) => ({
@@ -179,8 +194,10 @@ export default async function HomePage() {
             <Link href="/daily-practice" className="flex items-center gap-3 rounded-2xl p-3 shadow border-2 border-moko-gold/30 bg-moko-gold/5 hover:border-moko-gold transition active:scale-95">
               <span className="text-2xl">①🎯</span>
               <div className="flex-1 min-w-0">
-                <div className="font-black text-moko-violet">做今日一练</div>
-                <div className="text-xs text-gray-500">积分 +10/科 · 阳光 +1/科 · 捕捉券 +1/科 · 萌可入驻</div>
+                <div className="font-black text-moko-violet">{practiceDone ? '做今日一练（已完成 ✓）' : '做今日一练'}</div>
+                <div className="text-xs text-gray-500">
+                  {checkedSubjects.size > 0 ? `已打卡 ${checkedSubjects.size}/3 科` : '积分 +10/科 · 阳光 +1/科 · 捕捉券 +1/科 · 萌可入驻'}
+                </div>
               </div>
               <span className="text-xs text-gray-400">›</span>
             </Link>
@@ -188,7 +205,7 @@ export default async function HomePage() {
             <Link href="/study" className="flex items-center gap-3 rounded-2xl p-3 shadow border-2 border-moko-pink/30 bg-moko-pink/5 hover:border-moko-pink transition active:scale-95">
               <span className="text-2xl">②📚</span>
               <div className="flex-1 min-w-0">
-                <div className="font-black text-moko-violet">去学习</div>
+                <div className="font-black text-moko-violet">{todayModules.length > 0 ? `去学习（已练 ${todayModules.length} 个模块）` : '去学习'}</div>
                 <div className="text-xs text-gray-500">做模块练习拿 ⭐学习星（解锁萌可剧情）</div>
               </div>
               <span className="text-xs text-gray-400">›</span>
@@ -197,7 +214,7 @@ export default async function HomePage() {
             <Link href="/games" className="flex items-center gap-3 rounded-2xl p-3 shadow border-2 border-moko-blue/30 bg-moko-blue/5 hover:border-moko-blue transition active:scale-95">
               <span className="text-2xl">③🎮</span>
               <div className="flex-1 min-w-0">
-                <div className="font-black text-moko-violet">玩游戏</div>
+                <div className="font-black text-moko-violet">{playedGames > 0 ? `玩游戏（已玩 ${playedGames} 款）` : '玩游戏'}</div>
                 <div className="text-xs text-gray-500">得分就是积分，每天每款 1 次</div>
               </div>
               <span className="text-xs text-gray-400">›</span>

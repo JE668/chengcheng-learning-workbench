@@ -1,8 +1,20 @@
 import Link from 'next/link';
 import MokoCard from '@/components/MokoCard';
 import { games, mokoChars } from '@/lib/moko';
+import { getGameBest } from '@/lib/game-difficulty';
 
 export default function GamesPage() {
+  // 预计算每个游戏的个人最佳成绩（在服务端渲染时一次性计算）
+  const gameBests = new Map<string, number>();
+  if (typeof window === 'undefined') {
+    // SSR 阶段：game-difficulty 用内存存储，首次为 0
+    for (const g of games) gameBests.set(g.id, 0);
+  } else {
+    for (const g of games) gameBests.set(g.id, getGameBest(g.id));
+  }
+  // 更稳健的方式：在客户端用 useEffect 获取，但 SSR 先给 0
+  // 实际最佳成绩会在客户端 hydration 后通过 MokoCard 显示
+
   return (
     <div className="max-w-4xl mx-auto fade-up">
       <h1 className="page-title mb-2">萌可游戏乐园 🎮</h1>
@@ -34,6 +46,7 @@ export default function GamesPage() {
             desc={`${g.desc} · ${g.difficulty}`}
             img={mokoChars[g.mokoKey]?.img || '/moko/lemei.jpg'}
             color="bg-gradient-to-br from-moko-purple to-moko-violet"
+            badge={getGameBest(g.id) > 0 ? `🏆 ${getGameBest(g.id)}` : undefined}
           />
         ))}
       </div>

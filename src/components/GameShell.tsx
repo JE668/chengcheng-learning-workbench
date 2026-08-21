@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { mokoChars } from '@/lib/moko';
+import { sfxComplete, sfxClick, sfxStar } from '@/lib/sfx';
 import { getGameLevel, setGameLevel, recordGameResult, getGameBest } from '@/lib/game-difficulty';
 
 export default function GameShell({
@@ -34,6 +35,7 @@ export default function GameShell({
 
   async function handleFinish(finalScore: number) {
     setScore(finalScore);
+    try { sfxComplete(); } catch {}
     setFinished(true);
     setStarted(false);
     // 依据本次成绩调整下一局的难度档位（发挥好升档、退步降档）。
@@ -80,7 +82,7 @@ export default function GameShell({
                         setLevel(n);
                         setGameLevel(gameId, n);
                       }}
-                      className={`px-5 py-3 rounded-2xl font-bold shadow transition border-2 ${
+                      className={`tap px-5 py-3 rounded-2xl font-bold shadow transition border-2 ${
                         active ? 'border-moko-rose bg-moko-rose/10 text-moko-rose scale-105' : 'border-gray-200 text-gray-600 hover:border-moko-pink'
                       }`}
                     >
@@ -94,8 +96,8 @@ export default function GameShell({
           )}
           <p className="text-lg text-gray-700 mb-6">准备好接受挑战了吗？完成后可以获得积分哦！</p>
           <button
-            onClick={() => setStarted(true)}
-            className="px-10 py-4 bg-gradient-to-r from-moko-rose to-moko-pink text-white text-xl font-extrabold rounded-full shadow-lg hover:scale-105 transition"
+            onClick={() => { try { sfxClick(); } catch {} setStarted(true); }}
+            className="tap px-10 py-4 bg-gradient-to-r from-moko-rose to-moko-pink text-white text-xl font-extrabold rounded-full shadow-lg hover:scale-105 transition"
           >
             开始游戏 ▶
           </button>
@@ -105,22 +107,41 @@ export default function GameShell({
       {started && children({ onFinish: handleFinish, started, level })}
 
       {finished && (
-        <div className="text-center bg-white rounded-3xl shadow-xl p-8">
-          <div className="text-6xl mb-4">🎉</div>
-          <h2 className="text-2xl font-extrabold text-moko-violet mb-2">挑战完成！</h2>
-          <p className="text-xl text-moko-rose font-bold mb-4">{msg || `获得 ${score} 积分！`}</p>
-          <p className="text-sm text-gray-400 mb-4">🏆 历史最高分：{Math.max(getGameBest(gameId), score)} 分</p>
-          <button
-            onClick={() => {
-              setFinished(false);
-              setStarted(true);
-              setScore(0);
-              setMsg('');
-            }}
-            className="px-8 py-3 bg-moko-blue text-white rounded-full font-bold shadow hover:scale-105 transition"
-          >
-            再玩一次
-          </button>
+        <div className="text-center bg-white rounded-3xl shadow-xl p-8 relative overflow-hidden">
+          {/* 五彩纸屑粒子 */}
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="confetti"
+              style={{
+                left: Math.random() * 100 + '%',
+                background: ['#FF5DA0', '#C084FC', '#60A5FA', '#FACC15', '#22D3EE', '#6EE7B7'][i % 6],
+                animationDelay: Math.random() * 0.5 + 's',
+                animationDuration: (2 + Math.random() * 2) + 's',
+                width: (6 + Math.random() * 8) + 'px',
+                height: (6 + Math.random() * 8) + 'px',
+              }}
+            />
+          ))}
+          <div className="celebrate-pop">
+            <div className="text-7xl mb-4">🎉</div>
+            <h2 className="text-3xl font-extrabold text-moko-violet mb-2">太棒了！</h2>
+            <p className="text-xl text-moko-rose font-bold mb-4">{msg || `获得 ${score} 积分！`}</p>
+            <p className="text-sm text-gray-400 mb-4">🏆 历史最高分：{Math.max(getGameBest(gameId), score)} 分</p>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => {
+                  setFinished(false);
+                  setStarted(true);
+                  setScore(0);
+                  setMsg('');
+                }}
+                className="tap px-8 py-3 bg-moko-blue text-white rounded-full font-bold shadow hover:scale-105 transition"
+              >
+                🔄 再玩一次
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

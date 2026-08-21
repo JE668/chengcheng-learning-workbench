@@ -58,16 +58,23 @@ interface HarvestInfo {
 
 /**
  * 一键收获星星币。
- * 传入 info 后展示「今日可收获数量 + friend 进度条 + 状态」；
- * 不传 info（兼容旧调用）则退化为裸按钮。
+ * 展示「今日可收获数量 + 萌可好友进度条 + 状态」。
+ * 始终显示进度条（0 好友时显示 0% 空状态，让用户知道需要先培养好友）。
  */
 export function HarvestBtn({ info }: { info?: HarvestInfo }) {
   const router = useRouter();
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const hasFriends = (info?.friendTotal ?? 0) > 0;
-  const canHarvest = (info?.harvestableStars ?? 0) > 0;
+  const friendTotal = info?.friendTotal ?? 0;
+  const friendHarvestedToday = info?.friendHarvestedToday ?? 0;
+  const harvestableStars = info?.harvestableStars ?? 0;
+  const hasFriends = friendTotal > 0;
+  const canHarvest = harvestableStars > 0;
+  // 收获进度 = 已收萌可数 / 好友总数（满 100% 时今日已收完）
+  const harvestProgress = friendTotal > 0 ? Math.min(100, (friendHarvestedToday / friendTotal) * 100) : 0;
+  // 可收获的萌可数 = 好友总数 - 已收数
+  const unharvestedCount = friendTotal - friendHarvestedToday;
 
   async function harvest() {
     setBusy(true);
@@ -76,7 +83,7 @@ export function HarvestBtn({ info }: { info?: HarvestInfo }) {
       const r = await fetch('/api/castle/harvest', { method: 'POST' });
       const j = await r.json();
       setMsg(j.message || '');
-      router.refresh(); // 服务端重算 harvestableStars，按钮自动变为「明日可收」
+      router.refresh();
     } catch {
       setMsg('网络错误');
     } finally {
@@ -86,35 +93,51 @@ export function HarvestBtn({ info }: { info?: HarvestInfo }) {
 
   return (
     <div className="flex flex-col gap-2">
-      {info && (
-        <div className="rounded-2xl bg-moko-gold/10 border-2 border-moko-gold/30 p-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-bold text-moko-violet">⭐ 今日可收获</span>
-            <span className="font-black text-moko-gold">{info.harvestableStars} 颗</span>
+      <div className="rounded-2xl bg-white/80 border-2 border-moko-gold/40 p-3 shadow-sm">
+        {/* 可收获数量 */}
+        <div className="flex items-center justify-between mb-2">
+          <span className="font-bold text-moko-violet text-sm">⭐ 星星币收获</span>
+          <span className="font-black text-moko-gold text-lg">{harvestableStars} 颗</span>
+        </div>
+
+        {/* 进度条：萌可好友收获进度 */}
+        <div className="relative">
+          <div className="h-3 rounded-full bg-amber-100 overflow-hidden border border-amber-200">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-moko-gold to-amber-400 transition-all duration-500"
+              style={{ width: harvestProgress + '%' }}
+            />
           </div>
+          <span className="absolute -right-1 -top-4 text-[10px] font-bold text-amber-600">
+            {Math.round(harvestProgress)}%
+          </span>
+        </div>
+
+        {/* 状态说明 */}
+        <div className="mt-2 text-xs text-gray-500">
           {hasFriends ? (
-            <>
-              <div className="mt-2 h-2 rounded-full bg-white/70 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-moko-gold to-moko-yellow"
-                  style={{ width: `${Math.min(100, (info.friendHarvestedToday / info.friendTotal) * 100)}%` }}
-                />
-              </div>
-              <div className="mt-1 text-[11px] text-gray-500 text-right">
-                {canHarvest
-                  ? `还有 ${info.friendTotal - info.friendHarvestedToday} 只萌可没收获～`
-                  : '今天都收完啦，明天再来 🌙'}
-                （${info.friendHarvestedToday}/${info.friendTotal} 只已收）
-              </div>
-            </>
+            canHarvest ? (
+              <span className="text-amber-700 font-semibold">
+                {'🎯 ' + unharvestedCount + ' 只萌可好友可以收获，共 ' + harvestableStars + ' 颗星星币！'}
+              </span>
+            ) : (
+              <span>
+                {'🌙 今天已全部收完（' + friendHarvestedToday + '/' + friendTotal + ' 只），明天再来～'}
+              </span>
+            )
           ) : (
-            <div className="mt-1 text-[11px] text-gray-500">成为好朋友的萌可才能每天产星星币哦～</div>
+            <span>💡 还没有萌可好友，快去培养萌可成为「好朋友」阶段吧！</span>
           )}
         </div>
-      )}
+      </div>
+
       <div className="inline-flex flex-col items-start gap-1">
-        <button onClick={harvest} disabled={busy || (hasFriends && !canHarvest)} className="btn btn-gold">
-          {busy ? '收获中…' : canHarvest ? `⭐ 收获 ${info?.harvestableStars} 颗` : '⭐ 收获星星币'}
+        <button
+          onClick={harvest}
+          disabled={busy || (hasFriends && !canHarvest)}
+          className={'btn font-bold text-sm px-5 py-2.5 rounded-xl shadow-lg transition-all ' + (canHarvest ? 'bg-gradient-to-r from-moko-gold to-amber-400 text-white hover:scale-105 active:scale-95' : 'bg-gray-200 text-gray-400 cursor-default')}
+        >
+          {busy ? '⏳ 收获中…' : canHarvest ? ('⭐ 收获 ' + harvestableStars + ' 颗星星币') : '⭐ 收获星星币'}
         </button>
         {msg && <span className="text-xs text-moko-violet font-semibold">{msg}</span>}
       </div>

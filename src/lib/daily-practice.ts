@@ -511,18 +511,65 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
   } catch {
     /* 错题本还没建表/查询失败时，不影响正常出题 */
   }
-  // 语文 10 题：每天随机出不同题型组合（听写/拼音/识字/古诗/应用），保持新鲜感
+
+  // 全局去重：当天已出现的汉字/单词不再重复出题，避免同一知识点反复出现
+  const usedChars = new Set<string>();
+
+  // 语文 10 题：每天随机出不同题型组合（听写/拼音/识字/反义词/谚语/谜语），保持新鲜感
   const zhPool: (() => PracticeQuestion)[] = [
-    genDictationQ, genDictationQ, genDictationQ,  // 听写占大头
-    genPinyinQ, genPinyinQ,                         // 拼音
-    () => genChineseQuizQ(),                         // 识字（看释义选字）
-    () => genAntonymQ(),                             // 反义词
-    () => genProverbQ(),                             // 谚语配对
-    () => genRiddleQ(),                             // 谜语
+    // 带去重的拼音题
+    () => {
+      let q = genPinyinQ();
+      let guard = 0;
+      while (usedChars.has(q.han) && guard++ < 20) q = genPinyinQ();
+      usedChars.add(q.han);
+      return q;
+    },
+    () => {
+      let q = genPinyinQ();
+      let guard = 0;
+      while (usedChars.has(q.han) && guard++ < 20) q = genPinyinQ();
+      usedChars.add(q.han);
+      return q;
+    },
+    // 带去重的听写题
+    () => {
+      let q = genDictationQ();
+      let guard = 0;
+      while (usedChars.has(q.han) && guard++ < 20) q = genDictationQ();
+      usedChars.add(q.han);
+      return q;
+    },
+    () => {
+      let q = genDictationQ();
+      let guard = 0;
+      while (usedChars.has(q.han) && guard++ < 20) q = genDictationQ();
+      usedChars.add(q.han);
+      return q;
+    },
+    () => {
+      let q = genDictationQ();
+      let guard = 0;
+      while (usedChars.has(q.han) && guard++ < 20) q = genDictationQ();
+      usedChars.add(q.han);
+      return q;
+    },
+    // 识字（看释义选字）
+    () => {
+      let q = genChineseQuizQ();
+      let guard = 0;
+      while (usedChars.has(q.han) && guard++ < 20) q = genChineseQuizQ();
+      usedChars.add(q.han);
+      return q;
+    },
+    () => genAntonymQ(),   // 反义词（不涉及汉字去重，是不同的词对）
+    () => genProverbQ(),   // 谚语配对（不涉及汉字去重）
+    () => genRiddleQ(),    // 谜语（不涉及汉字去重）
   ];
   const zhPick = shuffleArr(zhPool).slice(0, 10);
   for (const fn of zhPick) qs.push(fn());
-  // 数学 10 题：基础+应用题混合，每天随机
+
+  // 数学 10 题：基础口算+应用题混合，每天随机（数字题天然不重复，无需去重）
   const mathPool: (() => PracticeQuestion)[] = [
     () => genMathQ(false), () => genMathQ(false), () => genMathQ(false), () => genMathQ(false),
     () => genMathQ(false), () => genMathQ(false),  // 6 道基础口算
@@ -533,26 +580,27 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
   ];
   const mathPick = shuffleArr(mathPool).slice(0, 10);
   for (const fn of mathPick) qs.push(fn());
-  // 英语 5 题：听音选词 + 看图选词 + 首字母，每天随机组合
+
+  // 英语 5 题：听音选词 + 看图选词 + 首字母，每天随机组合（单词去重）
   const usedEn = new Set<string>();
   const enPool: (() => PracticeQuestion)[] = [
-    () => { // 听音选词
+    () => {
       let w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
       let g = 0;
       while (usedEn.has(w.word) && g++ < 20) w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
       usedEn.add(w.word);
       return genEnglishQ(w);
     },
-    () => genEnPicQ(),    // 看图选词
-    () => genEnInitialQ(), // 首字母
-    () => { // 再来一道听音选词（占大头）
+    () => {
       let w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
       let g = 0;
       while (usedEn.has(w.word) && g++ < 20) w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
       usedEn.add(w.word);
       return genEnglishQ(w);
     },
-    () => genEnPicQ(),    // 再来一道看图选词
+    () => genEnPicQ(),
+    () => genEnInitialQ(),
+    () => genEnPicQ(),
   ];
   for (const fn of enPool) qs.push(fn());
   return qs;
@@ -591,6 +639,9 @@ export async function getTodayPractice(childId: number, generate = false): Promi
       args: [childId, today, qs.length, JSON.stringify(qs)],
     });
     row = (await db.execute({ sql: 'SELECT * FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, today] })).rows[0];
+  } else if (row && row.questions) {
+    // 缓存命中：当天已有题目，即使刷新页面也不重新生成
+    // 确保孩子看到的是同一套题，不会做到一半刷新就全变了
   }
   const streak = await computePracticeStreak(childId, today);
   const nextMilestoneDay = MILESTONE_DAYS.find((d) => d > streak);

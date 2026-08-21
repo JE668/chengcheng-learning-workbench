@@ -22,11 +22,46 @@ interface StateView {
   troublemakers: { key: string; name: string; img: string }[];
   inventory: Record<string, number>;
   missedDays: { day: string; missed: string[]; hasTrouble: boolean }[];
-  canBuyShield: boolean; noStarToday: boolean;
+  canBuyShield: boolean; noStarToday: boolean; freezeCount: number;
   harvestableStars: number; friendTotal: number; friendHarvestedToday: number;
+  penaltyAlert: string;
 }
 const STAGE_LABEL: Record<Stage, string> = { obtained: '刚解锁', settled: '入驻城堡', playing: '开心玩耍', friend: '好朋友' };
 const TABS = [['hall', '🏰 大厅'], ['gallery', '📖 图鉴'], ['shop', '🛍️ 商店'], ['bag', '🎒 背包'], ['achv', '🏅 成就']] as const;
+/** ⏳ 时光沙漏申请按钮：点击后向家长发起申请 */
+function TimeGlassRequestBtn({ busy, onMsg }: { busy: boolean; onMsg: (m: string) => void }) {
+  const [reqSent, setReqSent] = useState(false);
+  return (
+    <div className="mb-4 rounded-2xl bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 p-3 shadow">
+      <div className="flex items-center gap-3">
+        <span className="text-2xl">⏳</span>
+        <div className="flex-1">
+          <div className="font-bold text-purple-700 text-sm">需要时光沙漏吗？</div>
+          <div className="text-xs text-gray-500 mt-0.5">让爸爸妈妈帮你补打卡，找回萌可和星星币</div>
+        </div>
+        <button
+          onClick={async () => {
+            if (reqSent) return;
+            setReqSent(true);
+            try {
+              const r = await fetch('/api/castle/request-timeglass', { method: 'POST' });
+              const j = await r.json();
+              onMsg(j.message || '已申请 ✅');
+            } catch {
+              onMsg('网络错误');
+              setReqSent(false);
+            }
+          }}
+          disabled={busy || reqSent}
+          className={"shrink-0 px-4 py-2 rounded-xl font-bold text-sm shadow transition-all " + (reqSent ? "bg-gray-200 text-gray-400 cursor-default" : "bg-purple-500 text-white hover:bg-purple-600 active:scale-95")}
+        >
+          {reqSent ? '已申请 ✅' : '申请时光沙漏'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const SKINS = [
   { key: 'default', name: '梦幻城堡', emoji: '🏰' },
   { key: 'skin_star', name: '星空城堡', emoji: '🌌' },
@@ -63,9 +98,41 @@ export default function CastlePage() {
 
   if (!state)
     return (
-      <div className="max-w-4xl mx-auto flex flex-col items-center justify-center py-24 text-moko-violet">
-        <span className="moko-loader mb-3"><span></span><span></span><span></span></span>
-        <span className="font-bold">城堡加载中… ✨</span>
+      <div className="max-w-4xl mx-auto fade-up">
+        {/* 骨架屏：模拟城堡页面布局 */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="h-8 w-40 rounded-2xl bg-moko-purple/20 animate-pulse" />
+          <div className="h-6 w-32 rounded-2xl bg-moko-purple/15 animate-pulse" />
+        </div>
+        {/* 惩罚通报骨架 */}
+        <div className="mb-4 h-20 rounded-2xl bg-gradient-to-r from-red-50/50 to-orange-50/50 border-2 border-red-100/50 animate-pulse" />
+        {/* 繁荣度 + 收获骨架 */}
+        <div className="card-moko mb-4">
+          <div className="h-4 w-32 rounded-full bg-moko-purple/20 animate-pulse mb-4" />
+          <div className="h-16 rounded-2xl bg-moko-gold/10 border-2 border-moko-gold/30 animate-pulse mb-3" />
+          <div className="h-10 rounded-2xl bg-moko-gold/20 animate-pulse" />
+        </div>
+        {/* 选项卡骨架 */}
+        <div className="flex gap-2 mb-4">
+          {[1,2,3,4,5].map((i) => (
+            <div key={i} className="h-10 w-20 rounded-full bg-moko-purple/15 animate-pulse" />
+          ))}
+        </div>
+        {/* 城堡大厅骨架 */}
+        <div className="card-moko">
+          <div className="flex gap-4">
+            {[1,2,3].map((i) => (
+              <div key={i} className="w-28 text-center">
+                <div className="w-24 h-24 mx-auto rounded-full bg-moko-purple/15 animate-pulse mb-2" />
+                <div className="h-4 w-16 mx-auto rounded-full bg-moko-purple/20 animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="text-center text-moko-violet/40 text-sm mt-4 font-bold flex items-center justify-center gap-2">
+          <span className="moko-loader"><span></span><span></span><span></span></span>
+          萌可城堡加载中…
+        </p>
       </div>
     );
 
@@ -73,8 +140,34 @@ export default function CastlePage() {
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <h1 className="page-title">🏰 萌可城堡</h1>
-        <div className="text-sm font-bold text-moko-rose">☀️ {state.sunlight} · ⭐ {state.starCoins} · 🛡️ {state.shieldEquipped}</div>
+        <div className="text-sm font-bold text-moko-rose">☀️ {state.sunlight} · ⭐ {state.starCoins} · 🛡️ {state.shieldEquipped}{state.freezeCount > 0 && ` · 🧊 ×${state.freezeCount}`}</div>
       </div>
+
+      {/* 🔔 惩罚通报：登录后首次加载时展示 */}
+      {state.penaltyAlert && (
+        <div className="mb-4 rounded-2xl bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 p-4 shadow-lg animate-bounce-in">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">⚠️</span>
+            <div className="flex-1">
+              <div className="font-bold text-red-600 text-sm">城堡出事了！</div>
+              <div className="text-sm text-red-700 mt-1">{state.penaltyAlert}</div>
+              <div className="text-xs text-gray-500 mt-2">完成「今日一练」或使用道具可恢复城堡安宁 ✨</div>
+            </div>
+            <button
+              onClick={() => setState({ ...state, penaltyAlert: '' })}
+              className="text-red-400 hover:text-red-600 text-lg leading-none"
+              title="关闭"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ⏳ 时光沙漏申请按钮 */}
+      {(state.troublemakers.length > 0 || state.penaltyAlert) && (
+        <TimeGlassRequestBtn busy={busy} onMsg={setMsg} />
+      )}
 
       {/* 繁荣度 + 收获 */}
       <div className="card-moko mb-4">
@@ -85,39 +178,17 @@ export default function CastlePage() {
           </div>
           <span className="text-sm font-bold text-moko-violet">{state.prosperity}</span>
         </div>
-        <div className="mt-3 rounded-2xl bg-moko-gold/10 border-2 border-moko-gold/30 p-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-bold text-moko-violet">⭐ 今日可收获星星币</span>
-            <span className="font-black text-moko-gold">{state.harvestableStars} 颗</span>
-          </div>
-          {state.friendTotal > 0 ? (
-            <>
-              <div className="mt-2 h-2 rounded-full bg-white/70 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-moko-gold to-moko-yellow"
-                  style={{ width: `${Math.min(100, (state.friendHarvestedToday / state.friendTotal) * 100)}%` }}
-                />
-              </div>
-              <div className="mt-1 text-[11px] text-gray-500 text-right">
-                {state.harvestableStars > 0
-                  ? `还有 ${state.friendTotal - state.friendHarvestedToday} 只萌可没收获～`
-                  : '今天都收完啦，明天再来 🌙'}
-                （${state.friendHarvestedToday}/${state.friendTotal} 只已收）
-              </div>
-            </>
-          ) : (
-            <div className="mt-1 text-[11px] text-gray-500">成为好朋友的萌可才能每天产星星币哦～</div>
-          )}
+        <div className="mt-3">
+          <HarvestBtn
+            info={{
+              harvestableStars: state.harvestableStars,
+              friendTotal: state.friendTotal,
+              friendHarvestedToday: state.friendHarvestedToday,
+            }}
+          />
         </div>
         <div className="flex items-center justify-between mt-2">
           <span className="text-xs text-gray-500">连续打卡 {state.streakDays} 天</span>
-          <button
-            onClick={() => act('/api/castle/harvest')}
-            disabled={busy || (state.friendTotal > 0 && state.harvestableStars === 0)}
-            className="btn btn-gold text-sm"
-          >
-            {state.harvestableStars > 0 ? `⭐ 收获 ${state.harvestableStars} 颗` : '⭐ 收获星星币'}
-          </button>
         </div>
       </div>
 
@@ -260,7 +331,7 @@ export default function CastlePage() {
       {tab === 'bag' && (
         <div className="space-y-3">
           <h2 className="section-title">🎒 魔法背包</h2>
-          <div className="card-moko text-sm text-gray-600">星星币余额：⭐ {state.starCoins}　护盾已装备：🛡️ {state.shieldEquipped}</div>
+          <div className="card-moko text-sm text-gray-600">星星币余额：⭐ {state.starCoins}　护盾：🛡️ {state.shieldEquipped}{state.freezeCount > 0 ? `　冰冻：🧊 ×${state.freezeCount}` : ''}</div>
           {Number(state.inventory.spray || 0) > 0 && (
             <div className="rounded-3xl p-4 shadow-lg border-2 border-green-100 bg-green-50 flex items-center gap-3">
               <div className="text-4xl">🧴</div>
@@ -270,6 +341,9 @@ export default function CastlePage() {
           )}
           {Number(state.inventory.shield || 0) > 0 && (
             <div className="card-moko flex items-center gap-3"><div className="text-4xl">🛡️</div><div className="flex-1"><div className="font-bold text-moko-violet">护盾 ×{state.inventory.shield}</div><div className="text-xs text-gray-500">已自动装备，能帮乐美挡住一次捣蛋萌可</div></div></div>
+          )}
+          {state.freezeCount > 0 && (
+            <div className="card-moko flex items-center gap-3"><div className="text-4xl">🧊</div><div className="flex-1"><div className="font-bold text-moko-violet">冰冻徽章 ×{state.freezeCount}</div><div className="text-xs text-gray-500">下次漏卡时自动消耗，保护连胜不中断</div></div></div>
           )}
           {Number(state.inventory.timeglass || 0) > 0 && (
             <TimeGlassCard count={Number(state.inventory.timeglass)} busy={busy} onUse={(day) => act('/api/castle/use-item', { itemKey: 'timeglass', day })} />

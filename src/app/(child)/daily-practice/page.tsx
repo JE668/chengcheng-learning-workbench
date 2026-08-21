@@ -6,6 +6,7 @@ import { GuideModal } from '@/components/GuideModal';
 import { EmptyState } from '@/components/EmptyState';
 import { playTts } from '@/lib/speak';
 import type { PracticeDayRecord, PracticeQuestion, PracticeSubmitResult } from '@/lib/daily-practice';
+import { sfxComplete, sfxWrong } from '@/lib/sfx';
 import { PROSPERITY_BONUS } from '@/lib/moko';
 
 const KIND_META: Record<string, { label: string; grad: string; icon: string }> = {
@@ -91,6 +92,11 @@ export default function DailyPracticePage() {
       });
       const j = await r.json();
       setResult(j);
+      // 🔊 音效：三科全完成 → 欢快庆祝；有未通过科目 → 温和提示
+      try {
+        if (j?.completed) sfxComplete();
+        else sfxWrong();
+      } catch { /* 忽略音效异常 */ }
     } finally {
       setSubmitting(false);
     }
@@ -171,31 +177,80 @@ export default function DailyPracticePage() {
     // 三科全部完成 → 庆祝
     if (result.completed) {
       const rw = result.rewards;
+      const today = new Date();
+      const dateLabel = `${today.getMonth() + 1}月${today.getDate()}日`;
       return (
         <div className="max-w-2xl mx-auto p-6">
-          <div className="card-moko text-center p-8 bg-gradient-to-br from-moko-pink to-moko-rose text-white">
-            <div className="text-6xl mb-3">🎉</div>
-            <h1 className="text-3xl font-black mb-2">三科全部完成，太棒啦！</h1>
-            <p className="text-lg opacity-90">今日一练打卡完成，萌可们超开心～</p>
-            {rw && (
-              <div className="mt-5 space-y-2 text-left bg-white/20 rounded-2xl p-4">
-                <div className="flex items-center gap-2">☀️ <span>阳光能量 +{rw.sunlight}</span></div>
-                <div className="flex items-center gap-2">🧸 <span>召唤 {rw.mokos.join('、')}</span></div>
-                {rw.prosperity && <div className="flex items-center gap-2">🏰 <span>城堡繁荣度 +{PROSPERITY_BONUS}</span></div>}
-                <div className="flex items-center gap-2">🔥 <span>已连续完成 {result.practiceStreak} 天</span></div>
-                {(result.tickets ?? 0) > 0 && <div className="flex items-center gap-2">🎟️ <span>捕捉券 +{result.tickets}（去「萌可闯关」读故事、捉萌可吧！）</span></div>}
-              </div>
-            )}
-            {result.milestone && (
-              <div className="mt-4 bg-white/25 rounded-2xl p-4">
-                <div className="text-2xl font-black">🌟 连续 {result.practiceStreak} 天达成！</div>
-                <div className="mt-1">解锁新萌可「{result.milestone.mokoName}」+ 10 ⭐ 星星币</div>
-              </div>
-            )}
-            <div className="flex gap-3 justify-center mt-6">
-              <Link href="/home" className="px-6 py-3 rounded-full bg-white text-moko-rose font-black">返回首页</Link>
-              <Link href="/castle" className="px-6 py-3 rounded-full bg-moko-gold text-white font-black">去看城堡</Link>
+          {/* 🎓 今日一练报告卡 */}
+          <div className="card-moko overflow-hidden">
+            {/* 头部渐变 */}
+            <div className="bg-gradient-to-r from-moko-pink via-moko-rose to-moko-purple p-6 text-white text-center">
+              <div className="text-5xl mb-2">🎓</div>
+              <h1 className="text-3xl font-black">今日一练报告卡</h1>
+              <p className="text-sm opacity-80 mt-1">{dateLabel} · 全部完成</p>
             </div>
+            {/* 各科成绩 */}
+            <div className="p-5">
+              <div className="space-y-3">
+                {result.subjects.map((s) => (
+                  <div key={s.subject} className="flex items-center gap-3">
+                    <span className="w-16 text-sm font-bold text-gray-700">{s.subject}</span>
+                    <div className="flex-1 h-5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={'h-full rounded-full transition-all ' + ((s.status === 'passed' || s.status === 'already') ? 'bg-moko-mint' : 'bg-moko-yellow')}
+                        style={{ width: ((s.correct ?? s.total) / Math.max(1, s.total) * 100) + '%' }}
+                      />
+                    </div>
+                    <span className="w-20 text-right text-sm font-bold">
+                      {s.status === 'passed' || s.status === 'already' ? '✅ 通过' : `${s.correct ?? 0}/${s.total}`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {/* 奖励总结 */}
+              <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+                {rw && (
+                  <>
+                    <div className="bg-moko-yellow/10 rounded-2xl p-3">
+                      <div className="text-2xl">☀️</div>
+                      <div className="text-sm font-bold text-moko-gold">+{rw.sunlight}</div>
+                      <div className="text-[11px] text-gray-400">阳光能量</div>
+                    </div>
+                    <div className="bg-moko-pink/10 rounded-2xl p-3">
+                      <div className="text-2xl">🧸</div>
+                      <div className="text-sm font-bold text-moko-rose">+{rw.mokos.length}</div>
+                      <div className="text-[11px] text-gray-400">召唤萌可</div>
+                    </div>
+                    <div className="bg-moko-violet/10 rounded-2xl p-3">
+                      <div className="text-2xl">🔥</div>
+                      <div className="text-sm font-bold text-moko-violet">{result.practiceStreak}天</div>
+                      <div className="text-[11px] text-gray-400">连续打卡</div>
+                    </div>
+                  </>
+                )}
+              </div>
+              {rw?.mokos && rw.mokos.length > 0 && (
+                <div className="mt-3 bg-moko-pink/10 rounded-2xl p-3 text-center">
+                  <span className="text-sm text-gray-600">🧸 今日召唤：</span>
+                  <span className="text-sm font-bold text-moko-rose">{rw.mokos.join('、')}</span>
+                </div>
+              )}
+              {(result.tickets ?? 0) > 0 && (
+                <div className="mt-2 bg-moko-mint/10 rounded-2xl p-3 text-center">
+                  <span className="text-sm">🎟️ 捕捉券 +{result.tickets}（去「萌可闯关」捉萌可吧！）</span>
+                </div>
+              )}
+              {result.milestone && (
+                <div className="mt-3 bg-moko-gold/20 rounded-2xl p-4 text-center">
+                  <div className="text-2xl font-black text-moko-gold">🌟 连续 {result.practiceStreak} 天达成！</div>
+                  <div className="text-sm mt-1">解锁新萌可「{result.milestone.mokoName}」+ 10 ⭐ 星星币</div>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-3 justify-center mt-5">
+            <Link href="/home" className="px-6 py-3 rounded-full bg-white text-moko-rose font-black shadow border-2 border-moko-rose/20">返回首页</Link>
+            <Link href="/castle" className="px-6 py-3 rounded-full bg-moko-gold text-white font-black shadow">去看城堡</Link>
           </div>
         </div>
       );

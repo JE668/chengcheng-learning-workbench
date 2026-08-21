@@ -37,6 +37,7 @@ const cards = [
 
 // 三大主学科卡片已各自承载本学科全部小课堂；首页不再重复罗列，避免「精选小课堂」与学科页内容重复。
 
+// Search state for client-side filtering
 const TOOLS = [
   { href: '/study/talk', emoji: '🗣️', title: '看图说话', sub: '看场景说 3 句话，录下自己的声音' },
   { href: '/study/picto', emoji: '🌟', title: '象形字变变变', sub: '汉字怎么从「画」变成「字」' },

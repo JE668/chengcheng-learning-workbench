@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { getActivity, type ActivityKey } from '@/lib/activity';
+import { BadgeCelebrate } from '@/components/BadgeCelebrate';
 
 type Tier = 0 | 1 | 2 | 3; // 0 未获得，1 铜，2 银，3 金
 interface BadgeDef {
@@ -33,6 +34,7 @@ export default function BadgesPage() {
   const [streak, setStreak] = useState(0);
   const [act, setAct] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [celebrate, setCelebrate] = useState<{ name: string; emoji: string }[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -67,6 +69,29 @@ export default function BadgesPage() {
   );
 
   const earned = badges.filter((b) => tierFor(b.value, b.tiers) > 0).length;
+
+  // 检测本次新升级/获得的徽章（与 localStorage 上次记录对比）
+  useEffect(() => {
+    if (loading) return;
+    try {
+      const prevRaw = localStorage.getItem('badge_tiers');
+      const prev: Record<string, number> = prevRaw ? JSON.parse(prevRaw) : {};
+      const current: Record<string, number> = {};
+      const newlyUpgraded: { name: string; emoji: string }[] = [];
+      for (const b of badges) {
+        const tier = tierFor(b.value, b.tiers);
+        current[b.key] = tier;
+        if (tier > 0 && (prev[b.key] ?? 0) < tier) {
+          newlyUpgraded.push({ name: b.name, emoji: b.emoji });
+        }
+      }
+      localStorage.setItem('badge_tiers', JSON.stringify(current));
+      if (newlyUpgraded.length) {
+        // 短暂延迟让页面渲染完毕再弹庆祝
+        setTimeout(() => setCelebrate(newlyUpgraded), 500);
+      }
+    } catch { /* 忽略 localStorage 异常 */ }
+  }, [loading, badges]);
 
   return (
     <div className="max-w-4xl mx-auto fade-up">
@@ -104,6 +129,8 @@ export default function BadgesPage() {
           })}
         </div>
       )}
+
+      {celebrate.length > 0 && <BadgeCelebrate badges={celebrate} onClose={() => setCelebrate([])} />}
 
       <div className="mt-6 rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-purple/20">
         <h3 className="text-lg font-black text-moko-violet mb-2">💡 怎么得更多勋章</h3>

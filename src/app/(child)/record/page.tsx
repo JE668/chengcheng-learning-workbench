@@ -3,6 +3,14 @@ import { getDb, getChildPoints } from '@/lib/db';
 import { getGrowthDiary } from '@/lib/castle';
 import Link from 'next/link';
 import GrowthTree from '@/components/GrowthTree';
+
+// 本地日期工具（与 castle/date 一致）
+function dateStrForPg(d: Date = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 import { EmptyState } from '@/components/EmptyState';
 
 export default async function RecordPage() {
@@ -17,6 +25,54 @@ export default async function RecordPage() {
   });
   const redeems = await db.execute({ sql: 'SELECT * FROM redemptions WHERE child_id = ? ORDER BY created_at DESC LIMIT 10', args: [user.id] });
   const diary = await getGrowthDiary(user.id, 20);
+
+  // 近 7 天积分趋势
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 6);
+  const weekStart = weekAgo.toISOString().split('T')[0];
+  const weeklyPts = await db.execute({
+    sql: `SELECT DATE(created_at, 'localtime') as day, COALESCE(SUM(points), 0) as pts
+          FROM completions WHERE child_id = ? AND created_at >= ? GROUP BY day ORDER BY day`,
+    args: [user.id, weekStart],
+  });
+  const ptsByDay = new Map<string, number>();
+  for (const r of weeklyPts.rows) ptsByDay.set(String(r.day), Number(r.pts));
+  const weeklyTrend: { day: string; pts: number }[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    weeklyTrend.push({ day: key, pts: ptsByDay.get(key) ?? 0 });
+  }
+
+  // 打卡日历：近 35 天每日打卡科目数 + 是否有捣蛋萌可
+  const calStartDate = new Date();
+  calStartDate.setDate(calStartDate.getDate() - 34);
+  const calStart = calStartDate.toISOString().split('T')[0];
+  const calCheckins = await db.execute({
+    sql: "SELECT day, subject FROM daily_checkins WHERE child_id = ? AND day >= ? AND status = 'confirmed'",
+    args: [user.id, calStart],
+  });
+  const calTrouble = await db.execute({
+    sql: "SELECT DISTINCT day FROM troublemakers WHERE child_id = ? AND day >= ? AND resolved = 0",
+    args: [user.id, calStart],
+  });
+  const calTroubleSet = new Set(calTrouble.rows.map((r) => String(r.day)));
+  const calByDay = new Map<string, Set<string>>();
+  for (const r of calCheckins.rows) {
+    const d = String(r.day);
+    if (!calByDay.has(d)) calByDay.set(d, new Set());
+    calByDay.get(d)!.add(String(r.subject));
+  }
+  const calDays: { day: string; count: number; hasTrouble: boolean }[] = [];
+  const todayKey = dateStrForPg();
+  for (let i = 34; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = dateStrForPg(d);
+    const subs = calByDay.get(key) ?? new Set<string>();
+    calDays.push({ day: key, count: subs.size, hasTrouble: calTroubleSet.has(key) });
+  }
 
   return (
     <div className="max-w-3xl mx-auto fade-up">
@@ -39,6 +95,115 @@ export default async function RecordPage() {
           <div className="text-4xl font-black text-moko-blue">{comps.rows.length}</div>
           <div className="text-gray-500">完成次数</div>
         </div>
+      </div>
+
+            {/* 近 7 天积分趋势 */}
+      {weeklyTrend.length > 0 && (
+        <div className="card-moko mb-6">
+          <h2 className="text-xl font-bold text-moko-violet mb-3">📈 近 7 天积分趋势</h2>
+          <div className="relative h-28">
+            <svg viewBox="0 0 700 140" className="w-full h-full" preserveAspectRatio="none">
+              {[0,1,2,3].map((i) => (
+                <line key={i} x1="0" y1={30 + i * 25} x2="700" y2={30 + i * 25} stroke="#f0e6ff" strokeWidth="1" />
+              ))}
+              <path
+                d={'M' + weeklyTrend.map((p, i) => {
+                  const x = 50 + (i * 600 / 6);
+                  const maxPts = Math.max(...weeklyTrend.map(w => w.pts), 1);
+                  return x + ',' + (130 - (p.pts / maxPts) * 90);
+                }).join(' L') + ' L' + (50 + 600) + ',130 L50,130 Z'}
+                fill="url(#gradient)" opacity="0.25"
+              />
+              <path
+                d={'M' + weeklyTrend.map((p, i) => {
+                  const x = 50 + (i * 600 / 6);
+                  const maxPts = Math.max(...weeklyTrend.map(w => w.pts), 1);
+                  return x + ',' + (130 - (p.pts / maxPts) * 90);
+                }).join(' L')}
+                fill="none" stroke="#FF5DA0" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+              />
+              {weeklyTrend.map((p, i) => {
+                const x = 50 + (i * 600 / 6);
+                const maxPts = Math.max(...weeklyTrend.map(w => w.pts), 1);
+                const y = 130 - (p.pts / maxPts) * 90;
+                return (
+                  <g key={i}>
+                    <circle cx={x} cy={y} r="5" fill="#FF5DA0" stroke="white" strokeWidth="2" />
+                    <text x={x} y={145} textAnchor="middle" fill="#9CA3AF" fontSize="10">{p.day.slice(5)}</text>
+                    <text x={x} y={y - 10} textAnchor="middle" fill="#FF5DA0" fontSize="10" fontWeight="bold">{p.pts}</text>
+                  </g>
+                );
+              })}
+              <defs>
+                <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#FF5DA0" />
+                  <stop offset="100%" stopColor="#FF8FC6" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+      )}
+            {/* 📅 打卡日历（近 35 天） */}
+      <div className="card-moko mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-2xl font-black text-moko-violet">📅 打卡日历</h2>
+          <span className="text-sm text-gray-500">坚持每天三科打卡，日历越来越绿！</span>
+        </div>
+        {/* 按自然周分组渲染 */}
+        {(() => {
+          // 把 calDays 按 ISO 周（周一开始）分组
+          const weeks: { day: string; count: number; hasTrouble: boolean; dow: number }[][] = [];
+          let cur: { day: string; count: number; hasTrouble: boolean; dow: number }[] = [];
+          // 找到 calDays 最早一天的星期偏移，补前导空格
+          const first = new Date(calDays[0].day + 'T00:00:00');
+          const firstDow = (first.getDay() + 6) % 7; // 0=周一
+          for (let i = 0; i < firstDow; i++) cur.push({ day: '', count: -1, hasTrouble: false, dow: i });
+          for (const c of calDays) {
+            const dt = new Date(c.day + 'T00:00:00');
+            const dow = (dt.getDay() + 6) % 7;
+            cur.push({ ...c, dow });
+            if (dow === 6) { weeks.push(cur); cur = []; }
+          }
+          if (cur.length) weeks.push(cur);
+          const weekday = ['一', '二', '三', '四', '五', '六', '日'];
+          const dayColor = (count: number) => {
+            if (count >= 3) return 'bg-green-500 text-white';
+            if (count === 2) return 'bg-green-300 text-white';
+            if (count === 1) return 'bg-green-100 text-green-700';
+            return 'bg-gray-100 text-gray-400';
+          };
+          return (
+            <div>
+              <div className="grid grid-cols-7 gap-1 mb-1.5">
+                {weekday.map((w) => <div key={w} className="text-center text-[11px] font-bold text-gray-400">{w}</div>)}
+              </div>
+              {weeks.map((week, wi) => (
+                <div key={wi} className="grid grid-cols-7 gap-1 mb-1">
+                  {week.map((c, ci) => c.day === '' ? (
+                    <div key={ci} className="h-10 rounded-xl bg-transparent" />
+                  ) : (
+                    <div
+                      key={ci}
+                      title={`${c.day} · 打卡 ${c.count}/3 科${c.hasTrouble ? ' · 有捣蛋萌可' : ''}`}
+                      className={'h-10 rounded-xl flex flex-col items-center justify-center relative text-xs font-bold transition ' + dayColor(c.count)}
+                    >
+                      {new Date(c.day + 'T00:00:00').getDate()}
+                      {c.hasTrouble && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border border-white" />}
+                    </div>
+                  ))}
+                </div>
+              ))}
+              <div className="flex items-center gap-3 mt-3 text-[11px] text-gray-500">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500 inline-block" /> 三科全勤</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-300 inline-block" /> 两科</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-100 inline-block" /> 单科</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-100 inline-block" /> 未打卡</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" /> 捣蛋萌可</span>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* 🌳 成长树 */}

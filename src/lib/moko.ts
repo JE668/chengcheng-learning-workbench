@@ -82,10 +82,11 @@ export const mokoChars: Record<string, MokoChar> = {
   lemei: { key: 'lemei', name: '乐美公主', color: 'text-moko-rose', img: '/moko/lemei.jpg', emoji: '👑', season: '全季', item: '爱心魔杖', line: '一起捕捉萌可吧！', category: 'guide' },
 
   // —— 捣蛋萌可：未完成打卡时溜进城堡捣乱 ——
-  naonao: { key: 'naonao', name: '闹闹萌可', color: 'text-slate-500', img: '/moko/transform_courage.jpg', emoji: '🤪', season: '捣蛋萌可', item: '吵闹喇叭', line: '嘻嘻，我来捣乱啦！', category: 'trouble' },
-  mihu: { key: 'mihu', name: '迷糊萌可', color: 'text-slate-500', img: '/moko/transform_gem.jpg', emoji: '😵', season: '捣蛋萌可', item: '迷糊口袋', line: '唔…我的币呢？', category: 'trouble' },
-  lulu: { key: 'lulu', name: '噜噜萌可', color: 'text-slate-500', img: '/moko/transform_music.jpg', emoji: '🫧', season: '捣蛋萌可', item: '噜噜泡泡', line: '噜噜噜~ 溜走啦！', category: 'trouble' },
-  taopiping: { key: 'taopiping', name: '淘气萌可', color: 'text-slate-500', img: '/moko/transform_love.jpg', emoji: '😈', season: '捣蛋萌可', item: '捣蛋锤', line: '嘿嘿，看我的！', category: 'trouble' },
+  // 图片修复：原 transform_*.jpg 是「其他萌可变身」的错图，已改为各自真实角色图
+  naonao: { key: 'naonao', name: '闹闹萌可', color: 'text-slate-500', img: '/moko/collection/09_反派及其他/闹闹萌可_render.webp', emoji: '🤪', season: '捣蛋萌可', item: '吵闹喇叭', line: '嘻嘻，我来捣乱啦！', category: 'trouble' },
+  mihu: { key: 'mihu', name: '迷糊萌可', color: 'text-slate-500', img: '/moko/collection/02_魔方萌可_第一二季/迷糊萌可_render.webp', emoji: '😵', season: '捣蛋萌可', item: '迷糊口袋', line: '唔…我的币呢？', category: 'trouble' },
+  lulu: { key: 'lulu', name: '噜噜萌可', color: 'text-slate-500', img: '', emoji: '🫧', season: '捣蛋萌可', item: '噜噜泡泡', line: '噜噜噜~ 溜走啦！', category: 'trouble' },
+  taopiping: { key: 'taopiping', name: '淘气萌可', color: 'text-slate-500', img: '/moko/collection/02_魔方萌可_第一二季/淘气萌可_render.webp', emoji: '😈', season: '捣蛋萌可', item: '捣蛋锤', line: '嘿嘿，看我的！', category: 'trouble' },
 };
 
 // 把核心萌可的图片重映射到真实图片集（同名首图更清晰、风格统一）
@@ -100,8 +101,12 @@ for (const k of Object.keys(mokoChars)) {
 // 并入真实图片集（157 张，key 以 col_ 前缀），图鉴/奖状均可直接使用
 for (const c of mokoCollection) mokoChars[c.key] = c;
 
-/** 捣蛋萌可池（结算时随机挑选出场捣乱） */
-export const troubleMokoKeys = ['naonao', 'mihu', 'lulu'];
+/**
+ * 捣蛋萌可池（结算时随机挑选出场捣乱）。
+ * 用 taopiping（淘气萌可）替代 lulu（噜噜萌可，无真实角色图）——
+ * 保证出场角色都有匹配图片，不再出现「图不对名」的错图。
+ */
+export const troubleMokoKeys = ['naonao', 'mihu', 'taopiping'];
 
 export const games: {
   id: string;
@@ -332,6 +337,7 @@ export {
 export const magicShop = [
   { key: 'spray', name: '魔法喷雾', cost: COST_SPRAY, icon: '🧴', desc: '帮乐美捉回所有捣蛋萌可 + 安抚全体萌可至满格心情 + 找回被藏星星币的 50%' },
   { key: 'shield', name: '护盾', cost: COST_SHIELD, icon: '🛡️', desc: `帮乐美挡住一次捣蛋萌可（需连续打卡 ${SHIELD_STREAK_REQ} 天才能兑换，兑换后自动装备）` },
+  { key: 'freeze', name: '冰冻徽章', cost: 8, icon: '🧊', desc: '下次漏卡时自动消耗，保护一天连胜不中断（可叠加）' },
 ];
 
 /** 星星币商城（长期激励） */

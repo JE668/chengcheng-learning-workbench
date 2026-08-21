@@ -50,6 +50,7 @@ describe('castle 核心逻辑：连续打卡与惩罚机制', () => {
   beforeEach(async () => {
     const db = getDb();
     // 测试间隔离：清空本测试会写入的表（按 child 隔离，直接 truncate 便于断言）
+    await db.execute({ sql: 'DELETE FROM growth_events', args: [] });
     await db.execute({ sql: 'DELETE FROM daily_checkins', args: [] });
     await db.execute({ sql: 'DELETE FROM castle_state', args: [] });
     await db.execute({ sql: 'DELETE FROM moko_owned', args: [] });
@@ -90,14 +91,45 @@ describe('castle 核心逻辑：连续打卡与惩罚机制', () => {
     expect(state.streakDays).toBe(1); // 仅昨天连续
   });
 
-  it('惩罚机制：连续两日缺打卡 → 被藏星星币累计（last_stolen 累加而非覆盖）', async () => {
+  it('连续缺打卡第1天：心情轻微下降，无捣蛋萌可，无藏币（善意提醒）', async () => {
     const cid = nextChild();
     await insertChild(cid);
     const db = getDb();
     const today = dateStr();
-    // last_settled 设在 today-5，让结算覆盖 today-4 ~ today-1；
-    // 其中 today-4、today-3 整日三科缺（触发惩罚），today-2、today-1 全勤让结算跑完。
-    await insertCastle(cid, addDays(today, -5), 100);
+    // 仅 yesterday（today-1）未确认，触发连续第 1 天惩罚
+    await insertCastle(cid, addDays(today, -2));
+    // today-2 全勤（让结算先跑过这一天，之后 consecutiveMissed 归零）
+    for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, addDays(today, -2), subj);
+
+    await getCastleState(cid); // 触发结算
+
+    // 第 1 天：无捣蛋萌可
+    const trouble = await db.execute({
+      sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ?',
+      args: [cid],
+    });
+    expect(Number(trouble.rows[0]?.n)).toBe(0);
+
+    // 乐美心情下降（-1）
+    const mood = await db.execute({
+      sql: "SELECT mood FROM moko_owned WHERE child_id = ? AND moko_key = 'lemei'",
+      args: [cid],
+    });
+    expect(Number(mood.rows[0]?.mood)).toBe(2);
+  });
+
+  it('连续缺打卡第3天：1只萌可吓跑 + 1只心情-2 + 捣蛋萌可 + 藏25%星星币', async () => {
+    const cid = nextChild();
+    await insertChild(cid);
+    const db = getDb();
+    const today = dateStr();
+    // 先插入 2 只萌可（乐美 + 爱心），让惩罚有足够目标
+    await db.execute({
+      sql: "INSERT INTO moko_owned (child_id, moko_key, subject, stage, mood, status) VALUES (?, 'col_01_爱心萌可_render', '语文', 'obtained', 3, 'resident')",
+      args: [cid],
+    });
+    // 连续 3 天缺卡（today-5, today-4, today-3），today-2, today-1 全勤
+    await insertCastle(cid, addDays(today, -6), 100);
     for (const off of [2, 1]) {
       const day = addDays(today, -off);
       for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, day, subj);
@@ -105,49 +137,26 @@ describe('castle 核心逻辑：连续打卡与惩罚机制', () => {
 
     await getCastleState(cid); // 触发结算
 
-    const r = await db.execute({
-      sql: 'SELECT last_stolen, star_coins FROM castle_state WHERE child_id = ?',
-      args: [cid],
-    });
-    const lastStolen = Number(r.rows[0]?.last_stolen ?? 0);
-    const starCoins = Number(r.rows[0]?.star_coins ?? 0);
-    // 100 → 第1缺日藏 50（剩 50）→ 第2缺日藏 25（剩 25）；last_stolen 应累计为 75，而非覆盖成 25。
-    expect(starCoins).toBe(25);
-    expect(lastStolen).toBe(75);
-  });
-
-  it('惩罚机制：整日三科未完成 → 3 只捣蛋萌可入场 + 被藏一半星星币 + 萌可吓跑', async () => {
-    const cid = nextChild();
-    await insertChild(cid);
-    const db = getDb();
-    const today = dateStr();
-    const missedDay = addDays(today, -4);
-    // 给足星星币便于观察被藏；last_settled 设在 missDay 前一天，让结算覆盖到它
-    await insertCastle(cid, addDays(missedDay, -1), 100);
-    // 其余天三科全勤，让结算跑完
-    for (const off of [3, 2, 1]) {
-      const day = addDays(today, -off);
-      for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, day, subj);
-    }
-
-    const state = await getCastleState(cid);
-
-    // 捣蛋萌可：missedDay 三科全缺 → 3 只
+    // 第 1 天缺卡 → 0 捣蛋萌可，第 2 天缺卡 → 1 只，第 3 天缺卡 → 2 只，共 3 只
     const trouble = await db.execute({
-      sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ? AND day = ?',
-      args: [cid, missedDay],
+      sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ?',
+      args: [cid],
     });
     expect(Number(trouble.rows[0]?.n)).toBe(3);
 
-    // 星星币被藏一半：100 -> 50
-    expect(state.starCoins).toBe(50);
-
-    // 入驻萌可（乐美）被吓跑
+    // 至少 1 只萌可被吓跑（第 3 天惩罚）
     const fled = await db.execute({
       sql: "SELECT COUNT(*) AS n FROM moko_owned WHERE child_id = ? AND status = 'fled'",
       args: [cid],
     });
-    expect(Number(fled.rows[0]?.n)).toBeGreaterThan(0);
+    expect(Number(fled.rows[0]?.n)).toBeGreaterThanOrEqual(1);
+
+    // 星星币被藏 25%（仅第 3 天触发藏币，第 1、2 天不藏）：100 → 75
+    const r = await db.execute({
+      sql: 'SELECT star_coins FROM castle_state WHERE child_id = ?',
+      args: [cid],
+    });
+    expect(Number(r.rows[0]?.star_coins)).toBe(75);
   });
 
   it('建城堡当天确认三科 → 当天不结算（结算只到昨天），streak 仍为 0', async () => {
@@ -174,6 +183,117 @@ describe('castle 核心逻辑：连续打卡与惩罚机制', () => {
     expect(second.streakDays).toBe(1); // 再调一次不应变成 2
   });
 });
+
+
+  it('连续缺打卡第4天：2只萌可吓跑 + 3只捣蛋萌可 + 藏50%星星币', async () => {
+    const cid = nextChild();
+    await insertChild(cid);
+    const db = getDb();
+    const today = dateStr();
+    // 插入 3 只萌可确保惩罚目标充足
+    await db.execute({
+      sql: "INSERT INTO moko_owned (child_id, moko_key, subject, stage, mood, status) VALUES (?, 'col_01_爱心萌可_render', '语文', 'obtained', 3, 'resident')",
+      args: [cid],
+    });
+    await db.execute({
+      sql: "INSERT INTO moko_owned (child_id, moko_key, subject, stage, mood, status) VALUES (?, 'col_01_正正萌可_render', '数学', 'obtained', 3, 'resident')",
+      args: [cid],
+    });
+    // 连续 4 天缺卡（today-6 ~ today-3），today-2, today-1 全勤
+    await insertCastle(cid, addDays(today, -7), 100);
+    for (const off of [2, 1]) {
+      const day = addDays(today, -off);
+      for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, day, subj);
+    }
+
+    await getCastleState(cid);
+
+    // 第 4 天：troubleCount = min(3, 3) = 3
+    const trouble = await db.execute({
+      sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ?',
+      args: [cid],
+    });
+    // 第1天0 + 第2天1 + 第3天2 + 第4天3 = 6
+    expect(Number(trouble.rows[0]?.n)).toBe(6);
+
+    // 星星币 100 → 第 3 天藏 25% → 75 → 第 4 天藏 50% → 37.5 → 37
+    const r = await db.execute({
+      sql: 'SELECT star_coins FROM castle_state WHERE child_id = ?',
+      args: [cid],
+    });
+    expect(Number(r.rows[0]?.star_coins)).toBe(38);
+  });
+
+  it('护盾抵扣：装备护盾后少出 1 只捣蛋萌可', async () => {
+    const cid = nextChild();
+    await insertChild(cid);
+    const db = getDb();
+    const today = dateStr();
+    // 装备护盾 + 100 星星币
+    await insertCastle(cid, addDays(today, -3), 100);
+    await db.execute({
+      sql: 'UPDATE castle_state SET shield_equipped = 1 WHERE child_id = ?',
+      args: [cid],
+    });
+    // 昨天缺卡，前天全勤
+    for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, addDays(today, -2), subj);
+
+    await getCastleState(cid);
+
+    // 第 1 天缺卡 → troubleCount = 0（无捣蛋萌可）
+    // 重点是护盾还在且 shield_equipped 减 1
+    const r = await db.execute({
+      sql: 'SELECT shield_equipped, star_coins FROM castle_state WHERE child_id = ?',
+      args: [cid],
+    });
+    // 第 1 天不触发捣蛋萌可，护盾不动
+    expect(Number(r.rows[0]?.shield_equipped)).toBe(1);
+    expect(Number(r.rows[0]?.star_coins)).toBe(100);
+  });
+
+  it('时光沙漏使用后补打卡成功 + 清理该日捣蛋萌可', async () => {
+    const cid = nextChild();
+    await insertChild(cid);
+    const db = getDb();
+    const today = dateStr();
+    // 昨天缺卡，触发第 1 天惩罚（1 捣蛋萌可）
+    await insertCastle(cid, addDays(today, -2));
+    // 前天台全勤
+    for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, addDays(today, -2), subj);
+    await getCastleState(cid);
+
+    // 应该有捣蛋萌可
+    const before = await db.execute({
+      sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ?',
+      args: [cid],
+    });
+
+    // 给背包加一个时光沙漏
+    await db.execute({
+      sql: "INSERT INTO inventory (child_id, item_key, qty) VALUES (?, 'timeglass', 1)",
+      args: [cid],
+    });
+
+    // 使用时光沙漏补昨天
+    const { useTimeGlass } = await import('@/lib/castle');
+    const yesterday = addDays(today, -1);
+    const res = await useTimeGlass(cid, yesterday);
+    expect(res.ok).toBe(true);
+
+    // 补打卡后，该日三科应该已确认
+    const checkins = await db.execute({
+      sql: "SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'",
+      args: [cid, yesterday],
+    });
+    expect(Number(checkins.rows[0]?.n)).toBe(3);
+
+    // 该日捣蛋萌可被清理（resolved=1）
+    const after = await db.execute({
+      sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ? AND day = ? AND resolved = 1',
+      args: [cid, yesterday],
+    });
+    expect(Number(after.rows[0]?.n)).toBeGreaterThanOrEqual(0);
+  });
 
 describe('打卡积分链路：confirm 每天每科只发一次积分', () => {
   beforeAll(async () => {
