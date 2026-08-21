@@ -524,45 +524,45 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
     () => {
       let q = genPinyinQ();
       let guard = 0;
-      while (usedChars.has(q.han) && guard++ < 20) q = genPinyinQ();
-      usedChars.add(q.han);
+      while (usedChars.has(q.han!) && guard++ < 20) q = genPinyinQ();
+      usedChars.add(q.han!);
       return q;
     },
     () => {
       let q = genPinyinQ();
       let guard = 0;
-      while (usedChars.has(q.han) && guard++ < 20) q = genPinyinQ();
-      usedChars.add(q.han);
+      while (usedChars.has(q.han!) && guard++ < 20) q = genPinyinQ();
+      usedChars.add(q.han!);
       return q;
     },
     // 带去重的听写题
     () => {
       let q = genDictationQ();
       let guard = 0;
-      while (usedChars.has(q.han) && guard++ < 20) q = genDictationQ();
-      usedChars.add(q.han);
+      while (usedChars.has(q.han!) && guard++ < 20) q = genDictationQ();
+      usedChars.add(q.han!);
       return q;
     },
     () => {
       let q = genDictationQ();
       let guard = 0;
-      while (usedChars.has(q.han) && guard++ < 20) q = genDictationQ();
-      usedChars.add(q.han);
+      while (usedChars.has(q.han!) && guard++ < 20) q = genDictationQ();
+      usedChars.add(q.han!);
       return q;
     },
     () => {
       let q = genDictationQ();
       let guard = 0;
-      while (usedChars.has(q.han) && guard++ < 20) q = genDictationQ();
-      usedChars.add(q.han);
+      while (usedChars.has(q.han!) && guard++ < 20) q = genDictationQ();
+      usedChars.add(q.han!);
       return q;
     },
     // 识字（看释义选字）
     () => {
       let q = genChineseQuizQ();
       let guard = 0;
-      while (usedChars.has(q.han) && guard++ < 20) q = genChineseQuizQ();
-      usedChars.add(q.han);
+      while (usedChars.has(q.han!) && guard++ < 20) q = genChineseQuizQ();
+      usedChars.add(q.han!);
       return q;
     },
     () => genAntonymQ(),   // 反义词（不涉及汉字去重，是不同的词对）
