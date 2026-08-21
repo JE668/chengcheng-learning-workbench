@@ -48,7 +48,7 @@ def run_default():
         samples, sample_rate = kokoro.create(
             text,
             voice=args.voice,
-            speed=args.speed,
+            speed=max(0.5, min(2.0, args.speed)),
             lang=lang_code
         )
     except Exception as e:

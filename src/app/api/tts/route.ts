@@ -96,7 +96,7 @@ const TTS_LIMIT = { windowSeconds: 60, maxRequests: 30 }; // 每 IP 每分钟 30
 // (2) 合成结果按 (text,lang,rate,pause) 缓存：儿童学习场景大量重复朗读（同一字母 /
 //     单词 / 夸夸语反复出现），命中缓存直接秒回，彻底绕过微软 WebSocket 握手。
 //     限定上限做 LRU 淘汰，防内存膨胀。Node 持久进程下缓存跨请求复用，收益最大。
-const ttsCache = new Map<string, Buffer>();
+const ttsCache = new Map<string, { data: Buffer; type: string }>();
 const TTS_CACHE_MAX = 500;
 let cachedSec: { date: string; token: string } | null = null;
 
@@ -167,12 +167,19 @@ interface KokoroServeState {
 }
 
 let kokoroServe: KokoroServeState | null = null;
+// 待决启动 Promise：多个并发请求共享同一个实例的启动过程，避免互相杀进程
+let kokoroStarting: Promise<KokoroServeState> | null = null;
 
 /** 启动持久化 Kokoro 进程（懒加载，首次 TTS 请求时触发）。 */
 async function getKokoroServe(): Promise<KokoroServeState> {
-  if (kokoroServe && kokoroServe.proc && kokoroServe.proc.exitCode === null) {
-    // 进程存活，直接用
-    if (kokoroServe.ready) return kokoroServe;
+  // 已有就绪且存活的进程 → 直接复用
+  if (kokoroServe && kokoroServe.ready && kokoroServe.proc && kokoroServe.proc.exitCode === null) {
+    return kokoroServe;
+  }
+
+  // 已有进程正在启动中 → 等它，避免并发请求互相 kill
+  if (kokoroStarting) {
+    return kokoroStarting;
   }
 
   // 检查文件存在
@@ -180,10 +187,11 @@ async function getKokoroServe(): Promise<KokoroServeState> {
     throw new Error('kokoro 模型或脚本缺失');
   }
 
-  // 清理旧进程
+  // 清理旧进程（如有）
   if (kokoroServe?.proc) {
     try { kokoroServe.proc.kill('SIGTERM'); } catch { /* ignore */ }
   }
+  kokoroServe = null;
 
   const state: KokoroServeState = {
     proc: null,
@@ -206,7 +214,6 @@ async function getKokoroServe(): Promise<KokoroServeState> {
     state.errBuf += msg;
     if (msg.includes('ready')) {
       state.ready = true;
-      // 如果队列里有等待的请求，立即处理
       flushKokoroQueue(state);
     }
   });
@@ -215,7 +222,6 @@ async function getKokoroServe(): Promise<KokoroServeState> {
   let partial = '';
   state.proc!.stdout!.on('data', (d) => {
     partial += String(d);
-    // 处理所有完整行
     let idx;
     while ((idx = partial.indexOf('\n')) >= 0) {
       const line = partial.slice(0, idx).trim();
@@ -242,7 +248,6 @@ async function getKokoroServe(): Promise<KokoroServeState> {
 
   state.proc.on('error', (e) => {
     state.ready = false;
-    // 把队列中所有等待的请求全部 reject
     for (const item of state.pendingQueue) {
       item.reject(e);
     }
@@ -259,8 +264,8 @@ async function getKokoroServe(): Promise<KokoroServeState> {
 
   kokoroServe = state;
 
-  // 等待 ready 信号（最多 15 秒）
-  return new Promise((resolve, reject) => {
+  // 用 kokoroStarting 记录待决启动，其他并发请求共享此实例
+  kokoroStarting = new Promise((resolve, reject) => {
     let settled = false;
     const onReady = () => {
       if (settled) return;
@@ -275,8 +280,6 @@ async function getKokoroServe(): Promise<KokoroServeState> {
       if (settled) return;
       settled = true;
       clearInterval(timer);
-      // 给一个较长的超时让首次模型加载完成
-      // 如果超时但进程仍存活，可能只是加载慢，仍可尝试
       if (state.proc && state.proc.exitCode === null) {
         resolve(state);
       } else {
@@ -284,6 +287,10 @@ async function getKokoroServe(): Promise<KokoroServeState> {
       }
     }, 30000);
   });
+
+  const result = await kokoroStarting;
+  kokoroStarting = null;
+  return result;
 }
 
 /** 将待处理请求发送到持久化进程。 */
@@ -485,9 +492,9 @@ export async function POST(req: NextRequest) {
     // 命中即移到末尾，维持 LRU（热门短语不被淘汰）
     ttsCache.delete(cacheKey);
     ttsCache.set(cacheKey, hit);
-    return new NextResponse(new Uint8Array(hit), {
+    return new NextResponse(new Uint8Array(hit.data), {
       status: 200,
-      headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=86400' },
+      headers: { 'content-type': hit.type, 'cache-control': 'public, max-age=86400' },
     });
   }
 
@@ -514,7 +521,7 @@ export async function POST(req: NextRequest) {
       const oldest = ttsCache.keys().next().value;
       if (oldest !== undefined) ttsCache.delete(oldest);
     }
-    ttsCache.set(cacheKey, result.data);
+    ttsCache.set(cacheKey, { data: result.data, type: result.type });
 
     return new NextResponse(new Uint8Array(result.data), {
       status: 200,
