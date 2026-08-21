@@ -4,6 +4,7 @@ import { getCastleState } from '@/lib/castle';
 import { getTodayPractice } from '@/lib/daily-practice';
 import { getModuleProgressAll } from '@/lib/progress-store';
 import Link from 'next/link';
+import { dateStr, LOCAL_DAY_COL } from '@/lib/date';
 import { CheckinPanel, HarvestBtn } from '@/components/castle-client';
 import { GuideModal } from '@/components/GuideModal';
 import { MokoGroupBg } from '@/components/moko-bg';
@@ -38,14 +39,13 @@ export default async function HomePage() {
   const todayStr = dateStr();
   const practiceDone = practice.completed;
   const todayCheckins = await db.execute({
-    sql: 'SELECT subject FROM daily_checkins WHERE child_id = ? AND day = ? AND status =\'confirmed\',
-    args: [user.id],
+    sql: 'SELECT subject FROM daily_checkins WHERE child_id = ? AND day = ? AND status = ?',
+    args: [user.id, todayStr],
   });
   const checkedSubjects = new Set(todayCheckins.rows.map((r) => String(r.subject)));
-  const todayDate = dateStr();
   const todayGamesRes = await db.execute({
-    sql: 'SELECT DISTINCT game_id FROM completions WHERE child_id = ? AND created_at >= ?',
-    args: [user.id, todayDate],
+    sql: 'SELECT DISTINCT game_id FROM completions WHERE child_id = ? AND ' + LOCAL_DAY_COL + ' = ?',
+    args: [user.id, todayStr],
   });
   const playedGames = todayGamesRes.rows.length;
 
