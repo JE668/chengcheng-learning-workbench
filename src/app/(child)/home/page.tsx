@@ -43,7 +43,7 @@ export default async function HomePage() {
   });
   const checkedSubjects = new Set(todayCheckins.rows.map((r) => String(r.subject)));
   const todayGamesRes = await db.execute({
-    sql: 'SELECT DISTINCT game_id FROM completions WHERE child_id = ? AND ' + LOCAL_DAY_COL + ' = ?',
+    sql: 'SELECT DISTINCT source FROM completions WHERE child_id = ? AND ' + LOCAL_DAY_COL + ' = ? AND source IS NOT NULL',
     args: [user.id, todayStr],
   });
   const playedGames = todayGamesRes.rows.length;
