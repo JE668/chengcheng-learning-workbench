@@ -41,6 +41,14 @@ export default function ParentCastlePanel() {
     await load(); router.refresh();
   }
 
+  async function grant(resource: string, amount: number) {
+    setMsg('');
+    const r = await fetch('/api/castle/grant', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ resource, amount }) });
+    const j = await r.json();
+    setMsg(j.message || (j.ok ? '已发放' : (j.error || '')));
+    await load(); router.refresh();
+  }
+
   if (!state) return <div className="card-moko text-center text-moko-violet flex flex-col items-center justify-center gap-2"><span className="moko-loader"><span></span><span></span><span></span></span>城堡数据加载中…</div>;
 
   return (
@@ -118,6 +126,23 @@ export default function ParentCastlePanel() {
         <button onClick={giftTimeGlass} className="px-4 py-2 rounded-full bg-moko-violet text-white font-bold text-sm shadow active:scale-95 transition">
           赠送
         </button>
+      </div>
+
+      {/* 家长发放资源 */}
+      <div className="rounded-3xl p-4 shadow-lg border-2 border-moko-gold/20 bg-moko-gold/5">
+        <div className="font-bold text-moko-violet mb-2">🎁 发放资源</div>
+        <p className="text-xs text-gray-500 mb-3">直接给孩子发放阳光能量、星星币或捕捉券（不消耗任何东西）</p>
+        <div className="grid grid-cols-3 gap-2">
+          <button onClick={() => grant('sunlight', 3)} className="py-2 rounded-xl bg-moko-yellow text-white font-bold text-sm shadow active:scale-95 transition">
+            ☀️ +3 阳光
+          </button>
+          <button onClick={() => grant('starCoins', 5)} className="py-2 rounded-xl bg-moko-gold text-white font-bold text-sm shadow active:scale-95 transition">
+            ⭐ +5 星星币
+          </button>
+          <button onClick={() => grant('tickets', 1)} className="py-2 rounded-xl bg-moko-purple text-white font-bold text-sm shadow active:scale-95 transition">
+            🎟️ +1 捕捉券
+          </button>
+        </div>
       </div>
 
       {msg && <p className="text-sm text-moko-violet font-semibold">{msg}</p>}

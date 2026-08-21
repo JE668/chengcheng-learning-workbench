@@ -450,9 +450,46 @@ export async function castSpray(childId: number) {
     sql: 'UPDATE castle_state SET star_coins = star_coins + ?, last_stolen = 0 WHERE child_id = ?',
     args: [returnCoins, childId],
   });
+  // 关键修复：把 last_settled_day 更新到昨天，防止下次 getCastleState → settleCastle
+  // 重新结算漏打卡天数、再次生成捣蛋萌可（导致"用了喷雾又出现捣蛋萌可"）
+  const today = dateStr();
+  const yesterday = addDays(today, -1);
+  await db.execute({ sql: 'UPDATE castle_state SET last_settled_day = ? WHERE child_id = ?', args: [yesterday, childId] });
   await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'spray'] });
   await logGrowthEvent(childId, 'repair', '🧼', '捉回捣蛋萌可，城堡恢复欢乐！', `和乐美一起捉回捣蛋萌可，萌可们心情全满，找回 ${returnCoins} 星星币`);
   return { ok: true, message: `太棒了！和乐美一起捉回捣蛋萌可，找回 ${returnCoins} 星星币～` };
+}
+
+/** 家长端：直接给孩子发放资源（阳光/星星币/捕捉券） */
+export async function grantResource(
+  childId: number,
+  resource: 'sunlight' | 'starCoins' | 'tickets',
+  amount: number,
+): Promise<{ ok: boolean; message: string }> {
+  const db = getDb();
+  await ensureCastle(childId);
+  const n = Math.max(0, Math.min(100, Math.floor(amount)));
+  if (n <= 0) return { ok: false, message: '数量必须大于 0' };
+
+  if (resource === 'sunlight') {
+    await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight + ? WHERE child_id = ?', args: [n, childId] });
+    await logGrowthEvent(childId, 'gift', '☀️', '爸爸妈妈送了阳光能量', `+${n} 阳光能量`);
+    return { ok: true, message: `已送 ${n} 阳光能量 ✅` };
+  }
+  if (resource === 'starCoins') {
+    await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + ? WHERE child_id = ?', args: [n, childId] });
+    await logGrowthEvent(childId, 'gift', '⭐', '爸爸妈妈送了星星币', `+${n} 星星币`);
+    return { ok: true, message: `已送 ${n} 星星币 ✅` };
+  }
+  if (resource === 'tickets') {
+    await db.execute({
+      sql: 'INSERT INTO capture_tickets (child_id, total, used) VALUES (?, ?, 0) ON CONFLICT(child_id) DO UPDATE SET total = total + ?',
+      args: [childId, n, n],
+    });
+    await logGrowthEvent(childId, 'gift', '🎟️', '爸爸妈妈送了捕捉券', `+${n} 捕捉券`);
+    return { ok: true, message: `已送 ${n} 捕捉券 ✅` };
+  }
+  return { ok: false, message: '未知资源类型' };
 }
 
 /**
