@@ -507,7 +507,7 @@ export async function POST(req: NextRequest) {
       const rateMatch = /([+-]?\d+(?:\.\d+)?)\s*%/.exec(rate);
       const pct = rateMatch ? parseFloat(rateMatch[1]) : 0;
       const speed = 1 + pct / 100; // -45% -> 0.55
-      result = await synthesizeWithKokoro(text, lang, Math.max(0.5, Math.min(2.0, 1 / speed)));
+      result = await synthesizeWithKokoro(text, lang, Math.max(0.5, Math.min(2.0, speed)));
     } catch (e) {
       console.warn(
         '[tts] Kokoro 不可用，回退 Edge 在线 TTS：',

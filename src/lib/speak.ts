@@ -160,15 +160,19 @@ function warmServerCache(
   const wsRate = opts.wsRate ?? 0.8;
   const pauseMs = opts.pauseMs ?? 0;
   if (typeof window === 'undefined' || !('fetch' in window)) return;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 5000); // 预热不要等太久，避免阻塞感知
   fetch('/api/tts', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ text, lang, rate: toEdgeRate(wsRate), pause: pauseMs }),
+    signal: ctrl.signal,
   })
     .then((r) => {
+      clearTimeout(t);
       if (r.ok) serverCached.add(cacheKey(text, lang));
     })
-    .catch(() => {});
+    .catch(() => { clearTimeout(t); });
 }
 
 /** 走服务端 /api/tts 播放，并在结束时 resolve；失败降级到 Web Speech。 */
@@ -211,9 +215,13 @@ function playServerAudio(
         };
         audio.onerror = () => {
           URL.revokeObjectURL(url);
+          serverCached.add(cacheKey(text, lang)); // 已拿到服务端音频，后续重试直接走本地
           fallback();
         };
-        audio.play().catch(() => fallback());
+        audio.play().catch(() => {
+          serverCached.add(cacheKey(text, lang));
+          fallback();
+        });
       })
       .catch(() => {
         clearTimeout(timer);
