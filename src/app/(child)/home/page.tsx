@@ -15,6 +15,7 @@ export default async function HomePage() {
   if (!user || user.role !== 'child') return null;
   const db = getDb();
 
+  const todayStr = dateStr();
   // 并行拉取，减少串行等待（首页加载提速）
   const [points, castle, practice, taskRes, modProg] = await Promise.all([
     getChildPoints(user.id),
@@ -35,8 +36,6 @@ export default async function HomePage() {
   todayStart.setHours(0, 0, 0, 0);
   const todayModules = modProg.filter((p) => p.lastPlayed >= todayStart.getTime());
   const todayStars = todayModules.reduce((sum, p) => sum + p.stars, 0);
-  // 今日完成状态（快捷入口 ✓ 标记）
-  const todayStr = dateStr();
   const practiceDone = practice.completed;
   const todayCheckins = await db.execute({
     sql: 'SELECT subject FROM daily_checkins WHERE child_id = ? AND day = ? AND status = ?',

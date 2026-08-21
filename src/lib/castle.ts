@@ -221,10 +221,10 @@ export async function useTimeGlass(childId: number, day: string): Promise<{ ok: 
   if (missing.length === 0) {
     return { ok: false, message: day + ' 三科都已经打卡过了，不用补～' };
   }
+  const messages: string[] = [];
   await db.execute('BEGIN IMMEDIATE');
   try {
     await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
-    const messages: string[] = [];
     for (const subject of missing) {
       const res = await confirm(childId, day, subject);
       if (res.ok) messages.push(subject);

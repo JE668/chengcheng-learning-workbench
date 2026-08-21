@@ -13,6 +13,7 @@ const EXPORT_TABLES = [
   'capture_tickets', 'story_read', 'story_quiz', 'cert_requests',
   'module_progress', 'child_tasks', 'textbook_progress',
 ];
+const allowed = new Set(EXPORT_TABLES);
 
 /**
  * GET /api/backup/export — 导出全部数据为 JSON 文件（家长身份）
@@ -23,8 +24,6 @@ export async function GET() {
     return NextResponse.json({ error: '无权限' }, { status: 403 });
   }
   const db = getDb();
-  // 白名单校验：只允许导出 EXPORT_TABLES 中的表
-  const allowed = new Set(EXPORT_TABLES);
   const data: Record<string, unknown[]> = { _exported_at: [new Date().toISOString()] };
   for (const t of EXPORT_TABLES) {
     try {
