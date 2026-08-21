@@ -799,18 +799,18 @@ export interface ClockItem {
   emoji: string;
 }
 export const CLOCKS: ClockItem[] = [
-  { hour: 1, label: '1时', emoji: '🌙' },
-  { hour: 2, label: '2时', emoji: '🌙' },
+  { hour: 1, label: '1时', emoji: '🕐' },
+  { hour: 2, label: '2时', emoji: '🕑' },
   { hour: 3, label: '3时', emoji: '🕒' },
   { hour: 4, label: '4时', emoji: '🕓' },
-  { hour: 5, label: '5时', emoji: '🌅' },
-  { hour: 6, label: '6时', emoji: '🌅' },
-  { hour: 7, label: '7时', emoji: '🌞' },
-  { hour: 8, label: '8时', emoji: '🌞' },
-  { hour: 9, label: '9时', emoji: '🏫' },
-  { hour: 10, label: '10时', emoji: '🏫' },
-  { hour: 11, label: '11时', emoji: '🍱' },
-  { hour: 12, label: '12时', emoji: '🌞' },
+  { hour: 5, label: '5时', emoji: '🕔' },
+  { hour: 6, label: '6时', emoji: '🕕' },
+  { hour: 7, label: '7时', emoji: '🕖' },
+  { hour: 8, label: '8时', emoji: '🕗' },
+  { hour: 9, label: '9时', emoji: '🕘' },
+  { hour: 10, label: '10时', emoji: '🕙' },
+  { hour: 11, label: '11时', emoji: '🕚' },
+  { hour: 12, label: '12时', emoji: '🕛' },
 ];
 
 /* -------------------- 英语 · 人教版（一年级起点）单元 -------------------- */
@@ -1230,14 +1230,14 @@ export interface OrdinalItem {
   answer: string; // 如 第3
 }
 export const ORDINALS: OrdinalItem[] = [
-  { row: ['🐱', '🐶', '🐰', '🐯', '🐼'], ask: 2, question: '从左边数，🐰排第几？', answer: '第3' },
-  { row: ['🍎', '🍌', '🍊', '🍇'], ask: 0, question: '从左边数，🍎排第几？', answer: '第1' },
-  { row: ['🚌', '🚗', '🚕', '🚙', '🚎'], ask: 4, question: '从左边数，🚎排第几？', answer: '第5' },
-  { row: ['🐟', '🐠', '🐡', '🦈'], ask: 1, question: '从左边数，🐠排第几？', answer: '第2' },
-  { row: ['🌹', '🌻', '🌷', '🌼', '🌺'], ask: 2, question: '从左边数，🌷排第几？', answer: '第3' },
-  { row: ['🍓', '🍉', '🍇', '🍒', '🍑'], ask: 3, question: '从左边数，🍒排第几？', answer: '第4' },
-  { row: ['🦁', '🐯', '🐻', '🐼', '🐨'], ask: 4, question: '从左边数，🐨排第几？', answer: '第5' },
-  { row: ['⭐', '🌙', '☁️', '⚡', '❄️'], ask: 3, question: '从左边数，⚡排第几？', answer: '第4' },
+  { row: ['🐱', '🐶', '🐰', '🐯', '🐼'], ask: 2, question: '🐱🐶🐰🐯🐼 从左边数，🐰排第几？', answer: '第3' },
+  { row: ['🍎', '🍌', '🍊', '🍇'], ask: 0, question: '🍎🍌🍊🍇 从左边数，🍎排第几？', answer: '第1' },
+  { row: ['🚌', '🚗', '🚕', '🚙', '🚎'], ask: 4, question: '🚌🚗🚕🚙🚎 从左边数，🚎排第几？', answer: '第5' },
+  { row: ['🐟', '🐠', '🐡', '🦈'], ask: 1, question: '🐟🐠🐡🦈 从左边数，🐠排第几？', answer: '第2' },
+  { row: ['🌹', '🌻', '🌷', '🌼', '🌺'], ask: 2, question: '🌹🌻🌷🌼🌺 从左边数，🌷排第几？', answer: '第3' },
+  { row: ['🍓', '🍉', '🍇', '🍒', '🍑'], ask: 3, question: '🍓🍉🍇🍒🍑 从左边数，🍒排第几？', answer: '第4' },
+  { row: ['🦁', '🐯', '🐻', '🐼', '🐨'], ask: 4, question: '🦁🐯🐻🐼🐨 从左边数，🐨排第几？', answer: '第5' },
+  { row: ['⭐', '🌙', '☁️', '⚡', '❄️'], ask: 3, question: '⭐🌙☁️⚡❄️ 从左边数，⚡排第几？', answer: '第4' },
 ];
 
 /* -------------------- 数学 · 钟表半时（分针指 6） -------------------- */

@@ -346,9 +346,9 @@ function genWordProblemQ(): PracticeQuestion {
 /** 序数题 */
 function genOrdinalQ(): PracticeQuestion {
   const o = ORDINALS[randInt(0, ORDINALS.length - 1)];
-  const options = ['第1', '第2', '第3', '第4', '第5'].slice(0, 4);
-  if (!options.includes(o.answer)) options[0] = o.answer;
-  const shuffled = shuffle([...options]);
+  // 确保答案一定在选项里：先放答案，再补 3 个干扰项
+  const allOpts = ['第1', '第2', '第3', '第4', '第5'].filter((x) => x !== o.answer);
+  const shuffled = shuffle([o.answer, ...shuffle(allOpts).slice(0, 3)]);
   const answer = shuffled.indexOf(o.answer);
   return {
     id: `od-${o.ask}`,
@@ -498,7 +498,7 @@ function genMistakeQ(m: MistakeRow, pool: MistakeRow[]): PracticeQuestion | null
   };
 }
 
-async function generateQuestions(childId: number): Promise<PracticeQuestion[]> {
+export async function generateQuestions(childId: number): Promise<PracticeQuestion[]> {
   const qs: PracticeQuestion[] = [];
   // 0) 错题优先：今天到期的错题最多抽 2 题排在最前面
   try {

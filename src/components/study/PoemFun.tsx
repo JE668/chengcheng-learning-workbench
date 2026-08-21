@@ -81,21 +81,25 @@ function LineOrder() {
     const ok = made === target;
     setResult(ok ? 'right' : 'wrong');
     if (ok) {
-      speakZh(target);
-      praise();
+      // 先读诗，读完再夸——避免两条语音叠加
+      if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
+      speakZh(target, 0.6);
+      // 延迟 2.5 秒再夸（等诗读完），不再和读诗叠加
+      setTimeout(() => praise(), 2500);
       correctRef.current += 1;
       record(Math.min(3, Math.ceil(correctRef.current / 2)));
       setTimeout(() => {
+        if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
         setResult('idle');
         setSelected([]);
         setPoem(POEMS[Math.floor(Math.random() * POEMS.length)]);
-      }, 1600);
+      }, 3500);
     } else {
       speakZh('再排一排，看看顺序对不对～');
       setTimeout(() => {
         setResult('idle');
         setSelected([]);
-      }, 1600);
+      }, 2000);
     }
   }
 

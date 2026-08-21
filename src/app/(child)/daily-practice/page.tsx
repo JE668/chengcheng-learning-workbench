@@ -105,6 +105,18 @@ export default function DailyPracticePage() {
   }
 
   // 已完成（当天）
+  const [hasTimeGlass, setHasTimeGlass] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch('/api/castle/state');
+        const j = await r.json();
+        setHasTimeGlass(Number(j.inventory?.timeglass ?? 0) > 0);
+      } catch { /* */ }
+    })();
+  }, []);
+
   if (data?.completed && !result) {
     return (
       <div className="max-w-2xl mx-auto p-6">
@@ -118,6 +130,34 @@ export default function DailyPracticePage() {
             <Link href="/castle" className="px-6 py-3 rounded-full bg-moko-rose text-white font-black">去看城堡</Link>
           </div>
         </div>
+        {/* 使用时光沙漏再做一次 */}
+        {hasTimeGlass && (
+          <div className="mt-4 rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-violet/20 text-center">
+            <div className="text-4xl mb-2">⏳</div>
+            <p className="text-sm text-gray-600 mb-3">你有时光沙漏！可以用它再做一次今天的每日一练（不影响已得的奖励）</p>
+            <button
+              onClick={async () => {
+                const r = await fetch('/api/daily-practice/reset', { method: 'POST' });
+                const j = await r.json();
+                if (j.ok) {
+                  // 重新拉取每日一练数据
+                  setLoading(true);
+                  const r2 = await fetch('/api/daily-practice');
+                  const d = await r2.json();
+                  setData(d);
+                  setSelected(new Array(d.questions?.length ?? 0).fill(-1));
+                  setLoading(false);
+                  setHasTimeGlass(false);
+                } else {
+                  alert(j.message || '操作失败');
+                }
+              }}
+              className="px-6 py-2.5 rounded-full bg-gradient-to-r from-moko-violet to-moko-purple text-white font-black text-sm shadow active:scale-95 transition"
+            >
+              ⏳ 使用时光沙漏再做一次
+            </button>
+          </div>
+        )}
         <div className="mt-4 text-center">
           <GuideModal trigger={<span className="inline-block px-4 py-2 rounded-full bg-white shadow text-moko-violet font-bold cursor-pointer">📖 查看攻略说明</span>} />
         </div>
