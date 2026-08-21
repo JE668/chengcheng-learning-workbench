@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
           const values = cols.map((c) => (r[c] === undefined || r[c] === null ? null : r[c])) as (string | number | boolean | null)[];
           await db.execute({
             sql: 'INSERT INTO ' + t + ' (' + cols.join(', ') + ') VALUES (' + placeholders + ')',
-            args: values as unknown[],
+            args: values as (string | number | boolean | null)[],
           });
         }
         await db.execute({ sql: 'PRAGMA foreign_keys = ON', args: [] });

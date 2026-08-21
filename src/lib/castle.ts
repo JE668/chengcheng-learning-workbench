@@ -2,7 +2,7 @@ import { getDb } from './db';
 import { dateStr, addDays } from './date';
 import { mokoCollection } from './moko-collection';
 import { mokoChars, subjectMokoKey, STAR_PER_FRIEND, SUN_PER_SUBJECT, PROSPERITY_BONUS, SHIELD_STREAK_REQ } from './moko';
-import { COST_SPRAY, COST_SHIELD, POINTS_PER_CHECKIN } from './economy';
+import { COST_SPRAY, COST_SHIELD, COST_FREEZE, POINTS_PER_CHECKIN } from './economy';
 import type { Subject } from './types';
 import {
   type MokoStage,

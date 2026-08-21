@@ -68,6 +68,7 @@ export type PracticeQuestion =
       kind: 'english';
       subject: Subject;
       prompt: string;
+      han?: string;
       word: string;
       cn: string;
       emoji: string;
@@ -92,6 +93,7 @@ export type PracticeQuestion =
       kind: 'mistake';
       subject: Subject;
       prompt: string; // 原题目
+      han?: string;
       options: string[];
       answer: number;
       explain: string;

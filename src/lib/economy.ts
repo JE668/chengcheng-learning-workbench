@@ -26,6 +26,7 @@ export const POINTS_PER_CAPTURE = 10;
 /** 魔法商店（阳光能量消费）购买价 */
 export const COST_SPRAY = 5;
 export const COST_SHIELD = 10;
+export const COST_FREEZE = 8;
 
 /** 时光沙漏（星星币购买，使用后可补打卡一天） */
 export const COST_TIMEGLASS = 15;
