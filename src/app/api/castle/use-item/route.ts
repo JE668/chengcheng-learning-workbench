@@ -13,10 +13,10 @@ export async function POST(req: Request) {
     return NextResponse.json(res);
   }
   if (itemKey === 'timeglass') {
-    if (!day || !subject || !['语文', '数学', '英语'].includes(subject)) {
-      return NextResponse.json({ ok: false, message: '请选择要补打卡的日期和科目' }, { status: 400 });
+    if (!day) {
+      return NextResponse.json({ ok: false, message: '请选择要补打卡的日期' }, { status: 400 });
     }
-    const res = await useTimeGlass(user.id, String(day), subject as Subject);
+    const res = await useTimeGlass(user.id, String(day));
     return NextResponse.json(res);
   }
   return NextResponse.json({ ok: false, message: '暂不支持该道具' });

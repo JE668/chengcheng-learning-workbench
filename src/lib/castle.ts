@@ -493,14 +493,13 @@ export async function grantResource(
 }
 
 /**
- * 使用时光沙漏：选一个过去漏做的日期+科目，直接补打卡。
- * 内部调用 confirm（补作业分支），享受同样的发奖逻辑（阳光+萌可+积分+繁荣度）。
- * 道具消耗在 confirm 之前扣，confirm 失败不退道具（避免反复刷）。
+ * 使用时光沙漏：选一个过去漏做的日期，直接补打卡当天所有缺的科目。
+ * 一个沙漏补一整天（可能含语文+数学+英语三科），补完后恢复 daily_practice.completed=1
+ * 以续上连续打卡天数。内部调用 confirm（补作业分支），享受同样的发奖逻辑。
  */
 export async function useTimeGlass(
   childId: number,
   day: string,
-  subject: Subject,
 ): Promise<{ ok: boolean; message: string }> {
   const db = getDb();
   await ensureCastle(childId);
@@ -514,13 +513,16 @@ export async function useTimeGlass(
     return { ok: false, message: '没有时光沙漏，请爸爸妈妈在家长端送给你吧～' };
   }
 
-  // 检查该日该科是否已打卡（幂等：已打卡则不消耗道具）
+  // 查该日缺哪些科目
+  const SUBJECTS: Subject[] = ['语文', '数学', '英语'];
   const existing = await db.execute({
-    sql: "SELECT status FROM daily_checkins WHERE child_id = ? AND day = ? AND subject = ?",
-    args: [childId, day, subject],
+    sql: "SELECT subject FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'",
+    args: [childId, day],
   });
-  if (existing.rows.length && String(existing.rows[0].status) === 'confirmed') {
-    return { ok: false, message: `${day} 的 ${subject} 已经打卡过了，不用补～` };
+  const doneSet = new Set(existing.rows.map((r) => String(r.subject)));
+  const missing = SUBJECTS.filter((s) => !doneSet.has(s));
+  if (missing.length === 0) {
+    return { ok: false, message: `${day} 三科都已经打卡过了，不用补～` };
   }
 
   // 消耗道具
@@ -529,19 +531,39 @@ export async function useTimeGlass(
     args: [childId, 'timeglass'],
   });
 
-  // 补打卡（走 confirm 的补作业分支，发放对应奖励）
-  const res = await confirm(childId, day, subject);
-  if (res.ok) {
-    await logGrowthEvent(
-      childId,
-      'repair',
-      '⏳',
-      `用时光沙漏补打卡 ${subject}`,
-      `${day} 的 ${subject} 补打卡成功，拿到对应奖励！`,
-    );
-    return { ok: true, message: `⏳ 时光沙漏生效！${day} 的 ${subject} 补打卡成功，奖励已发放～` };
+  // 逐科补打卡
+  const messages: string[] = [];
+  for (const subject of missing) {
+    const res = await confirm(childId, day, subject);
+    if (res.ok) messages.push(subject);
   }
-  return res;
+
+  // 关键修复：如果该日三科都已确认，更新/插入 daily_practice.completed=1，续上连续天数
+  const finalCheckins = await db.execute({
+    sql: "SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'",
+    args: [childId, day],
+  });
+  if (Number(finalCheckins.rows[0]?.n) >= 3) {
+    // 没有记录就插入，有记录就更新
+    await db.execute({
+      sql: `INSERT INTO daily_practice (child_id, day, completed, correct, total, questions)
+            VALUES (?, ?, 1, 0, 0, '[]')
+            ON CONFLICT(child_id, day) DO UPDATE SET completed = 1`,
+      args: [childId, day],
+    });
+  }
+
+  await logGrowthEvent(
+    childId,
+    'repair',
+    '⏳',
+    `用时光沙漏补打卡 ${day}`,
+    `${day} 补打卡 ${messages.join('、')}，连续天数已恢复！`,
+  );
+  return {
+    ok: true,
+    message: `⏳ 时光沙漏生效！${day} 的 ${messages.join('、')} 补打卡成功，连续天数已恢复～`,
+  };
 }
 
 /** 收获星星币（好朋友阶段萌可每日产出） */
