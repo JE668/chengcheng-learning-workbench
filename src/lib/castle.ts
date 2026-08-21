@@ -222,24 +222,28 @@ export async function useTimeGlass(childId: number, day: string): Promise<{ ok: 
     return { ok: false, message: day + ' 三科都已经打卡过了，不用补～' };
   }
   const messages: string[] = [];
-  await db.execute('BEGIN IMMEDIATE');
-  try {
-    await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
-    for (const subject of missing) {
-      const res = await confirm(childId, day, subject);
-      if (res.ok) messages.push(subject);
-    }
-    const finalCheckins = await db.execute({ sql: "SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'", args: [childId, day] });
-    if (Number(finalCheckins.rows[0]?.n) >= 3) {
-      await db.execute({ sql: "INSERT INTO daily_practice (child_id, day, completed, correct, total, questions) VALUES (?, ?, 1, 0, 0, '[]') ON CONFLICT(child_id, day) DO UPDATE SET completed = 1", args: [childId, day] });
-    }
-    await db.execute({ sql: 'UPDATE troublemakers SET resolved = 1 WHERE child_id = ? AND day = ?', args: [childId, day] });
-    await db.execute({ sql: "UPDATE moko_owned SET status = 'resident', mood = 3 WHERE child_id = ? AND status = 'fled'", args: [childId] });
-    await db.execute('COMMIT');
-  } catch (e) {
-    await db.execute('ROLLBACK');
-    throw e;
+  // 注意：confirm() 内部有 BEGIN IMMEDIATE 事务，此处不能再嵌套事务。
+  // confirm() 是幂等的（已确认的科直接返回失败），因此无需额外事务包裹。
+  // 扣减沙漏必须先于 confirm 执行：若 confirm 失败则跳过，不浪费沙漏。
+  const invCheck = await db.execute({ sql: 'SELECT qty FROM inventory WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
+  if (!invCheck.rows.length || Number(invCheck.rows[0].qty) <= 0) {
+    return { ok: false, message: '没有时光沙漏啦～' };
   }
+  await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
+  for (const subject of missing) {
+    const res = await confirm(childId, day, subject);
+    if (res.ok) messages.push(subject);
+  }
+  // confirm 没消耗沙漏？补回去
+  if (messages.length === 0) {
+    await db.execute({ sql: 'UPDATE inventory SET qty = qty + 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
+  }
+  const finalCheckins = await db.execute({ sql: "SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'", args: [childId, day] });
+  if (Number(finalCheckins.rows[0]?.n) >= 3) {
+    await db.execute({ sql: "INSERT INTO daily_practice (child_id, day, completed, correct, total, questions) VALUES (?, ?, 1, 0, 0, '[]') ON CONFLICT(child_id, day) DO UPDATE SET completed = 1", args: [childId, day] });
+  }
+  await db.execute({ sql: 'UPDATE troublemakers SET resolved = 1 WHERE child_id = ? AND day = ?', args: [childId, day] });
+  await db.execute({ sql: "UPDATE moko_owned SET status = 'resident', mood = 3 WHERE child_id = ? AND status = 'fled'", args: [childId] });
   const row = await getRow(childId);
   const lastStolen = Number(row?.last_stolen ?? 0);
   if (lastStolen > 0) {
