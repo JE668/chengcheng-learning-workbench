@@ -48,9 +48,10 @@ export default function DailyPracticePage() {
 
   const q: PracticeQuestion | undefined = data?.questions[idx];
 
-  // 切到新题时自动朗读（拼音/英语），不点也能听到
+  // 切到新题时自动朗读（拼音/英语），不点也能听到。
+  // 但已完成时不要朗读（避免在"已完成"弹窗后面偷偷播放语音）
   useEffect(() => {
-    if (q) autoPlay(q);
+    if (q && !data?.completed && !result) autoPlay(q);
   }, [q]);
 
   const allAnswered = !!data && selected.length === data.questions.length && selected.every((s) => s !== -1);
