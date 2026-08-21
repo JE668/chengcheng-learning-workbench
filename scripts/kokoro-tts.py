@@ -65,6 +65,7 @@ def run_default():
 # ── 持久化守护模式（--serve）─────────────────────────────
 def run_serve():
     parser = argparse.ArgumentParser(description='Kokoro TTS 持久化守护进程')
+    parser.add_argument('--serve', action='store_true', help='持久化守护模式标志')
     parser.add_argument('--model', required=True)
     parser.add_argument('--voices', required=True)
     args = parser.parse_args()

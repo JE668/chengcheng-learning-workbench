@@ -265,32 +265,45 @@ async function getKokoroServe(): Promise<KokoroServeState> {
   kokoroServe = state;
 
   // 用 kokoroStarting 记录待决启动，其他并发请求共享此实例
+  // 进程崩溃时立即 reject（不等 30s 超时），超时仅在进程存活但 ready 信号迟迟不来时兜底
   kokoroStarting = new Promise((resolve, reject) => {
     let settled = false;
-    const onReady = () => {
-      if (settled) return;
-      settled = true;
-      if (state.ready) {
-        clearInterval(timer);
-        resolve(state);
-      }
-    };
-    const timer = setInterval(onReady, 50);
-    const timeout = setTimeout(() => {
+    const finish = (fn: () => void) => {
       if (settled) return;
       settled = true;
       clearInterval(timer);
-      if (state.proc && state.proc.exitCode === null) {
-        resolve(state);
-      } else {
-        reject(new Error(`kokoro serve 启动超时（${state.errBuf.slice(0, 300)}）`));
-      }
+      clearTimeout(timeout);
+      // 进程已退出就不需要再监听 close 来 reject 启动
+      state.proc?.removeListener('close', onEarlyExit);
+      fn();
+    };
+    const onReady = () => {
+      if (state.ready) finish(() => resolve(state));
+    };
+    const onEarlyExit = (code: number | null) => {
+      finish(() => reject(new Error(`kokoro serve 启动期退出(code=${code})：${state.errBuf.slice(0, 300)}`)));
+    };
+    const timer = setInterval(onReady, 50);
+    const timeout = setTimeout(() => {
+      finish(() => {
+        if (state.proc && state.proc.exitCode === null) {
+          resolve(state);
+        } else {
+          reject(new Error(`kokoro serve 启动超时（${state.errBuf.slice(0, 300)}）`));
+        }
+      });
     }, 30000);
+    // 进程在 ready 之前就退出 → 立即 reject，不再白等 30s
+    state.proc!.on('close', onEarlyExit);
   });
 
-  const result = await kokoroStarting;
-  kokoroStarting = null;
-  return result;
+  try {
+    const result = await kokoroStarting;
+    return result;
+  } finally {
+    // 无论成功还是失败，都清理待决标记，让后续请求能重新尝试启动
+    kokoroStarting = null;
+  }
 }
 
 /** 将待处理请求发送到持久化进程。 */
