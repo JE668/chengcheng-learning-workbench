@@ -265,22 +265,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // 优先离线 Piper：国内网络/无外网均可用，语速由 rate 映射为 length_scale。
-    // 失败（二进制或模型缺失 / 合成出错）返回 null，自动回退微软 TTS。
-    const piperAudio = await synthesizeWithPiper(text, lang, rate);
-    if (piperAudio) {
-      if (ttsCache.size >= TTS_CACHE_MAX) {
-        const oldest = ttsCache.keys().next().value;
-        if (oldest !== undefined) ttsCache.delete(oldest);
-      }
-      ttsCache.set(cacheKey, { audio: piperAudio, type: 'audio/wav' });
-      return new NextResponse(new Uint8Array(piperAudio), {
-        status: 200,
-        headers: { 'content-type': 'audio/wav', 'cache-control': 'public, max-age=86400' },
-      });
-    }
-
-    // 协议第 2~3 步：取动态安全令牌，并拼出带令牌的 WebSocket 握手地址。
+    // 优先 Edge 在线 TTS（zh-CN-XiaoxiaoNeural 晓晓，发音标准、自然），
+    // 失败（网络不通 / 令牌过期 / 微软 400 拒服）才回退离线 Piper。
+    // Piper 的 zh_CN-huayan-medium 模型发音不够准，仅作为无外网时的兜底。
     const sec = await getSecToken();
     const audio = await new Promise<Buffer>((resolve, reject) => {
       // 优先复用空闲暖连接（见 acquireWs），省去 TLS + WS 握手固定开销。
@@ -396,9 +383,25 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (e) {
-    // 合成失败（令牌端点不可达 / 握手 403 / 超时）→ 交由前端降级到 Web Speech
-    // 这里仅记日志供排查（如微软改端点/限流），不影响用户：前端 speak.ts 会自动降级。
-    console.warn('[tts] 合成失败，前端将降级到浏览器 Web Speech：', e instanceof Error ? e.message : String(e));
+    // Edge TTS 合成失败（令牌端点不可达 / 握手 403 / 超时）→ 回退离线 Piper
+    console.warn('[tts] Edge TTS 失败，尝试 Piper 兜底：', e instanceof Error ? e.message : String(e));
+    try {
+      const piperAudio = await synthesizeWithPiper(text, lang, rate);
+      if (piperAudio) {
+        if (ttsCache.size >= TTS_CACHE_MAX) {
+          const oldest = ttsCache.keys().next().value;
+          if (oldest !== undefined) ttsCache.delete(oldest);
+        }
+        ttsCache.set(cacheKey, { audio: piperAudio, type: 'audio/wav' });
+        return new NextResponse(new Uint8Array(piperAudio), {
+          status: 200,
+          headers: { 'content-type': 'audio/wav', 'cache-control': 'public, max-age=86400' },
+        });
+      }
+    } catch (pe) {
+      console.warn('[tts] Piper 兜底也失败：', pe instanceof Error ? pe.message : String(pe));
+    }
+    // Piper 也不可用 → 前端降级到浏览器 Web Speech
     return NextResponse.json({ error: 'tts failed' }, { status: 502 });
   }
 }
