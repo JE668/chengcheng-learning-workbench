@@ -612,17 +612,18 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
 /* ----------------------------- 连续练习天数 ----------------------------- */
 async function computePracticeStreak(childId: number, today: string): Promise<number> {
   const db = getDb();
+  // 一次性查询最近 400 天的记录，避免循环 N 次 DB 查询
+  const start = addDays(today, -400);
+  const res = await db.execute({
+    sql: 'SELECT day FROM daily_practice WHERE child_id = ? AND completed = 1 AND day >= ? AND day <= ? ORDER BY day DESC',
+    args: [childId, start, today],
+  });
+  const completedDays = new Set(res.rows.map(r => String(r.day)));
   let streak = 0;
   let d = today;
-  for (let i = 0; i < 400; i++) {
-    const r = await db.execute({
-      sql: 'SELECT completed FROM daily_practice WHERE child_id = ? AND day = ?',
-      args: [childId, d],
-    });
-    if (r.rows.length && Number(r.rows[0].completed) === 1) {
-      streak++;
-      d = addDays(d, -1);
-    } else break;
+  while (completedDays.has(d)) {
+    streak++;
+    d = addDays(d, -1);
   }
   return streak;
 }

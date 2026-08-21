@@ -20,10 +20,26 @@ function nowSec() {
   return Math.floor(Date.now() / 1000);
 }
 
+let lastCleanup = 0;
+const CLEANUP_INTERVAL = 60; // 每 60 秒清理一次过期 key
+
+function cleanupStore() {
+  const now = nowSec();
+  if (now - lastCleanup < CLEANUP_INTERVAL) return;
+  lastCleanup = now;
+  for (const [k, v] of store) {
+    if (v.resetAt <= now) store.delete(k);
+  }
+  for (const [k, v] of failStore) {
+    if (v.resetAt <= now) failStore.delete(k);
+  }
+}
+
 export function rateLimit(
   key: string,
   rule: RateLimitRule
 ): { ok: true; remaining: number } | { ok: false; retryAfter: number } {
+  cleanupStore();
   const now = nowSec();
   const bucket = store.get(key);
   if (!bucket || bucket.resetAt <= now) {
@@ -60,6 +76,7 @@ const failStore = new Map<string, { count: number; resetAt: number }>();
 
 /** 查询某账号当前是否被锁定 */
 export function loginLockout(username: string): { ok: true } | { ok: false; retryAfter: number } {
+  cleanupStore();
   const now = nowSec();
   const b = failStore.get(username);
   if (!b || b.resetAt <= now) return { ok: true };

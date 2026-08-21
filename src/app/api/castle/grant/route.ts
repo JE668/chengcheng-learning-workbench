@@ -17,6 +17,10 @@ export async function POST(req: Request) {
   if (!['sunlight', 'starCoins', 'tickets'].includes(resource)) {
     return NextResponse.json({ error: '未知资源类型' }, { status: 400 });
   }
-  const res = await grantResource(childId, resource, Number(amount));
+  const numAmount = Number(amount);
+  if (!Number.isFinite(numAmount) || numAmount <= 0 || numAmount > 100) {
+    return NextResponse.json({ error: '数量必须是 1-100 的数字' }, { status: 400 });
+  }
+  const res = await grantResource(childId, resource, numAmount);
   return NextResponse.json(res);
 }

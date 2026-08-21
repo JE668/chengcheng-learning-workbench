@@ -25,7 +25,7 @@ export default async function HomePage() {
             LEFT JOIN completions c ON c.task_id = t.id AND c.child_id = ?
             WHERE c.task_id IS NULL
             ORDER BY t.created_at DESC LIMIT 5`,
-      args: [user.id],
+      args: [user.id, todayStr],
     }),
     getModuleProgressAll(user.id),
   ]);
@@ -35,13 +35,14 @@ export default async function HomePage() {
   const todayModules = modProg.filter((p) => p.lastPlayed >= todayStart.getTime());
   const todayStars = todayModules.reduce((sum, p) => sum + p.stars, 0);
   // 今日完成状态（快捷入口 ✓ 标记）
+  const todayStr = dateStr();
   const practiceDone = practice.completed;
   const todayCheckins = await db.execute({
-    sql: "SELECT subject FROM daily_checkins WHERE child_id = ? AND day = date('now','localtime') AND status = 'confirmed'",
+    sql: 'SELECT subject FROM daily_checkins WHERE child_id = ? AND day = ? AND status =\'confirmed\',
     args: [user.id],
   });
   const checkedSubjects = new Set(todayCheckins.rows.map((r) => String(r.subject)));
-  const todayDate = new Date().toISOString().split('T')[0];
+  const todayDate = dateStr();
   const todayGamesRes = await db.execute({
     sql: 'SELECT DISTINCT game_id FROM completions WHERE child_id = ? AND created_at >= ?',
     args: [user.id, todayDate],

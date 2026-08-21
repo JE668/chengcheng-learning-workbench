@@ -139,7 +139,7 @@ export async function settleCastle(childId: number, today: string) {
     const confirmed = confirmedByDay.get(cursor) ?? 0;
     const isFullDay = confirmed === 3;
     if (!isFullDay) {
-      // 🧊 检查冰冻徽章：有则消耗保护一天连胜
+      // 🧊 检查冰冻徽章：有则消耗保护一天连胜（与连胜更新在同一条 SQL 中保证一致性）
       let frozen = false;
       try {
         const fr = await db.execute({ sql: "SELECT id, qty FROM inventory WHERE child_id = ? AND item_key = 'freeze' AND qty > 0", args: [childId] });
@@ -148,12 +148,12 @@ export async function settleCastle(childId: number, today: string) {
           await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE id = ?', args: [freezeId] });
           await db.execute({ sql: "DELETE FROM inventory WHERE id = ? AND qty <= 0", args: [freezeId] });
           frozen = true;
+          streak = streak + 1;
+          await db.execute({ sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?', args: [streak, childId] });
           await logGrowthEvent(childId, 'freeze', '🧊', '冰冻徽章保护', '🧊 冰冻徽章自动消耗，' + cursor + ' 漏卡但连胜未中断！');
         }
       } catch { /* inventory 表可能不存在 */ }
-      if (frozen) {
-        streak = streak + 1; // 冰冻保护：连胜不中断
-      } else {
+      if (!frozen) {
         consecutiveMissed++;
         await applyPenalty(childId, cursor, consecutiveMissed);
         streak = 0;

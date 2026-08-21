@@ -23,6 +23,8 @@ export async function GET() {
     return NextResponse.json({ error: '无权限' }, { status: 403 });
   }
   const db = getDb();
+  // 白名单校验：只允许导出 EXPORT_TABLES 中的表
+  const allowed = new Set(EXPORT_TABLES);
   const data: Record<string, unknown[]> = { _exported_at: [new Date().toISOString()] };
   for (const t of EXPORT_TABLES) {
     try {
@@ -68,23 +70,27 @@ export async function POST(req: NextRequest) {
 
   const db = getDb();
   // 逐表恢复：先清空再插入（事务保护，失败回滚）
+  // PRAGMA foreign_keys 必须在事务外设置，否则不生效
+  await db.execute('PRAGMA foreign_keys = OFF');
   await db.execute('BEGIN');
   try {
+    // 先清空所有表（按外键依赖顺序）
     for (const t of EXPORT_TABLES) {
+      if (!allowed.has(t)) continue;
       if (!Array.isArray(data[t])) continue;
       try {
-        // 关掉外键约束检查，按备份顺序插入
         await db.execute({ sql: 'DELETE FROM ' + t, args: [] });
       } catch { /* 表不存在跳过 */ }
     }
+    // 逐表恢复数据
     for (const t of EXPORT_TABLES) {
+      if (!allowed.has(t)) continue;
       const rows = data[t];
       if (!Array.isArray(rows) || rows.length === 0) continue;
       const first = rows[0] as Record<string, unknown>;
       const cols = Object.keys(first);
       if (cols.length === 0) continue;
       try {
-        await db.execute('PRAGMA foreign_keys = OFF');
         for (const row of rows) {
           const r = row as Record<string, unknown>;
           const placeholders = cols.map(() => '?').join(', ');
@@ -94,17 +100,17 @@ export async function POST(req: NextRequest) {
             args: values as (string | number | boolean | null)[],
           });
         }
-        await db.execute({ sql: 'PRAGMA foreign_keys = ON', args: [] });
       } catch {
         // 单表恢复失败（如 schema 差异）跳过该表，不中断整体
         continue;
       }
     }
     await db.execute('COMMIT');
+    await db.execute('PRAGMA foreign_keys = ON').catch(() => {});
     return NextResponse.json({ ok: true, message: '数据已恢复（' + EXPORT_TABLES.length + ' 张表）✅' });
   } catch (e) {
     await db.execute('ROLLBACK');
-    await db.execute({ sql: 'PRAGMA foreign_keys = ON', args: [] }).catch(() => {});
+    await db.execute('PRAGMA foreign_keys = ON').catch(() => {});
     return NextResponse.json({ error: '恢复失败：' + String((e as Error).message) }, { status: 500 });
   }
 }

@@ -120,15 +120,15 @@ export async function buy(childId: number, itemKey: string) {
   const row = await getRow(childId);
   if (itemKey === 'spray') {
     const cost = COST_SPRAY;
-    if (Number(row?.sunlight ?? 0) < cost) return { ok: false, message: '阳光能量不足' };
-    await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight - ? WHERE child_id = ?', args: [cost, childId] });
+    const res = await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight - ? WHERE child_id = ? AND sunlight >= ?', args: [cost, childId, cost] });
+    if (Number(res.rowsAffected ?? 0) === 0) return { ok: false, message: '阳光能量不足' };
     await db.execute({ sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1', args: [childId, 'spray'] });
     return { ok: true, message: '购买魔法喷雾成功！' };
   }
   if (itemKey === 'freeze') {
     const cost = COST_FREEZE;
-    if (Number(row?.sunlight ?? 0) < cost) return { ok: false, message: '阳光能量不足（需要 ' + cost + ' 阳光）' };
-    await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight - ? WHERE child_id = ?', args: [cost, childId] });
+    const res = await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight - ? WHERE child_id = ? AND sunlight >= ?', args: [cost, childId, cost] });
+    if (Number(res.rowsAffected ?? 0) === 0) return { ok: false, message: '阳光能量不足（需要 ' + cost + ' 阳光）' };
     await db.execute({ sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1', args: [childId, 'freeze'] });
     return { ok: true, message: '🧊 冰冻徽章购买成功！下次漏卡会自动消耗保护一天连胜。' };
   }
@@ -136,14 +136,14 @@ export async function buy(childId: number, itemKey: string) {
     const cost = COST_SHIELD;
     const streak = await computeStreak(childId, dateStr());
     if (streak < SHIELD_STREAK_REQ) return { ok: false, message: '需连续打卡 ' + SHIELD_STREAK_REQ + ' 天才能兑换护盾（当前 ' + streak + ' 天）' };
-    if (Number(row?.sunlight ?? 0) < cost) return { ok: false, message: '阳光能量不足' };
-    await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight - ?, shield_equipped = shield_equipped + 1 WHERE child_id = ?', args: [cost, childId] });
+    const res = await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight - ?, shield_equipped = shield_equipped + 1 WHERE child_id = ? AND sunlight >= ?', args: [cost, childId, cost] });
+    if (Number(res.rowsAffected ?? 0) === 0) return { ok: false, message: '阳光能量不足' };
     return { ok: true, message: '护盾已兑换并自动装备到城堡！' };
   }
   const starItem = (await import('./moko')).starShop.find((s: any) => s.key === itemKey);
   if (!starItem) return { ok: false, message: '未知商品' };
-  if (Number(row?.star_coins ?? 0) < starItem.cost) return { ok: false, message: '星星币不足' };
-  await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins - ? WHERE child_id = ?', args: [starItem.cost, childId] });
+  const starRes = await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins - ? WHERE child_id = ? AND star_coins >= ?', args: [starItem.cost, childId, starItem.cost] });
+  if (Number(starRes.rowsAffected ?? 0) === 0) return { ok: false, message: '星星币不足' };
   await db.execute({ sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1', args: [childId, itemKey] });
   if (itemKey.startsWith('skin_')) {
     await db.execute({ sql: 'UPDATE castle_state SET skin = ? WHERE child_id = ?', args: [itemKey, childId] });
@@ -169,7 +169,11 @@ export async function castSpray(childId: number) {
   const inv = await db.execute({ sql: 'SELECT qty FROM inventory WHERE child_id = ? AND item_key = ?', args: [childId, 'spray'] });
   if (!inv.rows.length || Number(inv.rows[0].qty) <= 0) return { ok: false, message: '没有魔法喷雾' };
   const row = await getRow(childId);
-  await db.execute({ sql: 'UPDATE troublemakers SET resolved = 1 WHERE child_id = ? AND resolved = 0', args: [childId] });
+  // 只清除最近一天的捣蛋萌可（而非全部历史），避免一次喷雾清掉多天惩罚
+  const latestTrouble = await db.execute({ sql: 'SELECT day FROM troublemakers WHERE child_id = ? AND resolved = 0 ORDER BY day DESC LIMIT 1', args: [childId] });
+  if (latestTrouble.rows.length) {
+    await db.execute({ sql: 'UPDATE troublemakers SET resolved = 1 WHERE child_id = ? AND resolved = 0 AND day = ?', args: [childId, String(latestTrouble.rows[0].day)] });
+  }
   await db.execute({ sql: "UPDATE moko_owned SET mood = 3, status = 'resident' WHERE child_id = ?", args: [childId] });
   const returnCoins = Math.ceil(Number(row?.last_stolen ?? 0) * 0.5);
   await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + ?, last_stolen = 0 WHERE child_id = ?', args: [returnCoins, childId] });
@@ -217,18 +221,25 @@ export async function useTimeGlass(childId: number, day: string): Promise<{ ok: 
   if (missing.length === 0) {
     return { ok: false, message: day + ' 三科都已经打卡过了，不用补～' };
   }
-  await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
-  const messages: string[] = [];
-  for (const subject of missing) {
-    const res = await confirm(childId, day, subject);
-    if (res.ok) messages.push(subject);
+  await db.execute('BEGIN IMMEDIATE');
+  try {
+    await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
+    const messages: string[] = [];
+    for (const subject of missing) {
+      const res = await confirm(childId, day, subject);
+      if (res.ok) messages.push(subject);
+    }
+    const finalCheckins = await db.execute({ sql: "SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'", args: [childId, day] });
+    if (Number(finalCheckins.rows[0]?.n) >= 3) {
+      await db.execute({ sql: "INSERT INTO daily_practice (child_id, day, completed, correct, total, questions) VALUES (?, ?, 1, 0, 0, '[]') ON CONFLICT(child_id, day) DO UPDATE SET completed = 1", args: [childId, day] });
+    }
+    await db.execute({ sql: 'UPDATE troublemakers SET resolved = 1 WHERE child_id = ? AND day = ?', args: [childId, day] });
+    await db.execute({ sql: "UPDATE moko_owned SET status = 'resident', mood = 3 WHERE child_id = ? AND status = 'fled'", args: [childId] });
+    await db.execute('COMMIT');
+  } catch (e) {
+    await db.execute('ROLLBACK');
+    throw e;
   }
-  const finalCheckins = await db.execute({ sql: "SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'", args: [childId, day] });
-  if (Number(finalCheckins.rows[0]?.n) >= 3) {
-    await db.execute({ sql: "INSERT INTO daily_practice (child_id, day, completed, correct, total, questions) VALUES (?, ?, 1, 0, 0, '[]') ON CONFLICT(child_id, day) DO UPDATE SET completed = 1", args: [childId, day] });
-  }
-  await db.execute({ sql: 'UPDATE troublemakers SET resolved = 1 WHERE child_id = ? AND day = ?', args: [childId, day] });
-  await db.execute({ sql: "UPDATE moko_owned SET status = 'resident', mood = 3 WHERE child_id = ? AND status = 'fled'", args: [childId] });
   const row = await getRow(childId);
   const lastStolen = Number(row?.last_stolen ?? 0);
   if (lastStolen > 0) {
@@ -262,7 +273,7 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
   await settleCastle(childId, today);
 
   const db = getDb();
-  const [row, checkRows, owned, trouble, inv, past, troubleDays, penaltyEvents] = await Promise.all([
+  const [row, checkRows, owned, trouble, inv, past, troubleDays, penaltyEvents, freezeRow] = await Promise.all([
     getRow(childId),
     db.execute({ sql: 'SELECT subject, status FROM daily_checkins WHERE child_id = ? AND day = ?', args: [childId, today] }),
     db.execute({ sql: 'SELECT * FROM moko_owned WHERE child_id = ?', args: [childId] }),
@@ -271,6 +282,7 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
     db.execute({ sql: "SELECT day, subject, status FROM daily_checkins WHERE child_id = ? AND day < ? ORDER BY day DESC", args: [childId, today] }),
     db.execute({ sql: 'SELECT DISTINCT day FROM troublemakers WHERE child_id = ? AND resolved = 0', args: [childId] }),
     db.execute({ sql: "SELECT title, desc FROM growth_events WHERE child_id = ? AND type = 'penalty' AND day = ? ORDER BY id DESC LIMIT 1", args: [childId, today] }),
+    db.execute({ sql: "SELECT qty FROM inventory WHERE child_id = ? AND item_key = 'freeze'", args: [childId] }).catch(() => ({ rows: [] as any[] })),
   ]);
 
   const sunlight = Number(row?.sunlight ?? 0);
@@ -278,11 +290,7 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
   const prosperity = Number(row?.prosperity ?? 0);
   const streakDays = Number(row?.streak_days ?? 0);
   const shieldEquipped = Number(row?.shield_equipped ?? 0);
-  let freezeCount = 0;
-  try {
-    const fr = await db.execute({ sql: "SELECT qty FROM inventory WHERE child_id = ? AND item_key = 'freeze'", args: [childId] });
-    freezeCount = Number(fr.rows[0]?.qty ?? 0);
-  } catch {}
+  const freezeCount = Number(freezeRow?.rows?.[0]?.qty ?? 0);
   const skin = String(row?.skin ?? 'default');
 
   const checkins: Record<Subject, 'pending' | 'child_done' | 'confirmed'> = { 语文: 'pending', 数学: 'pending', 英语: 'pending' };
