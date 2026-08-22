@@ -61,6 +61,12 @@ const VOICE_EDGE: Record<string, string> = {
   en: 'en-US-AriaNeural',
 };
 
+// Vercel Edge TTS 代理 URL（可选）：
+//   当 NAS 直连 Edge TTS 被 geo-block 时，设此环境变量指向已部署的
+//   /api/tts-edge Vercel Edge 路由（海外节点），绕过大陆 geo-block。
+//   用法：VERCEL_EDGE_TTS_URL=https://your-app.vercel.app/api/tts-edge
+const VERCEL_EDGE_TTS_URL = process.env.VERCEL_EDGE_TTS_URL;
+
 function uuid() {
   return crypto.randomUUID().replaceAll('-', '');
 }
@@ -465,6 +471,45 @@ async function synthesizeWithEdge(
   return { data: audio, type: 'audio/mpeg' };
 }
 
+/**
+ * 通过 Vercel Edge 路由代理调用 Edge TTS。
+ *
+ * 部署在 Vercel 海外的 /api/tts-edge 路由可直连 edge.microsoft.com，
+ * 不受大陆 geo-block 影响。NAS 端只需设置 VERCEL_EDGE_TTS_URL 环境变量。
+ *
+ * 协议：POST JSON {text, lang, rate, pause} → 返回音频二进制。
+ */
+async function synthesizeWithVercelEdge(
+  text: string,
+  lang: 'zh' | 'en',
+  rate: string,
+  pause: number,
+): Promise<{ data: Buffer; type: string }> {
+  if (!VERCEL_EDGE_TTS_URL) throw new Error('VERCEL_EDGE_TTS_URL not set');
+
+  // 把 rate 字符串（如 "-45%"）转成数值倍率（如 0.55）
+  const rateMatch = /([+-]?\d+(?:\.\d+)?)\s*%/.exec(rate);
+  const pct = rateMatch ? parseFloat(rateMatch[1]) : 0;
+  const speed = 1 + pct / 100;
+
+  const resp = await fetch(VERCEL_EDGE_TTS_URL, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ text, lang, rate: Math.max(0.5, Math.min(2.0, speed)), pause }),
+    signal: AbortSignal.timeout(15000),
+  });
+
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => '');
+    throw new Error(`vercel-edge ${resp.status}${body ? `: ${body.slice(0, 100)}` : ''}`);
+  }
+
+  const data = Buffer.from(await resp.arrayBuffer());
+  if (data.length < 50) throw new Error(`vercel-edge returned ${data.length} bytes`);
+
+  return { data, type: resp.headers.get('content-type') || 'audio/mpeg' };
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // 入口
 // ═══════════════════════════════════════════════════════════════════════════
@@ -524,22 +569,53 @@ export async function POST(req: NextRequest) {
     } catch (e) {
       const kokoroErr = e instanceof Error ? e.message : String(e);
       console.warn(
-        '[tts] Kokoro 不可用，回退 Edge 在线 TTS：',
+        '[tts] Kokoro 不可用，回退 Vercel Edge / Edge 在线 TTS：',
         kokoroErr,
       );
-      try {
-        result = await synthesizeWithEdge(text, lang, rate, pause);
-      } catch (edgeErr) {
-        const edgeMsg = edgeErr instanceof Error ? edgeErr.message : String(edgeErr);
-        // 两条路径都失败 → 交由前端降级到 Web Speech，同时把诊断信息附在响应头里
-        console.warn(
-          '[tts] Edge 也失败，前端降级 Web Speech：',
-          `kokoro=${kokoroErr}; edge=${edgeMsg}`,
-        );
-        return NextResponse.json(
-          { error: 'tts failed', kokoro: kokoroErr, edge: edgeMsg },
-          { status: 502 },
-        );
+
+      // 第二层：Vercel Edge 路由代理（海外节点，可绕过大区 geo-block）
+      let vercelErr: string | null = null;
+      if (VERCEL_EDGE_TTS_URL) {
+        try {
+          result = await synthesizeWithVercelEdge(text, lang, rate, pause);
+        } catch (ve) {
+          vercelErr = ve instanceof Error ? ve.message : String(ve);
+          console.warn('[tts] Vercol Edge 代理失败，回退直连 Edge：', vercelErr);
+        }
+      }
+
+      // 第三层：直连 Edge 在线 TTS（NAS 大陆可能被拒，仅作最后兜底）
+      if (!vercelErr) {
+        // vercelErr is null means VERCEL_EDGE_TTS_URL not set → skip to direct Edge
+        try {
+          result = await synthesizeWithEdge(text, lang, rate, pause);
+        } catch (edgeErr) {
+          const edgeMsg = edgeErr instanceof Error ? edgeErr.message : String(edgeErr);
+          const vercelMsg = vercelErr || 'not-configured';
+          console.warn(
+            '[tts] Edge 也失败，前端降级 Web Speech：',
+            `kokoro=${kokoroErr}; vercel=${vercelMsg}; edge=${edgeMsg}`,
+          );
+          return NextResponse.json(
+            { error: 'tts failed', kokoro: kokoroErr, vercel: vercelMsg, edge: edgeMsg },
+            { status: 502 },
+          );
+        }
+      } else {
+        // Vercel Edge 已尝试但失败，仍尝试直连 Edge（以防 Vercel 挂了但直连可用）
+        try {
+          result = await synthesizeWithEdge(text, lang, rate, pause);
+        } catch (edgeErr) {
+          const edgeMsg = edgeErr instanceof Error ? edgeErr.message : String(edgeErr);
+          console.warn(
+            '[tts] 全部 TTS 路径失败，前端降级 Web Speech：',
+            `kokoro=${kokoroErr}; vercel=${vercelErr}; edge=${edgeMsg}`,
+          );
+          return NextResponse.json(
+            { error: 'tts failed', kokoro: kokoroErr, vercel: vercelErr, edge: edgeMsg },
+            { status: 502 },
+          );
+        }
       }
     }
 
