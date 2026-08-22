@@ -4,16 +4,25 @@
  * 共享的语音朗读助手（TTS），供各学习模块复用。
  *
  * 三层朗读策略（2026-08-22 重构）：
- *   第 1 层【浏览器 Web Speech 本地优先】——零延迟、零网络往返。
+ *   第 1 层【浏览器 Web Speech 严格匹配】——零延迟、零网络往返。
  *     只要本机有 zh-CN / en-US 严格匹配嗓音，就用它朗读。
- *     Safari/iOS 首句自动播放可能静音 → 1.5s 内未触发 onstart 就降级。
- *   第 2 层【服务端 Edge TTS（Python edge-tts 包）】——神经嗓音（晓晓/Aria），跨设备一致普通话。
- *     本地失败或本机无严格嗓音时走服务端 /api/tts。
+ *   第 2 层【Web Speech 宽松兜底】——零延迟，粤语/台式/英式也行。
+ *     本机无严格嗓音时（如 Android Edge）先走宽松，总比走服务端快。
+ *     （用户已确认「粤语也不是不能接受，总比没有声音好」）
+ *   第 3 层【服务端 edge-tts（Python edge-tts 包）】——神经嗓音（晓晓/Aria），最后兜底。
+ *     两层 Web Speech 都失败时才走服务端 /api/tts。
  *     服务端通过 subprocess 调用 Python edge-tts 包，从 NAS 住宅 IP 直连 speech.platform.bing.com。
  *     12s 超时保护。
- *   第 3 层【Web Speech 宽松兜底】——粤语 / 台式等也算。
- *     服务端也失败时，用本机任何 zh/en 嗓音读，总比静默好。
- *     （用户已确认「粤语也不是不能接受，总比没有声音好」）
+ *
+ * ⚠️ 2026-08-22 修复：
+ *   1. SSML <break> 标签 bug：edge-tts 对 <break time="400ms"/> 处理不稳定，
+ *      导致 pause 时长被当作文本朗读出来（用户听到"400毫秒"）。
+ *      现已将暂停逻辑从服务端 SSML 移回客户端 setTimeout。
+ *   2. 连续点击降级 bug：speechSynthesis.cancel() 后未等待队列清空就 speak，
+ *      导致 onstart 在 1.5s 超时窗口内不触发 → 误判失败 → 走服务端降级。
+ *      现已在 speak() 前轮询 speaking/pending 状态，确保队列清空后再播放。
+ *   3. 层级重排：宽松 Web Speech 移至第 2 层（服务端之前），
+ *      Android Edge 无严格嗓音时优先用宽松嗓音而非走网络。
  *
  * 拼音以「同音汉字」形式（如 bà→爸）交给 zh-CN 嗓音读，音节和声调都正确。
  * 整体语速偏慢，适配一年级小朋友跟读。
@@ -158,22 +167,27 @@ export async function playTts(
 ) {
   const wsRate = opts.wsRate ?? 0.8;
   const pitch = opts.pitch ?? 1.05;
+  const pauseMs = opts.pauseMs ?? 0;
 
-  // ── 第 1 层：本地 Web Speech（零延迟，普通话）─────────────────
+  // ── 第 1 层：本地 Web Speech 严格匹配（零延迟，普通话）────────
   if (hasStrictVoice(lang)) {
-    const played = await speakEnd(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch);
+    const played = await speakEnd(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch, pauseMs);
     if (played) return;
   }
 
-  // ── 第 2 层：服务端 Kokoro（神经嗓音，跨设备一致）────────────
+  // ── 第 2 层：Web Speech 宽松兜底（零延迟，粤语/台式也行）────
+  // 本机无严格嗓音时（如 Android Edge）先走宽松，总比走服务端快。
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    const loosePlayed = await speakEndLoose(text, lang === 'zh' ? 'zh' : 'en', wsRate, pitch, pauseMs);
+    if (loosePlayed) return;
+  }
+
+  // ── 第 3 层：服务端 edge-tts（神经嗓音，最后兜底）────────────
   const serverOk = await tryServer(text, lang, { ...opts, wsRate, pitch });
   if (serverOk) return;
-
-  // ── 第 3 层：Web Speech 宽松兜底（粤语/台式等，总比静默好）──
-  speakEndLoose(text, lang, wsRate, pitch);
 }
 
-/** 第 2 层：走服务端 /api/tts 播放，结束时 resolve；失败降级到第 3 层。 */
+/** 第 3 层：走服务端 /api/tts 播放，结束时 resolve；失败则结束（两层 Web Speech 已兜底）。 */
 function tryServer(
   text: string,
   lang: 'zh' | 'en',
@@ -191,7 +205,7 @@ function tryServer(
     fetch('/api/tts', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ text, lang, rate: toEdgeRate(wsRate), pause: pauseMs }),
+      body: JSON.stringify({ text, lang, rate: toEdgeRate(wsRate) }),
       signal: controller.signal,
     })
       .then((res) => {
@@ -201,7 +215,15 @@ function tryServer(
       .then((blob) => {
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
-        audio.onended = () => { URL.revokeObjectURL(url); resolve(true); };
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+          // pauseMs 暂停：音频播放结束后延迟 resolve
+          if (pauseMs > 0) {
+            setTimeout(() => resolve(true), pauseMs);
+          } else {
+            resolve(true);
+          }
+        };
         audio.onerror = () => { URL.revokeObjectURL(url); resolve(false); };
         audio.play().catch(() => { URL.revokeObjectURL(url); resolve(false); });
       })
@@ -226,7 +248,7 @@ export function playTtsEnd(
  * 严格模式朗读（第 1 层）：onstart 触发才算成功。
  * iPad Safari 首句常不触发 onstart（静音）→ 1.5s 内未触发即判定失败。
  */
-function speakEnd(text: string, lang: string, rate: number, pitch: number): Promise<boolean> {
+function speakEnd(text: string, lang: string, rate: number, pitch: number, pauseMs = 0): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
       resolve(false);
@@ -250,12 +272,35 @@ function speakEnd(text: string, lang: string, rate: number, pitch: number): Prom
       resolve(ok);
     };
     u.onstart = () => { started = true; clearTimeout(startTimer); };
-    u.onend = () => finish(started);
+    u.onend = () => {
+      // pauseMs 暂停：播放结束后延迟 resolve，用于顺序连读时的段落间隔
+      if (pauseMs > 0) {
+        setTimeout(() => finish(started), pauseMs);
+      } else {
+        finish(started);
+      }
+    };
     u.onerror = () => finish(started);
     const fire = () => {
       try {
         window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(u);
+        // ⚠️ 修复连续点击降级：cancel() 后不等待队列清空就 speak，
+        // 会导致 onstart 在 1.5s 内不触发 → 误判失败 → 走服务端降级。
+        // 轮询 speaking/pending 都变为 false 后再 speak，最多等 200ms。
+        let retries = 20;
+        const trySpeak = () => {
+          if (retries <= 0) {
+            window.speechSynthesis.speak(u);
+            return;
+          }
+          if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+            window.speechSynthesis.speak(u);
+          } else {
+            retries--;
+            setTimeout(trySpeak, 10);
+          }
+        };
+        trySpeak();
       } catch {
         finish(false);
       }
@@ -268,10 +313,10 @@ function speakEnd(text: string, lang: string, rate: number, pitch: number): Prom
 }
 
 /**
- * 宽松模式朗读（第 3 层兜底）：不排斥粤语/台式，
+ * 宽松模式朗读（第 2 层兜底）：不排斥粤语/台式，
  * 只要 onstart 触发就视为成功，不再严格检查嗓音匹配。
  */
-function speakEndLoose(text: string, lang: string, rate: number, pitch: number): Promise<boolean> {
+function speakEndLoose(text: string, lang: string, rate: number, pitch: number, pauseMs = 0): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
       resolve(false);
@@ -295,11 +340,30 @@ function speakEndLoose(text: string, lang: string, rate: number, pitch: number):
       resolve(ok);
     };
     u.onstart = () => { started = true; clearTimeout(startTimer); };
-    u.onend = () => finish(true);
+    u.onend = () => {
+      if (pauseMs > 0) {
+        setTimeout(() => finish(true), pauseMs);
+      } else {
+        finish(true);
+      }
+    };
     u.onerror = () => finish(started);
     try {
       window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
+      let retries = 20;
+      const trySpeak = () => {
+        if (retries <= 0) {
+          window.speechSynthesis.speak(u);
+          return;
+        }
+        if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+          window.speechSynthesis.speak(u);
+        } else {
+          retries--;
+          setTimeout(trySpeak, 10);
+        }
+      };
+      trySpeak();
     } catch {
       finish(false);
     }

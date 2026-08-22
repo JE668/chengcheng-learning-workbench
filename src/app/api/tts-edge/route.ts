@@ -125,9 +125,8 @@ export async function POST(request: NextRequest) {
 
     const voice = VOICE_EDGE[lang] || VOICE_EDGE.zh;
     const rateStr = `${Math.round((rate - 1) * 100)}%`;
-    const textWithPause = pause > 0
-      ? text.trim() + `<break time="${Math.round(pause * 1000)}ms"/>`
-      : text.trim();
+    // ⚠️ edge-tts 对 SSML <break> 标签处理不稳定，不再嵌入
+    const textWithPause = text.trim();
 
     const buffer = await edgeTTS(textWithPause, voice, rateStr);
     const body = buffer.buffer as ArrayBuffer;

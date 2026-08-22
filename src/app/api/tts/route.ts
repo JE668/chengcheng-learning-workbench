@@ -131,9 +131,10 @@ export async function POST(req: NextRequest) {
   if (text.length > 500) text = text.slice(0, 500);
   if (!rate) rate = '-45%';
 
-  const textWithPause = pause > 0
-    ? text.trim() + `<break time="${pause}ms"/>`
-    : text.trim();
+  // ⚠️ 2026-08-22 修复：edge-tts 对 SSML <break> 标签处理不稳定，
+  // 会将 pause 时长当作文本朗读出来（如"400毫秒"）。
+  // 暂停由客户端在播放结束后通过 setTimeout 处理，此处不嵌入 SSML。
+  const textWithPause = text.trim();
   const voice = VOICE_EDGE[lang];
 
   const cacheKey = ttsCacheKey(text, lang, rate, pause);

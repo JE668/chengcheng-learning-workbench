@@ -90,7 +90,7 @@ describe('calibrateRate：仅 Edge/Chrome 校准，真 Safari 不校准', () => 
   });
 });
 
-describe('playTts：本地优先 → 服务端降级 → 宽松兜底（三层策略）', () => {
+describe('playTts：严格 Web Speech → 宽松 Web Speech → 服务端（三层策略）', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it('第1层：本机有 zh-CN 嗓音且本地真正出声 → 仅用 Web Speech，不调用服务端', async () => {
@@ -99,22 +99,21 @@ describe('playTts：本地优先 → 服务端降级 → 宽松兜底（三层�
     expect(spoken.length).toBe(1);
     expect(spoken[0].lang).toBe('zh-CN');
     expect(spoken[0].text).toBe('你好');
-    // 新策略：本地成功后不调用服务端预热
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('第2层：本机无 zh-CN 嗓音（如 iPad 仅粤语）→ 跳过本地，走服务端兜底', async () => {
+  it('第2/3层：本机无 zh-CN 嗓音（如 iPad 仅粤语）→ 跳过本地，走服务端兜底', async () => {
     const { spoken, fetchMock } = installBrowser({ zhCN: false });
     await playTts('你好', 'zh');
-    expect(spoken.length).toBe(0); // 没用本地嗓音（严格匹配为空）
+    expect(spoken.length).toBe(0); // 严格和宽松都没找到嗓音
     expect(fetchMock).toHaveBeenCalled(); // 走服务端
   });
 
-  it('第2层降级：本机有嗓音但本地首句不响（iPad Safari onstart 不触发）→ 降级服务端', async () => {
+  it('第1/2层降级：本机有嗓音但本地首句不响（iPad Safari onstart 不触发）→ 宽松层 onend 仍触发 → 宽松成功，不走服务端', async () => {
     const { spoken, fetchMock } = installBrowser({ zhCN: true, start: false });
     await expect(playTts('苹果', 'zh')).resolves.toBeUndefined();
-    expect(spoken.length).toBe(1); // 本地确实尝试过 speak
-    expect(fetchMock).toHaveBeenCalled(); // 判定本地未出声后改走服务端
+    expect(spoken.length).toBe(2); // 严格 + 宽松各尝试一次 speak
+    expect(fetchMock).not.toHaveBeenCalled(); // 宽松层 onend 触发 → 视为成功，无需服务端
   });
 
   it('playTtsEnd 在语音结束时 resolve，可用于顺序连读', async () => {
