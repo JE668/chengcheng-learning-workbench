@@ -44,7 +44,13 @@ async function getSecToken(): Promise<string> {
   const date = new Date().toUTCString();
   if (cachedSec && cachedSec.date === date) return cachedSec.token;
   const resp = await fetch(SECURITY_URL, {
-    headers: { 'x-client-birth': date, 'x-client-current': date },
+    headers: {
+      'x-client-birth': date,
+      'x-client-current': date,
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+      'Referer': 'https://www.bing.com/',
+    },
   });
   if (!resp.ok) throw new Error(`sec cfg ${resp.status}`);
   const data = (await resp.json()) as { secret?: string };
