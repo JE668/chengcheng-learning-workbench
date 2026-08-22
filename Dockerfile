@@ -8,16 +8,21 @@ FROM node:22-bookworm-slim
 # 安装 Python + ONNX Runtime 依赖（Kokoro TTS 需要）
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip python3-dev \
-    libsndfile1 ffmpeg \
+    libsndfile1 ffmpeg espeak-ng \
     && rm -rf /var/lib/apt/lists/* \
-    && pip3 install --break-system-packages 'numpy==1.26.4' soundfile \
-        onnxruntime-gpu==1.17.1 && \
+    && pip3 install --break-system-packages \
+        numpy==1.26.4 \
+        espeakng-loader>=0.2.4 \
+        phonemizer>=3.4.0 \
+        onnxruntime-gpu==1.17.1 \
+        soundfile && \
     pip3 install --break-system-packages --no-deps kokoro-onnx==0.6.1
-    # onnxruntime-gpu 1.17.1（CUDA 11.8）：最后一个支持 Pascal 架构的版本
-    # numpy==1.26.4：1.17.1 wheel 用 numpy 1.x ABI 编译，不可混用 2.x
-    # --no-deps：kokoro-onnx 0.6.1 要求 numpy>=2.0.2 但运行时无需 2.x 特性
-    #   实测 np.load/npz 在 numpy 1.26.4 正常工作
-    #   需 docker-compose 配 --gpus all（见 deploy.resources）
+    # kokoro-onnx 0.6.1 依赖：espeakng-loader, numpy>=2.0.2, onnxruntime>=1.20.1, phonemizer
+    # 问题：onnxruntime-gpu 1.17.1（唯一支持 Pascal sm_6.1 的版本）用 numpy 1.x ABI 编译
+    # 方案：显式装全部依赖，numpy pin 1.26.4（ABI 兼容 1.x 编译的 wheel）
+    #       --no-deps 只跳过 kokoro-onnx 自身的 numpy>=2.0.2 版本声明
+    #       phonemizer/espeakng-loader 等其余依赖显式安装，不跳过
+    # 需 docker-compose 配 --gpus all（见 deploy.resources）
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
