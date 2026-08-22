@@ -8,35 +8,54 @@
 //   - 模型轻量（~80MB quantized），CPU 推理速度可达实时
 //
 // 下载源：GitHub Release（已验证可达）；国内 NAS 本地构建失败时回退到 hf-mirror.com
-// 模型文件：
-//   - kokoro-v1.0.onnx  (~60MB)：主模型
-//   - voices-v1.0.bin   (~20MB)：多音色向量
+//
+// 2026-08-18 后 release 重新上传模型文件，`kokoro-v1.0.onnx` 实际变成了 PyTorch 格式
+// （文件名误导）。真正的 ONNX 量化模型是 `kokoro-v1.0.int8.onnx`（82MB）。
+// `voices-v1.0.bin` 只在 model-files-v1.0 release 里存在。
+// 因此这里用不同的 release tag 分别下载。
 //
 // Piper 模型已废弃，此脚本会清理旧的 piper 目录。
 
 import { spawnSync } from 'node:child_process';
 import { writeFileSync, mkdirSync, existsSync, rmSync, statSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const KOKORO_DIR = '/opt/kokoro';
-const MODEL_FILE = 'kokoro-v1.0.onnx';
+const MODEL_FILE = 'kokoro-v1.0.onnx';    // 保存目标名（Python 代码引用）
 const VOICES_FILE = 'voices-v1.0.bin';
 
-// GitHub Release 下载链接（v1.1 版本，包含 v1.0 模型）
-const BASE_URL = 'https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.1';
+// 模型：下载 int8 ONNX（真正的 ONNX 格式），保存为 kokoro-v1.0.onnx
+const MODEL_DOWNLOAD_NAME = 'kokoro-v1.0.int8.onnx';
+const MODEL_RELEASE = 'model-files-v1.1';
+const MODEL_URL = `https://github.com/thewh1teagle/kokoro-onnx/releases/download/${MODEL_RELEASE}/${MODEL_DOWNLOAD_NAME}`;
+const MODEL_HF = `https://hf-mirror.com/thewh1teagle/kokoro-onnx/releases/download/${MODEL_RELEASE}/${MODEL_DOWNLOAD_NAME}`;
 
-// 备用源：HuggingFace（国内可访问）
-const HF_BASE_URL = 'https://hf-mirror.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.1';
+// 音色：仅在 model-files-v1.0 release 中有
+const VOICES_RELEASE = 'model-files-v1.0';
+const VOICES_URL = `https://github.com/thewh1teagle/kokoro-onnx/releases/download/${VOICES_RELEASE}/${VOICES_FILE}`;
+const VOICES_HF = `https://hf-mirror.com/thewh1teagle/kokoro-onnx/releases/download/${VOICES_RELEASE}/${VOICES_FILE}`;
 
-const MIN_MODEL_BYTES = 10 * 1024 * 1024; // 模型文件应 > 10MB
+const MIN_MODEL_BYTES = 10 * 1024 * 1024;
+const MIN_VOICES_BYTES = 5 * 1024 * 1024;
 
-async function download(url, dest, minBytes = 0) {
-  const res = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(30000) });
+function validateOnnx(buf) {
+  // 前 200 字节里不应含 "pytorch"（避免误下 PyTorch 模型）
+  const header = buf.slice(0, 200).toString('latin1');
+  if (/pytorch/i.test(header)) {
+    throw new Error('文件是 PyTorch 格式，非 ONNX（文件名误导）');
+  }
+  return true;
+}
+
+async function download(url, dest, minBytes = 0, validate = null) {
+  const res = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(90000) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const buf = Buffer.from(await res.arrayBuffer());
   if (minBytes > 0 && buf.length < minBytes) {
     throw new Error(`文件过小(${buf.length}B)，疑似错误页/LFS指针`);
+  }
+  if (validate && !validate(buf)) {
+    throw new Error('文件内容验证失败');
   }
   writeFileSync(dest, buf);
   return buf.length;
@@ -58,44 +77,62 @@ async function download(url, dest, minBytes = 0) {
       }
     }
 
-    // 下载主模型
+    // 清理旧的错误格式模型文件（PyTorch 伪 .onnx），强制重新下载
     const modelPath = join(KOKORO_DIR, MODEL_FILE);
+    const modelNeedsReplace = existsSync(modelPath) && (() => {
+      const buf = Buffer.alloc(200);
+      let fd = -1;
+      try {
+        const { openSync, readSync, closeSync } = require('node:fs');
+        fd = openSync(modelPath, 'r');
+        readSync(fd, buf, 0, 200, 0);
+        return /pytorch/i.test(buf.toString('latin1', 0, 200));
+      } catch {
+        return false;
+      } finally {
+        if (fd >= 0) { try { require('node:fs').closeSync(fd); } catch {} }
+      }
+    })();
+    if (modelNeedsReplace) {
+      console.log('[fetch-kokoro] existing model is PyTorch format, removing and re-downloading...');
+      rmSync(modelPath);
+    }
+
+    // 下载主模型（真正的 ONNX int8 量化版）
     if (existsSync(modelPath) && statSync(modelPath).size >= MIN_MODEL_BYTES) {
       console.log('[fetch-kokoro] model already present, skip');
     } else {
-      console.log('[fetch-kokoro] downloading kokoro model...');
+      console.log('[fetch-kokoro] downloading kokoro ONNX model...');
       let ok = false;
-      for (const base of [BASE_URL, HF_BASE_URL]) {
+      for (const url of [MODEL_URL, MODEL_HF]) {
         try {
-          const url = `${base}/${MODEL_FILE}`;
-          const n = await download(url, modelPath, MIN_MODEL_BYTES);
-          console.log(`[fetch-kokoro] model downloaded (${n} bytes) from ${base}`);
+          const n = await download(url, modelPath, MIN_MODEL_BYTES, validateOnnx);
+          console.log(`[fetch-kokoro] model downloaded (${n} bytes) from ${url}`);
           ok = true;
           break;
         } catch (e) {
-          console.log(`[fetch-kokoro] model failed from ${base}: ${e.message}`);
+          console.log(`[fetch-kokoro] model failed from ${url}: ${e.message}`);
           if (existsSync(modelPath)) rmSync(modelPath);
         }
       }
       if (!ok) console.log('[fetch-kokoro] WARN: kokoro model not installed');
     }
 
-    // 下载音色文件
+    // 下载音色文件（来自 model-files-v1.0 release）
     const voicesPath = join(KOKORO_DIR, VOICES_FILE);
-    if (existsSync(voicesPath) && statSync(voicesPath).size >= 5 * 1024 * 1024) {
+    if (existsSync(voicesPath) && statSync(voicesPath).size >= MIN_VOICES_BYTES) {
       console.log('[fetch-kokoro] voices already present, skip');
     } else {
       console.log('[fetch-kokoro] downloading voices...');
       let ok = false;
-      for (const base of [BASE_URL, HF_BASE_URL]) {
+      for (const url of [VOICES_URL, VOICES_HF]) {
         try {
-          const url = `${base}/${VOICES_FILE}`;
-          const n = await download(url, voicesPath, 5 * 1024 * 1024);
-          console.log(`[fetch-kokoro] voices downloaded (${n} bytes) from ${base}`);
+          const n = await download(url, voicesPath, MIN_VOICES_BYTES);
+          console.log(`[fetch-kokoro] voices downloaded (${n} bytes) from ${url}`);
           ok = true;
           break;
         } catch (e) {
-          console.log(`[fetch-kokoro] voices failed from ${base}: ${e.message}`);
+          console.log(`[fetch-kokoro] voices failed from ${url}: ${e.message}`);
           if (existsSync(voicesPath)) rmSync(voicesPath);
         }
       }
