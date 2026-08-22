@@ -392,7 +392,7 @@ function genClockQ(): PracticeQuestion {
     id: `ck-${c.hour}`,
     kind: 'math',
     subject: '数学',
-    prompt: `${c.emoji} 这是几点？`,
+    prompt: `这是几点？`,
     options,
     answer,
     explain: c.label,
