@@ -175,14 +175,14 @@ export async function POST(request: NextRequest) {
 
     const result = await edgeTTS(text.trim(), (lang as 'zh' | 'en') || 'zh', rate || 1.0, pause || 0.1, signal);
 
-    // Edge 运行时 Uint8Array<ArrayBufferLike> 不匹配 BodyInit，用 ArrayBuffer 传递
-    const body = result.data.buffer.slice(result.data.byteOffset, result.data.byteOffset + result.data.byteLength);
-    const length = result.data.byteLength;
+    // Uint8Array.buffer 类型为 ArrayBufferLike (= ArrayBuffer | SharedArrayBuffer)，
+    // BodyInit 只接受 ArrayBuffer。new Uint8Array() 只生成 ArrayBuffer，断言安全。
+    const body = result.data.buffer as ArrayBuffer;
 
     return new NextResponse(body, {
       headers: {
         'Content-Type': result.type,
-        'Content-Length': String(length),
+        'Content-Length': String(result.data.byteLength),
         'X-TTS-Engine': 'edge',
       },
     });
