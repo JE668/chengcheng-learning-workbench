@@ -24,9 +24,10 @@ const KOKORO_DIR = '/opt/kokoro';
 const MODEL_FILE = 'kokoro-v1.0.onnx';    // 保存目标名（Python 代码引用）
 const VOICES_FILE = 'voices-v1.0.bin';
 
-// 模型：下载 int8 ONNX（真正的 ONNX 格式），保存为 kokoro-v1.0.onnx
-const MODEL_DOWNLOAD_NAME = 'kokoro-v1.0.int8.onnx';
-const MODEL_RELEASE = 'model-files-v1.1';
+// 模型：下载 FP16 ONNX 量化模型（v1.0 release），保存为 kokoro-v1.0.onnx
+// INT8 模型在 NAS 上推理超时（5s），FP16 量化通常 CPU 上更快。
+const MODEL_DOWNLOAD_NAME = 'kokoro-v1.0.fp16.onnx';
+const MODEL_RELEASE = 'model-files-v1.0';
 const MODEL_URL = `https://github.com/thewh1teagle/kokoro-onnx/releases/download/${MODEL_RELEASE}/${MODEL_DOWNLOAD_NAME}`;
 const MODEL_HF = `https://hf-mirror.com/thewh1teagle/kokoro-onnx/releases/download/${MODEL_RELEASE}/${MODEL_DOWNLOAD_NAME}`;
 
