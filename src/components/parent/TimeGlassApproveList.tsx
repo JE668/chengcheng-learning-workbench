@@ -10,11 +10,17 @@ export default function TimeGlassApproveList({
   requests,
   childId,
 }: {
-  requests: { id: number; createdAt: string }[];
+  requests: { id: number; text: string; createdAt: string }[];
   childId: number;
 }) {
   const [list, setList] = useState(requests);
   const [msg, setMsg] = useState('');
+
+  // 从申请文本中提取补打卡日期，如 "⏳ 申请时光沙漏（补 08-18日）"
+  function extractDay(text: string): string | null {
+    const m = text.match(/补\s*(\d{2}-\d{2})日/);
+    return m ? `${m[1].slice(0, 2)}月${m[1].slice(3)}日` : null;
+  }
 
   async function handleAction(wishId: number, action: 'approve' | 'reject') {
     setMsg('');
@@ -55,7 +61,11 @@ export default function TimeGlassApproveList({
           >
             <span className="text-2xl">⏳</span>
             <div className="flex-1">
-              <div className="font-bold text-purple-700 text-sm">孩子申请了时光沙漏</div>
+              <div className="font-bold text-purple-700 text-sm">
+                {req.text.includes('（补')
+                  ? `孩子申请时光沙漏补 ${extractDay(req.text) || '打卡'}`
+                  : '孩子申请了时光沙漏'}
+              </div>
               <div className="text-xs text-gray-500">
                 申请时间：{req.createdAt}
               </div>

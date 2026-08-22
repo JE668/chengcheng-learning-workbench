@@ -21,10 +21,10 @@ export async function POST(req: Request) {
 
   const db = getDb();
 
-  // 越权防护：只能操作自己孩子的沙漏申请
+  // 越权防护：只能操作自己孩子的沙漏申请（支持带日期的新格式）
   const wish = await db.execute({
-    sql: "SELECT id, child_id, status FROM wishes WHERE id = ? AND child_id = ? AND text = ?",
-    args: [wishId, childId, '⏳ 申请时光沙漏'],
+    sql: "SELECT id, child_id, status FROM wishes WHERE id = ? AND child_id = ? AND text LIKE '⏳%'",
+    args: [wishId, childId],
   });
   if (!wish.rows.length) {
     return NextResponse.json({ error: '申请不存在或已处理' }, { status: 404 });

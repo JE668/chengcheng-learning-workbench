@@ -36,8 +36,8 @@ const TTS_LIMIT = { windowSeconds: 60, maxRequests: 30 };
 const ttsCache = new Map<string, { data: Buffer; type: string }>();
 const TTS_CACHE_MAX = 500;
 
-function ttsCacheKey(text: string, lang: string, rate: string, pause: number): string {
-  return `${lang}|${rate}|${pause}|${text}`;
+function ttsCacheKey(text: string, lang: string, rate: string): string {
+  return `${lang}|${rate}|${text}`;
 }
 
 /**
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
   const textWithPause = text.trim();
   const voice = VOICE_EDGE[lang];
 
-  const cacheKey = ttsCacheKey(text, lang, rate, pause);
+  const cacheKey = ttsCacheKey(text, lang, rate);
   const hit = ttsCache.get(cacheKey);
   if (hit) {
     ttsCache.delete(cacheKey);

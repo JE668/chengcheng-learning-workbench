@@ -68,14 +68,18 @@ export default async function DashboardPage() {
   } catch { /* 同上 */ }
 
   // 待审批时光沙漏申请
-  let timeglassRequests: { id: number; createdAt: string }[] = [];
+  let timeglassRequests: { id: number; text: string; createdAt: string }[] = [];
   try {
     if (cId) {
       const reqRows = await db.execute({
-        sql: "SELECT id, created_at FROM wishes WHERE child_id = ? AND text = ? AND status = 'pending' ORDER BY created_at DESC",
-        args: [cId, '⏳ 申请时光沙漏'],
+        sql: "SELECT id, text, created_at FROM wishes WHERE child_id = ? AND text LIKE '⏳%' AND status = 'pending' ORDER BY created_at DESC",
+        args: [cId],
       });
-      timeglassRequests = reqRows.rows.map((r) => ({ id: Number(r.id), createdAt: String(r.created_at ?? '') }));
+      timeglassRequests = reqRows.rows.map((r) => ({
+        id: Number(r.id),
+        text: String(r.text),
+        createdAt: String(r.created_at ?? ''),
+      }));
     }
   } catch { /* 忽略 */ }
 

@@ -3,6 +3,8 @@ import { getDb, getChildPoints } from '@/lib/db';
 import { getGrowthDiary } from '@/lib/castle';
 import Link from 'next/link';
 import GrowthTree from '@/components/GrowthTree';
+import CheckinCalendar from '@/components/CheckinCalendar';
+import { EmptyState } from '@/components/EmptyState';
 
 // 本地日期工具（与 castle/date 一致）
 function dateStrForPg(d: Date = new Date()): string {
@@ -11,7 +13,6 @@ function dateStrForPg(d: Date = new Date()): string {
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
-import { EmptyState } from '@/components/EmptyState';
 
 export default async function RecordPage() {
   const user = await getCurrentUser();
@@ -97,7 +98,7 @@ export default async function RecordPage() {
         </div>
       </div>
 
-            {/* 近 7 天积分趋势 */}
+      {/* 近 7 天积分趋势 */}
       {weeklyTrend.length > 0 && (
         <div className="card-moko mb-6">
           <h2 className="text-xl font-bold text-moko-violet mb-3">📈 近 7 天积分趋势</h2>
@@ -144,66 +145,13 @@ export default async function RecordPage() {
           </div>
         </div>
       )}
-            {/* 📅 打卡日历（近 35 天） */}
+      {/* 📅 打卡日历（近 35 天） */}
       <div className="card-moko mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-2xl font-black text-moko-violet">📅 打卡日历</h2>
           <span className="text-sm text-gray-500">坚持每天三科打卡，日历越来越绿！</span>
         </div>
-        {/* 按自然周分组渲染 */}
-        {(() => {
-          // 把 calDays 按 ISO 周（周一开始）分组
-          const weeks: { day: string; count: number; hasTrouble: boolean; dow: number }[][] = [];
-          let cur: { day: string; count: number; hasTrouble: boolean; dow: number }[] = [];
-          // 找到 calDays 最早一天的星期偏移，补前导空格
-          const first = new Date(calDays[0].day + 'T00:00:00');
-          const firstDow = (first.getDay() + 6) % 7; // 0=周一
-          for (let i = 0; i < firstDow; i++) cur.push({ day: '', count: -1, hasTrouble: false, dow: i });
-          for (const c of calDays) {
-            const dt = new Date(c.day + 'T00:00:00');
-            const dow = (dt.getDay() + 6) % 7;
-            cur.push({ ...c, dow });
-            if (dow === 6) { weeks.push(cur); cur = []; }
-          }
-          if (cur.length) weeks.push(cur);
-          const weekday = ['一', '二', '三', '四', '五', '六', '日'];
-          const dayColor = (count: number) => {
-            if (count >= 3) return 'bg-green-500 text-white';
-            if (count === 2) return 'bg-green-300 text-white';
-            if (count === 1) return 'bg-green-100 text-green-700';
-            return 'bg-gray-100 text-gray-400';
-          };
-          return (
-            <div>
-              <div className="grid grid-cols-7 gap-1 mb-1.5">
-                {weekday.map((w) => <div key={w} className="text-center text-[11px] font-bold text-gray-400">{w}</div>)}
-              </div>
-              {weeks.map((week, wi) => (
-                <div key={wi} className="grid grid-cols-7 gap-1 mb-1">
-                  {week.map((c, ci) => c.day === '' ? (
-                    <div key={ci} className="h-10 rounded-xl bg-transparent" />
-                  ) : (
-                    <div
-                      key={ci}
-                      title={`${c.day} · 打卡 ${c.count}/3 科${c.hasTrouble ? ' · 有捣蛋萌可' : ''}`}
-                      className={'h-10 rounded-xl flex flex-col items-center justify-center relative text-xs font-bold transition ' + dayColor(c.count)}
-                    >
-                      {new Date(c.day + 'T00:00:00').getDate()}
-                      {c.hasTrouble && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border border-white" />}
-                    </div>
-                  ))}
-                </div>
-              ))}
-              <div className="flex items-center gap-3 mt-3 text-[11px] text-gray-500">
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500 inline-block" /> 三科全勤</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-300 inline-block" /> 两科</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-100 inline-block" /> 单科</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-100 inline-block" /> 未打卡</span>
-                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" /> 捣蛋萌可</span>
-              </div>
-            </div>
-          );
-        })()}
+        <CheckinCalendar days={calDays} />
       </div>
 
       {/* 🌳 成长树 */}
