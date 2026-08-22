@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { calibrateRate, playTts, playTtsEnd } from '@/lib/speak';
 
-/** 在 node 环境里拼出最小可用的浏览器语音环境，返回「本地播了什么」与「fetch 是否被调」。 */
+/** 在 node 环境里拼出最小可用的浏览器语音环境。 */
 function installBrowser(opts: { zhCN: boolean; start?: boolean }) {
   const spoken: any[] = [];
   const fireStart = opts.start ?? true; // 默认 onstart 会触发（本地真正出声）；false 模拟 iPad 首句不响
@@ -90,31 +90,30 @@ describe('calibrateRate：仅 Edge/Chrome 校准，真 Safari 不校准', () => 
   });
 });
 
-describe('playTts：首句本地出声 + iPad 无普通话嗓音守卫 + 本地不响降级', () => {
+describe('playTts：本地优先 → 服务端降级 → 宽松兜底（三层策略）', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('本机有 zh-CN 嗓音且本地真正出声 → 首句走本地 Web Speech，同时后台预热服务端缓存', async () => {
+  it('第1层：本机有 zh-CN 嗓音且本地真正出声 → 仅用 Web Speech，不调用服务端', async () => {
     const { spoken, fetchMock } = installBrowser({ zhCN: true });
     await playTts('你好', 'zh');
     expect(spoken.length).toBe(1);
     expect(spoken[0].lang).toBe('zh-CN');
     expect(spoken[0].text).toBe('你好');
-    // 本地已出声；首次会后台预热服务端缓存（fetch 被调用于预热），但不阻塞
-    expect(fetchMock).toHaveBeenCalled();
+    // 新策略：本地成功后不调用服务端预热
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('本机无 zh-CN 嗓音（如 iPad 仅粤语）→ 跳过本地，直接走服务端兜底，不静音', async () => {
+  it('第2层：本机无 zh-CN 嗓音（如 iPad 仅粤语）→ 跳过本地，走服务端兜底', async () => {
     const { spoken, fetchMock } = installBrowser({ zhCN: false });
     await playTts('你好', 'zh');
-    expect(spoken.length).toBe(0); // 没用本地嗓音（避免用粤语误导孩子）
-    expect(fetchMock).toHaveBeenCalled(); // 改走服务端普通话
+    expect(spoken.length).toBe(0); // 没用本地嗓音（严格匹配为空）
+    expect(fetchMock).toHaveBeenCalled(); // 走服务端
   });
 
-  it('本机有嗓音但本地首句不响（iPad Safari onstart 不触发）→ 降级服务端兜底，不静音、不卡死', async () => {
-    // 用与前面用例不同的文本，避免命中跨用例持久化的 serverCached 而直接走服务端
+  it('第2层降级：本机有嗓音但本地首句不响（iPad Safari onstart 不触发）→ 降级服务端', async () => {
     const { spoken, fetchMock } = installBrowser({ zhCN: true, start: false });
     await expect(playTts('苹果', 'zh')).resolves.toBeUndefined();
-    expect(spoken.length).toBe(1); // 本地确实尝试过 speak（但没真正出声）
+    expect(spoken.length).toBe(1); // 本地确实尝试过 speak
     expect(fetchMock).toHaveBeenCalled(); // 判定本地未出声后改走服务端
   });
 
