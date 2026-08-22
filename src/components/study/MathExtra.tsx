@@ -255,7 +255,7 @@ export function ClockModule() {
     <div className="space-y-5">
       <div className="rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-blue/20">
         <ClockFace hour={current.hour} />
-        <div className="text-center text-lg font-black text-moko-blue mt-2">{current.emoji} 现在几点？</div>
+        <div className="text-center text-lg font-black text-moko-blue mt-2">现在几点？</div>
         <div className="grid grid-cols-2 gap-3 mt-3">
           {choices.map((label) => {
             const isAnswer = label === current.label;

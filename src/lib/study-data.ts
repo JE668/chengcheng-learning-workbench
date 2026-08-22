@@ -796,21 +796,20 @@ export const NUMBERS_1120: Number1120Item[] = Array.from({ length: 10 }, (_, i) 
 export interface ClockItem {
   hour: number;
   label: string;
-  emoji: string;
 }
 export const CLOCKS: ClockItem[] = [
-  { hour: 1, label: '1时', emoji: '🕐' },
-  { hour: 2, label: '2时', emoji: '🕑' },
-  { hour: 3, label: '3时', emoji: '🕒' },
-  { hour: 4, label: '4时', emoji: '🕓' },
-  { hour: 5, label: '5时', emoji: '🕔' },
-  { hour: 6, label: '6时', emoji: '🕕' },
-  { hour: 7, label: '7时', emoji: '🕖' },
-  { hour: 8, label: '8时', emoji: '🕗' },
-  { hour: 9, label: '9时', emoji: '🕘' },
-  { hour: 10, label: '10时', emoji: '🕙' },
-  { hour: 11, label: '11时', emoji: '🕚' },
-  { hour: 12, label: '12时', emoji: '🕛' },
+  { hour: 1, label: '1时' },
+  { hour: 2, label: '2时' },
+  { hour: 3, label: '3时' },
+  { hour: 4, label: '4时' },
+  { hour: 5, label: '5时' },
+  { hour: 6, label: '6时' },
+  { hour: 7, label: '7时' },
+  { hour: 8, label: '8时' },
+  { hour: 9, label: '9时' },
+  { hour: 10, label: '10时' },
+  { hour: 11, label: '11时' },
+  { hour: 12, label: '12时' },
 ];
 
 /* -------------------- 英语 · 人教版（一年级起点）单元 -------------------- */
@@ -1244,15 +1243,14 @@ export const ORDINALS: OrdinalItem[] = [
 export interface ClockHalfItem {
   hour: number;
   label: string;
-  emoji: string;
 }
 export const CLOCK_HALF: ClockHalfItem[] = [
-  { hour: 1, label: '1时半', emoji: '🥛' },
-  { hour: 3, label: '3时半', emoji: '🍰' },
-  { hour: 5, label: '5时半', emoji: '🌇' },
-  { hour: 7, label: '7时半', emoji: '🌆' },
-  { hour: 9, label: '9时半', emoji: '📚' },
-  { hour: 11, label: '11时半', emoji: '🛏️' },
+  { hour: 1, label: '1时半' },
+  { hour: 3, label: '3时半' },
+  { hour: 5, label: '5时半' },
+  { hour: 7, label: '7时半' },
+  { hour: 9, label: '9时半' },
+  { hour: 11, label: '11时半' },
 ];
 
 /* -------------------- 数学 · 比轻重 / 比长短 -------------------- */
