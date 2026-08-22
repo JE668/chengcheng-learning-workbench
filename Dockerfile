@@ -10,8 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
     # 注：Kokoro 离线 TTS 已弃用（MX150 Pascal 不兼容新版 onnxruntime-gpu），
-    #     TTS 改用 Vercel Edge 代理 + Edge 在线神经嗓音（见 /api/tts-edge 路由）。
-    #     已移除 Python/kokoro-onnx 依赖，镜像大小从 ~1.5GB 降至 ~800MB。
+    #     TTS 改用 Edge 在线神经嗓音（晓晓/Aria）。
+    #     大陆 NAS 直连 edge.microsoft.com 被 geo-block，
+    #     改用 edge-tts npm 包（WebSocket 直连 speech.platform.bing.com，住宅 IP 不受限）。
+    #     Vercel 数据中⼼ IP 也被封禁，故 edge-tts 只在 NAS 本地跑。
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000

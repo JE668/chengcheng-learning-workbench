@@ -9,7 +9,7 @@
  *     Safari/iOS 首句自动播放可能静音 → 1.5s 内未触发 onstart 就降级。
  *   第 2 层【服务端 Edge TTS】——神经嗓音（晓晓/Aria），跨设备一致普通话。
  *     本地失败或本机无严格嗓音时走服务端 /api/tts。
- *     服务端内部链路：Vercel Edge 代理（海外，~200ms）→ 直连 Edge TTS（兜底）。
+ *     服务端内部链路：直连 speech.platform.bing.com（住宅 IP）→ Vercel 代理（可选）→ 兜底。
  *     8s 超时保护。
  *   第 3 层【Web Speech 宽松兜底】——粤语 / 台式等也算。
  *     服务端也失败时，用本机任何 zh/en 嗓音读，总比静默好。
