@@ -6,11 +6,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
-    && pip3 install --break-system-packages edge-tts
-    # edge-tts: Python 版 Microsoft Edge TTS 客户端
-    #   从住宅 IP 直连 speech.platform.bing.com（WebSocket），不受数据中心 IP 限制
-    #   容器运行在 NAS 住宅宽带上，WebSocket 连接正常
-    #   替代了已弃用的 Kokoro（CPU 推理 5s+）和 Vercel 代理（数据中心 IP 被拒 403）
+    && pip3 install --break-system-packages edge-tts==7.2.8
+    # edge-tts: Python 版 Microsoft Edge TTS 客户端（v7.2.8，已验证从 NAS 住宅 IP 可用）
+    #   - WebSocket 直连 speech.platform.bing.com（Chromium 143 headers）
+    #   - Sec-MS-GEC 令牌通过时间戳 + SHA256 计算，无需 edge.microsoft.com
+    #   - 替代了已弃用的 Kokoro（MX150 Pascal 不兼容新版 onnxruntime-gpu）
+    #     和 Vercel 代理（数据中心 IP 被微软拒 403）
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000

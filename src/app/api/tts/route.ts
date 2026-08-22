@@ -3,24 +3,20 @@
  * 服务端中文/英文 TTS —— edge-tts Python 包本地合成
  * ───────────────────────────────────────────────────────────────────────────
  *
- * 合成链路：
- *   1) edge-tts Python 本地合成（首选）—— subprocess 调用 Python 的 edge-tts 包。
- *      Python edge-tts 包从住宅 IP 直连 speech.platform.bing.com（WebSocket），
- *      不受数据中心 IP（Vercel/AWS/GCP）限制。容器运行在 NAS 住宅宽带上。
- *      延迟 ~300-600ms（含 Python 进程启动开销），音质为微软神经嗓音（晓晓/Aria）。
+ * 技术路线（已验证从 NAS 广东电信住宅 IP 可用）：
+ *   Python edge-tts 包 subprocess 调用：
+ *     - WebSocket 直连 speech.platform.bing.com（Chromium 143 headers）
+ *     - Sec-MS-GEC 令牌通过时间戳 + SHA256 计算，无需 edge.microsoft.com
+ *     - stream() 获取 MP3 音频块，base64 输出
  *
- *   2) 浏览器 Web Speech（前端降级）—— edge-tts 失败时，speak.ts 触发。
+ * 延迟：~300-600ms（含 Python 进程启动开销），内存缓存命中秒回。
  *
- * 为什么用 edge-tts 而非 Kokoro：
- *   - Kokoro CPU 推理 5s+，远超 edge-tts 的 ~300-600ms
- *   - Edge TTS 神经嗓音（晓晓/Aria）音质优于 Kokoro
- *   - edge-tts 零模型下载，零磁盘占用，完全依赖微软在线服务
- *   - MX150 GPU 不兼容新版 Kokoro 模型（硬件天花板）
+ * 为什么用 Python subprocess 而非 Node.js WebSocket：
+ *   - Node.js ws 包从 NAS 住宅 IP 返回 403（被微软识别为非浏览器流量）
+ *   - Python edge-tts 使用 aiohttp + 完整 Chromium 143 浏览器特征
+ *     住宅 IP 可正常通过。
  *
- * 为什么用 Python subprocess 而非 Node.js WebSocket 直连：
- *   - Node.js WebSocket 从 NAS 住宅 IP 也被微软拒 403（可能是 UA/header 被识别）
- *   - Python edge-tts 包使用 urllib3 + asyncio 直连，WebSocket 握手参数不同
- *     住宅 IP 可正常通过。实测从 NAS 容器内 subprocess 调用成功。
+ * 降级：edge-tts 失败时，前端 speak.ts 自动降级到 Web Speech。
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { safeJson } from '@/lib/safe-json';
@@ -47,41 +43,31 @@ function ttsCacheKey(text: string, lang: string, rate: string, pause: number): s
 /**
  * 通过 Python edge-tts 包合成音频。
  *
- * edge-tts 包的 API：
- *   from edge_tts import Communicate
- *   communicate = Communicate(text=text, voice=voice, rate=rate)
- *   data = await communicate.synthesize()  # 返回 bytes
- *
- * 我们用 subprocess 调用，输出 base64 音频。
+ * 输出：stdout 为 base64 编码的 MP3 音频。
+ * 参数通过 sys.argv 传递，避免 shell 转义问题。
  */
 async function synthesizeWithEdgeTTS(
   text: string,
-  lang: 'zh' | 'en',
+  voice: string,
   rate: string,
-  pause: number,
-): Promise<{ data: Buffer; type: string }> {
-  const voice = VOICE_EDGE[lang];
-  const rateStr = rate; // edge-tts 接受 '-45%' 格式
-
-  // 用 Python subprocess 调用 edge-tts
-  // 脚本输出 base64 编码的 MP3
+): Promise<Buffer> {
   const pyScript = `
-import asyncio, base64, sys
+import asyncio, base64, io, sys
 from edge_tts import Communicate
 
 async def main():
-    text = sys.argv[1]
-    voice = sys.argv[2]
-    rate = sys.argv[3]
-    communicate = Communicate(text=text, voice=voice, rate=rate)
-    data = await communicate.synthesize()
-    print(base64.b64encode(data).decode())
+    c = Communicate(text=sys.argv[1], voice=sys.argv[2], rate=sys.argv[3])
+    data = io.BytesIO()
+    async for chunk in c.stream():
+        if chunk['type'] == 'audio':
+            data.write(chunk['data'])
+    print(base64.b64encode(data.getvalue()).decode())
 
 asyncio.run(main())
 `;
 
   return new Promise((resolve, reject) => {
-    const proc = spawn('python3', ['-c', pyScript, text, voice, rateStr], {
+    const proc = spawn('python3', ['-c', pyScript, text, voice, rate], {
       timeout: 12000,
     });
 
@@ -91,22 +77,28 @@ asyncio.run(main())
     proc.stdout.on('data', (d) => { stdout += d.toString(); });
     proc.stderr.on('data', (d) => { stderr += d.toString(); });
 
-    proc.on('error', (e) => reject(new Error(`python edge-tts spawn error: ${e.message}`)));
+    proc.on('error', (e) => {
+      reject(new Error(`edge-tts spawn error: ${e.message}`));
+    });
 
     proc.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error(`python edge-tts exit code=${code}, stderr: ${stderr.slice(0, 300)}`));
+        reject(new Error(`edge-tts exit code=${code}, stderr: ${stderr.slice(0, 500)}`));
         return;
       }
       if (!stdout.trim()) {
-        reject(new Error('python edge-tts returned empty output'));
+        reject(new Error('edge-tts returned empty output'));
         return;
       }
       try {
         const data = Buffer.from(stdout.trim(), 'base64');
-        resolve({ data, type: 'audio/mpeg' });
+        if (data.length < 50) {
+          reject(new Error(`edge-tts returned only ${data.length} bytes`));
+          return;
+        }
+        resolve(data);
       } catch (e) {
-        reject(new Error(`python edge-tts base64 decode failed: ${e}`));
+        reject(new Error(`edge-tts base64 decode failed: ${e}`));
       }
     });
   });
@@ -139,6 +131,11 @@ export async function POST(req: NextRequest) {
   if (text.length > 500) text = text.slice(0, 500);
   if (!rate) rate = '-45%';
 
+  const textWithPause = pause > 0
+    ? text.trim() + `<break time="${pause}ms"/>`
+    : text.trim();
+  const voice = VOICE_EDGE[lang];
+
   const cacheKey = ttsCacheKey(text, lang, rate, pause);
   const hit = ttsCache.get(cacheKey);
   if (hit) {
@@ -151,18 +148,18 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await synthesizeWithEdgeTTS(text, lang, rate, pause);
+    const buffer = await synthesizeWithEdgeTTS(textWithPause, voice, rate);
 
     if (ttsCache.size >= TTS_CACHE_MAX) {
       const oldest = ttsCache.keys().next().value;
       if (oldest !== undefined) ttsCache.delete(oldest);
     }
-    ttsCache.set(cacheKey, { data: result.data, type: result.type });
+    ttsCache.set(cacheKey, { data: buffer, type: 'audio/mpeg' });
 
-    return new NextResponse(new Uint8Array(result.data), {
+    return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
-        'content-type': result.type,
+        'content-type': 'audio/mpeg',
         'cache-control': 'public, max-age=86400',
       },
     });

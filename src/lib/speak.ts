@@ -7,10 +7,10 @@
  *   第 1 层【浏览器 Web Speech 本地优先】——零延迟、零网络往返。
  *     只要本机有 zh-CN / en-US 严格匹配嗓音，就用它朗读。
  *     Safari/iOS 首句自动播放可能静音 → 1.5s 内未触发 onstart 就降级。
- *   第 2 层【服务端 Edge TTS】——神经嗓音（晓晓/Aria），跨设备一致普通话。
+ *   第 2 层【服务端 Edge TTS（Python edge-tts 包）】——神经嗓音（晓晓/Aria），跨设备一致普通话。
  *     本地失败或本机无严格嗓音时走服务端 /api/tts。
- *     服务端内部链路：直连 speech.platform.bing.com（住宅 IP）→ Vercel 代理（可选）→ 兜底。
- *     8s 超时保护。
+ *     服务端通过 subprocess 调用 Python edge-tts 包，从 NAS 住宅 IP 直连 speech.platform.bing.com。
+ *     12s 超时保护。
  *   第 3 层【Web Speech 宽松兜底】——粤语 / 台式等也算。
  *     服务端也失败时，用本机任何 zh/en 嗓音读，总比静默好。
  *     （用户已确认「粤语也不是不能接受，总比没有声音好」）
