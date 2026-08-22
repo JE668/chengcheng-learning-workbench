@@ -324,10 +324,10 @@ function flushKokoroQueue(state: KokoroServeState): void {
 async function synthesizeWithKokoro(
   text: string,
   lang: 'zh' | 'en',
-  rate: number,
+  speed: number,
 ): Promise<{ data: Buffer; type: string }> {
-  // 语速映射：Kokoro speed 0.5-2.0，对应 Edge rate -50%~+100%
-  const speed = Math.max(0.5, Math.min(2.0, 1 / rate));
+  // 直接以 Kokoro speed 形式传入（0.5=slow, 1.0=normal, 2.0=fast），与 Edge 百分比转换在调用方完成
+  const clampedSpeed = Math.max(0.5, Math.min(2.0, speed));
 
   // 获取持久化进程（懒启动，模型只加载一次）
   const state = await getKokoroServe();
@@ -336,7 +336,7 @@ async function synthesizeWithKokoro(
     text,
     voice: VOICE_KOKORO[lang],
     lang,
-    speed,
+    speed: clampedSpeed,
   });
 
   return new Promise((resolve, reject) => {
@@ -522,11 +522,25 @@ export async function POST(req: NextRequest) {
       const speed = 1 + pct / 100; // -45% -> 0.55
       result = await synthesizeWithKokoro(text, lang, Math.max(0.5, Math.min(2.0, speed)));
     } catch (e) {
+      const kokoroErr = e instanceof Error ? e.message : String(e);
       console.warn(
         '[tts] Kokoro 不可用，回退 Edge 在线 TTS：',
-        e instanceof Error ? e.message : String(e),
+        kokoroErr,
       );
-      result = await synthesizeWithEdge(text, lang, rate, pause);
+      try {
+        result = await synthesizeWithEdge(text, lang, rate, pause);
+      } catch (edgeErr) {
+        const edgeMsg = edgeErr instanceof Error ? edgeErr.message : String(edgeErr);
+        // 两条路径都失败 → 交由前端降级到 Web Speech，同时把诊断信息附在响应头里
+        console.warn(
+          '[tts] Edge 也失败，前端降级 Web Speech：',
+          `kokoro=${kokoroErr}; edge=${edgeMsg}`,
+        );
+        return NextResponse.json(
+          { error: 'tts failed', kokoro: kokoroErr, edge: edgeMsg },
+          { status: 502 },
+        );
+      }
     }
 
     // 写入合成缓存（限定上限，FIFO 淘汰最旧），供后续重复朗读秒回
@@ -544,11 +558,9 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (e) {
-    // 合成失败（Kokoro 与 Edge 均不可用）→ 交由前端降级到 Web Speech
-    console.warn(
-      '[tts] 合成失败（Kokoro 与 Edge 均不可用），前端将降级到浏览器 Web Speech：',
-      e instanceof Error ? e.message : String(e),
-    );
-    return NextResponse.json({ error: 'tts failed' }, { status: 502 });
+    // 异常路径兜底（缓存同步错误等）
+    const msg = e instanceof Error ? e.message : String(e);
+    console.warn('[tts] 异常降级 Web Speech：', msg);
+    return NextResponse.json({ error: 'tts failed', reason: msg }, { status: 502 });
   }
 }

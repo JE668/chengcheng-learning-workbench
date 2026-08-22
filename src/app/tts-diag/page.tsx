@@ -46,7 +46,13 @@ export default function TtsDiagPage() {
         }
       } else {
         const txt = await res.text().catch(() => '');
-        push(`服务端返回非 200，内容: ${txt.slice(0, 200)}`);
+        push(`服务端返回非 200，内容: ${txt.slice(0, 400)}`);
+        try {
+          const j = JSON.parse(txt);
+          if (j.kokoro) push(`  ↳ Kokoro 失败原因: ${j.kokoro}`);
+          if (j.edge) push(`  ↳ Edge 失败原因: ${j.edge}`);
+          if (j.reason) push(`  ↳ 兜底异常: ${j.reason}`);
+        } catch { /* 不是 JSON */ }
       }
     } catch (e) {
       const elapsed = Math.round(performance.now() - t0);
