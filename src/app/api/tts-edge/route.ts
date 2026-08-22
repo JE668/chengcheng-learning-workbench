@@ -14,11 +14,11 @@
  * ───────────────────────────────────────────────────────────────────────────
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { EdgeTTS } from 'edge-tts';
+import { tts } from 'edge-tts';
 
 // 必须用 nodejs 运行时（serverless function），才能：
 //   1) 支持 regions 配置（强制美国节点，绕过大区 geo-block）
-//   2) 使用 edge-tts npm 包（HTTP streaming，非 WebSocket）
+//   2) 使用 edge-tts npm 包（WebSocket 内部封装，无需手动实现协议）
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -41,22 +41,22 @@ export async function POST(request: NextRequest) {
     }
 
     const voice = VOICE_EDGE[lang] || VOICE_EDGE.zh;
-    const speed = `${(rate - 1) * 100}%`;
-    const pauseMs = Math.round(pause * 1000);
+    const rateStr = `${Math.round((rate - 1) * 100)}%`;
+    const textWithPause = pause > 0
+      ? text.trim() + `<break time="${Math.round(pause * 1000)}ms"/>`
+      : text.trim();
 
-    const tts = new EdgeTTS();
-
-    const buffer = (await tts
-      .setVoice(voice)
-      .setRaw(false)
-      .setRate(speed)
-      .setPitch('+0Hz')
-      .say(text.trim())) as Buffer;
+    const buffer = await tts(textWithPause, {
+      voice,
+      rate: rateStr,
+      pitch: '+0Hz',
+      volume: '+0%',
+    });
 
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': 'audio/mpeg',
-        'Content-Length': String(Buffer.byteLength(buffer)),
+        'Content-Length': String(buffer.length),
         'X-TTS-Engine': 'edge',
       },
     });
