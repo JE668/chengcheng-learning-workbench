@@ -175,10 +175,13 @@ export async function POST(request: NextRequest) {
 
     const result = await edgeTTS(text.trim(), (lang as 'zh' | 'en') || 'zh', rate || 1.0, pause || 0.1, signal);
 
-    return new NextResponse(result.data, {
+    // Edge 运行时 Uint8Array<ArrayBufferLike> 不匹配 BodyInit，用 Blob 包装
+    const body = new Uint8Array(result.data.buffer, result.data.byteOffset, result.data.byteLength);
+
+    return new NextResponse(body, {
       headers: {
         'Content-Type': result.type,
-        'Content-Length': String(result.data.length),
+        'Content-Length': String(body.length),
         'X-TTS-Engine': 'edge',
       },
     });
