@@ -8,5 +8,11 @@
         { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "src/app/api/tts-edge/route.ts": {
+      "regions": ["iad1"],
+      "memory": 512
+    }
+  }
 }
