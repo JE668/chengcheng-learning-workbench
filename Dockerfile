@@ -11,18 +11,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsndfile1 ffmpeg espeak-ng \
     && rm -rf /var/lib/apt/lists/* \
     && pip3 install --break-system-packages \
-        numpy==1.26.4 \
-        espeakng-loader>=0.2.4 \
-        phonemizer>=3.4.0 \
-        onnxruntime-gpu==1.17.1 \
-        soundfile && \
-    pip3 install --break-system-packages --no-deps kokoro-onnx==0.6.1
+        kokoro-onnx==0.6.1 \
+        soundfile
     # kokoro-onnx 0.6.1 依赖：espeakng-loader, numpy>=2.0.2, onnxruntime>=1.20.1, phonemizer
-    # 问题：onnxruntime-gpu 1.17.1（唯一支持 Pascal sm_6.1 的版本）用 numpy 1.x ABI 编译
-    # 方案：显式装全部依赖，numpy pin 1.26.4（ABI 兼容 1.x 编译的 wheel）
-    #       --no-deps 只跳过 kokoro-onnx 自身的 numpy>=2.0.2 版本声明
-    #       phonemizer/espeakng-loader 等其余依赖显式安装，不跳过
-    # 需 docker-compose 配 --gpus all（见 deploy.resources）
+    #   onnxruntime-gpu ≥1.18（CUDA 12.x）不支持 Pascal 架构（MX150 sm_6.1）
+    #   → 保留 onnxruntime CPU（1.20.1+），Kokoro 在 CPU 上推理
+    #   Web Speech 是主要路径（Layer 1），Kokoro 仅兜底
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000

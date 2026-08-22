@@ -13,15 +13,6 @@ services:
       - TZ=Asia/Shanghai
       - CRON_SECRET=${CRON_SECRET}
       - TURSO_URL=file:/data/local.db
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
     volumes:
       # 数据库持久化：账号 / 城堡 / 打卡 / 错题 全部存在这里，重建容器不丢
       - ./data:/data
