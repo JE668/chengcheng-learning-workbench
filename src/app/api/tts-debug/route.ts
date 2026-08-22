@@ -1,65 +1,57 @@
-/** Debug endpoint: 直接从 Vercel 测试 edge.microsoft.com 可达性 */
+/** Debug endpoint: 测试各种 TTS 端点 */
 import { NextRequest, NextResponse } from 'next/server';
+import WebSocket from 'ws';
+import { randomUUID } from 'node:crypto';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  const results: Record<string, any> = {};
   const date = new Date().toUTCString();
-  const results: any = { date };
 
-  // 测试 1: fetch 默认
+  // 测试 1: edge.microsoft.com /tts/cfg/security
   try {
     const r = await fetch('https://edge.microsoft.com/tts/cfg/security', {
       headers: {
-        'x-client-birth': date,
-        'x-client-current': date,
+        'x-client-birth': date, 'x-client-current': date,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
       },
       signal: AbortSignal.timeout(5000),
     });
-    results.fetch_default = { status: r.status, body: await r.text().then(s => s.slice(0, 200)) };
-  } catch (e: any) { results.fetch_default = e.message; }
+    results.edge_microsoft = { status: r.status, body: (await r.text()).slice(0, 100) };
+  } catch (e: any) { results.edge_microsoft = e.message; }
 
-  // 测试 2: fetch 带完整浏览器头
+  // 测试 2: speech.platform.bing.com 只有 TrustedClientToken (无 Sec-MS-GEC)
   try {
-    const r = await fetch('https://edge.microsoft.com/tts/cfg/security', {
+    const TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
+    const connId = randomUUID().replaceAll('-', '');
+    const wsUrl = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${TOKEN}&ConnectionId=${connId}`;
+
+    const ws = new WebSocket(wsUrl, {
+      host: 'speech.platform.bing.com',
+      origin: 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
       headers: {
-        'x-client-birth': date,
-        'x-client-current': date,
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
-        'Accept': 'application/json',
-        'Referer': 'https://www.bing.com/',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.66 Safari/537.36 Edg/103.0.1264.44',
       },
+      timeout: 5000,
+    });
+
+    let opened = false;
+    ws.on('open', () => { opened = true; ws.close(); });
+    ws.on('error', (e) => { results.ws_no_sec = `error: ${e.message}`; });
+    await new Promise<void>((r) => setTimeout(r, 6000));
+    results.ws_no_sec = opened ? 'connected (will close)' : 'not opened';
+  } catch (e: any) { results.ws_no_sec = e.message; }
+
+  // 测试 3: api-edge.bing.com
+  try {
+    const r = await fetch('https://api-edge.bing.com/tts', {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
       signal: AbortSignal.timeout(5000),
     });
-    results.fetch_browser = { status: r.status, body: await r.text().then(s => s.slice(0, 200)) };
-  } catch (e: any) { results.fetch_browser = e.message; }
+    results.api_edge_bing = { status: r.status };
+  } catch (e: any) { results.api_edge_bing = e.message; }
 
-  // 测试 3: https 模块直连
-  try {
-    const https = require('https');
-    const r = await new Promise<any>((resolve, reject) => {
-      const req = https.request({
-        hostname: 'edge.microsoft.com',
-        path: '/tts/cfg/security',
-        method: 'GET',
-        headers: {
-          'x-client-birth': date,
-          'x-client-current': date,
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
-        },
-      }, (res) => {
-        let data = '';
-        res.on('data', c => { data += c; if (data.length > 200) res.destroy(); });
-        res.on('end', () => resolve({ status: res.statusCode, body: data.slice(0, 200) }));
-      });
-      req.setTimeout(5000, () => { req.destroy(); reject(new Error('timeout')); });
-      req.end();
-    });
-    results.https_module = r;
-  } catch (e: any) { results.https_module = e.message; }
-
-  return NextResponse.json(results, { status: 200 });
+  return NextResponse.json(results);
 }
