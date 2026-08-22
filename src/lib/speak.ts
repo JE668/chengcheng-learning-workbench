@@ -248,7 +248,7 @@ function speakEnd(text: string, lang: string, rate: number, pitch: number): Prom
       resolve(ok);
     };
     u.onstart = () => { started = true; clearTimeout(startTimer); };
-    u.onend = () => finish(true);
+    u.onend = () => finish(started);
     u.onerror = () => finish(started);
     const fire = () => {
       try {
