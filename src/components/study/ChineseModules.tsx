@@ -572,6 +572,16 @@ export function CharacterQuizModule() {
     setQ(buildQuestion(newLevel));
   }
 
+  // 换题时自动朗读：char2mean 读「字 + 拼音」，mean2char 读「哪个字是这个意思」
+  useEffect(() => {
+    if (q.mode === 'char2mean') {
+      speakZh(`${q.target.char}，${q.target.meaning}`);
+    } else {
+      speakZh(`哪个字的意思是「${q.target.meaning}」？`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q.mode, q.target.char, q.target.meaning]);
+
   function choose(opt: string) {
     if (picked) return;
     setPicked(opt);

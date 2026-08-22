@@ -50,7 +50,7 @@ export function OrdinalModule() {
     const ordinals = Array.from({ length: o.row.length }, (_, i) => `第${i + 1}`);
     return {
       prompt: (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-center gap-2">
             {o.row.map((e, i) => (
               <span key={i} className="w-14 h-14 flex items-center justify-center rounded-2xl bg-moko-blue/10 text-3xl">
@@ -59,7 +59,7 @@ export function OrdinalModule() {
             ))}
           </div>
           <div className="font-black text-moko-blue">
-            {o.question}（从左边数哦）
+            {o.question}
           </div>
         </div>
       ),
