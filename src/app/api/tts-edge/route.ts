@@ -4,8 +4,8 @@
  * ───────────────────────────────────────────────────────────────────────────
  *
  * 用途：给大陆 NAS 服务端做中转。NAS 直连 edge.microsoft.com 被 geo-block，
- * 但此路由通过 wss://speech.platform.bing.com 直连（使用 TrustedClientToken，
- * 无需 edge.microsoft.com 安全令牌），部署在美国节点（iad1）即可成功。
+ * 但此路由通过 Vercel 美国节点（iad1）获取 Sec-MS-GEC 安全令牌，再连
+ * wss://speech.platform.bing.com 完成 TTS 合成。
  *
  * 部署：随本仓库一起部署到 Vercel，vercel.json 配置 regions=["iad1"]。
  * NAS 端 VERCEL_EDGE_TTS_URL 指向 https://your-app.vercel.app/api/tts-edge。
@@ -15,9 +15,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import WebSocket from 'ws';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 
-// 必须用 nodejs 运行时（serverless function），才能支持 regions 配置。
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -27,14 +26,47 @@ const VOICE_EDGE: Record<string, string> = {
 };
 
 const TRUSTED_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
+const SECURITY_URL = 'https://edge.microsoft.com/tts/cfg/security';
+
+let cachedSec: { date: string; token: string } | null = null;
+
+/**
+ * 从 edge.microsoft.com 获取 Sec-MS-GEC 安全令牌。
+ * Vercel 服务器在美国 iad1 节点，不受大陆 geo-block 影响。
+ */
+async function getSecToken(): Promise<string> {
+  const date = new Date().toUTCString();
+  if (cachedSec && cachedSec.date === date) return cachedSec.token;
+  const resp = await fetch(SECURITY_URL, {
+    headers: {
+      'x-client-birth': date,
+      'x-client-current': date,
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+      'Referer': 'https://www.bing.com/',
+    },
+  });
+  if (!resp.ok) throw new Error(`sec cfg ${resp.status}`);
+  const data = (await resp.json()) as { secret?: string };
+  if (!data.secret) throw new Error('sec cfg no secret');
+  const sha = createHash('sha256').update(`GEC${date}${data.secret}`).digest('base64');
+  cachedSec = { date, token: sha };
+  return sha;
+}
 
 async function edgeTTS(
   text: string,
   voice: string,
   rate: string,
 ): Promise<Buffer> {
+  const sec = await getSecToken();
   const connId = randomUUID().replaceAll('-', '');
-  const wsUrl = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${TRUSTED_TOKEN}&ConnectionId=${connId}`;
+  const wsUrl =
+    `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1` +
+    `?TrustedClientToken=${TRUSTED_TOKEN}` +
+    `&Sec-MS-GEC=${encodeURIComponent(sec)}` +
+    `&Sec-MS-GEC-Version=1` +
+    `&ConnectionId=${connId}`;
 
   const audioData: Buffer[] = [];
 
@@ -44,7 +76,7 @@ async function edgeTTS(
       origin: 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
       headers: {
         'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.66 Safari/537.36 Edg/120.0.0.0',
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.66 Safari/537.36 Edg/103.0.1264.44',
       },
       timeout: 10000,
     });
@@ -131,7 +163,7 @@ export async function POST(request: NextRequest) {
 
     const buffer = await edgeTTS(textWithPause, voice, rateStr);
 
-    // Buffer<ArrayBufferLike> 不匹配 BodyInit，转 ArrayBuffer（Buffer 底层永远是 ArrayBuffer）
+    // Buffer<ArrayBufferLike> 不匹配 BodyInit，转 ArrayBuffer
     const body = buffer.buffer as ArrayBuffer;
 
     return new NextResponse(body, {
