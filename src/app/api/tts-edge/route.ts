@@ -3,22 +3,21 @@
  * Vercel Serverless Function —— Edge TTS 代理（海外节点部署）
  * ───────────────────────────────────────────────────────────────────────────
  *
- * 用途：给大陆 NAS 服务端做中转。NAS 无法直连 edge.microsoft.com（geo-block），
- * 但 Vercel Serverless Function 强制部署在美国节点（iad1），不受此限制。
+ * 用途：给大陆 NAS 服务端做中转。NAS 直连 edge.microsoft.com 被 geo-block，
+ * 但此路由通过 wss://speech.platform.bing.com 直连（使用 TrustedClientToken，
+ * 无需 edge.microsoft.com 安全令牌），部署在美国节点（iad1）即可成功。
  *
  * 部署：随本仓库一起部署到 Vercel，vercel.json 配置 regions=["iad1"]。
  * NAS 端 VERCEL_EDGE_TTS_URL 指向 https://your-app.vercel.app/api/tts-edge。
  *
- * 延迟：~300-800ms（短文本），远低于 Kokoro CPU 的 5s+。
- * 音质：Edge TTS 神经嗓音（晓晓/Aria），优于 Kokoro。
+ * 延迟：~300-800ms（短文本）。音质：Edge TTS 神经嗓音（晓晓/Aria）。
  * ───────────────────────────────────────────────────────────────────────────
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { tts } from 'edge-tts';
+import WebSocket from 'ws';
+import { randomUUID } from 'node:crypto';
 
-// 必须用 nodejs 运行时（serverless function），才能：
-//   1) 支持 regions 配置（强制美国节点，绕过大区 geo-block）
-//   2) 使用 edge-tts npm 包（WebSocket 内部封装，无需手动实现协议）
+// 必须用 nodejs 运行时（serverless function），才能支持 regions 配置。
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +25,90 @@ const VOICE_EDGE: Record<string, string> = {
   zh: 'zh-CN-XiaoxiaoNeural',
   en: 'en-US-AriaNeural',
 };
+
+const TRUSTED_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
+
+async function edgeTTS(
+  text: string,
+  voice: string,
+  rate: string,
+): Promise<Buffer> {
+  const connId = randomUUID().replaceAll('-', '');
+  const wsUrl = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${TRUSTED_TOKEN}&ConnectionId=${connId}`;
+
+  const audioData: Buffer[] = [];
+
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(wsUrl, {
+      host: 'speech.platform.bing.com',
+      origin: 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.66 Safari/537.36 Edg/120.0.0.0',
+      },
+      timeout: 10000,
+    });
+
+    let sent = false;
+    let done = false;
+
+    const sendSsml = () => {
+      if (sent) return;
+      sent = true;
+
+      const speechConfig = JSON.stringify({
+        context: {
+          synthesis: {
+            audio: {
+              metadataoptions: { sentenceBoundaryEnabled: false, wordBoundaryEnabled: false },
+              outputFormat: 'audio-24khz-48kbitrate-mono-mp3',
+            },
+          },
+        },
+      });
+      const cfg = `X-Timestamp:${new Date()}\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n${speechConfig}`;
+      ws.send(cfg, { compress: true });
+
+      const ssml =
+        `X-RequestId:${randomUUID().replaceAll('-', '')}\r\nContent-Type:application/ssml+xml\r\n` +
+        `X-Timestamp:${new Date()}Z\r\nPath:ssml\r\n\r\n` +
+        `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>` +
+        `<voice name='${voice}'><prosody pitch='+0Hz' rate='${rate}' volume='+0%'>${text}</prosody></voice></speak>`;
+      ws.send(ssml, { compress: true });
+    };
+
+    ws.on('open', () => sendSsml());
+    if (ws.readyState === WebSocket.OPEN) sendSsml();
+
+    ws.on('message', (raw, isBinary) => {
+      if (isBinary) {
+        const buf = Buffer.from(raw as Buffer);
+        const sep = 'Path:audio\r\n';
+        const i = buf.indexOf(sep);
+        if (i >= 0) audioData.push(buf.subarray(i + sep.length));
+      } else {
+        const s = raw.toString('utf8');
+        if (s.includes('turn.end')) {
+          done = true;
+          ws.close();
+        }
+      }
+    });
+
+    ws.on('close', () => {
+      if (audioData.length > 0) resolve(Buffer.concat(audioData));
+      else reject(new Error('no audio data received'));
+    });
+
+    ws.on('error', (e) => {
+      if (!done) reject(e);
+    });
+
+    setTimeout(() => {
+      if (!done) { ws.close(); reject(new Error('tts timeout 10s')); }
+    }, 10000);
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,12 +129,7 @@ export async function POST(request: NextRequest) {
       ? text.trim() + `<break time="${Math.round(pause * 1000)}ms"/>`
       : text.trim();
 
-    const buffer = await tts(textWithPause, {
-      voice,
-      rate: rateStr,
-      pitch: '+0Hz',
-      volume: '+0%',
-    });
+    const buffer = await edgeTTS(textWithPause, voice, rateStr);
 
     return new NextResponse(buffer, {
       headers: {
