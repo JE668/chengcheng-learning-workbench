@@ -11,10 +11,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsndfile1 ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
     && pip3 install --break-system-packages kokoro-onnx==0.6.1 soundfile \
-        onnxruntime-gpu==1.17.1
+        onnxruntime-gpu==1.17.1 \
+        'numpy<2.1'
     # kokoro-onnx 锁定版本：0.6.x 支持 ONNX 量化模型格式（onnx.quantize）
-    # onnxruntime-gpu 1.17.1（CUDA 11.8）：最后一个支持 Pascal 架构的版本
-    #   MX150（Pascal sm_6.1）可用 GPU 推理，延迟 ~50-100ms vs CPU ~300-500ms
+    # onnxruntime-gpu 1.17.1（CUDA 11.8）：最后一个可能支持 Pascal 架构的版本
+    #   numpy<2.1：1.17.1 wheel 用 numpy 1.x ABI 编译，numpy 2.x 高版本不兼容
+    #   2.0.2 是 numpy 2.x 的最低版本，ABI 兼容 1.x 编译的 wheel
     #   需 docker-compose 配 --gpus all（见 deploy.resources）
 
 ENV NEXT_TELEMETRY_DISABLED=1
