@@ -20,10 +20,10 @@ const FALLBACK_META = { label: '今日练习', grad: 'from-moko-violet to-moko-p
 
 async function autoPlay(q?: PracticeQuestion) {
   if (!q) return;
-  if (q.kind === 'pinyin') void playTts(q.audioText, 'zh', { wsRate: 0.5, pauseMs: 400 });
+  if (q.kind === 'pinyin') void playTts(q.audioText, 'zh', { wsRate: 0.6, pauseMs: 300 });
   else if (q.kind === 'english') void playTts(q.word, 'en');
-  else if (q.kind === 'dictation') void playTts(q.han, 'zh', { wsRate: 0.5, pauseMs: 400 });
-  else if (q.kind === 'mistake' && q.speakText) void playTts(q.speakText, 'zh', { wsRate: 0.6 });
+  else if (q.kind === 'dictation') void playTts(q.han, 'zh', { wsRate: 0.6, pauseMs: 300 });
+  else if (q.kind === 'mistake' && q.speakText) void playTts(q.speakText, 'zh', { wsRate: 0.7 });
 }
 
 export default function DailyPracticePage() {
@@ -337,13 +337,13 @@ export default function DailyPracticePage() {
           {q.kind === 'pinyin' && (
             <>
               <div className="text-6xl font-black mb-2">{q.han}</div>
-              <button onClick={() => playTts(q.audioText, 'zh', { wsRate: 0.5, pauseMs: 400 })} className="text-sm bg-white/30 rounded-full px-3 py-1">🔊 听一听</button>
+              <button onClick={() => playTts(q.audioText, 'zh', { wsRate: 0.6, pauseMs: 300 })} className="text-sm bg-white/30 rounded-full px-3 py-1">🔊 听一听</button>
             </>
           )}
           {q.kind === 'dictation' && (
             <>
               <div className="text-6xl font-black mb-2">✍️</div>
-              <button onClick={() => playTts(q.han, 'zh', { wsRate: 0.5, pauseMs: 400 })} className="text-sm bg-white/30 rounded-full px-4 py-1.5">🔊 听写 · 再听一遍</button>
+              <button onClick={() => playTts(q.han, 'zh', { wsRate: 0.6, pauseMs: 300 })} className="text-sm bg-white/30 rounded-full px-4 py-1.5">🔊 听写 · 再听一遍</button>
             </>
           )}
           {q.kind === 'math' && <div className="text-5xl font-black">{q.prompt}</div>}
@@ -366,7 +366,7 @@ export default function DailyPracticePage() {
               <div className="text-2xl font-black leading-snug">{q.prompt}</div>
               {q.speakText && (
                 <button
-                  onClick={() => playTts(q.speakText as string, 'zh', { wsRate: 0.6 })}
+                  onClick={() => playTts(q.speakText as string, 'zh', { wsRate: 0.7 })}
                   className="mt-2 text-sm bg-white/30 rounded-full px-3 py-1"
                 >
                   🔊 听一听
