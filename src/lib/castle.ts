@@ -208,6 +208,10 @@ export async function grantResource(childId: number, resource: 'sunlight' | 'sta
   return { ok: false, message: '未知资源类型' };
 }
 
+/**
+ * 家长审批时光沙漏申请的入口（带库存校验）。
+ * 孩子背包里必须有沙漏，扣减后调用 restoreDay 实际补打卡。
+ */
 export async function applyTimeGlass(childId: number, day: string): Promise<{ ok: boolean; message: string }> {
   const db = getDb();
   await ensureCastle(childId);
@@ -221,38 +225,68 @@ export async function applyTimeGlass(childId: number, day: string): Promise<{ ok
   if (missing.length === 0) {
     return { ok: false, message: day + ' 三科都已经打卡过了，不用补～' };
   }
-  const messages: string[] = [];
-  // 注意：confirm() 内部有 BEGIN IMMEDIATE 事务，此处不能再嵌套事务。
-  // confirm() 是幂等的（已确认的科直接返回失败），因此无需额外事务包裹。
   // 扣减沙漏必须先于 confirm 执行：若 confirm 失败则跳过，不浪费沙漏。
-  const invCheck = await db.execute({ sql: 'SELECT qty FROM inventory WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
-  if (!invCheck.rows.length || Number(invCheck.rows[0].qty) <= 0) {
-    return { ok: false, message: '没有时光沙漏啦～' };
-  }
   await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
+  const restored = await restoreDay(childId, day, missing);
+  if (!restored.ok || restored.restored.length === 0) {
+    // confirm 都没成功，补回沙漏
+    await db.execute({ sql: 'UPDATE inventory SET qty = qty + 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
+    return { ok: false, message: restored.message };
+  }
+  const extraMsg = restored.coinsReturned > 0 ? '，还找回了被藏起来的星星币！' : '！';
+  return { ok: true, message: '⏳ 时光沙漏生效！' + day + ' 的 ' + restored.restored.join('、') + ' 补打卡成功，连续天数已恢复' + extraMsg };
+}
+
+/**
+ * 补打卡核心逻辑（不带库存校验），供 applyTimeGlass 和家长审批共用。
+ * 将指定日期缺少的科目全部确认，同时处理捣蛋萌可、逃亡萌可、被藏星星币。
+ */
+export async function restoreDay(
+  childId: number,
+  day: string,
+  subjectsToConfirm?: Subject[],
+): Promise<{ ok: boolean; message: string; restored: Subject[]; coinsReturned: number }> {
+  const db = getDb();
+  await ensureCastle(childId);
+
+  // 确定需要补的科目
+  let missing: Subject[];
+  if (subjectsToConfirm) {
+    missing = subjectsToConfirm;
+  } else {
+    const existing = await db.execute({ sql: "SELECT subject FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'", args: [childId, day] });
+    const doneSet = new Set(existing.rows.map((r) => String(r.subject)));
+    missing = SUBJECTS.filter((s) => !doneSet.has(s));
+  }
+
+  const restored: Subject[] = [];
   for (const subject of missing) {
     const res = await confirm(childId, day, subject);
-    if (res.ok) messages.push(subject);
+    if (res.ok) restored.push(subject);
   }
-  // confirm 没消耗沙漏？补回去
-  if (messages.length === 0) {
-    await db.execute({ sql: 'UPDATE inventory SET qty = qty + 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
-  }
+
+  // 三科全补则标记每日一练完成
   const finalCheckins = await db.execute({ sql: "SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'", args: [childId, day] });
   if (Number(finalCheckins.rows[0]?.n) >= 3) {
     await db.execute({ sql: "INSERT INTO daily_practice (child_id, day, completed, correct, total, questions) VALUES (?, ?, 1, 0, 0, '[]') ON CONFLICT(child_id, day) DO UPDATE SET completed = 1", args: [childId, day] });
   }
+
+  // 解决该日捣蛋萌可
   await db.execute({ sql: 'UPDATE troublemakers SET resolved = 1 WHERE child_id = ? AND day = ?', args: [childId, day] });
+  // 召回逃亡萌可
   await db.execute({ sql: "UPDATE moko_owned SET status = 'resident', mood = 3 WHERE child_id = ? AND status = 'fled'", args: [childId] });
+
+  // 找回被藏起来的星星币
+  let coinsReturned = 0;
   const row = await getRow(childId);
   const lastStolen = Number(row?.last_stolen ?? 0);
   if (lastStolen > 0) {
-    const returnCoins = Math.ceil(lastStolen * 0.5);
-    await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + ?, last_stolen = 0 WHERE child_id = ?', args: [returnCoins, childId] });
+    coinsReturned = Math.ceil(lastStolen * 0.5);
+    await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + ?, last_stolen = 0 WHERE child_id = ?', args: [coinsReturned, childId] });
   }
-  await logGrowthEvent(childId, 'repair', '⏳', '用时光沙漏补打卡 ' + day, day + ' 补打卡 ' + messages.join('、') + '，连续天数已恢复！捣蛋萌可被赶走，萌可们全部回来啦～');
-  const extraMsg = lastStolen > 0 ? '，还找回了被藏起来的星星币！' : '！';
-  return { ok: true, message: '⏳ 时光沙漏生效！' + day + ' 的 ' + messages.join('、') + ' 补打卡成功，连续天数已恢复' + extraMsg };
+
+  await logGrowthEvent(childId, 'repair', '⏳', '用时光沙漏补打卡 ' + day, day + ' 补打卡 ' + restored.join('、') + '，连续天数已恢复！捣蛋萌可被赶走，萌可们全部回来啦～');
+  return { ok: true, message: '补打卡成功', restored, coinsReturned };
 }
 
 export async function harvest(childId: number) {
