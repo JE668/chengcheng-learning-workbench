@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 interface CalendarDay {
   day: string;
@@ -20,13 +21,23 @@ interface CheckinCalendarProps {
  *   - 中断日（count < 3，过去日期）：点击后弹出确认框，确认后调用
  *     POST /api/castle/request-timeglass 带 day 参数发起申请
  *   - 已成功申请过该日期的：不再重复申请
+ *
+ * ⚠️ 确认弹窗通过 createPortal 渲染到 document.body，避免被外层
+ * fade-up 动画的 transform 创建固定定位包含块导致弹窗被裁剪。
  */
 export default function CheckinCalendar({ days }: CheckinCalendarProps) {
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [confirmDay, setConfirmDay] = useState<string | null>(null);
+  const mounted = useRef(false);
 
   const today = new Date().toISOString().slice(0, 10);
+
+  // 弹窗挂载到 body
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
   // 把 days 按 ISO 周（周一开始）分组
   const weeks: CalendarDay[][] = [];
@@ -75,6 +86,52 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
     if (count === 1) return 'bg-green-100 text-green-700';
     return 'bg-gray-100 text-gray-400';
   };
+
+  // 确认弹窗（通过 Portal 渲染到 body，避免被 transform 包含块裁剪）
+  const modalContent = confirmDay && mounted.current && typeof document !== 'undefined'
+    ? createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40"
+          onClick={() => setConfirmDay(null)}
+        >
+          <div
+            className="bg-white rounded-3xl p-6 shadow-2xl max-w-xs w-full"
+            style={{ animation: 'fadeUp 0.3s ease-out both' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-4">
+              <span className="text-4xl">⏳</span>
+              <div className="font-black text-lg text-moko-violet mt-2">补打卡？</div>
+              <div className="text-sm text-gray-600 mt-1">
+                {confirmDay.slice(5).replace('-', '月')}月{confirmDay.slice(8)}日 只打了 {days.find((d) => d.day === confirmDay)?.count}/3 科
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                向爸爸妈妈申请时光沙漏补打卡，审批后自动恢复连续天数
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDay(null)}
+                className="flex-1 py-2.5 rounded-full bg-gray-100 text-gray-600 font-bold text-sm active:scale-95 transition"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => handleRequest(confirmDay)}
+                disabled={busy}
+                className="flex-1 py-2.5 rounded-full bg-gradient-to-r from-moko-violet to-moko-purple text-white font-black text-sm active:scale-95 transition disabled:opacity-50"
+              >
+                {busy ? '申请中…' : '⏳ 申请'}
+              </button>
+            </div>
+            {msg && (
+              <div className="text-xs text-center text-moko-rose font-bold mt-3">{msg}</div>
+            )}
+          </div>
+        </div>,
+        document.body,
+      )
+    : null;
 
   return (
     <div>
@@ -141,45 +198,7 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
           <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" /> 捣蛋萌可
         </span>
       </div>
-
-      {/* 确认弹窗 */}
-      {confirmDay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30" onClick={() => setConfirmDay(null)}>
-          <div
-            className="bg-white rounded-3xl p-6 shadow-2xl max-w-xs w-full fade-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="text-center mb-4">
-              <span className="text-4xl">⏳</span>
-              <div className="font-black text-lg text-moko-violet mt-2">补打卡？</div>
-              <div className="text-sm text-gray-600 mt-1">
-                {confirmDay.slice(5).replace('-', '月')}月{confirmDay.slice(8)}日 只打了 {days.find((d) => d.day === confirmDay)?.count}/3 科
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                向爸爸妈妈申请时光沙漏补打卡，审批后自动恢复连续天数
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmDay(null)}
-                className="flex-1 py-2.5 rounded-full bg-gray-100 text-gray-600 font-bold text-sm active:scale-95 transition"
-              >
-                取消
-              </button>
-              <button
-                onClick={() => handleRequest(confirmDay)}
-                disabled={busy}
-                className="flex-1 py-2.5 rounded-full bg-gradient-to-r from-moko-violet to-moko-purple text-white font-black text-sm active:scale-95 transition disabled:opacity-50"
-              >
-                {busy ? '申请中…' : '⏳ 申请'}
-              </button>
-            </div>
-            {msg && (
-              <div className="text-xs text-center text-moko-rose font-bold mt-3">{msg}</div>
-            )}
-          </div>
-        </div>
-      )}
+      {modalContent}
     </div>
   );
 }

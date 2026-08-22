@@ -208,7 +208,7 @@ export async function grantResource(childId: number, resource: 'sunlight' | 'sta
   return { ok: false, message: '未知资源类型' };
 }
 
-export async function useTimeGlass(childId: number, day: string): Promise<{ ok: boolean; message: string }> {
+export async function applyTimeGlass(childId: number, day: string): Promise<{ ok: boolean; message: string }> {
   const db = getDb();
   await ensureCastle(childId);
   const inv = await db.execute({ sql: 'SELECT qty FROM inventory WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });

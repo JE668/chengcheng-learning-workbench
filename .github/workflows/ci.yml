@@ -32,5 +32,8 @@ jobs:
       - name: 单元测试（castle 核心逻辑等）
         run: npx vitest run
 
+      - name: ESLint 代码检测
+        run: npm run lint
+
       - name: 生产构建冒烟（next build）
         run: npm run build

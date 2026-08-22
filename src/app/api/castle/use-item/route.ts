@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { safeJson } from '@/lib/safe-json';
-import { castSpray, useTimeGlass } from '@/lib/castle';
+import { castSpray, applyTimeGlass } from '@/lib/castle';
 import type { Subject } from '@/lib/types';
 
 export async function POST(req: Request) {
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     if (!day) {
       return NextResponse.json({ ok: false, message: '请选择要补打卡的日期' }, { status: 400 });
     }
-    const res = await useTimeGlass(user.id, String(day));
+    const res = await applyTimeGlass(user.id, String(day));
     return NextResponse.json(res);
   }
   return NextResponse.json({ ok: false, message: '暂不支持该道具' });

@@ -275,9 +275,9 @@ describe('castle 核心逻辑：连续打卡与惩罚机制', () => {
     });
 
     // 使用时光沙漏补昨天
-    const { useTimeGlass } = await import('@/lib/castle');
+    const { applyTimeGlass } = await import('@/lib/castle');
     const yesterday = addDays(today, -1);
-    const res = await useTimeGlass(cid, yesterday);
+    const res = await applyTimeGlass(cid, yesterday);
     expect(res.ok).toBe(true);
 
     // 补打卡后，该日三科应该已确认
