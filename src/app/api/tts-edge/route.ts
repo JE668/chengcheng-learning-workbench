@@ -131,8 +131,8 @@ export async function POST(request: NextRequest) {
 
     const buffer = await edgeTTS(textWithPause, voice, rateStr);
 
-    // Buffer<ArrayBufferLike> 不匹配 BodyInit，转 ArrayBuffer
-    const body = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+    // Buffer<ArrayBufferLike> 不匹配 BodyInit，转 ArrayBuffer（Buffer 底层永远是 ArrayBuffer）
+    const body = buffer.buffer as ArrayBuffer;
 
     return new NextResponse(body, {
       headers: {
