@@ -131,7 +131,10 @@ export async function POST(request: NextRequest) {
 
     const buffer = await edgeTTS(textWithPause, voice, rateStr);
 
-    return new NextResponse(buffer, {
+    // Buffer<ArrayBufferLike> 不匹配 BodyInit，转 ArrayBuffer
+    const body = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+
+    return new NextResponse(body, {
       headers: {
         'Content-Type': 'audio/mpeg',
         'Content-Length': String(buffer.length),
