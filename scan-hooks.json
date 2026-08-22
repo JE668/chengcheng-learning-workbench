@@ -1,0 +1,452 @@
+[
+  {
+    "file": "src/app/(child)/badges/page.tsx",
+    "firstReturnLine": 51,
+    "firstReturnContent": "return () => {",
+    "hooksAfter": [
+      {
+        "line": 58,
+        "type": "useMemo"
+      },
+      {
+        "line": 74,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/app/(child)/castle/page.tsx",
+    "firstReturnLine": 203,
+    "firstReturnContent": "return (",
+    "hooksAfter": [
+      {
+        "line": 381,
+        "type": "useState"
+      },
+      {
+        "line": 382,
+        "type": "useState"
+      },
+      {
+        "line": 385,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/CaptureMoment.tsx",
+    "firstReturnLine": 33,
+    "firstReturnContent": "return () => timers.forEach(clearTimeout);",
+    "hooksAfter": [
+      {
+        "line": 43,
+        "type": "useRef"
+      },
+      {
+        "line": 44,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/EyeRest.tsx",
+    "firstReturnLine": 39,
+    "firstReturnContent": "return () => clearInterval(id);",
+    "hooksAfter": [
+      {
+        "line": 42,
+        "type": "useCallback"
+      }
+    ]
+  },
+  {
+    "file": "src/components/GrowthTree.tsx",
+    "firstReturnLine": 37,
+    "firstReturnContent": "return () => {",
+    "hooksAfter": [
+      {
+        "line": 44,
+        "type": "useState"
+      },
+      {
+        "line": 53,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/castle-client.tsx",
+    "firstReturnLine": 28,
+    "firstReturnContent": "return (",
+    "hooksAfter": [
+      {
+        "line": 66,
+        "type": "useState"
+      },
+      {
+        "line": 67,
+        "type": "useState"
+      }
+    ]
+  },
+  {
+    "file": "src/components/games/CharacterMatch.tsx",
+    "firstReturnLine": 36,
+    "firstReturnContent": "return () => clearInterval(id);",
+    "hooksAfter": [
+      {
+        "line": 39,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/games/CompareBalance.tsx",
+    "firstReturnLine": 27,
+    "firstReturnContent": "return () => clearInterval(id);",
+    "hooksAfter": [
+      {
+        "line": 30,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/games/CountChallenge.tsx",
+    "firstReturnLine": 38,
+    "firstReturnContent": "return () => clearInterval(id);",
+    "hooksAfter": [
+      {
+        "line": 41,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/games/LetterAdventure.tsx",
+    "firstReturnLine": 39,
+    "firstReturnContent": "return () => clearInterval(id);",
+    "hooksAfter": [
+      {
+        "line": 42,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/games/MakeTen.tsx",
+    "firstReturnLine": 89,
+    "firstReturnContent": "return () => clearInterval(id);",
+    "hooksAfter": [
+      {
+        "line": 92,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/games/MathChallenge.tsx",
+    "firstReturnLine": 37,
+    "firstReturnContent": "return () => clearInterval(id);",
+    "hooksAfter": [
+      {
+        "line": 40,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/games/PinyinEliminate.tsx",
+    "firstReturnLine": 33,
+    "firstReturnContent": "return () => clearInterval(id);",
+    "hooksAfter": [
+      {
+        "line": 36,
+        "type": "useEffect"
+      },
+      {
+        "line": 45,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/games/PinyinSpell.tsx",
+    "firstReturnLine": 108,
+    "firstReturnContent": "return () => clearInterval(id);",
+    "hooksAfter": [
+      {
+        "line": 111,
+        "type": "useEffect"
+      },
+      {
+        "line": 118,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/games/ToneDetective.tsx",
+    "firstReturnLine": 91,
+    "firstReturnContent": "return () => clearInterval(id);",
+    "hooksAfter": [
+      {
+        "line": 94,
+        "type": "useEffect"
+      },
+      {
+        "line": 102,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/games/WordChain.tsx",
+    "firstReturnLine": 90,
+    "firstReturnContent": "return () => clearInterval(id);",
+    "hooksAfter": [
+      {
+        "line": 93,
+        "type": "useEffect"
+      },
+      {
+        "line": 100,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/games/WordMatch.tsx",
+    "firstReturnLine": 38,
+    "firstReturnContent": "return () => clearInterval(id);",
+    "hooksAfter": [
+      {
+        "line": 41,
+        "type": "useEffect"
+      },
+      {
+        "line": 48,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/study/ChildTaskList.tsx",
+    "firstReturnLine": 91,
+    "firstReturnContent": "return (",
+    "hooksAfter": [
+      {
+        "line": 127,
+        "type": "useState"
+      }
+    ]
+  },
+  {
+    "file": "src/components/study/ChineseModules.tsx",
+    "firstReturnLine": 116,
+    "firstReturnContent": "return () => clearTimeout(timer);",
+    "hooksAfter": [
+      {
+        "line": 190,
+        "type": "useState"
+      },
+      {
+        "line": 193,
+        "type": "useState"
+      },
+      {
+        "line": 194,
+        "type": "useState"
+      },
+      {
+        "line": 352,
+        "type": "useState"
+      },
+      {
+        "line": 378,
+        "type": "useState"
+      },
+      {
+        "line": 380,
+        "type": "useEffect"
+      },
+      {
+        "line": 474,
+        "type": "useState"
+      },
+      {
+        "line": 552,
+        "type": "useState"
+      },
+      {
+        "line": 553,
+        "type": "useState"
+      },
+      {
+        "line": 554,
+        "type": "useState"
+      },
+      {
+        "line": 557,
+        "type": "useEffect"
+      },
+      {
+        "line": 565,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/study/ChineseNew.tsx",
+    "firstReturnLine": 127,
+    "firstReturnContent": "return () => {",
+    "hooksAfter": [
+      {
+        "line": 172,
+        "type": "useState"
+      },
+      {
+        "line": 173,
+        "type": "useState"
+      },
+      {
+        "line": 176,
+        "type": "useMemo"
+      },
+      {
+        "line": 276,
+        "type": "useState"
+      },
+      {
+        "line": 280,
+        "type": "useRef"
+      },
+      {
+        "line": 282,
+        "type": "useMemo"
+      },
+      {
+        "line": 381,
+        "type": "useState"
+      }
+    ]
+  },
+  {
+    "file": "src/components/study/EnglishModules.tsx",
+    "firstReturnLine": 243,
+    "firstReturnContent": "return () => clearTimeout(timer);",
+    "hooksAfter": [
+      {
+        "line": 353,
+        "type": "useState"
+      },
+      {
+        "line": 356,
+        "type": "useEffect"
+      },
+      {
+        "line": 365,
+        "type": "useEffect"
+      },
+      {
+        "line": 369,
+        "type": "useEffect"
+      },
+      {
+        "line": 450,
+        "type": "useState"
+      },
+      {
+        "line": 451,
+        "type": "useState"
+      },
+      {
+        "line": 452,
+        "type": "useState"
+      },
+      {
+        "line": 454,
+        "type": "useState"
+      }
+    ]
+  },
+  {
+    "file": "src/components/study/MathExtra.tsx",
+    "firstReturnLine": 79,
+    "firstReturnContent": "return (",
+    "hooksAfter": [
+      {
+        "line": 98,
+        "type": "useState"
+      },
+      {
+        "line": 231,
+        "type": "useState"
+      }
+    ]
+  },
+  {
+    "file": "src/components/study/MathNew.tsx",
+    "firstReturnLine": 83,
+    "firstReturnContent": "return (",
+    "hooksAfter": [
+      {
+        "line": 123,
+        "type": "useState"
+      },
+      {
+        "line": 125,
+        "type": "useRef"
+      }
+    ]
+  },
+  {
+    "file": "src/components/study/MokoStudy.tsx",
+    "firstReturnLine": 224,
+    "firstReturnContent": "return (",
+    "hooksAfter": [
+      {
+        "line": 245,
+        "type": "useState"
+      }
+    ]
+  },
+  {
+    "file": "src/components/study/PinyinModule.tsx",
+    "firstReturnLine": 59,
+    "firstReturnContent": "return (",
+    "hooksAfter": [
+      {
+        "line": 100,
+        "type": "useRef"
+      },
+      {
+        "line": 103,
+        "type": "useEffect"
+      },
+      {
+        "line": 114,
+        "type": "useEffect"
+      },
+      {
+        "line": 122,
+        "type": "useEffect"
+      }
+    ]
+  },
+  {
+    "file": "src/components/study/PoemFun.tsx",
+    "firstReturnLine": 128,
+    "firstReturnContent": "return (",
+    "hooksAfter": [
+      {
+        "line": 177,
+        "type": "useMemo"
+      },
+      {
+        "line": 178,
+        "type": "useMemo"
+      }
+    ]
+  }
+]

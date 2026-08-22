@@ -49,7 +49,6 @@ export default function TtsDiagPage() {
         push(`服务端返回非 200，内容: ${txt.slice(0, 400)}`);
         try {
           const j = JSON.parse(txt);
-          if (j.kokoro) push(`  ↳ Kokoro 失败原因: ${j.kokoro}`);
           if (j.vercel) push(`  ↳ Vercel Edge 代理失败: ${j.vercel}`);
           if (j.edge) push(`  ↳ Edge 失败原因: ${j.edge}`);
           if (j.reason) push(`  ↳ 兜底异常: ${j.reason}`);
