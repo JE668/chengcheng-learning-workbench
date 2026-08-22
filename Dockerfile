@@ -10,9 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip python3-dev \
     libsndfile1 ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
-    && pip3 install --break-system-packages kokoro-onnx==0.6.1 soundfile numpy==1.26.4
+    && pip3 install --break-system-packages kokoro-onnx==0.6.1 soundfile
     # kokoro-onnx 锁定版本：0.6.x 支持 ONNX 量化模型格式（onnx.quantize）；
-    # 不锁定则未来新版本可能变更 API 或模型格式导致 TTS 静默失败。
+    # numpy 由 kokoro-onnx 自动解析（要求 >=2.0.2），不手工锁定避免冲突。
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
