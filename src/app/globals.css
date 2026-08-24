@@ -286,6 +286,25 @@ body { padding-top: env(safe-area-inset-top); }
   50% { transform: scale(1.08); opacity: 0.6; filter: blur(1px); }
 }
 
+/* 彩虹边框动画 */
+@keyframes rainbowShift {
+  0% { border-color: #ef4444; }
+  16% { border-color: #f97316; }
+  33% { border-color: #eab308; }
+  50% { border-color: #22c55e; }
+  66% { border-color: #3b82f6; }
+  83% { border-color: #a855f7; }
+  100% { border-color: #ef4444; }
+}
+.rainbow-ring {
+  animation: rainbowShift 3s linear infinite;
+}
+
+/* 皇冠发光效果 */
+.crown-glow {
+  box-shadow: 0 0 15px rgba(234,179,8,.5), 0 0 30px rgba(234,179,8,.3);
+}
+
 /* 萌可在大厅里走动（左右轻摇） */
 .moko-walk {
   animation: mokoWalk 3s ease-in-out infinite;

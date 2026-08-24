@@ -28,6 +28,20 @@ interface StateView {
   penaltyAlert: string;
 }
 const STAGE_LABEL: Record<Stage, string> = { obtained: '刚解锁', settled: '入驻城堡', playing: '开心玩耍', friend: '好朋友' };
+const FRAME_PRIORITY = ['frame_crown', 'frame_rainbow', 'frame', 'frame_star', 'frame_heart', 'frame_silver'];
+const BADGE_KEYS = ['badge_star', 'badge_heart'];
+function determineFrame(inv: Record<string, number>): string | undefined {
+  for (const k of FRAME_PRIORITY) {
+    if (Number(inv[k] || 0) > 0) return k;
+  }
+  return Number(inv.frame || 0) > 0 ? 'frame' : undefined;
+}
+function determineBadge(inv: Record<string, number>): string | undefined {
+  for (const k of BADGE_KEYS) {
+    if (Number(inv[k] || 0) > 0) return k;
+  }
+  return undefined;
+}
 const TABS = [['hall', '🏰 大厅'], ['gallery', '📖 图鉴'], ['shop', '🛍️ 商店'], ['bag', '🎒 背包'], ['achv', '🏅 成就']] as const;
 /** ⏳ 时光沙漏申请按钮：点击后向家长发起申请 */
 function TimeGlassRequestBtn({ busy, onMsg }: { busy: boolean; onMsg: (m: string) => void }) {
@@ -242,7 +256,7 @@ export default function CastlePage() {
               {state.residents.map((r) => (
                 <div key={r.key} className={`w-28 text-center ${r.mood < 3 ? 'moko-sad' : 'moko-enter'} ${r.stage === 'friend' ? 'moko-walk' : ''}`}>
                   <div className="relative">
-                    <MokoAvatar img={r.img} emoji={r.emoji} name={r.name} size={96} className="mx-auto" frameKey={Number(state.inventory.frame || 0) > 0 ? 'frame' : undefined} />
+                    <MokoAvatar img={r.img} emoji={r.emoji} name={r.name} size={96} className="mx-auto" frameKey={determineFrame(state.inventory)} badgeKey={determineBadge(state.inventory)} />
                     <div className="absolute -top-2 -right-2 text-lg">{'❤️'.repeat(r.mood)}{'🖤'.repeat(3 - r.mood)}</div>
                   </div>
                   <div className="font-bold text-moko-violet text-sm mt-1">{r.name}</div>

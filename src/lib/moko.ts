@@ -345,7 +345,14 @@ export const magicShop = [
 /** 星星币商城（长期激励） */
 export const starShop = [
   { key: 'cert', name: '🏆 虚拟奖状', cost: 30, icon: '🏆', desc: '可下载打印的专属成就奖状' },
-  { key: 'frame', name: '🖼️ 萌可头像框', cost: 50, icon: '🖼️', desc: '装饰个人中心头像的萌可边框' },
+  { key: 'frame', name: '🖼️ 金色头像框', cost: 50, icon: '🖼️', desc: '金色边框，让萌可头像更闪亮' },
+  { key: 'frame_silver', name: '🥈 银光头像框', cost: 30, icon: '🥈', desc: '银色边框，简约优雅' },
+  { key: 'frame_rainbow', name: '🌈 彩虹头像框', cost: 60, icon: '🌈', desc: '彩虹渐变边框，会变色哦' },
+  { key: 'frame_star', name: '⭐ 星光头像框', cost: 40, icon: '⭐', desc: '星光闪烁的可爱边框' },
+  { key: 'frame_heart', name: '💗 爱心头像框', cost: 40, icon: '💗', desc: '粉红爱心边框' },
+  { key: 'frame_crown', name: '👑 皇冠头像框', cost: 60, icon: '👑', desc: '皇冠造型，尊贵专属' },
+  { key: 'badge_star', name: '⭐ 星星勋章', cost: 20, icon: '⭐', desc: '在萌可头像上角装饰一颗小星星' },
+  { key: 'badge_heart', name: '💗 爱心勋章', cost: 20, icon: '💗', desc: '在萌可头像上角装饰一颗小爱心' },
   { key: 'outfit', name: '🎀 专属萌可装扮', cost: 60, icon: '🎀', desc: '给喜欢的萌可换上可爱装扮' },
   { key: 'skin_star', name: '🏰 星空城堡皮肤', cost: 80, icon: '🌌', desc: '把城堡变成梦幻星空主题' },
   { key: 'skin_candy', name: '🍬 糖果城堡皮肤', cost: 80, icon: '🍬', desc: '把城堡变成甜甜蜜糖主题' },
