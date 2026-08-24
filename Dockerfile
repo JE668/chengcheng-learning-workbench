@@ -8,23 +8,22 @@ WORKDIR /app
 
 # 先装依赖（利用 Docker 缓存层）
 COPY --link package.json package-lock.json ./
-RUN npm ci && npm cache clean --force
+RUN npm ci --no-optional && npm cache clean --force
 
 # 复制源码并构建
 COPY . .
 RUN npm run lint && npx tsc --noEmit --skipLibCheck && \
     npm run build && \
     rm -rf .next/cache tsconfig.tsbuildinfo && \
-    npm prune --omit=dev && \
+    npm prune --omit=dev --no-optional && \
     npm cache clean --force
 
 # ============ 运行阶段 ============
 FROM node:22-bookworm-slim AS runner
 
-# 安装运行依赖（Python + ffmpeg + edge-tts），一次性清理
+# 安装运行依赖（Python + edge-tts），ffmpeg 未使用故不安装
 RUN apt-get update && apt-get install -y --no-install-recommends --no-install-suggests \
     python3 python3-pip \
-    ffmpeg \
     && rm -rf /var/lib/apt/lists/* /tmp/* \
     && pip3 install --no-cache-dir --break-system-packages edge-tts==7.2.8 \
     && pip3 cache purge \

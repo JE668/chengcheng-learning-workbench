@@ -40,7 +40,7 @@ jobs:
           cache: npm
 
       - name: 安装依赖
-        run: npm ci
+        run: npm ci --no-optional
 
       - name: TypeScript 类型检查
         run: npx tsc --noEmit --skipLibCheck
@@ -74,5 +74,6 @@ jobs:
             ${{ env.IMAGE_IO }}:latest
             ${{ env.IMAGE_IO }}:${{ github.sha }}
           provenance: false
+          outputs: type=image,name=target,compression=zstd,compression-level=3
           cache-from: type=gha
           cache-to: type=gha,mode=max
