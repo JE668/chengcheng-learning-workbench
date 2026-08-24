@@ -15,8 +15,8 @@ echo ">>> [3/4] 用新镜像重启容器"
 docker compose up -d
 
 echo ">>> [4/4] 校验：正在跑的镜像里是否已是新代码（应显示 castle.ts 的 643 行）"
-if docker compose exec chengcheng grep -n "COLLECTIBLE_MOKO_NAMES.length" /app/src/lib/castle.ts; then
-  echo "✅ 已是最新镜像。刷新浏览器（Ctrl/Cmd+Shift+R）即可看到 150 种。"
+if docker compose exec chengcheng grep -n "mokoCollection" /app/src/lib/castle.ts; then
+  echo "✅ 已是最新镜像。刷新浏览器（Ctrl/Cmd+Shift+R）即可看到最新内容。"
 else
   echo "⚠️ 容器内未找到新代码，可能仍是旧镜像。请检查上面 build 步骤是否报错。"
 fi
