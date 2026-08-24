@@ -13,7 +13,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPw, setShowPw] = useState(false);
   const router = useRouter();
 
   // 记住上次登录角色
@@ -22,15 +21,12 @@ export default function LoginPage() {
     if (saved) setUsername(saved);
   }, []);
 
-  // 儿童快捷登录：密码固定 0000，自动填充
+  // 选择用户后填入用户名，密码需手动输入
   function quickLogin(user: string) {
     setUsername(user);
+    setPassword('');
+    setError('');
     localStorage.setItem('lastUser', user);
-    if (user === 'cara') {
-      setPassword('0000');
-      // 自动提交
-      setTimeout(() => (document.getElementById('login-form') as HTMLFormElement)?.requestSubmit(), 100);
-    }
   }
 
   async function submit(e: React.FormEvent) {
@@ -115,20 +111,13 @@ export default function LoginPage() {
           />
           <div className="relative">
             <input
-              type={showPw ? 'text' : 'password'}
+              type='password'
               placeholder="密码"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-5 py-3 rounded-2xl border-2 border-gray-200 text-lg focus:border-moko-pink outline-none transition bg-white/70 pr-12"
             />
-            <button
-              type="button"
-              onClick={() => setShowPw(!showPw)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xl text-gray-400 hover:text-moko-rose transition"
-              tabIndex={-1}
-            >
-              {showPw ? '🙈' : '👁️'}
-            </button>
+
           </div>
           {error && <p className="text-red-500 font-bold text-sm bg-red-50 rounded-2xl p-3">{error}</p>}
           <button
@@ -145,7 +134,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-xs text-gray-400 mt-4">家长账号：parent / 12345678　孩子账号：cara / 0000</p>
+
       </div>
     </div>
   );
