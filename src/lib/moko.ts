@@ -73,9 +73,9 @@ export const mokoChars: Record<string, MokoChar> = {
   cometping: { key: 'cometping', name: '彗星萌可', color: 'text-moko-violet', emoji: '🌠', season: 'S6 闪耀流星', item: '彗星扫把', line: '划过夜空啦！', category: 'star' },
 
   // —— 闪亮公主萌可 ——
-  moonping: { key: 'moonping', name: '月光萌可', color: 'text-moko-violet', img: '/moko/moonping.jpg', emoji: '🌙', season: 'S7 闪亮公主', item: '月光皇冠', line: '月光之下，数到一百！', category: 'princess', subject: '数学' },
+  moonping: { key: 'moonping', name: '月光萌可', color: 'text-moko-violet', img: '/moko/moonping.jpg', emoji: '🌙', season: 'S1 皇室萌可', item: '月光皇冠', line: '月光之下，数到一百！', category: 'royal', subject: '数学' },
   hopeping: { key: 'hopeping', name: '希望萌可', color: 'text-moko-mint', img: '/moko/hopeping.jpg', emoji: '🌟', season: 'S7 闪亮公主', item: '希望之星', line: '永远不要放弃希望！', category: 'princess', subject: '语文' },
-  princeping: { key: 'princeping', name: '王子萌可', color: 'text-moko-blue', emoji: '🤴', season: 'S7 闪亮公主', item: '黄金剑', line: '我来保护大家！', category: 'princess' },
+  princeping: { key: 'princeping', name: '王子萌可', color: 'text-moko-blue', emoji: '🤴', season: 'S1 皇室萌可', item: '黄金剑', line: '我来保护大家！', category: 'royal' },
   princessping: { key: 'princessping', name: '公主萌可', color: 'text-moko-rose', emoji: '👸', season: 'S7 闪亮公主', item: '公主裙', line: '今天也是小公主！', category: 'princess' },
 
   // —— 引导萌可 ——
@@ -226,12 +226,14 @@ export const games: {
     title: '十格阵魔法屋',
     mokoKey: 'diamondping',
     subject: '数学',
-    desc: '凑十·破十·进位，用十格阵玩转 20 以内加减',
-    difficulty: '3 关递进',
+    desc: '凑十·破十·进位·退位·混合，层层递进练计算',
+    difficulty: '5 关递进',
     levels: [
       { name: '入门', tag: '凑十法' },
       { name: '进阶', tag: '破十法' },
       { name: '高手', tag: '进位加法' },
+      { name: '大师', tag: '退位减法' },
+      { name: '传说', tag: '混合运算' },
     ],
   },
   {

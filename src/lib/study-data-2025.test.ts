@@ -166,12 +166,12 @@ describe('英语 · 英文音乐会（EN_SONGS）', () => {
 });
 
 describe('扩充题库回归（应用题 / 阅读理解）', () => {
-  it('应用题 32 道，答案都在选项里、纯数字、20 以内', () => {
-    expect(WORD_PROBLEMS).toHaveLength(32);
+  it('应用题 42 道（含 20~50/50~100 新题），答案都在选项里、纯数字', () => {
+    expect(WORD_PROBLEMS).toHaveLength(42);
     for (const p of WORD_PROBLEMS) {
       expect(p.options.every((o) => /^\d+$/.test(o)), `「${p.text}」有非数字选项`).toBe(true);
       expect(p.options.includes(p.answer), `「${p.text}」答案「${p.answer}」不在选项里`).toBe(true);
-      expect(Number(p.answer) >= 1 && Number(p.answer) <= 20, `「${p.text}」答案 ${p.answer} 超出一上 20 以内范围`).toBe(true);
+      expect(Number(p.answer) >= 1 && Number(p.answer) <= 100, `「${p.text}」答案 ${p.answer} 超出 100 范围`).toBe(true);
     }
   });
 

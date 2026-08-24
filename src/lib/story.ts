@@ -265,7 +265,7 @@ const HERO_CHAPTERS: StoryChapter[] = [
     mokoKey: 'col_01_月光萌可_render',
     emoji: '🌙',
     gradient: 'from-moko-violet to-moko-blue',
-    scene: '第八集 · 闪亮公主萌可',
+    scene: '第八集 · 皇室萌可',
     paragraphs: [
       '月光洒在城堡的尖顶上，月光萌可戴着月光皇冠出现了。',
       '「月光之下，数到一百！」她拉着程程的手，一起数着天上的小星星。',
