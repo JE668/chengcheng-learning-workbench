@@ -8,6 +8,7 @@ import { dateStr, LOCAL_DAY_COL } from '@/lib/date';
 import { CheckinPanel, HarvestBtn } from '@/components/castle-client';
 import { GuideModal } from '@/components/GuideModal';
 import { MokoGroupBg } from '@/components/moko-bg';
+import { MokoCarousel } from '@/components/MokoCarousel';
 import { MokoAvatar } from '@/components/MokoAvatar';
 
 export default async function HomePage() {
@@ -50,6 +51,7 @@ export default async function HomePage() {
 
   const ownedCount = castle.gallery.filter((g) => g.owned).length;
   const totalMoko = castle.gallery.length;
+  const carouselItems = castle.gallery.slice(0, 30).map((g) => ({ img: g.img, name: g.name }));
   const pendingTasks = taskRes.rows.map((r) => ({
     id: Number(r.id),
     title: String(r.title),
@@ -76,6 +78,9 @@ export default async function HomePage() {
           <p className="text-lg opacity-90">今天也要和萌可们一起加油学习哦～</p>
         </div>
       </div>
+
+      {/* 萌可旋转木马 */}
+      <MokoCarousel items={carouselItems} />
 
       {/* 数据大板 */}
       <h2 className="section-title mb-3">我的成长看板 📊</h2>

@@ -227,7 +227,7 @@ export default function CastlePage() {
       {/* ===== 大厅 ===== */}
       {tab === 'hall' && (
         <div className={`card-moko relative overflow-hidden ${state.shieldEquipped > 0 ? 'shield-glow' : ''}`}>
-          <div className={`castle-bg rounded-2xl p-4 min-h-[260px] ${state.skin === 'skin_star' ? 'castle-skin-star' : state.skin === 'skin_candy' ? 'castle-skin-candy' : ''}`}>
+          <div className={`castle-bg rounded-2xl p-4 min-h-[260px] ${state.skin === 'skin_star' ? 'castle-skin-star' : state.skin === 'skin_candy' ? 'castle-skin-candy' : 'castle-skin-default'}`}>
             {state.troublemakers.length > 0 && (
               <div className="absolute inset-0 pointer-events-none">
                 {state.troublemakers.map((t, i) => (
@@ -237,7 +237,7 @@ export default function CastlePage() {
             )}
             <div className="flex flex-wrap gap-4 relative z-10">
               {state.residents.map((r) => (
-                <div key={r.key} className={`w-28 text-center ${r.mood < 3 ? 'moko-sad' : 'moko-enter'}`}>
+                <div key={r.key} className={`w-28 text-center ${r.mood < 3 ? 'moko-sad' : 'moko-enter'} ${r.stage === 'friend' ? 'moko-walk' : ''}`}>
                   <div className="relative">
                     <MokoAvatar img={r.img} emoji={r.emoji} name={r.name} size={96} className="mx-auto" frameKey={Number(state.inventory.frame || 0) > 0 ? 'frame' : undefined} />
                     <div className="absolute -top-2 -right-2 text-lg">{'❤️'.repeat(r.mood)}{'🖤'.repeat(3 - r.mood)}</div>

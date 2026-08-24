@@ -191,6 +191,36 @@ body { padding-top: env(safe-area-inset-top); }
   100% { transform: translateY(0) scale(1); opacity: 0.4; }
 }
 
+/* 默认城堡皮肤 */
+.castle-skin-default {
+  position: relative;
+}
+.castle-skin-default::after {
+  content: '🏰✨💫🌈🏰✨💫🌈';
+  position: absolute;
+  inset: 0;
+  font-size: 14px;
+  letter-spacing: 16px;
+  line-height: 65px;
+  opacity: 0.15;
+  pointer-events: none;
+  animation: defaultFloat 10s ease-in-out infinite;
+}
+@keyframes defaultFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.15; }
+  50% { transform: translateY(-6px) rotate(3deg); opacity: 0.3; }
+}
+
+/* 萌可在大厅里走动（左右轻摇） */
+.moko-walk {
+  animation: mokoWalk 3s ease-in-out infinite;
+}
+@keyframes mokoWalk {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-4px) rotate(-2deg); }
+  75% { transform: translateY(-2px) rotate(2deg); }
+}
+
 /* 萌可入驻：从精灵球飞出 */
 @keyframes mokoPop {
   0% { transform: scale(0) rotate(-30deg); opacity: 0; }
