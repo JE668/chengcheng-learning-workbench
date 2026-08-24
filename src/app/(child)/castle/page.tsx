@@ -67,6 +67,9 @@ const SKINS = [
   { key: 'default', name: '梦幻城堡', emoji: '🏰' },
   { key: 'skin_star', name: '星空城堡', emoji: '🌌' },
   { key: 'skin_candy', name: '糖果城堡', emoji: '🍬' },
+  { key: 'skin_ocean', name: '海洋城堡', emoji: '🌊' },
+  { key: 'skin_garden', name: '花园城堡', emoji: '🌸' },
+  { key: 'skin_magic', name: '魔法城堡', emoji: '🔮' },
 ];
 
 export default function CastlePage() {
@@ -227,7 +230,7 @@ export default function CastlePage() {
       {/* ===== 大厅 ===== */}
       {tab === 'hall' && (
         <div className={`card-moko relative overflow-hidden ${state.shieldEquipped > 0 ? 'shield-glow' : ''}`}>
-          <div className={`castle-bg rounded-2xl p-4 min-h-[260px] ${state.skin === 'skin_star' ? 'castle-skin-star' : state.skin === 'skin_candy' ? 'castle-skin-candy' : 'castle-skin-default'}`}>
+          <div className={`castle-bg rounded-2xl p-4 min-h-[260px] ${state.skin === 'skin_star' ? 'castle-skin-star' : state.skin === 'skin_candy' ? 'castle-skin-candy' : state.skin === 'skin_ocean' ? 'castle-skin-ocean' : state.skin === 'skin_garden' ? 'castle-skin-garden' : state.skin === 'skin_magic' ? 'castle-skin-magic' : 'castle-skin-default'}`}>
             {state.troublemakers.length > 0 && (
               <div className="absolute inset-0 pointer-events-none">
                 {state.troublemakers.map((t, i) => (

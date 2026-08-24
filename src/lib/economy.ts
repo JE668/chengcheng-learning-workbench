@@ -35,4 +35,4 @@ export const COST_TIMEGLASS = 15;
 export const MILESTONE_DAYS = [2, 3, 4, 5, 6, 7, 10, 14, 21, 30, 45, 60, 90];
 
 /** 便于校验「某 key 是否属于可购买的星星币商城皮肤」等。 */
-export const STAR_SHOP_SKINS = ['skin_star', 'skin_candy'];
+export const STAR_SHOP_SKINS = ['skin_star', 'skin_candy', 'skin_ocean', 'skin_garden', 'skin_magic'];

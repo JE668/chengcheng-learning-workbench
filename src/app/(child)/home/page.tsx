@@ -51,7 +51,7 @@ export default async function HomePage() {
 
   const ownedCount = castle.gallery.filter((g) => g.owned).length;
   const totalMoko = castle.gallery.length;
-  const carouselItems = castle.gallery.slice(0, 30).map((g) => ({ img: g.img, name: g.name }));
+  const carouselItems = castle.gallery.filter((g) => g.owned).map((g) => ({ img: g.img, name: g.name }));
   const pendingTasks = taskRes.rows.map((r) => ({
     id: Number(r.id),
     title: String(r.title),

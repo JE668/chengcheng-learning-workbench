@@ -349,6 +349,9 @@ export const starShop = [
   { key: 'outfit', name: '🎀 专属萌可装扮', cost: 60, icon: '🎀', desc: '给喜欢的萌可换上可爱装扮' },
   { key: 'skin_star', name: '🏰 星空城堡皮肤', cost: 80, icon: '🌌', desc: '把城堡变成梦幻星空主题' },
   { key: 'skin_candy', name: '🍬 糖果城堡皮肤', cost: 80, icon: '🍬', desc: '把城堡变成甜甜蜜糖主题' },
+  { key: 'skin_ocean', name: '🌊 海洋城堡皮肤', cost: 80, icon: '🌊', desc: '把城堡变成清凉海洋主题' },
+  { key: 'skin_garden', name: '🌸 花园城堡皮肤', cost: 80, icon: '🌸', desc: '把城堡变成繁花花园主题' },
+  { key: 'skin_magic', name: '🔮 魔法城堡皮肤', cost: 80, icon: '🔮', desc: '把城堡变成神秘魔法主题' },
 ];
 
 /**
