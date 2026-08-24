@@ -611,7 +611,9 @@ function genPoemQ(): PracticeQuestion {
     () => genMathQ(useHard(0)), () => genMathQ(useHard(1)), () => genMathQ(useHard(2)), () => genMathQ(useHard(3)),
     () => genMathQ(useHard(4)), () => genMathQ(useHard(5)),  // 6 道口算（难度递增）
     () => genWordProblemQ(),                                  // 应用题
-    () => genWordProblemQ(),                                  // 应用题（替代序数题）
+    () => genWordProblemQ(),                                  // 应用题
+    () => genWordProblemQ(),                                  // 应用题
+    () => genWordProblemQ(),                                  // 应用题
     () => genCompareQ(),                                      // 比大小
     () => genClockQ(),                                        // 钟表
   ];
