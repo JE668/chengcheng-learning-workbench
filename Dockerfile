@@ -4,8 +4,8 @@ FROM node:22-bookworm-slim AS builder
 # 安装构建依赖（Python 仅用于 edge-tts，但构建阶段也需要以验证 tts-server.py 可运行）
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip3 install --break-system-packages edge-tts==7.2.8
+    && rm -rf /var/lib/apt/lists/* /tmp/* \
+    && pip3 install --no-cache-dir --break-system-packages edge-tts==7.2.8
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS=--max-old-space-size=2048
@@ -13,16 +13,16 @@ ENV NODE_OPTIONS=--max-old-space-size=2048
 WORKDIR /app
 
 # 先装依赖（利用 Docker 缓存层）
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY --link package.json package-lock.json ./
+RUN npm ci && npm cache clean --force
 
 # 复制源码并构建
 COPY . .
 RUN npm run lint && npx tsc --noEmit --skipLibCheck
 RUN npm run build
 
-# 只保留生产依赖（构建产物 + 运行时需要的 node_modules）
-RUN npm prune --omit=dev
+# 清理构建缓存 + 只保留生产依赖
+RUN rm -rf .next/cache tsconfig.tsbuildinfo && npm prune --omit=dev && npm cache clean --force
 
 # ============ 运行阶段 ============
 FROM node:22-bookworm-slim AS runner
@@ -31,8 +31,8 @@ FROM node:22-bookworm-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip \
     ffmpeg \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip3 install --break-system-packages edge-tts==7.2.8
+    && rm -rf /var/lib/apt/lists/* /tmp/* \
+    && pip3 install --no-cache-dir --break-system-packages edge-tts==7.2.8 && pip3 cache purge
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
