@@ -191,15 +191,15 @@ function genMathQ(hard = false): PracticeQuestion {
   const isAdd = Math.random() < 0.6;
   let a: number, b: number, ans: number, prompt: string;
   if (isAdd) {
-    // 基础：10 以内；加难：20 以内
-    a = randInt(0, hard ? 20 : 10);
-    b = randInt(0, hard ? 20 : 10);
+    // 基础：10 以内；加难：100 以内
+    a = randInt(0, hard ? 50 : 10);
+    b = randInt(0, hard ? 50 : 10);
     ans = a + b;
     prompt = `${a} + ${b} = ?`;
   } else {
-    // 基础：10 以内减法；加难：20 以内减法
-    a = randInt(1, hard ? 20 : 10);
-    b = randInt(0, a);
+    // 基础：10 以内减法；加难：100 以内不退位减法
+    a = randInt(1, hard ? 99 : 10);
+    b = randInt(0, hard ? Math.min(a, 50) : a);
     ans = a - b;
     prompt = `${a} − ${b} = ?`;
   }
@@ -611,7 +611,7 @@ function genPoemQ(): PracticeQuestion {
     () => genMathQ(useHard(0)), () => genMathQ(useHard(1)), () => genMathQ(useHard(2)), () => genMathQ(useHard(3)),
     () => genMathQ(useHard(4)), () => genMathQ(useHard(5)),  // 6 道口算（难度递增）
     () => genWordProblemQ(),                                  // 应用题
-    () => genOrdinalQ(),                                      // 序数
+    () => genWordProblemQ(),                                  // 应用题（替代序数题）
     () => genCompareQ(),                                      // 比大小
     () => genClockQ(),                                        // 钟表
   ];
