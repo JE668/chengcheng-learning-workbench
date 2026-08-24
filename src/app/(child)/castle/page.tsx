@@ -239,7 +239,7 @@ export default function CastlePage() {
               {state.residents.map((r) => (
                 <div key={r.key} className={`w-28 text-center ${r.mood < 3 ? 'moko-sad' : 'moko-enter'}`}>
                   <div className="relative">
-                    <MokoAvatar img={r.img} emoji={r.emoji} name={r.name} size={96} className="mx-auto" />
+                    <MokoAvatar img={r.img} emoji={r.emoji} name={r.name} size={96} className="mx-auto" frameKey={Number(state.inventory.frame || 0) > 0 ? 'frame' : undefined} />
                     <div className="absolute -top-2 -right-2 text-lg">{'❤️'.repeat(r.mood)}{'🖤'.repeat(3 - r.mood)}</div>
                   </div>
                   <div className="font-bold text-moko-violet text-sm mt-1">{r.name}</div>
