@@ -1,18 +1,40 @@
-# 整站自托管镜像：Next.js (next start) + libSQL 本地库
-FROM node:22-bookworm-slim
+# ============ 构建阶段 ============
+FROM node:22-bookworm-slim AS builder
 
-# 安装运行依赖
+# 安装构建依赖（Python 仅用于 edge-tts，但构建阶段也需要以验证 tts-server.py 可运行）
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-pip \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip3 install --break-system-packages edge-tts==7.2.8
+
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS=--max-old-space-size=2048
+
+WORKDIR /app
+
+# 先装依赖（利用 Docker 缓存层）
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# 复制源码并构建
+COPY . .
+RUN npm run lint && npx tsc --noEmit --skipLibCheck
+RUN npm run build
+
+# 只保留生产依赖（构建产物 + 运行时需要的 node_modules）
+RUN npm prune --omit=dev
+
+# ============ 运行阶段 ============
+FROM node:22-bookworm-slim AS runner
+
+# 安装运行依赖（Python + ffmpeg + edge-tts）
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
     && pip3 install --break-system-packages edge-tts==7.2.8
-    # edge-tts: Python 版 Microsoft Edge TTS 客户端（v7.2.8，已验证从 NAS 住宅 IP 可用）
-    #   - WebSocket 直连 speech.platform.bing.com（Chromium 143 headers）
-    #   - Sec-MS-GEC 令牌通过时间戳 + SHA256 计算，无需 edge.microsoft.com
-    #   - 替代了已弃用的 Kokoro（MX150 Pascal 不兼容新版 onnxruntime-gpu）
-    #     和 Vercel 代理（数据中心 IP 被微软拒 403）
 
+ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
@@ -21,21 +43,22 @@ ENV NODE_OPTIONS=--max-old-space-size=2048
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
+# 从 builder 复制：standalone 运行包 + 生产 node_modules + 公共资源 + 脚本
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/scripts/tts-server.py ./scripts/tts-server.py
+COPY --from=builder /app/package.json ./package.json
 
-COPY . .
-RUN npm run lint && npx tsc --noEmit --skipLibCheck
-RUN npm run build
-
-RUN npm prune --omit=dev
-
-ENV NODE_ENV=production
-
+# 创建非 root 用户
 RUN groupadd -g 1001 nodejs \
  && useradd -u 1001 -g nodejs -m nextjs \
- && mkdir -p /data && chown -R nextjs:nodejs /data
+ && mkdir -p /data && chown -R nextjs:nodejs /data \
+ && chown -R nextjs:nodejs /app
+
 USER nextjs
 
 EXPOSE 3000
-CMD ["node_modules/.bin/next", "start"]
+
+CMD ["node", "server.js"]
