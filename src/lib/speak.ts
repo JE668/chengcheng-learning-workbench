@@ -171,6 +171,7 @@ export async function playTts(
 
   // ── 第 1 层：本地 Web Speech 严格匹配（零延迟，普通话）────────
   if (hasStrictVoice(lang)) {
+    console.log('[TTS-L1] strict Web Speech', lang, text.slice(0, 25));
     const played = await speakEnd(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch, pauseMs);
     if (played) return;
   }
@@ -178,11 +179,13 @@ export async function playTts(
   // ── 第 2 层：Web Speech 宽松兜底（零延迟，粤语/台式也行）────
   // 本机无严格嗓音时（如 Android Edge）先走宽松，总比走服务端快。
   if (typeof window !== 'undefined' && window.speechSynthesis) {
+    console.log('[TTS-L2] loose Web Speech', lang, text.slice(0, 25));
     const loosePlayed = await speakEndLoose(text, lang === 'zh' ? 'zh' : 'en', wsRate, pitch, pauseMs);
     if (loosePlayed) return;
   }
 
   // ── 第 3 层：服务端 edge-tts（神经嗓音，最后兜底）────────────
+  console.log('[TTS-L3] server edge-tts', lang, text.slice(0, 30));
   const serverOk = await tryServer(text, lang, { ...opts, wsRate, pitch });
   if (serverOk) return;
 }
