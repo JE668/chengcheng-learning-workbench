@@ -601,14 +601,19 @@ function genPoemQ(): PracticeQuestion {
   const zhPick = shuffleArr(zhPool).slice(0, 10);
   for (const fn of zhPick) qs.push(fn());
 
+  // 根据连续天数决定难度：天数越多，难题比例越高
+  const streak = await computePracticeStreak(childId, dateStr());
+  const diffLevel = Math.min(4, Math.floor(streak / 7)); // 0~4：每7天升一级
+  const useHard = (idx: number) => idx < diffLevel; // 前 diffLevel 道用难题
+
   // 数学 10 题：基础口算+应用题混合，每天随机（数字题天然不重复，无需去重）
   const mathPool: (() => PracticeQuestion)[] = [
-    () => genMathQ(false), () => genMathQ(false), () => genMathQ(false), () => genMathQ(false),
-    () => genMathQ(false), () => genMathQ(false),  // 6 道基础口算
-    () => genWordProblemQ(),                         // 应用题
-    () => genOrdinalQ(),                             // 序数
-    () => genCompareQ(),                             // 比大小
-    () => genClockQ(),                               // 钟表
+    () => genMathQ(useHard(0)), () => genMathQ(useHard(1)), () => genMathQ(useHard(2)), () => genMathQ(useHard(3)),
+    () => genMathQ(useHard(4)), () => genMathQ(useHard(5)),  // 6 道口算（难度递增）
+    () => genWordProblemQ(),                                  // 应用题
+    () => genOrdinalQ(),                                      // 序数
+    () => genCompareQ(),                                      // 比大小
+    () => genClockQ(),                                        // 钟表
   ];
   const mathPick = shuffleArr(mathPool).slice(0, 10);
   for (const fn of mathPick) qs.push(fn());
