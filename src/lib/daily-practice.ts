@@ -1,6 +1,6 @@
 import { getDb } from './db';
 import { confirm, logGrowthEvent } from './castle';
-import { PINYIN_TONES, applyTone, ALL_EN_WORDS, CHARACTERS, PROVERBS, ANTONYMS, RIDDLES, WORD_PROBLEMS, ORDINALS, CLOCKS, EN_SENTENCES } from './study-data';
+import { PINYIN_TONES, applyTone, ALL_EN_WORDS, CHARACTERS, PROVERBS, ANTONYMS, RIDDLES, POEMS, WORD_PROBLEMS, ORDINALS, CLOCKS, EN_SENTENCES } from './study-data';
 import { mokoChars, subjectMokoKey, SUN_PER_SUBJECT } from './moko';
 import { mokoCollection } from './moko-collection';
 import { getDueMistakes, reviewMistake, type MistakeRow } from './mistakes';
@@ -100,6 +100,16 @@ export type PracticeQuestion =
       mistakeId: number; // 对应 mistakes.id，提交时推进间隔重复
       origin: string; // 「来自 xx 模块」之类的来源说明
       speakText?: string; // 需要朗读时的中文文本
+    }
+  | {
+      id: string;
+      kind: 'poem';
+      subject: Subject;
+      prompt: string;
+      han?: string;
+      options: string[];
+      answer: number;
+      explain: string;
     };
 
 export interface PracticeDayRecord {
@@ -519,7 +529,26 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
   const usedChars = new Set<string>();
 
   // 语文 10 题：每天随机出不同题型组合（听写/拼音/识字/反义词/谚语/谜语），保持新鲜感
+/** 古诗连线：给出一句诗，选出出自哪首诗 */
+function genPoemQ(): PracticeQuestion {
+  const p = POEMS[randInt(0, POEMS.length - 1)];
+  const line = p.lines[randInt(0, p.lines.length - 1)];
+  const distractors = shuffle(POEMS.filter((x) => x.title !== p.title)).slice(0, 3).map((x) => x.title);
+  const options = shuffle([p.title, ...distractors]);
+  const answer = options.indexOf(p.title);
+  return {
+    id: `pm-${p.title.slice(0, 4)}-${randInt(0, 99)}`,
+    kind: 'poem',
+    subject: '语文',
+    prompt: `「${line}」出自哪首诗？`,
+    options,
+    answer,
+    explain: `「${line}」出自《${p.title}》，作者${p.author}`,
+  };
+}
+
   const zhPool: (() => PracticeQuestion)[] = [
+    () => genPoemQ(),   // 古诗（不涉及汉字去重，直接出题）
     // 带去重的拼音题
     () => {
       let q = genPinyinQ();

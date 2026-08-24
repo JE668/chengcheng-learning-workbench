@@ -15,6 +15,7 @@ const KIND_META: Record<string, { label: string; grad: string; icon: string }> =
   math: { label: '数学 · 口算', grad: 'from-moko-blue to-sky-400', icon: '🔢' },
   english: { label: '英语 · 听音', grad: 'from-moko-yellow to-amber-300', icon: '🔤' },
   mistake: { label: '错题重练', grad: 'from-moko-violet to-purple-400', icon: '🔁' },
+  poem: { label: '语文 · 古诗', grad: 'from-moko-purple to-moko-violet', icon: '🌙' },
 };
 const FALLBACK_META = { label: '今日练习', grad: 'from-moko-violet to-moko-purple', icon: '📝' };
 
@@ -347,6 +348,7 @@ export default function DailyPracticePage() {
             </>
           )}
           {q.kind === 'math' && <div className="text-5xl font-black">{q.prompt}</div>}
+          {q.kind === 'poem' && <div className="text-2xl font-black leading-relaxed">{q.prompt}</div>}
           {q.kind === 'english' && (
             <>
               <div className="text-6xl mb-2">{q.emoji}</div>
