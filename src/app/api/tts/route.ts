@@ -33,6 +33,10 @@ const TTS_LIMIT = { windowSeconds: 60, maxRequests: 30 };
 const ttsCache = new Map<string, { data: Buffer; type: string }>();
 const TTS_CACHE_MAX = 500;
 
+// 空闲超时：30 分钟无请求自动清理 Python 进程
+const TTS_IDLE_TIMEOUT = 30 * 60 * 1000;
+let ttsIdleTimer: ReturnType<typeof setTimeout> | null = null;
+
 // 持久化 Python TTS 进程（避免每次请求启动 Python）
 let ttsProcess: import('node:child_process').ChildProcess | null = null;
 let ttsReqId = 0;
@@ -65,10 +69,24 @@ function getTtsProcess() {
   });
   ttsProcess.on('exit', () => {
     ttsProcess = null;
+    if (ttsIdleTimer) { clearTimeout(ttsIdleTimer); ttsIdleTimer = null; }
     for (const [, resolve] of ttsPending) resolve(Promise.reject(new Error('TTS process died')));
     ttsPending.clear();
   });
+  resetIdleTimer();
   return ttsProcess;
+}
+
+/** 重置空闲计时器：每次请求后推迟 30 分钟再清理进程 */
+function resetIdleTimer() {
+  if (ttsIdleTimer) clearTimeout(ttsIdleTimer);
+  ttsIdleTimer = setTimeout(() => {
+    if (ttsProcess && !ttsProcess.killed) {
+      ttsProcess.kill('SIGTERM');
+      ttsProcess = null;
+    }
+    ttsIdleTimer = null;
+  }, TTS_IDLE_TIMEOUT);
 }
 
 function ttsCacheKey(text: string, lang: string, rate: string): string {
@@ -85,6 +103,7 @@ async function synthesizeWithEdgeTTS(
   return new Promise((resolve, reject) => {
     try {
       const proc = getTtsProcess();
+      resetIdleTimer();
       ttsPending.set(id, resolve);
       const req = JSON.stringify({ id, text, voice, rate }) + '\n';
       proc.stdin!.write(req);
