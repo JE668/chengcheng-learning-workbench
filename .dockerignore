@@ -10,3 +10,10 @@ npm-debug.log
 *.log
 .DS_Store
 README.md
+*.tsbuildinfo
+local.db
+local.db-journal
+.env*
+.gitignore
+.vitest
+coverage
