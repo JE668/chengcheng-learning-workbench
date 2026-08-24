@@ -25,6 +25,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
+RUN npm run lint && npx tsc --noEmit --skipLibCheck
 RUN npm run build
 
 RUN npm prune --omit=dev

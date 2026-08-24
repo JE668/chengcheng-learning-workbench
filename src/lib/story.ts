@@ -355,7 +355,9 @@ function buildAutoChapter(m: MokoChar, idx: number): StoryChapter {
   const titles = CAT_TITLE[cat] ?? ['奇遇'];
   const title = titles[idx % titles.length];
   const theme = CAT_THEME[cat] ?? '快乐学习';
-  const tip = CAT_TIP[cat] ?? `和${m.name}做朋友，每天都有新惊喜～`;
+  const rawTip = CAT_TIP[cat] ?? `和${m.name}做朋友，每天都有新惊喜～`;
+  // 让 tip 带上萌可名字，每只萌可的 tip 不再一模一样
+  const tip = `${m.name}说：${rawTip}`;
   return {
     id: m.key,
     title,
@@ -367,7 +369,6 @@ function buildAutoChapter(m: MokoChar, idx: number): StoryChapter {
     paragraphs: [
       `萌可王国又迎来了一位新朋友——${m.emoji}${m.name}！`,
       `${m.name}笑眯眯地说：「${m.line}」程程跟着${m.name}一起${theme}，学到了不少新本领。`,
-      tip,
     ],
     tip,
     quiz: buildAutoQuiz(m),

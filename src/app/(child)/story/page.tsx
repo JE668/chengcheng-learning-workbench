@@ -113,12 +113,29 @@ export default function StoryPage() {
     for (let k = 0; k < c.paragraphs.length; k++) {
       if (abortRef.current) { setNarrating(null); setReadPara(-1); return; }
       setReadPara(k);
+      // 预取下一段 TTS，趁当前段朗读时让服务端提前缓存（Python edge-tts ~300-600ms 启动延迟）
+      if (k + 1 < c.paragraphs.length) {
+        fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: c.paragraphs[k + 1], lang: 'zh', rate: '+0%' }),
+        }).catch(() => {});
+      }
       await playTtsEnd(c.paragraphs[k], 'zh', { wsRate: 0.7, pauseMs: 140 });
     }
     if (c.tip) {
       if (abortRef.current) { setNarrating(null); setReadPara(-1); return; }
       setReadPara(c.paragraphs.length);
       await playTtsEnd(c.tip, 'zh', { wsRate: 0.7, pauseMs: 140 });
+    }
+    // 故事朗读完毕：预取下一集的第一段 TTS，减少切换到下一集时的等待
+    const nextIdx = storyChapters.findIndex((ch) => ch.id === c.id) + 1;
+    if (nextIdx < storyChapters.length && storyChapters[nextIdx].paragraphs.length > 0) {
+      fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: storyChapters[nextIdx].paragraphs[0], lang: 'zh', rate: '+0%' }),
+      }).catch(() => {});
     }
     if (abortRef.current) { setNarrating(null); setReadPara(-1); return; }
     setNarrating(null);

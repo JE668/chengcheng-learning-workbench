@@ -37,3 +37,30 @@ jobs:
 
       - name: 生产构建冒烟（next build）
         run: npm run build
+
+      - name: API 路由鉴权自动检查
+        run: |
+          ALLOWED_MISSING=(
+            'auth/login'
+            'auth/logout'
+            'cron/backup'
+            'cron/settle'
+            'media/[...path]'
+            'tts'
+            'tts-edge'
+            'tts-debug'
+          )
+          FAIL=0
+          for f in src/app/api/**/route.ts; do
+            rel="${f#src/app/api/}"
+            rel="${rel%/route.ts}"
+            skip=0
+            for a in "${ALLOWED_MISSING[@]}"; do [ "$rel" = "$a" ] && { skip=1; break; }; done
+            [ "$skip" = 1 ] && continue
+            if ! grep -q 'getCurrentUser' "$f" 2>/dev/null; then
+              echo "❌ 缺少鉴权: $rel"
+              FAIL=1
+            fi
+          done
+          if [ "$FAIL" = 1 ]; then echo "---"; echo "新增路由必须调用 getCurrentUser()；已知公开路由请加入 ALLOWED_MISSING 白名单。"; exit 1; fi
+          echo "✅ 全部路由均已鉴权"
