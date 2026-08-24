@@ -24,7 +24,7 @@ jobs:
           cache: npm
 
       - name: 安装依赖
-        run: npm ci --omit=optional
+        run: npm ci
 
       - name: TypeScript 类型检查
         run: npx tsc --noEmit --skipLibCheck

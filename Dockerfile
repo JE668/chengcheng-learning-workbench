@@ -8,7 +8,7 @@ WORKDIR /app
 
 # 先装依赖（利用 Docker 缓存层）
 COPY --link package.json package-lock.json ./
-RUN npm ci --omit=optional && npm cache clean --force
+RUN npm ci && npm cache clean --force
 
 # 复制源码并构建
 COPY . .
