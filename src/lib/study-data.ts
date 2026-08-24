@@ -88,7 +88,7 @@ export const PINYIN_GROUPS: { group: string; sub?: string; items: PinyinItem[] }
     items: [
       { pinyin: 'ai', tone: 0, examples: ['爱 ài', '白菜 bái cài'] },
       { pinyin: 'ei', tone: 0, examples: ['杯 bēi', '飞机 fēi jī'] },
-      { pinyin: 'ui', tone: 0, examples: ['水 shuǐ', '妹妹 mèi mei'] },
+      { pinyin: 'ui', tone: 0, examples: ['水 shuǐ', '回家 huí jiā'] },
       { pinyin: 'ao', tone: 0, examples: ['猫 māo', '泡泡 pào pao'] },
       { pinyin: 'ou', tone: 0, examples: ['藕 ǒu', '猴 hóu'] },
       { pinyin: 'iu', tone: 0, examples: ['球 qiú', '牛 niú'] },
