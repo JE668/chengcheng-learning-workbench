@@ -51,7 +51,7 @@ jobs:
             'tts-debug'
           )
           FAIL=0
-          for f in src/app/api/**/route.ts; do
+          while IFS= read -r f; do
             rel="${f#src/app/api/}"
             rel="${rel%/route.ts}"
             skip=0
@@ -61,6 +61,6 @@ jobs:
               echo "❌ 缺少鉴权: $rel"
               FAIL=1
             fi
-          done
+          done < <(find src/app/api -name 'route.ts' | sort)
           if [ "$FAIL" = 1 ]; then echo "---"; echo "新增路由必须调用 getCurrentUser()；已知公开路由请加入 ALLOWED_MISSING 白名单。"; exit 1; fi
           echo "✅ 全部路由均已鉴权"
