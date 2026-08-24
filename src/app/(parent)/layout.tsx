@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import Nav from '@/components/Nav';
 import Clock from '@/components/Clock';
 
@@ -11,7 +12,7 @@ export default async function ParentLayout({ children }: { children: React.React
     <div className="flex min-h-screen">
       <Nav user={user} />
       <main className="flex-1 p-4 md:p-8 pb-28 md:pb-8 safe-bottom">
-        {children}
+        <ErrorBoundary>{children}</ErrorBoundary>
       </main>
       <Clock />
     </div>

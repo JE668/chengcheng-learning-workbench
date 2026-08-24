@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
 
 export default function SettingsPage() {
@@ -156,6 +156,33 @@ export default function SettingsPage() {
           </div>
         </div>
         <p className="text-xs text-gray-400 mt-3">⚠️ 恢复会<strong>覆盖当前全部数据</strong>（含账号），操作前请先导出备份。恢复后建议刷新页面。</p>
+      </div>
+
+      {/* CSV 导出 */}
+      <div className="card-moko mt-6">
+        <h2 className="text-xl font-bold text-moko-violet mb-2">📊 导出学习数据</h2>
+        <p className="text-sm text-gray-600 mb-4">下载学习记录为 CSV 文件，可在 Excel 中打开分析</p>
+        <button
+          onClick={async () => {
+            try {
+              const r = await fetch('/api/backup');
+              if (!r.ok) { setMsg('获取数据失败'); return; }
+              const j = await r.json();
+              const rows = [['日期','科目','类型','详情']];
+              if (j.checkins) for (const c of j.checkins) rows.push([c.day||'',c.subject||'',c.status||'','']);
+              if (j.completions) for (const c of j.completions) rows.push([c.day||'',c.subject||'',c.source||'','积分:'+c.points]);
+              const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
+              const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a'); a.href = url; a.download = '学习数据_'+new Date().toISOString().slice(0,10)+'.csv';
+              a.click(); URL.revokeObjectURL(url);
+              setMsg('CSV 已下载');
+            } catch { setMsg('导出失败'); }
+          }}
+          className="w-full py-3 bg-gradient-to-r from-moko-blue to-cyan-400 text-white text-base font-extrabold rounded-2xl shadow hover:scale-[1.02] transition active:scale-95"
+        >
+          📥 下载 CSV 学习数据
+        </button>
       </div>
 
 <div className="card-moko border-2 border-red-300 mt-6">
