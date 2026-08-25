@@ -19,7 +19,7 @@ const FOLDER_CAT = {
 
 // 分类元数据（含已有分类，便于统一 season 标签；newCats 是本次新增、需要并入 MOko_CATEGORIES 的）
 const CAT_META = {
-  royal:    { label: '皇室萌可', emoji: '', color: 'text-moko-rose',   desc: '守护魔法萌可王国的小公主们' },
+  royal:    { label: '皇室萌可', emoji: '👑', color: 'text-moko-rose',   desc: '守护魔法萌可王国的小公主们' },
   mo:       { label: '魔方萌可', emoji: '🧊', color: 'text-moko-cyan',   desc: '第一、二季的魔法萌可' },
   jewel:    { label: '宝石萌可', emoji: '💎', color: 'text-moko-purple', desc: '住在宝石矿洞里的闪亮一族' },
   key:      { label: '钥匙萌可', emoji: '🔑', color: 'text-moko-violet', desc: '掌管知识宝盒的钥匙精灵' },
