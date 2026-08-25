@@ -27,22 +27,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
 
       - name: 安装依赖
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: TypeScript 类型检查
-        run: pnpm tsc --noEmit
+        run: npm run tsc -- --noEmit
 
       - name: 单元测试（castle 核心逻辑等）
-        run: pnpm test
+        run: npm test
 
       - name: ESLint 代码检测
-        run: pnpm lint
+        run: npm run lint
 
       - name: 生产构建冒烟（next build）
-        run: pnpm build
+        run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: 1
           NODE_ENV: production
