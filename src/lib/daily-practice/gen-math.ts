@@ -95,37 +95,50 @@ export function genCompareQ(): PracticeQuestion {
   };
 }
 
-/* 钟表题 */
-export function genClockQ(): PracticeQuestion {
-  const c = CLOCKS[Math.floor(Math.random() * CLOCKS.length)];
-  const distractors = shuffle(CLOCKS.filter((x) => x.hour !== c.hour)).slice(0, 3).map((x) => x.label);
-  const options = shuffle([c.label, ...distractors]);
-  const answer = options.indexOf(c.label);
+
+/* 乘法题 */
+export function genMultiplyQ(): PracticeQuestion {
+  const a = randInt(2, 9);
+  const b = randInt(2, 9);
+  const ans = a * b;
+  const set = new Set<number>([ans]);
+  while (set.size < 4) {
+    const d = ans + randInt(-5, 5);
+    if (d >= 0) set.add(d);
+  }
+  const options = shuffle(Array.from(set));
+  const answer = options.indexOf(ans);
   return {
-    id: `ck-${c.hour}`,
+    id: `mul-${a}-${b}`,
     kind: 'math',
     subject: '数学',
-    prompt: `这是几点？`,
-    options,
+    prompt: `${a} × ${b} = ?`,
+    options: options.map(String),
     answer,
-    explain: c.label,
+    explain: `${a} × ${b} = ${ans}`,
   };
 }
 
-/* 比大小题（数字版） */
-export function genCompareNumQ(): PracticeQuestion {
-  const a = randInt(0, 10);
-  const b = randInt(0, 10);
-  const correct = a > b ? '>' : a < b ? '<' : '=';
-  const options = shuffle(['>', '<', '=']);
-  const answer = options.indexOf(correct);
+/* 除法题 */
+export function genDivideQ(): PracticeQuestion {
+  const b = randInt(2, 9);
+  const ans = randInt(2, 9);
+  const a = b * ans;
+  const set = new Set<number>([ans]);
+  while (set.size < 4) {
+    const d = ans + randInt(-3, 3);
+    if (d >= 0) set.add(d);
+  }
+  const options = shuffle(Array.from(set));
+  const answer = options.indexOf(ans);
   return {
-    id: `cmp-num-${a}-${b}`,
+    id: `div-${a}-${b}`,
     kind: 'math',
     subject: '数学',
-    prompt: `${a} __ ${b}（填 > < 或 =）`,
-    options,
+    prompt: `${a} ÷ ${b} = ?`,
+    options: options.map(String),
     answer,
-    explain: `${a} ${correct} ${b}`,
+    explain: `${a} ÷ ${b} = ${ans}`,
   };
 }
+

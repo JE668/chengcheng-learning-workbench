@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { genMathQ, genWordProblemQ, genOrdinalQ, genCompareQ, genClockQ, genCompareNumQ } from '../daily-practice/gen-math';
+import { genMathQ, genWordProblemQ, genOrdinalQ, genCompareQ } from '../daily-practice/gen-math';
 
 describe('genMathQ', () => {
   it('should generate valid easy addition questions', () => {
@@ -130,24 +130,3 @@ describe('genCompareQ', () => {
   });
 });
 
-describe('genClockQ', () => {
-  it('should generate valid clock questions', () => {
-    const q = genClockQ();
-    expect(q.kind).toBe('math');
-    expect(q.subject).toBe('数学');
-    expect(q.prompt).toBe('这是几点？');
-    expect(q.options).toHaveLength(4);
-    expect(q.options[q.answer]).toMatch(/^\d+时$/);
-  });
-});
-
-describe('genCompareNumQ', () => {
-  it('should generate valid number compare questions', () => {
-    const q = genCompareNumQ();
-    expect(q.kind).toBe('math');
-    expect(q.subject).toBe('数学');
-    expect(['>', '<', '=']).toContain(q.options[q.answer]);
-    expect(q.options).toHaveLength(3);
-    expect(q.options[q.answer]).toMatch(/^[><=]$/);
-  });
-});

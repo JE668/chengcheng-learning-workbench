@@ -128,7 +128,7 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
   const diffLevel = 0; // 默认基础难度，实际难度在 getTodayPractice 中根据真实 streak 计算
   const useHard = (idx: number) => idx < diffLevel; // 前 diffLevel 道用难题
 
-  // 数学 10 题：基础口算+应用题混合，每天随机（数字题天然不重复，无需去重）
+  // 数学 10 题：基础口算+应用题+乘除法混合，每天随机（数字题天然不重复，无需去重）
   const mathPool: (() => PracticeQuestion)[] = [
     () => genMathQ(useHard(0)), () => genMathQ(useHard(1)), () => genMathQ(useHard(2)), () => genMathQ(useHard(3)),
     () => genMathQ(useHard(4)), () => genMathQ(useHard(5)),  // 6 道口算（难度递增）
@@ -136,8 +136,9 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
     () => genWordProblemQ(),                                  // 应用题
     () => genWordProblemQ(),                                  // 应用题
     () => genWordProblemQ(),                                  // 应用题
+    () => genMultiplyQ(),                                     // 乘法
+    () => genDivideQ(),                                       // 除法
     () => genCompareQ(),                                      // 比大小
-    () => genClockQ(),                                        // 钟表
   ];
   const mathPick = shuffle(mathPool).slice(0, 10);
   for (const fn of mathPick) qs.push(fn());
