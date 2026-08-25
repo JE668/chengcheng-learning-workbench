@@ -11,7 +11,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "华夫~ 我是冰沙萌可！"
+    "line": "冰沙~ 我是冰沙萌可，清爽一夏天！"
   },
   {
     "key": "col_05_华夫萌可_render",
@@ -22,7 +22,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "软软~ 我是华夫萌可！"
+    "line": "华夫~ 我是华夫萌可，格子满甜蜜！"
   },
   {
     "key": "col_05_夹心萌可_render",
@@ -33,7 +33,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "呼呼，夹心萌可在这里，棒棒~"
+    "line": "夹心~ 我是夹心萌可，惊喜在中间！"
   },
   {
     "key": "col_05_奶油萌可_render",
@@ -44,7 +44,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "香香~ 我是奶油萌可！"
+    "line": "奶油~ 我是奶油萌可，烘焙云朵软！"
   },
   {
     "key": "col_05_巧克力萌可_render",
@@ -55,7 +55,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "巧克力萌可登场，糖糖~"
+    "line": "巧克力~ 我是巧克力萌可，苦中带甜最好吃！"
   },
   {
     "key": "col_05_布丁萌可_render",
@@ -66,7 +66,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "来和我玩吧，甜甜~ 我是布丁萌可！"
+    "line": "布丁~ 我是布丁萌可，摇摇甜心动！"
   },
   {
     "key": "col_05_松饼萌可_render",
@@ -77,7 +77,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "来和我玩吧，糖糖~ 我是松饼萌可！"
+    "line": "松饼~ 我是松饼萌可，松软甜蜜蜜！"
   },
   {
     "key": "col_05_棉花糖萌可_render",
@@ -88,7 +88,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "来和我玩吧，凉凉~ 我是棉花糖萌可！"
+    "line": "棉花糖~ 我是棉花糖萌可，软软甜甜营养！"
   },
   {
     "key": "col_05_棒棒糖萌可_render",
@@ -99,7 +99,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "呼呼，棒棒糖萌可在这里，甜甜~"
+    "line": "棒棒~ 我是棒棒糖萌可，点心甜滋滋！"
   },
   {
     "key": "col_05_泡泡萌可_render",
@@ -110,7 +110,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "糯糯！泡泡萌可来啦！"
+    "line": "泡泡~ 我是泡泡萌可，糯糯圆又圆！"
   },
   {
     "key": "col_05_甜甜圈萌可_render",
@@ -121,7 +121,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "呼呼，甜甜圈萌可在这里，呼呼~"
+    "line": "甜圈~ 我是甜甜圈萌可，水果圈圈甜！"
   },
   {
     "key": "col_05_糖糖萌可_render",
@@ -132,7 +132,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "糖糖~ 我是糖糖萌可，甜滋滋！"
+    "line": "糖糖~ 我是糖糖萌可，甜滋滋陪伴！"
   },
   {
     "key": "col_05_蛋糕妹妹萌可_render",
@@ -143,7 +143,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "呼呼，蛋糕妹妹萌可在这里，糯糯~"
+    "line": "蛋糕~ 我是蛋糕妹妹萌可，快乐每一天！"
   },
   {
     "key": "col_05_蛋糕妹妹萌可_蛋糕弟弟萌可_render",
@@ -154,7 +154,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "呼呼！蛋糕妹妹萌可·蛋糕弟弟萌可来啦！"
+    "line": "双倍~ 我们是蛋糕兄妹，甜蜜加倍！"
   },
   {
     "key": "col_05_蛋糕弟弟萌可_render",
@@ -165,7 +165,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "来和我玩吧，绵绵~ 我是蛋糕弟弟萌可！"
+    "line": "蛋糕~ 我是蛋糕弟弟萌可，甜蜜跟你走！"
   },
   {
     "key": "col_05_酸奶萌可_render",
@@ -176,7 +176,7 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "呼呼，酸奶萌可在这里，蜜蜜~"
+    "line": "酸奶~ 我是酸奶萌可，饮品酸甜好！"
   },
   {
     "key": "col_05_马卡龙萌可_render",
@@ -187,6 +187,6 @@ export const mokoCollection_05: MokoChar[] = [
     "emoji": "🍬",
     "color": "text-moko-pink",
     "item": "✨ 魔法道具",
-    "line": "来和我玩吧，巧巧~ 我是马卡龙萌可！"
+    "line": "马卡~ 我是马卡龙萌可，烹饪彩虹色！"
   }
 ];

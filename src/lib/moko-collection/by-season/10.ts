@@ -11,7 +11,7 @@ export const mokoCollection_10: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "呼呼，幸运萌可在这里，运运~"
+    "line": "幸运~ 我是幸运萌可，福星高照！"
   },
   {
     "key": "col_10_月神萌可_render",
@@ -22,7 +22,7 @@ export const mokoCollection_10: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "来和我玩吧，灿灿~ 我是月神萌可！"
+    "line": "月神~ 我是月神萌可，月华守护者！"
   },
   {
     "key": "col_10_月食萌可_render",
@@ -33,7 +33,7 @@ export const mokoCollection_10: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "今天也要开开心心哦，奇奇~ 我是月食萌可！"
+    "line": "月食~ 我是月食萌可，神秘遮月光！"
   },
   {
     "key": "col_10_极光萌可_render",
@@ -44,7 +44,7 @@ export const mokoCollection_10: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "极光~ 我是极光萌可，绚丽登场！"
+    "line": "极光~ 我是极光萌可，绚丽登场角度正！"
   },
   {
     "key": "col_10_甜甜萌可_render",
@@ -55,7 +55,7 @@ export const mokoCollection_10: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "来和我玩吧，闪耀~ 我是甜甜萌可！"
+    "line": "甜甜~ 我是甜甜萌可，甜度满分！"
   },
   {
     "key": "col_10_酸酸萌可_render",
@@ -66,6 +66,6 @@ export const mokoCollection_10: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "来和我玩吧，闪耀~ 我是酸酸萌可！"
+    "line": "酸酸~ 我是酸酸萌可，酸中带甜心！"
   }
 ];

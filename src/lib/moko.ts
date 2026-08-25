@@ -26,7 +26,7 @@ export const subjects: { key: Subject; label: string; color: string; img: string
  * category 取值见 MokoCategoryKey：royal/key/jewel/sweetie/star/princess/guide/trouble
  */
 export const MokoCategories: { key: MokoCategoryKey; label: string; emoji: string; color: string; desc: string }[] = [
-  { key: 'royal', label: '皇室萌可', emoji: '👑', color: 'text-moko-rose', desc: '守护魔法萌可王国的小公主们' },
+  { key: 'royal', label: '皇室萌可', emoji: '', color: 'text-moko-rose', desc: '守护魔法萌可王国的小公主们' },
   { key: 'mo', label: '魔方萌可', emoji: '🧊', color: 'text-moko-cyan', desc: '第一、二季的魔法萌可' },
   { key: 'key', label: '钥匙萌可', emoji: '🔑', color: 'text-moko-violet', desc: '掌管知识宝盒的钥匙精灵' },
   { key: 'jewel', label: '闪亮宝石萌可', emoji: '💎', color: 'text-moko-purple', desc: '住在宝石矿洞里的闪亮一族' },
@@ -42,51 +42,51 @@ export const MokoCategories: { key: MokoCategoryKey; label: string; emoji: strin
 
 export const mokoChars: Record<string, MokoChar> = {
   // —— 皇室萌可（核心三科 + 伙伴）——
-  heartping: { key: 'heartping', name: '爱心萌可', color: 'text-moko-rose', img: '/moko/heartping.jpg', emoji: '💗', season: 'S1 魔方萌可', item: '爱心镜子', line: '啾~ 爱心光波！', category: 'royal', subject: '语文' },
-  courageping: { key: 'courageping', name: '正正萌可', color: 'text-moko-blue', img: '/moko/courageping.jpg', emoji: '💪', season: 'S1 魔方萌可', item: '勇气相机', line: '敬礼！正正萌可，无所畏惧！', category: 'royal', subject: '数学' },
-  singping: { key: 'singping', name: '唱唱萌可', color: 'text-moko-yellow', img: '/moko/singping.jpg', emoji: '🎵', season: 'S1 魔方萌可', item: '甜心铃铛', line: '啦啦啦，唱给世界听！', category: 'royal', subject: '英语' },
-  curiousping: { key: 'curiousping', name: '好奇萌可', color: 'text-moko-cyan', emoji: '🔍', season: 'S1 魔方萌可', item: '放大镜', line: '咦？这是什么呢？', category: 'royal' },
-  happyping: { key: 'happyping', name: '欢欢萌可', color: 'text-moko-pink', emoji: '😄', season: 'S1 魔方萌可', item: '欢乐喇叭', line: '笑一个嘛，嘿嘿！', category: 'royal' },
-  wisejingping: { key: 'wisejingping', name: '睿智萌可', color: 'text-moko-purple', emoji: '📘', season: 'S1 魔方萌可', item: '智慧书', line: '知识就是力量！', category: 'royal' },
-  gentleping: { key: 'gentleping', name: '温柔萌可', color: 'text-moko-mint', emoji: '🌸', season: 'S1 魔方萌可', item: '柔软羽毛', line: '轻轻的，慢慢来～', category: 'royal' },
+  heartping: { key: 'heartping', name: '爱心萌可', color: 'text-moko-rose', img: '/moko/heartping.jpg', emoji: '💗', season: 'S1 魔方萌可', item: '爱心镜子', line: '啾~ 我是爱心萌可，爱心光波！', category: 'royal', subject: '语文' },
+  courageping: { key: 'courageping', name: '正正萌可', color: 'text-moko-blue', img: '/moko/courageping.jpg', emoji: '💪', season: 'S1 魔方萌可', item: '勇气相机', line: '敬礼！我是正正萌可，无所畏惧！', category: 'royal', subject: '数学' },
+  singping: { key: 'singping', name: '唱唱萌可', color: 'text-moko-yellow', img: '/moko/singping.jpg', emoji: '🎵', season: 'S1 魔方萌可', item: '甜心铃铛', line: '啦啦~ 我是唱唱萌可，唱给世界听！', category: 'royal', subject: '英语' },
+  curiousping: { key: 'curiousping', name: '好奇萌可', color: 'text-moko-cyan', emoji: '🔍', season: 'S1 魔方萌可', item: '放大镜', line: '好奇~ 我是好奇萌可，动脑筋探险！', category: 'royal' },
+  happyping: { key: 'happyping', name: '欢欢萌可', color: 'text-moko-pink', emoji: '😄', season: 'S1 魔方萌可', item: '欢乐喇叭', line: '欢欢~ 我是欢欢萌可，笑声震天响！', category: 'royal' },
+  wisejingping: { key: 'wisejingping', name: '睿智萌可', color: 'text-moko-purple', emoji: '📘', season: 'S1 魔方萌可', item: '智慧书', line: '睿智~ 我是睿智萌可，知识就是力量！', category: 'royal' },
+  gentleping: { key: 'gentleping', name: '温柔萌可', color: 'text-moko-mint', emoji: '🌸', season: 'S1 魔方萌可', item: '柔软羽毛', line: '温柔~ 我是温柔萌可，轻轻慢来陪你！', category: 'royal' },
 
   // —— 钥匙萌可 ——
-  keyping: { key: 'keyping', name: '钥匙萌可', color: 'text-moko-violet', img: '/moko/keyping.jpg', emoji: '🔑', season: 'S4 魔法钥匙', item: '万能钥匙', line: '万能钥匙，打开知识！', category: 'key', subject: '英语' },
-  lockping: { key: 'lockping', name: '锁锁萌可', color: 'text-moko-violet', emoji: '🔒', season: 'S4 魔法钥匙', item: '小金锁', line: '咔嚓，锁好啦！', category: 'key' },
-  boxping: { key: 'boxping', name: '宝盒萌可', color: 'text-moko-violet', emoji: '🎁', season: 'S4 魔法钥匙', item: '神秘宝盒', line: '猜猜里面有什么？', category: 'key' },
+  keyping: { key: 'keyping', name: '钥匙萌可', color: 'text-moko-violet', img: '/moko/keyping.jpg', emoji: '🔑', season: 'S4 魔法钥匙', item: '万能钥匙', line: '钥匙~ 我是钥匙萌可，万能钥匙开知识！', category: 'key', subject: '英语' },
+  lockping: { key: 'lockping', name: '锁锁萌可', color: 'text-moko-violet', emoji: '🔒', season: 'S4 魔法钥匙', item: '小金锁', line: '锁锁~ 我是锁锁萌可，咔嚓锁好秘密！', category: 'key' },
+  boxping: { key: 'boxping', name: '宝盒萌可', color: 'text-moko-violet', emoji: '🎁', season: 'S4 魔法钥匙', item: '神秘宝盒', line: '宝盒~ 我是宝盒萌可，猜猜里面啥惊喜！', category: 'key' },
 
   // —— 闪亮宝石萌可 ——
-  gemsping: { key: 'gemsping', name: '宝石萌可', color: 'text-moko-purple', img: '/moko/gemsping.jpg', emoji: '💎', season: 'S3 闪亮宝石', item: '闪亮宝石', line: '闪闪发光的宝石！', category: 'jewel', subject: '数学' },
-  auroraping: { key: 'auroraping', name: '极光萌可', color: 'text-moko-cyan', img: '/moko/auroraping.jpg', emoji: '🌌', season: 'S6 闪耀流星', item: '流星弓箭', line: '流星划过，角度正好！', category: 'jewel', subject: '数学' },
-  diamondping: { key: 'diamondping', name: '钻石萌可', color: 'text-moko-cyan', emoji: '💠', season: 'S3 闪亮宝石', item: '钻石权杖', line: 'bling bling 闪瞎眼！', category: 'jewel' },
-  rubyping: { key: 'rubyping', name: '红宝石萌可', color: 'text-moko-rose', emoji: '❤️', season: 'S3 闪亮宝石', item: '红宝石', line: '红红火火惹人爱！', category: 'jewel' },
+  gemsping: { key: 'gemsping', name: '宝石萌可', color: 'text-moko-purple', img: '/moko/gemsping.jpg', emoji: '💎', season: 'S3 闪亮宝石', item: '闪亮宝石', line: '宝石~ 我是宝石萌可，闪闪发光数数！', category: 'jewel', subject: '数学' },
+  auroraping: { key: 'auroraping', name: '极光萌可', color: 'text-moko-cyan', img: '/moko/auroraping.jpg', emoji: '🌌', season: 'S6 闪耀流星', item: '流星弓箭', line: '极光~ 我是极光萌可，绚丽登场角度正！', category: 'star', subject: '数学' },
+  diamondping: { key: 'diamondping', name: '钻石萌可', color: 'text-moko-cyan', emoji: '💠', season: 'S3 闪亮宝石', item: '钻石权杖', line: '钻石~ 我是钻石萌可，bling bling权杖！', category: 'jewel' },
+  rubyping: { key: 'rubyping', name: '红宝石萌可', color: 'text-moko-rose', emoji: '❤️', season: 'S3 闪亮宝石', item: '红宝石', line: '红宝~ 我是红宝石萌可，红红火火惹人爱！', category: 'jewel' },
 
   // —— 魔法甜心萌可 ——
-  sweetsping: { key: 'sweetsping', name: '甜心萌可', color: 'text-moko-pink', img: '/moko/sweetsping.jpg', emoji: '🍬', season: 'S5 魔法甜心', item: '甜心棒棒糖', line: '甜蜜蜜，字母糖！', category: 'sweetie', subject: '英语' },
-  cottonping: { key: 'cottonping', name: '棉花糖萌可', color: 'text-moko-pink', emoji: '🍭', season: 'S5 魔法甜心', item: '棉花糖', line: '软软的，甜甜的！', category: 'sweetie' },
-  chocoping: { key: 'chocoping', name: '巧克力萌可', color: 'text-moko-yellow', emoji: '🍫', season: 'S5 魔法甜心', item: '巧克力', line: '苦中带甜才好吃！', category: 'sweetie' },
-  cakeping: { key: 'cakeping', name: '蛋糕萌可', color: 'text-moko-rose', emoji: '🍰', season: 'S5 魔法甜心', item: '草莓蛋糕', line: '生日快乐呀！', category: 'sweetie' },
+  sweetsping: { key: 'sweetsping', name: '甜心萌可', color: 'text-moko-pink', img: '/moko/sweetsping.jpg', emoji: '🍬', season: 'S5 魔法甜心', item: '甜心棒棒糖', line: '甜甜~ 我是甜心萌可，甜蜜蜜字母糖！', category: 'sweetie', subject: '英语' },
+  cottonping: { key: 'cottonping', name: '棉花糖萌可', color: 'text-moko-pink', emoji: '🍭', season: 'S5 魔法甜心', item: '棉花糖', line: '棉花糖~ 我是棉花糖萌可，软软甜甜营养！', category: 'sweetie' },
+  chocoping: { key: 'chocoping', name: '巧克力萌可', color: 'text-moko-yellow', emoji: '🍫', season: 'S5 魔法甜心', item: '巧克力', line: '巧克力~ 我是巧克力萌可，苦中带甜最好吃！', category: 'sweetie' },
+  cakeping: { key: 'cakeping', name: '蛋糕萌可', color: 'text-moko-rose', emoji: '🍰', season: 'S5 魔法甜心', item: '草莓蛋糕', line: '蛋糕~ 我是蛋糕萌可，生日快乐草莓香！', category: 'sweetie' },
 
   // —— 闪耀流星萌可 ——
-  meteorping: { key: 'meteorping', name: '流星萌可', color: 'text-moko-cyan', emoji: '☄️', season: 'S6 闪耀流星', item: '流星灯', line: '快许个愿吧！', category: 'star' },
-  starping: { key: 'starping', name: '星星萌可', color: 'text-moko-gold', emoji: '⭐', season: 'S6 闪耀流星', item: '小星星', line: '一闪一闪亮晶晶！', category: 'star' },
-  cometping: { key: 'cometping', name: '彗星萌可', color: 'text-moko-violet', emoji: '🌠', season: 'S6 闪耀流星', item: '彗星扫把', line: '划过夜空啦！', category: 'star' },
+  meteorping: { key: 'meteorping', name: '流星萌可', color: 'text-moko-cyan', emoji: '☄️', season: 'S6 闪耀流星', item: '流星灯', line: '流星~ 我是流星萌可，快许愿流星灯！', category: 'star' },
+  starping: { key: 'starping', name: '星星萌可', color: 'text-moko-gold', emoji: '⭐', season: 'S6 闪耀流星', item: '小星星', line: '星星~ 我是星星萌可，一闪一闪亮晶晶！', category: 'star' },
+  cometping: { key: 'cometping', name: '彗星萌可', color: 'text-moko-violet', emoji: '🌠', season: 'S6 闪耀流星', item: '彗星扫把', line: '彗星~ 我是彗星萌可，扫把划过夜空！', category: 'star' },
 
   // —— 闪亮公主萌可 ——
-  moonping: { key: 'moonping', name: '月光萌可', color: 'text-moko-violet', img: '/moko/moonping.jpg', emoji: '🌙', season: 'S1 皇室萌可', item: '月光皇冠', line: '月光之下，数到一百！', category: 'royal', subject: '数学' },
-  hopeping: { key: 'hopeping', name: '希望萌可', color: 'text-moko-mint', img: '/moko/hopeping.jpg', emoji: '🌟', season: 'S7 闪亮公主', item: '希望之星', line: '永远不要放弃希望！', category: 'princess', subject: '语文' },
-  princeping: { key: 'princeping', name: '王子萌可', color: 'text-moko-blue', emoji: '🤴', season: 'S1 皇室萌可', item: '黄金剑', line: '我来保护大家！', category: 'royal' },
-  princessping: { key: 'princessping', name: '公主萌可', color: 'text-moko-rose', emoji: '👸', season: 'S7 闪亮公主', item: '公主裙', line: '今天也是小公主！', category: 'princess' },
+  moonping: { key: 'moonping', name: '月光萌可', color: 'text-moko-violet', img: '/moko/moonping.jpg', emoji: '🌙', season: 'S1 皇室萌可', item: '月光皇冠', line: '月光~ 我是月光萌可，月光下数到一百！', category: 'royal', subject: '数学' },
+  hopeping: { key: 'hopeping', name: '希望萌可', color: 'text-moko-mint', img: '/moko/hopeping.jpg', emoji: '🌟', season: 'S7 闪亮公主', item: '希望之星', line: '希望~ 我是希望萌可，永远不放弃！', category: 'princess', subject: '语文' },
+  princeping: { key: 'princeping', name: '王子萌可', color: 'text-moko-blue', emoji: '🤴', season: 'S1 皇室萌可', item: '黄金剑', line: '我是王子萌可，我来守护大家！', category: 'royal' },
+  princessping: { key: 'princessping', name: '公主萌可', color: 'text-moko-rose', emoji: '👸', season: 'S7 闪亮公主', item: '公主裙', line: '公主~ 我是公主萌可，今天也是小公主！', category: 'princess' },
 
   // —— 引导萌可 ——
   lemei: { key: 'lemei', name: '乐美公主', color: 'text-moko-rose', img: '/moko/lemei.jpg', emoji: '👑', season: '全季', item: '爱心魔杖', line: '一起捕捉萌可吧！', category: 'guide' },
 
   // —— 捣蛋萌可：未完成打卡时溜进城堡捣乱 ——
   // 图片修复：原 transform_*.jpg 是「其他萌可变身」的错图，已改为各自真实角色图
-  naonao: { key: 'naonao', name: '闹闹萌可', color: 'text-slate-500', img: '/moko/collection/09_反派及其他/闹闹萌可_render.webp', emoji: '🤪', season: '捣蛋萌可', item: '吵闹喇叭', line: '嘻嘻，我来捣乱啦！', category: 'trouble' },
-  mihu: { key: 'mihu', name: '迷糊萌可', color: 'text-slate-500', img: '/moko/collection/02_魔方萌可_第一二季/迷糊萌可_render.webp', emoji: '😵', season: '捣蛋萌可', item: '迷糊口袋', line: '唔…我的币呢？', category: 'trouble' },
-  lulu: { key: 'lulu', name: '噜噜萌可', color: 'text-slate-500', img: '', emoji: '🫧', season: '捣蛋萌可', item: '噜噜泡泡', line: '噜噜噜~ 溜走啦！', category: 'trouble' },
-  taopiping: { key: 'taopiping', name: '淘气萌可', color: 'text-slate-500', img: '/moko/collection/02_魔方萌可_第一二季/淘气萌可_render.webp', emoji: '😈', season: '捣蛋萌可', item: '捣蛋锤', line: '嘿嘿，看我的！', category: 'trouble' },
+  naonao: { key: 'naonao', name: '闹闹萌可', color: 'text-slate-500', img: '/moko/collection/09_反派及其他/闹闹萌可_render.webp', emoji: '🤪', season: '捣蛋萌可', item: '吵闹喇叭', line: '闹闹~ 我是闹闹萌可，恶作剧大王！', category: 'trouble' },
+  mihu: { key: 'mihu', name: '迷糊萌可', color: 'text-slate-500', img: '/moko/collection/02_魔方萌可_第一二季/迷糊萌可_render.webp', emoji: '😵', season: '捣蛋萌可', item: '迷糊口袋', line: '迷糊~ 我是迷糊萌可，币币去哪啦！', category: 'trouble' },
+  lulu: { key: 'lulu', name: '噜噜萌可', color: 'text-slate-500', img: '', emoji: '🫧', season: '捣蛋萌可', item: '噜噜泡泡', line: '噜噜~ 我是噜噜萌可，泡泡溜走啦！', category: 'trouble' },
+  taopiping: { key: 'taopiping', name: '淘气萌可', color: 'text-slate-500', img: '/moko/collection/02_魔方萌可_第一二季/淘气萌可_render.webp', emoji: '😈', season: '捣蛋萌可', item: '捣蛋锤', line: '淘气~ 我是淘气萌可，捣蛋锤挥舞！', category: 'trouble' },
 };
 
 // 把核心萌可的图片重映射到真实图片集（同名首图更清晰、风格统一）

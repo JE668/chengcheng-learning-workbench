@@ -11,7 +11,7 @@ export const mokoCollection_09: MokoChar[] = [
     "emoji": "😈",
     "color": "text-slate-500",
     "item": "✨ 魔法道具",
-    "line": "嘻嘻~ 我是奉献萌可！"
+    "line": "奉献~ 我是奉献萌可，反派也有爱！"
   },
   {
     "key": "col_09_闹闹萌可_render",
@@ -22,6 +22,6 @@ export const mokoCollection_09: MokoChar[] = [
     "emoji": "😈",
     "color": "text-slate-500",
     "item": "✨ 魔法道具",
-    "line": "呼呼，闹闹萌可在这里，鬼鬼~"
+    "line": "闹闹~ 我是闹闹萌可，恶作剧大王！"
   }
 ];

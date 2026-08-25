@@ -11,7 +11,7 @@ export const mokoCollection_07: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "丘比特萌可登场，月光~"
+    "line": "丘比特~ 我是丘比特萌可，爱之箭射心！"
   },
   {
     "key": "col_07_丝绸萌可_render",
@@ -22,7 +22,7 @@ export const mokoCollection_07: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "丝绸萌可登场，灵灵~"
+    "line": "丝绸~ 我是丝绸萌可，芭蕾舞轻盈！"
   },
   {
     "key": "col_07_困困萌可_render",
@@ -33,7 +33,7 @@ export const mokoCollection_07: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "呼呼，困困萌可在这里，自信~"
+    "line": "困困~ 我是困困萌可，睡醒更自信！"
   },
   {
     "key": "col_07_洗洗萌可_render",
@@ -44,7 +44,7 @@ export const mokoCollection_07: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "自信！洗洗萌可来啦！"
+    "line": "洗洗~ 我是洗洗萌可，干净最漂亮！"
   },
   {
     "key": "col_07_猫猫萌可_render",
@@ -55,7 +55,7 @@ export const mokoCollection_07: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "呼呼，猫猫萌可在这里，自信~"
+    "line": "喵喵~ 我是猫猫萌可，优雅小猫咪！"
   },
   {
     "key": "col_07_玲珑萌可_render",
@@ -66,7 +66,7 @@ export const mokoCollection_07: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "华丽~ 我是玲珑萌可！"
+    "line": "玲珑~ 我是玲珑萌可，心思剔透亮！"
   },
   {
     "key": "col_07_白雪萌可_render",
@@ -77,7 +77,7 @@ export const mokoCollection_07: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "今天也要开开心心哦，月光~ 我是白雪萌可！"
+    "line": "白雪~ 我是白雪萌可，纯真如雪花！"
   },
   {
     "key": "col_07_蝴蝶萌可_render",
@@ -88,7 +88,7 @@ export const mokoCollection_07: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "优雅！蝴蝶萌可来啦！"
+    "line": "蝴蝶~ 我是蝴蝶萌可，破茧成蝶飞！"
   },
   {
     "key": "col_07_露水萌可_render",
@@ -99,7 +99,7 @@ export const mokoCollection_07: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "呼呼，露水萌可在这里，优雅~"
+    "line": "露水~ 我是露水萌可，晨曦最晶莹！"
   },
   {
     "key": "col_07_鞋鞋萌可_render",
@@ -110,7 +110,7 @@ export const mokoCollection_07: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "呼呼，鞋鞋萌可在这里，自信~"
+    "line": "鞋鞋~ 我是鞋鞋萌可，舞鞋踏梦想！"
   },
   {
     "key": "col_07_魅力萌可_render",
@@ -121,6 +121,6 @@ export const mokoCollection_07: MokoChar[] = [
     "emoji": "🌟",
     "color": "text-moko-gold",
     "item": "✨ 魔法道具",
-    "line": "来和我玩吧，盈盈~ 我是魅力萌可！"
+    "line": "魅力~ 我是魅力萌可，优雅迷人心！"
   }
 ];

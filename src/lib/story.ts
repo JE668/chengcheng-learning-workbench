@@ -22,6 +22,8 @@ export interface StoryQuiz {
   q: string;
   options: string[];
   answer: number;
+  /** 题目类型：用于前端展示不同交互/难度标识 */
+  type?: 'recall' | 'math' | 'logic' | 'chinese' | 'english' | 'identify';
 }
 
 /** 解锁条件：先完成某学习模块（拿到 ≥1 星）才能读/捕捉这一集。不设置则默认只受线性推进解锁。 */
@@ -134,6 +136,7 @@ const HERO_CHAPTERS: StoryChapter[] = [
       q: '爱心萌可用什么本领，帮程程认字读书呀？',
       options: ['爱心光波', '勇气相机', '甜心铃铛', '万能钥匙'],
       answer: 0,
+      type: 'recall',
     },
   },
   {
@@ -152,9 +155,10 @@ const HERO_CHAPTERS: StoryChapter[] = [
     ],
     tip: '数学就像闯关游戏，算对一步就前进一格！',
     quiz: {
-      q: '正正萌可带着程程一起做什么，让他越来越勇敢？',
-      options: ['加加减减算数字', '唱歌跳舞', '游泳划船', '做饭炒菜'],
-      answer: 0,
+      q: '程程在数字森林里看见 3 棵苹果树，每棵树上有 4 个苹果。正正萌可问：一共有几个苹果？',
+      options: ['7', '12', '9', '10'],
+      answer: 1,
+      type: 'math',
     },
   },
   {
@@ -173,9 +177,10 @@ const HERO_CHAPTERS: StoryChapter[] = [
     ],
     tip: '把单词唱成歌，记起来就轻松多啦！',
     quiz: {
-      q: '唱唱萌可用什么有趣的方式，教程程学英语？',
-      options: ['唱歌', '画画', '踢足球', '搭积木'],
+      q: '唱唱萌可教程程的单词 "apple" 里，第一个字母发什么音？',
+      options: ['/æ/ (啊)', '/e/ (额)', '/i/ (依)', '/o/ (哦)'],
       answer: 0,
+      type: 'english',
     },
   },
   {
@@ -193,9 +198,10 @@ const HERO_CHAPTERS: StoryChapter[] = [
     ],
     tip: '每一个「为什么」，都是一把打开知识的小钥匙。',
     quiz: {
-      q: '人鱼萌可说，想知道宝盒里的秘密，得先做什么？',
-      options: ['解开知识谜题', '睡个午觉', '吃甜甜圈', '去跑步'],
-      answer: 0,
+      q: '人鱼萌可守护的宝盒有 3 把锁，每把锁需要 2 把钥匙才能打开。程程一共需要几把钥匙？',
+      options: ['5', '6', '4', '3'],
+      answer: 1,
+      type: 'math',
     },
   },
   {
@@ -213,9 +219,10 @@ const HERO_CHAPTERS: StoryChapter[] = [
     ],
     tip: '会分享的小朋友，身边总有许多好朋友。',
     quiz: {
-      q: '分享萌可把闪亮宝石怎么分，才更快乐？',
-      options: ['分成两半和朋友分享', '全部藏起来', '一口吃掉', '扔到地上'],
-      answer: 0,
+      q: '分享萌可有 8 颗宝石，她想平均分给 4 个朋友，每个朋友能分到几颗？',
+      options: ['1', '2', '3', '4'],
+      answer: 1,
+      type: 'math',
     },
   },
   {
@@ -233,9 +240,10 @@ const HERO_CHAPTERS: StoryChapter[] = [
     ],
     tip: '学累了就休息一下，像棉花糖一样软软地放松～',
     quiz: {
-      q: '棉花糖萌可在哪里等着程程，请他吃点心？',
-      options: ['甜甜圈工厂', '学校教室', '医院', '超市'],
+      q: '棉花糖萌可做了 15 个棉花糖，送给程程 6 个，又送给朋友 4 个，自己还剩几个？',
+      options: ['5', '6', '7', '4'],
       answer: 0,
+      type: 'math',
     },
   },
   {
@@ -253,9 +261,10 @@ const HERO_CHAPTERS: StoryChapter[] = [
     ],
     tip: '对着流星许个愿，然后一步一步去实现它。',
     quiz: {
-      q: '亲亲萌可让程程对着什么，许下认真学习的愿望？',
-      options: ['流星', '太阳', '大树', '石头'],
-      answer: 0,
+      q: '亲亲萌可和程程一起看流星，看见 3 颗流星，每颗流星许 1 个愿，一共许了几个愿？',
+      options: ['2', '3', '4', '5'],
+      answer: 1,
+      type: 'math',
     },
   },
   {
@@ -273,9 +282,10 @@ const HERO_CHAPTERS: StoryChapter[] = [
     ],
     tip: '睡不着的时候，就和月光萌可一起数星星吧。',
     quiz: {
-      q: '月光萌可和程程一起数什么，数到一百？',
-      options: ['天上的小星星', '小羊', '糖果', '书本'],
-      answer: 0,
+      q: '月光萌可和程程数星星，先数了 27 颗，又数了 38 颗，一共数了几颗？',
+      options: ['55', '65', '54', '66'],
+      answer: 1,
+      type: 'math',
     },
   },
   {
@@ -293,9 +303,10 @@ const HERO_CHAPTERS: StoryChapter[] = [
     ],
     tip: '你已经捕捉了好多萌可！打开图鉴，看看谁在等你回家～',
     quiz: {
-      q: '幸运萌可把什么送给了，勇敢学到这里的程程？',
-      options: ['四叶草', '苹果', '气球', '铅笔'],
-      answer: 0,
+      q: '幸运萌可送程程一株四叶草，四叶草有 4 片叶子。如果有 5 株这样的四叶草，一共有几片叶子？',
+      options: ['15', '20', '25', '10'],
+      answer: 1,
+      type: 'math',
     },
   },
 ];
@@ -340,13 +351,126 @@ function shuffleQuiz(q: StoryQuiz, seedStr: string): StoryQuiz {
   return { q: q.q, options: opts, answer: opts.indexOf(q.options[q.answer]) };
 }
 
-// 给图鉴远征章节自动出一道「认萌可」题：正确项是本集萌可，配 3 个确定性干扰项
+// 给图鉴远征章节自动出一道题：根据分类生成不同类型的题目
 function buildAutoQuiz(m: MokoChar): StoryQuiz {
   const pool = mokoCollection.map((x) => x.name).filter((n) => n !== m.name);
   const seed = hashStr(m.key);
   const distractors = seededShuffle(pool, seed).slice(0, 3);
   const options = seededShuffle([m.name, ...distractors], seed ^ 0x9e3779b9);
-  return { q: `这一集，程程遇到了哪只萌可？`, options, answer: options.indexOf(m.name) };
+
+  // 根据分类生成不同类型的题目
+  const cat = m.category;
+  let q = '';
+  let type: StoryQuiz['type'] = 'identify';
+
+  if (cat === 'royal') {
+    // 皇室萌可：语文/记忆类
+    const questions = [
+      `这一集，程程遇到了哪只皇室萌可？`,
+      `${m.name}的口癖是「${m.line.slice(0, m.line.indexOf('我'))}」，这只萌可是谁？`,
+      `程程在皇室萌可的城堡里认识了新朋友，这位新朋友是？`,
+    ];
+    q = questions[seed % questions.length];
+    type = 'chinese';
+  } else if (cat === 'mo') {
+    // 魔方萌可：逻辑/数学应用题
+    const a = (seed % 8) + 2; // 2-9
+    const b = ((seed >> 4) % 6) + 2; // 2-7
+    const questions = [
+      `${m.name}带程程玩魔方，有 ${a} 层魔方，每层 ${b} 个小方块，一共 ${a * b} 个小方块。这只萌可是谁？`,
+      `${m.name}说：「${m.line}」程程和它一起变魔术，这只萌可是？`,
+      `魔方萌可家族有 ${a + b} 只，其中 ${m.name} 最擅长 ${a > b ? '变身' : '解谜'}。遇到的是谁？`,
+    ];
+    q = questions[seed % questions.length];
+    type = 'math';
+  } else if (cat === 'key') {
+    // 钥匙萌可：解谜/英语
+    const questions = [
+      `${m.name}守护着知识宝盒，它说：「${m.line}」这只钥匙萌可是？`,
+      `程程需要 ${(seed % 3) + 2} 把钥匙才能打开 ${m.name} 守护的门，这只萌可是谁？`,
+      `钥匙萌可 ${m.name} 最喜欢说：「${m.line.slice(0, 8)}...」遇到的是？`,
+    ];
+    q = questions[seed % questions.length];
+    type = 'logic';
+  } else if (cat === 'jewel') {
+    // 宝石萌可：数数/数学
+    const gems = (seed % 20) + 10;
+    const friends = ((seed >> 3) % 4) + 2;
+    const questions = [
+      `${m.name}有 ${gems} 颗宝石，平均分给 ${friends} 个朋友，每人分 ${Math.floor(gems / friends)} 颗，剩 ${gems % friends} 颗。这只萌可是？`,
+      `闪亮宝石矿洞里，${m.name} 数宝石最快！它说：「${m.line}」这是谁？`,
+      `${m.name} 把 ${gems} 颗宝石分成 ${friends} 堆，这只宝石萌可是谁？`,
+    ];
+    q = questions[seed % questions.length];
+    type = 'math';
+  } else if (cat === 'sweetie') {
+    // 甜心萌可：甜点计算/记忆
+    const sweets = (seed % 15) + 5;
+    const eaten = ((seed >> 2) % 5) + 1;
+    const questions = [
+      `${m.name}做了 ${sweets} 个甜点，程程吃了 ${eaten} 个，还剩 ${sweets - eaten} 个。这只甜心萌可是？`,
+      `甜甜圈工厂里，${m.name} 说：「${m.line}」遇到的是哪只？`,
+      `${m.name} 把 ${sweets} 颗糖果分成 ${eaten + 1} 份，这只萌可是谁？`,
+    ];
+    q = questions[seed % questions.length];
+    type = 'math';
+  } else if (cat === 'star') {
+    // 星星萌可：天文/许愿/加减法
+    const stars = (seed % 12) + 3;
+    const wishes = ((seed >> 1) % 4) + 1;
+    const questions = [
+      `${m.name} 和程程数星星，看见 ${stars} 颗流星，每颗许 ${wishes} 个愿，共 ${stars * wishes} 个愿。这只萌可是？`,
+      `流星划过夜空，${m.name} 说：「${m.line}」程程遇到的是哪只星星萌可？`,
+      `${m.name} 守护 ${stars} 颗星星，这只闪耀流星萌可是谁？`,
+    ];
+    q = questions[seed % questions.length];
+    type = 'math';
+  } else if (cat === 'princess') {
+    // 公主萌可：优雅/礼仪/记忆
+    const questions = [
+      `公主萌可 ${m.name} 优雅地跳舞，它说：「${m.line}」这是哪位小公主？`,
+      `${m.name} 教程程礼仪：「${m.line.slice(0, 10)}...」遇到的是谁？`,
+      `闪亮公主舞会上，${m.name} 最受欢迎，这只萌可是？`,
+    ];
+    q = questions[seed % questions.length];
+    type = 'chinese';
+  } else if (cat === 'prince') {
+    // 王子萌可：守护/勇气/逻辑
+    const guards = (seed % 5) + 3;
+    const questions = [
+      `${m.name} 守护着 ${guards} 位伙伴，它说：「${m.line}」这只王子萌可是？`,
+      `王子萌可 ${m.name} 挥舞着剑，保护大家。它最常说：「${m.line.slice(0, 8)}...」是谁？`,
+      `守护王国的 ${m.name}，带着 ${guards} 个勇士，遇到的是谁？`,
+    ];
+    q = questions[seed % questions.length];
+    type = 'logic';
+  } else if (cat === 'villain') {
+    // 反派萌可：恶作剧/趣味
+    const tricks = (seed % 6) + 2;
+    const questions = [
+      `调皮的 ${m.name} 搞了 ${tricks} 个恶作剧，它笑道：「${m.line}」这是谁？`,
+      `${m.name} 说：「${m.line}」这只反派萌可是谁？`,
+      `捣蛋萌可 ${m.name} 最爱恶作剧，程程遇到的是？`,
+    ];
+    q = questions[seed % questions.length];
+    type = 'recall';
+  } else if (cat === 'legend') {
+    // 传奇萌可：奇迹/幸运/综合
+    const luck = (seed % 10) + 1;
+    const questions = [
+      `传说中的 ${m.name} 带来 ${luck} 份幸运，它说：「${m.line}」这是谁？`,
+      `${m.name} 降临时天空绽放烟花，它最爱说：「${m.line.slice(0, 10)}...」遇到的是？`,
+      `幸运女神眷顾的 ${m.name}，程程终于见到它了！它是？`,
+    ];
+    q = questions[seed % questions.length];
+    type = 'recall';
+  } else {
+    // 兜底：认萌可
+    q = `这一集，程程遇到了哪只萌可？`;
+    type = 'identify';
+  }
+
+  return { q, options, answer: options.indexOf(m.name), type };
 }
 
 function buildAutoChapter(m: MokoChar, idx: number): StoryChapter {
@@ -367,7 +491,7 @@ function buildAutoChapter(m: MokoChar, idx: number): StoryChapter {
     gradient: CAT_GRADIENT[cat] ?? 'from-moko-pink to-moko-rose',
     scene: `图鉴远征 · ${label}`,
     paragraphs: [
-      `萌可王国又迎来了一位新朋友——${m.emoji}${m.name}！`,
+      `萌可王国又迎来了一位新朋友——${m.name}！`,
       `${m.name}笑眯眯地说：「${m.line}」程程跟着${m.name}一起${theme}，学到了不少新本领。`,
     ],
     tip,

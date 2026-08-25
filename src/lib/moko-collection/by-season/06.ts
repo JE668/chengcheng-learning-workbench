@@ -121,7 +121,7 @@ export const mokoCollection_06: MokoChar[] = [
     "emoji": "☄️",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "嗖嗖~ 我是流浪萌可！"
+    "line": "流浪~ 我是流浪萌可，看流星雨！"
   },
   {
     "key": "col_06_熊熊萌可_render",
@@ -187,7 +187,7 @@ export const mokoCollection_06: MokoChar[] = [
     "emoji": "☄️",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "望望！缤缤萌可·纷纷萌可来啦！"
+    "line": "望望！我是缤缤萌可·纷纷萌可，双彩绽放！"
   },
   {
     "key": "col_06_贴贴萌可_render",
@@ -220,6 +220,6 @@ export const mokoCollection_06: MokoChar[] = [
     "emoji": "☄️",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",
-    "line": "玻璃~ 我是透明萌可，看不见啦！"
+    "line": "透明~ 我是透明萌可，隐身大法！"
   }
 ];

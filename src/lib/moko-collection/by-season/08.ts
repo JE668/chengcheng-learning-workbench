@@ -11,7 +11,7 @@ export const mokoCollection_08: MokoChar[] = [
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "来和我玩吧，凛凛~ 我是查尔斯王子！"
+    "line": "查尔斯~ 我是查尔斯王子，绅士风度足！"
   },
   {
     "key": "col_08_演歌萌可_render",
@@ -22,7 +22,7 @@ export const mokoCollection_08: MokoChar[] = [
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "来和我玩吧，剑剑~ 我是演歌萌可！"
+    "line": "演歌~ 我是演歌萌可，歌声震四方！"
   },
   {
     "key": "col_08_绅士萌可_render",
@@ -33,7 +33,7 @@ export const mokoCollection_08: MokoChar[] = [
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "呼呼，绅士萌可在这里，英英~"
+    "line": "绅士~ 我是绅士萌可，礼仪守护者！"
   },
   {
     "key": "col_08_青蛙萌可_render",
@@ -44,6 +44,6 @@ export const mokoCollection_08: MokoChar[] = [
     "emoji": "🤴",
     "color": "text-moko-blue",
     "item": "✨ 魔法道具",
-    "line": "帅帅~ 我是青蛙萌可！"
+    "line": "呱呱~ 我是青蛙萌可，王子也跳跃！"
   }
 ];
