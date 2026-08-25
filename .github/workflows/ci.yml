@@ -32,7 +32,7 @@ jobs:
         run: npm ci
 
       - name: TypeScript 类型检查
-        run: npm run tsc -- --noEmit
+        run: npx tsc --noEmit
 
       - name: 单元测试（castle 核心逻辑等）
         run: npm test
