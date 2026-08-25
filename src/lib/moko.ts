@@ -1,6 +1,8 @@
 import { MokoChar, MokoCategoryKey, Subject } from './types';
 import { mokoCollection, mokoCollectionByName } from './moko-collection';
 
+export { mokoCollection, mokoCollectionByName };
+
 export const appName = process.env.NEXT_PUBLIC_APP_NAME || '程程学习工作台';
 
 /**

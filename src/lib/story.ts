@@ -35,7 +35,7 @@ export interface StoryChapterModuleReq {
 /* ------------------------------------------------------------------ *
  * 系列（分类）相关的文案/配色，用于「图鉴远征」自动生成的章节
  * ------------------------------------------------------------------ */
-const CAT_LABEL: Record<string, string> = {
+export const CAT_LABEL: Record<string, string> = {
   royal: '皇室萌可',
   mo: '魔方萌可',
   key: '钥匙萌可',
@@ -50,7 +50,7 @@ const CAT_LABEL: Record<string, string> = {
   trouble: '捣蛋萌可',
 };
 
-const CAT_GRADIENT: Record<string, string> = {
+export const CAT_GRADIENT: Record<string, string> = {
   royal: 'from-moko-pink to-moko-rose',
   mo: 'from-moko-cyan to-moko-blue',
   key: 'from-moko-violet to-moko-purple',
@@ -66,7 +66,7 @@ const CAT_GRADIENT: Record<string, string> = {
 };
 
 /** 该系列萌可陪程程一起做什么（融进剧情第 2 段） */
-const CAT_THEME: Record<string, string> = {
+export const CAT_THEME: Record<string, string> = {
   royal: '认字读诗',
   mo: '魔法变身',
   key: '解开知识谜题',
@@ -82,7 +82,7 @@ const CAT_THEME: Record<string, string> = {
 };
 
 /** 给程程的小提示（第 3 段） */
-const CAT_TIP: Record<string, string> = {
+export const CAT_TIP: Record<string, string> = {
   royal: '皇室萌可最讲礼貌，见到字宝宝要问好哦～',
   mo: '魔方萌可会变魔术，变出满满的学习劲头！',
   key: '钥匙萌可说：每一个「为什么」都是一把小钥匙。',
@@ -98,7 +98,7 @@ const CAT_TIP: Record<string, string> = {
 };
 
 /** 每系列的备选标题，按下标取，制造一点变化 */
-const CAT_TITLE: Record<string, string[]> = {
+export const CAT_TITLE: Record<string, string[]> = {
   royal: ['皇宫新朋友', '皇室小客人', '城堡来客'],
   mo: ['魔方奇遇', '奇妙的一天', '魔法变身记'],
   key: ['钥匙秘境', '知识宝盒', '解谜小能手'],
@@ -116,7 +116,7 @@ const CAT_TITLE: Record<string, string[]> = {
 /* ------------------------------------------------------------------ *
  * 9 集「主线剧情」——保留原文案与 id，向后兼容已写入 story_progress 的记录
  * ------------------------------------------------------------------ */
-const HERO_CHAPTERS: StoryChapter[] = [
+export const HERO_CHAPTERS: StoryChapter[] = [
   {
     id: 'ch1-love',
     title: '初遇萌可王国',
@@ -312,7 +312,7 @@ const HERO_CHAPTERS: StoryChapter[] = [
 ];
 
 /** 主线登场的核心萌可名字（其余图鉴萌可自动生成「图鉴远征」章节） */
-const HERO_NAMES = new Set(HERO_CHAPTERS.map((c) => c.mokoName));
+export const HERO_NAMES = new Set(HERO_CHAPTERS.map((c) => c.mokoName));
 
 // 主线 9 集的题做确定性洗牌，让正确选项位置每次都不同（但仍可答对）
 const HERO_CHAPTERS_Q = HERO_CHAPTERS.map((c) =>
@@ -499,7 +499,7 @@ function buildAutoChapter(m: MokoChar, idx: number): StoryChapter {
   };
 }
 
-const autoChapters: StoryChapter[] = mokoCollection
+export const autoChapters: StoryChapter[] = mokoCollection
   .filter((m) => !HERO_NAMES.has(m.name))
   .map((m, i) => buildAutoChapter(m, i));
 
