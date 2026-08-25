@@ -46,7 +46,8 @@ export function genEnInitialQ(): PracticeQuestion {
   const first = w.word[0].toUpperCase();
   const distractors = shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.replace(first, '').split('')).slice(0, 3);
   const options = shuffle([first, ...distractors]);
-  const answer = options.indexOf(first);
+  // 返回字母本身作为答案，而不是索引
+  const answer = first;
   return {
     id: `en-init-${w.word}`,
     kind: 'english',

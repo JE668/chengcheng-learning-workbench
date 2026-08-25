@@ -7,12 +7,12 @@ export function genMathQ(hard = false): PracticeQuestion {
   const isAdd = Math.random() < 0.6;
   let a: number, b: number, ans: number, prompt: string;
   if (isAdd) {
-    a = randInt(0, hard ? 50 : 10);
-    b = randInt(0, hard ? 50 : 10);
+    a = randInt(hard ? 5 : 0, hard ? 50 : 10);
+    b = randInt(hard ? (10 - a) : 0, hard ? 50 : 10);
     ans = a + b;
     prompt = `${a} + ${b} = ?`;
   } else {
-    a = randInt(1, hard ? 99 : 10);
+    a = randInt(hard ? 5 : 1, hard ? 99 : 10);
     b = randInt(0, hard ? Math.min(a, 50) : a);
     ans = a - b;
     prompt = `${a} − ${b} = ?`;
@@ -38,7 +38,15 @@ export function genMathQ(hard = false): PracticeQuestion {
 /* 应用题 */
 export function genWordProblemQ(): PracticeQuestion {
   const p = WORD_PROBLEMS[Math.floor(Math.random() * WORD_PROBLEMS.length)];
-  const options = shuffle([...p.options]);
+  const baseOptions = shuffle([...p.options]);
+  // 如果选项少于4个，添加干扰项
+  while (baseOptions.length < 4) {
+    const num = Number(p.answer) + Math.floor(Math.random() * 5) - 2;
+    if (num >= 0 && !baseOptions.includes(String(num))) {
+      baseOptions.push(String(num));
+    }
+  }
+  const options = shuffle(baseOptions.slice(0, 4));
   const answer = options.indexOf(p.answer);
   return {
     id: `wp-${p.text.slice(0, 4)}`,
@@ -46,8 +54,9 @@ export function genWordProblemQ(): PracticeQuestion {
     subject: '数学',
     prompt: p.text,
     options,
-    answer,
+    answer: options.indexOf(p.answer),
     explain: `答案是 ${p.answer}`,
+    emoji: p.emoji || '🧮',
   };
 }
 

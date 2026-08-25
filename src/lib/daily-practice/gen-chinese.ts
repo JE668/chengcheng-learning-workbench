@@ -49,7 +49,7 @@ export function genDictationQ(): PracticeQuestion {
     han,
     options,
     answer,
-    explain: `「${han}」${c.meaning}，${c.phrase}`,
+    explain: `「${han}」意思是${c.meaning}，${c.phrase}`,
   };
 }
 
@@ -110,7 +110,12 @@ export function genProverbQ(): PracticeQuestion {
 /* 谜语题 */
 export function genRiddleQ(): PracticeQuestion {
   const r = RIDDLES[Math.floor(Math.random() * RIDDLES.length)];
-  const options = shuffle([...r.options]);
+  let options = shuffle([...r.options]);
+  // 确保至少有 4 个选项
+  while (options.length < 4) {
+    const extra = `选项${options.length + 1}`;
+    if (!options.includes(extra)) options.push(extra);
+  }
   const answer = options.indexOf(r.answer);
   return {
     id: `rd-${r.riddle.slice(0, 4)}`,
