@@ -47,21 +47,18 @@ export async function confirm(childId: number, day: string, subject: Subject) {
 
   await db.execute('BEGIN IMMEDIATE');
   try {
-    const existing = await db.execute({
-      sql: 'SELECT status FROM daily_checkins WHERE child_id = ? AND day = ? AND subject = ?',
+    // 原子级幂等：尝试插入，若冲突则说明已确认
+    const insertResult = await db.execute({
+      sql: "INSERT INTO daily_checkins (child_id, day, subject, status, confirmed_at) VALUES (?, ?, ?, 'confirmed', CURRENT_TIMESTAMP) ON CONFLICT(child_id, day, subject) DO NOTHING",
       args: [childId, day, subject],
     });
-    const status = existing.rows[0]?.status;
-    if (status === 'confirmed') {
+    const isNewConfirm = Number(insertResult.rowsAffected ?? 0) > 0;
+    if (!isNewConfirm) {
       await db.execute('COMMIT');
       return { ok: false, message: '该科今天已确认' };
     }
 
-    await db.execute({
-      sql: "INSERT INTO daily_checkins (child_id, day, subject, status, confirmed_at) VALUES (?, ?, ?, 'confirmed', CURRENT_TIMESTAMP) ON CONFLICT(child_id, day, subject) DO UPDATE SET status = 'confirmed', confirmed_at = CURRENT_TIMESTAMP",
-      args: [childId, day, subject],
-    });
-
+    // 只有新确认才发奖励，避免重复发积分/阳光/萌可/捕捉券
     await db.execute({
       sql: 'INSERT INTO completions (child_id, points, source) VALUES (?, ?, ?)',
       args: [childId, POINTS_PER_CHECKIN, 'checkin:' + subject],
