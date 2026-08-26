@@ -1,5 +1,14 @@
 import type { Subject } from '../types';
 
+export interface WordItem {
+  word: string;
+  sound?: string;
+  emoji: string;
+  cn: string;
+  topic?: string;
+  sentence?: string;
+}
+
 /**
  * 每日一练单科通过门槛：正确题数 ≥ 总题数 × 80%（ceil 向上取整，即允许错 1 题）。
  * 例：5 题需对 4 题（ceil(5×0.8)=4），1 题需对 1 题，0 题直接不通过。
@@ -44,6 +53,7 @@ export type PracticeQuestion =
       options: string[];
       answer: number;
       explain: string;
+      emoji?: string;
     }
   | {
       id: string;

@@ -1,6 +1,4 @@
 import { getDb } from './db';
-import { localDate } from './date';
-import { addDaysToDate } from './sm2';
 
 /** 错题本一条记录（对应 mistakes 表） */
 export interface MistakeRow {
@@ -18,7 +16,7 @@ export interface MistakeRow {
   resolved: number;
 }
 
-export function localDate(offset = 0): string {
+function localDate(offset = 0): string {
   const d = new Date();
   d.setDate(d.getDate() + offset);
   const y = d.getFullYear();
@@ -107,9 +105,6 @@ export async function reviewMistake(childId: number, id: number, correct: boolea
   } else {
     // 成功：SM-2 计算
     let actualInterval: number;
-    const currentReps = Number(row.reps ?? 0);
-    const currentEasiness = Number(row.easiness_factor ?? 2.5);
-    const currentInterval = Number(row.interval_days ?? 1);
     
     if (Number(row.reps ?? 0) === 0) {
       actualInterval = 1;
@@ -132,7 +127,7 @@ export async function reviewMistake(childId: number, id: number, correct: boolea
                           Number(row.reps ?? 0) === 1 ? 6 :
                           Math.round(Number(row.interval_days ?? 1) * Number(row.easiness_factor ?? 2.5));
     
-    const nextReviewDate = addDaysToDate(localDate(), Math.min(365, nextReviewDays));
+    const nextReviewDate = localDate(Math.min(365, nextReviewDays));
     
     await db.execute({
       sql: 'UPDATE mistakes SET reps = ?, interval_days = ?, easiness_factor = ?, next_review = ?, resolved = ? WHERE id = ? AND child_id = ?',
@@ -140,7 +135,7 @@ export async function reviewMistake(childId: number, id: number, correct: boolea
              Math.min(365, Math.round(Number(row.interval_days ?? 1) * Number(row.easiness_factor ?? 2.5))), 
              Math.max(1.3, Number(row.easiness_factor ?? 2.5) + 0.02), 
              localDate(Math.min(365, nextReviewDays)), 
-             1 ? 1 : 0, 
+             correct ? 1 : 0, 
              id, childId],
     });
   }

@@ -22,19 +22,19 @@ describe('genPinyinQ', () => {
     expect(q.kind).toBe('pinyin');
     expect(q.subject).toBe('语文');
     expect(q.prompt).toBe('这个字读什么拼音？点选带正确声调的音节');
-    expect(q.han).toBeTruthy();
-    expect(q.audioText).toBe(q.han);
-    expect(q.options).toHaveLength(4);
-    expect(q.options[q.answer]).toBeTruthy();
-    expect(q.explain).toContain('拼音是');
+    if (q.kind === 'pinyin') {
+      expect(q.han).toBeTruthy();
+      expect(q.audioText).toBe(q.han);
+      expect(q.options).toHaveLength(4);
+      expect(q.options[q.answer]).toBeTruthy();
+      expect(q.explain).toContain('拼音是');
+    }
   });
 
   it('should have 4 unique options with different tones', () => {
     const q = genPinyinQ();
     const unique = new Set(q.options);
     expect(unique.size).toBe(4);
-    // All options should be different tone variants of same base
-    // Just verify they are different and all are valid pinyin
     for (const opt of q.options) {
       expect(opt.length).toBeGreaterThan(0);
     }
@@ -47,11 +47,13 @@ describe('genDictationQ', () => {
     expect(q.kind).toBe('dictation');
     expect(q.subject).toBe('语文');
     expect(q.prompt).toBe('听写：听一听，选出正确的字');
-    expect(q.han).toBeTruthy();
-    expect(q.han.length).toBe(1);
-    expect(q.options).toHaveLength(4);
-    expect(q.options[q.answer]).toBe(q.han);
-    expect(q.explain).toContain('意思是');
+    if (q.kind === 'dictation') {
+      expect(q.han).toBeTruthy();
+      expect(q.han!.length).toBe(1);
+      expect(q.options).toHaveLength(4);
+      expect(q.options[q.answer]).toBe(q.han);
+      expect(q.explain).toContain('意思是');
+    }
   });
 
   it('should have unique options', () => {
@@ -68,17 +70,19 @@ describe('genChineseQuizQ', () => {
     expect(q.kind).toBe('dictation');
     expect(q.subject).toBe('语文');
     expect(q.prompt).toContain('意思是');
-    expect(q.han).toBeTruthy();
-    expect(q.options).toHaveLength(4);
-    expect(q.options[q.answer]).toBe(q.han);
-    expect(q.explain).toContain('意思是');
+    if (q.kind === 'dictation') {
+      expect(q.han).toBeTruthy();
+      expect(q.options).toHaveLength(4);
+      expect(q.options[q.answer]).toBe(q.han);
+      expect(q.explain).toContain('意思是');
+    }
   });
 
   it('should have unique options', () => {
     const q = genChineseQuizQ();
     const unique = new Set(q.options);
     expect(unique.size).toBe(4);
-    expect(q.options[q.answer]).toBe(q.han);
+    expect(q.options[q.answer]).toBe(q.han!);
   });
 });
 
@@ -88,10 +92,12 @@ describe('genAntonymQ', () => {
     expect(q.kind).toBe('dictation');
     expect(q.subject).toBe('语文');
     expect(q.prompt).toContain('反义词');
-    expect(q.han).toBeTruthy();
-    expect(q.options).toHaveLength(4);
-    expect(q.options[q.answer]).toBeTruthy();
-    expect(q.explain).toContain('反义词');
+    if (q.kind === 'dictation') {
+      expect(q.han).toBeTruthy();
+      expect(q.options).toHaveLength(4);
+      expect(q.options[q.answer]).toBeTruthy();
+      expect(q.explain).toContain('反义词');
+    }
   });
 });
 
@@ -101,10 +107,12 @@ describe('genProverbQ', () => {
     expect(q.kind).toBe('dictation');
     expect(q.subject).toBe('语文');
     expect(q.prompt).toContain('后半句');
-    expect(q.han).toBeTruthy();
-    expect(q.options).toHaveLength(4);
-    expect(q.options[q.answer]).toBeTruthy();
-    expect(q.explain).toContain(q.han);
+    if (q.kind === 'dictation') {
+      expect(q.han).toBeTruthy();
+      expect(q.options).toHaveLength(4);
+      expect(q.options[q.answer]).toBeTruthy();
+      expect(q.explain).toContain(q.han);
+    }
   });
 });
 
@@ -114,11 +122,11 @@ describe('genRiddleQ', () => {
     expect(q.kind).toBe('dictation');
     expect(q.subject).toBe('语文');
     expect(q.prompt).toBeTruthy();
-    expect(q.options.length).toBeGreaterThanOrEqual(3);
-    expect(q.answer).toBeGreaterThanOrEqual(0);
-    expect(q.answer).toBeLessThan(q.options.length);
-    expect(q.options[q.answer]).toBeTruthy();
-    expect(q.explain).toContain('谜底');
+    if (q.kind === 'dictation') {
+      expect(q.options.length).toBeGreaterThanOrEqual(3);
+      expect(q.options[q.answer]).toBeTruthy();
+      expect(q.explain).toContain('谜底');
+    }
   });
 });
 
@@ -128,9 +136,11 @@ describe('genPoemQ', () => {
     expect(q.kind).toBe('poem');
     expect(q.subject).toBe('语文');
     expect(q.prompt).toContain('出自哪首诗');
-    expect(q.options).toHaveLength(4);
-    expect(q.options[q.answer]).toBeTruthy();
-    expect(q.explain).toContain('出自');
+    if (q.kind === 'poem') {
+      expect(q.options).toHaveLength(4);
+      expect(q.options[q.answer]).toBeTruthy();
+      expect(q.explain).toContain('出自');
+    }
   });
 
   it('should have unique options', () => {
@@ -148,7 +158,7 @@ describe('Unique question generators (deduplication)', () => {
 
       for (let i = 0; i < 10; i++) {
         const q = genUniquePinyinQ(usedChars);
-        if (q.han) {
+        if (q.kind === 'pinyin' && q.han) {
           expect(usedChars.has(q.han)).toBe(true);
           chars.add(q.han);
         }
@@ -162,7 +172,7 @@ describe('Unique question generators (deduplication)', () => {
       const usedChars = new Set<string>();
       for (let i = 0; i < 10; i++) {
         const q = genUniqueDictationQ(usedChars);
-        if (q.han) {
+        if (q.kind === 'dictation' && q.han) {
           expect(usedChars.has(q.han)).toBe(true);
         }
       }
@@ -175,7 +185,7 @@ describe('Unique question generators (deduplication)', () => {
       const usedChars = new Set<string>();
       for (let i = 0; i < 10; i++) {
         const q = genUniqueChineseQuizQ(usedChars);
-        if (q.han) {
+        if (q.kind === 'dictation' && q.han) {
           expect(usedChars.has(q.han)).toBe(true);
         }
       }

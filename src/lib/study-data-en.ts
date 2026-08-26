@@ -43,8 +43,10 @@ export const LETTERS: LetterItem[] = [
 
 export interface WordItem {
   word: string;
-  cn: string;
+  sound?: string;
   emoji: string;
+  cn: string;
+  topic?: string;
   sentence?: string;
 }
 

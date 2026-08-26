@@ -376,7 +376,7 @@ export interface EnWordTopic {
   emoji: string;
   words: { word: string; sound: string; emoji: string; cn: string; topic: string }[];
 }
-export {
+export type {
   LETTERS,
   EN_WORD_TOPICS,
   ALL_EN_WORDS,

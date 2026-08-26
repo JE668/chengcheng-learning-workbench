@@ -91,7 +91,8 @@ describe('genWordProblemQ', () => {
     expect(q.options).toHaveLength(4);
     expect(q.options[q.answer]).toBeTruthy();
     expect(typeof q.explain).toBe('string');
-    expect(q.emoji).toBeTruthy();
+    // emoji is optional in type but always present at runtime
+    expect((q as any).emoji).toBeTruthy();
   });
 
   it('should have unique options', () => {

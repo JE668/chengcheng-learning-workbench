@@ -53,8 +53,8 @@ import {
   genWordProblemQ,
   genOrdinalQ,
   genCompareQ,
-  genClockQ,
-  genCompareNumQ,
+  genMultiplyQ,
+  genDivideQ,
 } from './gen-math';
 
 import {

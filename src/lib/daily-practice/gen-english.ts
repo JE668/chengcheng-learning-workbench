@@ -1,9 +1,9 @@
 import { ALL_EN_WORDS } from '../study-data';
-import type { PracticeQuestion } from './types';
+import type { PracticeQuestion, WordItem } from './types';
 import { randInt, shuffle } from './types';
 
 /* —— 听音选词题 —— */
-export function genEnglishQ(w = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)]): PracticeQuestion {
+export function genEnglishQ(w: WordItem = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)]): PracticeQuestion {
   const distractors = shuffle(ALL_EN_WORDS.filter((x) => x.word !== w.word)).slice(0, 3);
   const options = shuffle([w, ...distractors]);
   const answer = options.indexOf(w);
@@ -16,13 +16,13 @@ export function genEnglishQ(w = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_W
     cn: w.cn,
     emoji: w.emoji,
     options: options.map((o) => o.word),
-    answer,
+    answer: options.indexOf(w),
     explain: `${w.emoji} ${w.word} = ${w.cn}`,
   };
 }
 
 /* 英语看图选词题（看 emoji 选对应单词） */
-export function genEnPicQ(w = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)]): PracticeQuestion {
+export function genEnPicQ(w: WordItem = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)]): PracticeQuestion {
   const distractors = shuffle(ALL_EN_WORDS.filter((x) => x.word !== w.word)).slice(0, 3);
   const options = shuffle([w, ...distractors]);
   const answer = options.indexOf(w);
@@ -35,7 +35,7 @@ export function genEnPicQ(w = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WOR
     cn: w.cn,
     emoji: w.emoji,
     options: options.map((o) => o.word),
-    answer,
+    answer: options.indexOf(w),
     explain: `${w.emoji} ${w.word} = ${w.cn}`,
   };
 }
@@ -47,7 +47,7 @@ export function genEnInitialQ(): PracticeQuestion {
   const distractors = shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.replace(first, '').split('')).slice(0, 3);
   const options = shuffle([first, ...distractors]);
   // 返回字母本身作为答案，而不是索引
-  const answer = first;
+  const answer = options.indexOf(first);
   return {
     id: `en-init-${w.word}`,
     kind: 'english',
@@ -58,7 +58,7 @@ export function genEnInitialQ(): PracticeQuestion {
     cn: w.cn,
     emoji: w.emoji,
     options,
-    answer,
+    answer: options.indexOf(first),
     explain: `${w.word} 以 ${first} 开头`,
   };
 }
