@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { getDb } from '@/lib/db';
 import { ensureSchema } from '@/lib/db';
-import { runMigrations } from './migrations';
+import { runMigrations, getCurrentVersion, getMigrationHistory } from './migrations';
 
 describe('轻量 Schema 迁移机制', () => {
   beforeAll(async () => {
@@ -29,10 +29,10 @@ describe('轻量 Schema 迁移机制', () => {
     });
     expect(Number(idx.rows.length)).toBe(1);
 
-    // 再跑一次：已记录的版本不重跑，仍只有 2 条记录
+    // 再跑一次：已记录的版本不重跑，记录数不变
     await runMigrations(getDb());
     const r = await getDb().execute({ sql: 'SELECT COUNT(*) AS n FROM schema_migrations', args: [] });
-    expect(Number(r.rows[0]?.n)).toBe(2);
+    expect(Number(r.rows[0]?.n)).toBe(5);
   });
 
   it('ensureSchema 内含迁移跑道，全新/旧库均可安全执行', async () => {
@@ -40,5 +40,20 @@ describe('轻量 Schema 迁移机制', () => {
     await expect(ensureSchema()).resolves.toBeUndefined();
     const r = await getDb().execute({ sql: 'SELECT COUNT(*) AS n FROM schema_migrations', args: [] });
     expect(Number(r.rows[0]?.n)).toBeGreaterThanOrEqual(1);
+  });
+
+  it('getCurrentVersion 返回正确的版本号', async () => {
+    await runMigrations(getDb());
+    const version = await getCurrentVersion(getDb());
+    expect(version).toBeGreaterThanOrEqual(2);
+  });
+
+  it('getMigrationHistory 返回完整的迁移历史', async () => {
+    await runMigrations(getDb());
+    const history = await getMigrationHistory(getDb());
+    expect(history.length).toBeGreaterThanOrEqual(2);
+    expect(history[0].version).toBe(1);
+    expect(history[0].name).toBe('baseline_marker');
+    expect(history[0].status).toBe('applied');
   });
 });
