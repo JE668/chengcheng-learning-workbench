@@ -80,7 +80,7 @@ async function edgeTTS(
 
     ws.on('open', () => sendSsml());
 
-    ws.on('message', (raw, isBinary) => {
+    ws.on('message', (raw: WebSocket.RawData, isBinary: boolean) => {
       if (isBinary) {
         const buf = Buffer.from(raw as Buffer);
         const sep = 'Path:audio\r\n';
@@ -100,7 +100,7 @@ async function edgeTTS(
       else reject(new Error('no audio data received'));
     });
 
-    ws.on('error', (e) => {
+    ws.on('error', (e: Error) => {
       if (!done) reject(e);
     });
 

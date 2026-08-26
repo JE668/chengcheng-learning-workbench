@@ -108,6 +108,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.7(@types/react@18.3.31)
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       '@vitest/coverage-v8':
         specifier: ^2.1.9
         version: 2.1.9(supports-color@8.0.0)(vitest@2.1.9(@types/node@20.19.43)(jsdom@24.1.0(supports-color@8.0.0))(supports-color@8.0.0)(terser@5.50.0))

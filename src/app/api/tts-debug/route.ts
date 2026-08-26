@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
       signal: AbortSignal.timeout(5000),
     });
     results.edge_microsoft = { status: r.status, body: (await r.text()).slice(0, 100) };
-  } catch (e: any) { results.edge_microsoft = e.message; }
+  } catch (e: unknown) { results.edge_microsoft = e instanceof Error ? e.message : String(e); }
 
   // 测试 2: speech.platform.bing.com 只有 TrustedClientToken (无 Sec-MS-GEC)
   try {
@@ -39,10 +39,10 @@ export async function GET(req: NextRequest) {
 
     let opened = false;
     ws.on('open', () => { opened = true; ws.close(); });
-    ws.on('error', (e) => { results.ws_no_sec = `error: ${e.message}`; });
+    ws.on('error', (e: Error) => { results.ws_no_sec = `error: ${e.message}`; });
     await new Promise<void>((r) => setTimeout(r, 6000));
     results.ws_no_sec = opened ? 'connected (will close)' : 'not opened';
-  } catch (e: any) { results.ws_no_sec = e.message; }
+  } catch (e: unknown) { results.ws_no_sec = e instanceof Error ? e.message : String(e); }
 
   // 测试 3: api-edge.bing.com
   try {
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
       signal: AbortSignal.timeout(5000),
     });
     results.api_edge_bing = { status: r.status };
-  } catch (e: any) { results.api_edge_bing = e.message; }
+  } catch (e: unknown) { results.api_edge_bing = e instanceof Error ? e.message : String(e); }
 
   return NextResponse.json(results);
 }

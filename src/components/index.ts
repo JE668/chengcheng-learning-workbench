@@ -3,35 +3,37 @@
 // UI 原子组件
 export * from './ui';
 
-// 业务组件
-export { MokoCarousel } from './MokoCarousel';
-export { MokoAvatar } from './MokoAvatar';
-export { MokoCard } from './MokoCard';
-export { MokoGroupBg } from './moko-bg';
-export { ErrorBoundary } from './ErrorBoundary';
-export { GuideModal } from './GuideModal';
-export { BadgeCelebrate } from './BadgeCelebrate';
-export { CaptureMoment } from './CaptureMoment';
-export { CertRequestButton } from './CertRequestButton';
-export { Certificate } from './Certificate';
-export { CheckinCalendar } from './CheckinCalendar';
-export { ChildSwitcher } from './ChildSwitcher';
-export { Clock } from './Clock';
-export { EmptyState } from './EmptyState';
-export { EyeRest } from './EyeRest';
-export { FullscreenToggle } from './FullscreenToggle';
-export { GameShell } from './GameShell';
-export { GrowthTree } from './GrowthTree';
-export { MokoArt } from './MokoArt';
-export { MokoHelper } from './MokoHelper';
-export { MokoTasks } from './MokoTasks';
-export { Nav } from './Nav';
-export { OfflineIndicator } from './OfflineIndicator';
-export { ParentCastlePanel } from './ParentCastlePanel';
-export { PdfViewer } from './PdfViewer';
-export { PrintButton } from './PrintButton';
-export { PwaRegister } from './PwaRegister';
-export { ReviewBadge } from './ReviewBadge';
-export { SectionHeading } from './SectionHeading';
-export { SeriesCompleteBanner } from './SeriesCompleteBanner';
-export { CastleClient } from './castle-client';
+// 业务组件 - 默认导出
+export { default as CertRequestButton } from './CertRequestButton';
+export { default as Certificate } from './Certificate';
+export { default as CheckinCalendar } from './CheckinCalendar';
+export { default as Clock } from './Clock';
+export { default as EyeRest } from './EyeRest';
+export { default as FullscreenToggle } from './FullscreenToggle';
+export { default as GameShell } from './GameShell';
+export { default as GrowthTree } from './GrowthTree';
+export { default as MokoCard } from './MokoCard';
+export { default as MokoTasks } from './MokoTasks';
+export { default as Nav } from './Nav';
+export { default as OfflineIndicator } from './OfflineIndicator';
+export { default as ParentCastlePanel } from './ParentCastlePanel';
+export { default as PdfViewer } from './PdfViewer';
+export { default as PrintButton } from './PrintButton';
+export { default as PwaRegister } from './PwaRegister';
+export { default as ReviewBadge } from './ReviewBadge';
+
+// 业务组件 - 命名导出（无 default export）
+export * from './BadgeCelebrate';
+export * from './CaptureMoment';
+export * from './ChildSwitcher';
+export * from './EmptyState';
+export * from './ErrorBoundary';
+export * from './GuideModal';
+export * from './MokoArt';
+export * from './MokoAvatar';
+export * from './MokoCarousel';
+export * from './MokoHelper';
+export * from './SectionHeading';
+export * from './SeriesCompleteBanner';
+export * from './castle-client';
+export * from './moko-bg';
