@@ -1,4 +1,5 @@
 import path from 'node:path';
+import bundleAnalyzer from '@next/bundle-analyzer';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -8,19 +9,72 @@ const nextConfig = {
   // 容器内生产构建时跳过 ESLint（lint 属开发期检查，避免阻塞构建）
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
-  webpack: (config) => {
-    // 显式把 @ 别名指向 src 目录，使用 webpack 原生 resolve.alias。
-    // 不依赖 tsconfig-paths 插件：该插件在 CI/Docker(Linux) 构建中对部分
-    // @/ 导入偶发解析失败（报 “Module not found: Can't resolve '@/...'”），
-    // 原生别名直接映射到文件系统路径，稳定可靠。
-    // 注意：别名键为 '@'，仅匹配 '@/...'（如 '@/lib/moko'），不会误伤
-    // 作用域包 '@scope/pkg'（其后不是斜杠），故 @libsql/client 等不受影响。
+  // 实验性功能
+  experimental: {
+    // 优化包导入
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+  },
+  webpack: (config, { dev, isServer }) => {
+    // 显式把 @ 别名指向 src 目录，使用 webpack 原生 resolve.alias
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(process.cwd(), 'src'),
     };
+
+    // 生产环境优化
+    if (!dev && !isServer) {
+      // 分包策略
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          default: false,
+          vendors: false,
+          // React 相关
+          react: {
+            name: 'react',
+            test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+            priority: 20,
+          },
+          // UI 库
+          ui: {
+            name: 'ui',
+            test: /[\\/]node_modules[\\/](lucide-react|@radix-ui|clsx|tailwind-merge)[\\/]/,
+            priority: 15,
+          },
+          // 数据库
+          db: {
+            name: 'db',
+            test: /[\\/]node_modules[\\/](@libsql|kysely)[\\/]/,
+            priority: 10,
+          },
+          // 公共代码
+          commons: {
+            name: 'commons',
+            minChunks: 2,
+            priority: 5,
+          },
+        },
+      };
+    }
+
     return config;
+  },
+  // 安全头
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
+        ],
+      },
+    ];
   },
 };
 
-export default nextConfig;
+const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
+export default withBundleAnalyzer(nextConfig);

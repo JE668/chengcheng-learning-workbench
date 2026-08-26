@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# 本地轻量检查（CI 在 GitHub Actions 完整跑）
+npx tsc --noEmit --skipLibCheck 2>&1 | head -20
