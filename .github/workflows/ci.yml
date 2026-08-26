@@ -27,21 +27,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
 
       - name: 安装依赖
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
-      - name: TypeScript 类型检查
-        run: npx tsc --noEmit
+      - name: TypeScript 类型检查（主代码库）
+        run: npx tsc --noEmit --skipLibCheck -p tsconfig.json
 
-      - name: 单元测试（castle 核心逻辑等）
-        run: npm test
+      - name: 单元测试 + 覆盖率
+        run: pnpm test:coverage
 
       - name: ESLint 代码检测
-        run: npm run lint
+        run: pnpm lint
 
       - name: 生产构建冒烟（next build）
-        run: npm run build
+        run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: 1
           NODE_ENV: production
@@ -72,3 +73,114 @@ jobs:
           done < <(find src/app/api -name 'route.ts' | sort)
           if [ "$FAIL" = 1 ]; then echo "---"; echo "新增路由必须调用 getCurrentUser()；已知公开路由请加入 ALLOWED_MISSING 白名单。"; exit 1; fi
           echo "✅ 全部路由均已鉴权"
+
+  # E2E 测试（独立 job，可并行）
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 安装 Playwright 浏览器
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: 启动开发服务器
+        run: |
+          pnpm dev > dev.log 2>&1 &
+          sleep 10
+          curl -f http://localhost:3000 || (cat dev.log && exit 1)
+
+      - name: 运行 E2E 测试
+        run: pnpm e2e
+        env:
+          E2E_BASE_URL: http://localhost:3000
+
+      - name: 上传 E2E 失败截图/视频
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: test-results/
+
+  # 视觉回归测试
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 安装 Playwright 浏览器
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: 启动开发服务器
+        run: |
+          pnpm dev > dev.log 2>&1 &
+          sleep 10
+          curl -f http://localhost:3000 || (cat dev.log && exit 1)
+
+      - name: 运行视觉回归测试
+        run: pnpm e2e --project=chromium tests/e2e/visual.spec.ts
+        env:
+          E2E_BASE_URL: http://localhost:3000
+
+      - name: 上传视觉差异报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-report
+          path: test-results/
+
+  # Storybook 构建验证
+  storybook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建 Storybook
+        run: pnpm build-storybook
+
+      - name: 上传 Storybook 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook-static
+          path: storybook-static/
