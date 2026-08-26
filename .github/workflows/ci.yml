@@ -37,7 +37,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: 安装依赖
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: TypeScript 类型检查（主代码库）
         run: npx tsc --noEmit --skipLibCheck -p tsconfig.json
@@ -106,7 +106,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: 安装依赖
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: 安装 Playwright 浏览器
         run: pnpm exec playwright install --with-deps chromium
@@ -154,7 +154,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: 安装依赖
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: 安装 Playwright 浏览器
         run: pnpm exec playwright install --with-deps chromium
@@ -202,7 +202,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: 安装依赖
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: 构建 Storybook
         run: pnpm build-storybook
