@@ -45,19 +45,19 @@ export async function confirm(childId: number, day: string, subject: Subject) {
   const today = dateStr();
   if (!day || day === 'undefined') day = today;
 
+  // 幂等检查：使用 INSERT ... ON CONFLICT DO NOTHING 的原子性
+  const insertResult = await db.execute({
+    sql: "INSERT INTO daily_checkins (child_id, day, subject, status, confirmed_at) VALUES (?, ?, ?, 'confirmed', CURRENT_TIMESTAMP) ON CONFLICT(child_id, day, subject) DO NOTHING",
+    args: [childId, day, subject],
+  });
+  const isNewConfirm = Number(insertResult.rowsAffected ?? 0) > 0;
+  if (!isNewConfirm) {
+    return { ok: false, message: '该科今天已确认' };
+  }
+
+  // 新确认：在事务中发放奖励
   await db.execute('BEGIN IMMEDIATE');
   try {
-    // 原子级幂等：尝试插入，若冲突则说明已确认
-    const insertResult = await db.execute({
-      sql: "INSERT INTO daily_checkins (child_id, day, subject, status, confirmed_at) VALUES (?, ?, ?, 'confirmed', CURRENT_TIMESTAMP) ON CONFLICT(child_id, day, subject) DO NOTHING",
-      args: [childId, day, subject],
-    });
-    const isNewConfirm = Number(insertResult.rowsAffected ?? 0) > 0;
-    if (!isNewConfirm) {
-      await db.execute('COMMIT');
-      return { ok: false, message: '该科今天已确认' };
-    }
-
     // 只有新确认才发奖励，避免重复发积分/阳光/萌可/捕捉券
     await db.execute({
       sql: 'INSERT INTO completions (child_id, points, source) VALUES (?, ?, ?)',

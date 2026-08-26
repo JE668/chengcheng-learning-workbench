@@ -297,6 +297,7 @@ export async function ensureSchema() {
       next_review TEXT NOT NULL,
       interval_days INTEGER NOT NULL DEFAULT 1,
       reps INTEGER NOT NULL DEFAULT 0,
+      easiness_factor REAL NOT NULL DEFAULT 2.5,
       resolved INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
