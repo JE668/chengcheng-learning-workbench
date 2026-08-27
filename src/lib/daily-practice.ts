@@ -143,10 +143,10 @@ export interface PracticeSubmitResult {
 }
 
 /* ----------------------------- 抽题工具 ----------------------------- */
-function randInt(min: number, max: number): number {
+export function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-function shuffle<T>(arr: T[]): T[] {
+export function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -158,7 +158,7 @@ function shuffle<T>(arr: T[]): T[] {
 /* —— 拼音：可完整发四声的音节（4 个代表字都不为空） —— */
 const PINYIN_FULL = Object.keys(PINYIN_TONES).filter((b) => PINYIN_TONES[b].every((t) => t));
 
-function genPinyinQ(): PracticeQuestion {
+export function genPinyinQ(): PracticeQuestion {
   // 个别音节不同声调可能返回相同字符串（如轻声/某些音节），
   // 必须先选出「四个声调互异」的音节，再据此出题，避免正确答案判定错位。
   let base = PINYIN_FULL[randInt(0, PINYIN_FULL.length - 1)];
@@ -187,7 +187,7 @@ function genPinyinQ(): PracticeQuestion {
   };
 }
 
-function genMathQ(hard = false): PracticeQuestion {
+export function genMathQ(hard = false): PracticeQuestion {
   const isAdd = Math.random() < 0.6;
   let a: number, b: number, ans: number, prompt: string;
   if (isAdd) {
@@ -221,7 +221,7 @@ function genMathQ(hard = false): PracticeQuestion {
   };
 }
 
-function genEnglishQ(w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)]): PracticeQuestion {
+export function genEnglishQ(w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)]): PracticeQuestion {
   const distractors = shuffle(ALL_EN_WORDS.filter((x) => x.word !== w.word)).slice(0, 3);
   const options = shuffle([w, ...distractors]);
   const answer = options.indexOf(w);
@@ -239,7 +239,7 @@ function genEnglishQ(w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)]): Pra
   };
 }
 
-function genDictationQ(): PracticeQuestion {
+export function genDictationQ(): PracticeQuestion {
   // 听写：听一个字的读音，从几个汉字里选出正确的字（TTS 直接朗读汉字，无需拼音字段）
   const c = CHARACTERS[randInt(0, CHARACTERS.length - 1)];
   const han = c.char;
@@ -270,7 +270,7 @@ function shuffleArr<T>(arr: T[]): T[] {
 }
 
 /** 识字题：看释义选字 */
-function genChineseQuizQ(): PracticeQuestion {
+export function genChineseQuizQ(): PracticeQuestion {
   const c = CHARACTERS[randInt(0, CHARACTERS.length - 1)];
   const distractors = shuffle(CHARACTERS.filter((x) => x.meaning !== c.meaning)).slice(0, 3).map((x) => x.char);
   const options = shuffle([c.char, ...distractors]);
@@ -288,7 +288,7 @@ function genChineseQuizQ(): PracticeQuestion {
 }
 
 /** 反义词题 */
-function genAntonymQ(): PracticeQuestion {
+export function genAntonymQ(): PracticeQuestion {
   const a = ANTONYMS[randInt(0, ANTONYMS.length - 1)];
   const distractors = shuffle(ANTONYMS.filter((x) => x.b !== a.b).map((x) => x.b)).slice(0, 3);
   const options = shuffle([a.b, ...distractors]);
@@ -306,7 +306,7 @@ function genAntonymQ(): PracticeQuestion {
 }
 
 /** 谚语配对题 */
-function genProverbQ(): PracticeQuestion {
+export function genProverbQ(): PracticeQuestion {
   const p = PROVERBS[randInt(0, PROVERBS.length - 1)];
   const distractors = shuffle(PROVERBS.filter((x) => x.second !== p.second).map((x) => x.second)).slice(0, 3);
   const options = shuffle([p.second, ...distractors]);
@@ -324,7 +324,7 @@ function genProverbQ(): PracticeQuestion {
 }
 
 /** 谜语题 */
-function genRiddleQ(): PracticeQuestion {
+export function genRiddleQ(): PracticeQuestion {
   const r = RIDDLES[randInt(0, RIDDLES.length - 1)];
   const options = shuffle([...r.options]);
   const answer = options.indexOf(r.answer);
@@ -341,7 +341,7 @@ function genRiddleQ(): PracticeQuestion {
 }
 
 /** 应用题 */
-function genWordProblemQ(): PracticeQuestion {
+export function genWordProblemQ(): PracticeQuestion {
   const p = WORD_PROBLEMS[randInt(0, WORD_PROBLEMS.length - 1)];
   const options = shuffle([...p.options]);
   const answer = options.indexOf(p.answer);
@@ -357,7 +357,7 @@ function genWordProblemQ(): PracticeQuestion {
 }
 
 /** 序数题 */
-function genOrdinalQ(): PracticeQuestion {
+export function genOrdinalQ(): PracticeQuestion {
   const o = ORDINALS[randInt(0, ORDINALS.length - 1)];
   // 确保答案一定在选项里：先放答案，再补 3 个干扰项
   const allOpts = ['第1', '第2', '第3', '第4', '第5'].filter((x) => x !== o.answer);
@@ -375,7 +375,7 @@ function genOrdinalQ(): PracticeQuestion {
 }
 
 /** 比大小题 */
-function genCompareQ(): PracticeQuestion {
+export function genCompareQ(): PracticeQuestion {
   const a = randInt(0, 10);
   const b = randInt(0, 10);
   const correct = a > b ? '>' : a < b ? '<' : '=';
@@ -393,7 +393,7 @@ function genCompareQ(): PracticeQuestion {
 }
 
 /** 钟表题 */
-function genClockQ(): PracticeQuestion {
+export function genClockQ(): PracticeQuestion {
   const c = CLOCKS[randInt(0, CLOCKS.length - 1)];
   const distractors = shuffle(CLOCKS.filter((x) => x.hour !== c.hour)).slice(0, 3).map((x) => x.label);
   const options = shuffle([c.label, ...distractors]);
@@ -410,7 +410,7 @@ function genClockQ(): PracticeQuestion {
 }
 
 /** 英语看图选词题（看 emoji 选对应单词，和听音选词不同：有视觉提示） */
-function genEnPicQ(): PracticeQuestion {
+export function genEnPicQ(): PracticeQuestion {
   const w = ALL_EN_WORDS[randInt(0, ALL_EN_WORDS.length - 1)];
   const distractors = shuffle(ALL_EN_WORDS.filter((x) => x.word !== w.word)).slice(0, 3);
   const options = shuffle([w, ...distractors]);
