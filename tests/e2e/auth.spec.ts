@@ -27,7 +27,7 @@ test.describe('认证流程', () => {
 
     // 应该重定向到家长看板
     await expect(page).toHaveURL(/\/dashboard/);
-    await expect(page.locator('h1')).toContainText('爸爸妈妈看板');
+    await expect(page.getByRole('heading', { name: /爸爸妈妈看板/ })).toBeVisible();
   });
 
   test('孩子登录', async ({ page }) => {
@@ -39,7 +39,7 @@ test.describe('认证流程', () => {
 
     // 应该重定向到孩子首页
     await expect(page).toHaveURL(/\/home/);
-    await expect(page.locator('h1')).toContainText('你好呀');
+    await expect(page.getByRole('heading', { name: /你好呀/ })).toBeVisible();
   });
 
   test('错误密码显示错误', async ({ page }) => {
@@ -62,8 +62,8 @@ test.describe('认证流程', () => {
     await page.fill('input[name="password"]', '12345678');
     await page.click('button[type="submit"]');
 
-    // 点击登出
-    await page.click('button:has-text("登出"), a:has-text("登出")');
+    // 点击退出
+    await page.getByRole('button', { name: /退出/ }).click();
     await expect(page).toHaveURL(/\/login/);
   });
 });
