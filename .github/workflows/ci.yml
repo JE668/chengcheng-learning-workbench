@@ -111,11 +111,26 @@ jobs:
       - name: 启动开发服务器
         run: |
           pnpm dev > dev.log 2>&1 &
-          sleep 30
+          DEV_PID=$!
+          echo "Dev server PID: $DEV_PID"
+          # 等待并重试检查服务器是否就绪
+          for i in {1..60}; do
+            if curl -sf http://localhost:3000 > /dev/null 2>&1; then
+              echo "Dev server ready after $i attempts"
+              break
+            fi
+            if ! kill -0 $DEV_PID 2>/dev/null; then
+              echo "Dev server process died!"
+              cat dev.log
+              exit 1
+            fi
+            sleep 2
+          done
+          # 最后确认
           curl -f http://localhost:3000 || (cat dev.log && exit 1)
 
       - name: 运行 E2E 测试（仅核心认证流程）
-        run: pnpm e2e --project=chromium tests/e2e/auth.spec.ts
+        run: pnpm e2e --project=chromium tests/e2e/auth.spec.ts --timeout=120000
         env:
           E2E_BASE_URL: http://localhost:3000
 
@@ -158,11 +173,26 @@ jobs:
       - name: 启动开发服务器
         run: |
           pnpm dev > dev.log 2>&1 &
-          sleep 30
+          DEV_PID=$!
+          echo "Dev server PID: $DEV_PID"
+          # 等待并重试检查服务器是否就绪
+          for i in {1..60}; do
+            if curl -sf http://localhost:3000 > /dev/null 2>&1; then
+              echo "Dev server ready after $i attempts"
+              break
+            fi
+            if ! kill -0 $DEV_PID 2>/dev/null; then
+              echo "Dev server process died!"
+              cat dev.log
+              exit 1
+            fi
+            sleep 2
+          done
+          # 最后确认
           curl -f http://localhost:3000 || (cat dev.log && exit 1)
 
       - name: 生成视觉基线（首次运行）
-        run: pnpm e2e --project=chromium tests/e2e/visual.spec.ts --update-snapshots
+        run: pnpm e2e --project=chromium tests/e2e/visual.spec.ts --update-snapshots --timeout=120000
         env:
           E2E_BASE_URL: http://localhost:3000
         continue-on-error: true

@@ -24,7 +24,7 @@ const config: StorybookConfig = {
     },
   },
   // Workaround for "Cannot read properties of undefined (reading 'tap')" error
-  // with Storybook 8.2.x + Next.js 14
+  // with Storybook 8.x + Next.js 14
   webpackFinal: async (config) => {
     // Disable webpack cache to avoid cache shutdown hook error
     config.cache = false;
