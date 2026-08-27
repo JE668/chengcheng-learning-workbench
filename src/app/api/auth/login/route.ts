@@ -3,7 +3,11 @@ import { getDb } from '@/lib/db';
 import { setSessionCookie, verifyPassword } from '@/lib/auth';
 import { getClientIp, rateLimit, loginLockout, recordLoginFailure, clearLoginFailure } from '@/lib/rate-limit';
 
-const LOGIN_LIMIT = { windowSeconds: 300, maxRequests: 10 }; // 每 IP 5 分钟 10 次
+// 登录限流配置（可通过环境变量覆盖）
+const LOGIN_LIMIT = {
+  windowSeconds: Number(process.env.LOGIN_RATE_LIMIT_WINDOW) || 300,
+  maxRequests: Number(process.env.LOGIN_RATE_LIMIT_MAX) || 10,
+}; // 每 IP 5 分钟 10 次
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);

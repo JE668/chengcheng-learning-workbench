@@ -6,6 +6,10 @@ import { User } from './types';
 
 const COOKIE_NAME = 'session';
 
+// 环境变量配置（带默认值，保持向后兼容）
+const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS) || 7;
+const SECURE_COOKIE = process.env.SECURE_COOKIE === 'true';
+
 export function hashPassword(password: string): string {
   return bcrypt.hashSync(password, 10);
 }
@@ -41,7 +45,6 @@ export async function deleteSession(token: string) {
  * 与 cookie maxAge（7 天）对齐，只删确实失效的会话，不影响活跃登录。
  * 调用点：createSession（每次登录顺手修剪）+ cron/settle（云端每日兜底）。
  */
-const SESSION_TTL_DAYS = 7;
 export async function cleanupExpiredSessions(): Promise<void> {
   const db = getDb();
   await db.execute({
@@ -58,6 +61,9 @@ export async function cleanupExpiredSessions(): Promise<void> {
  * 无该头时回退到 NODE_ENV === 'production'。
  */
 function shouldSecureCookie(): boolean {
+  // 显式配置优先（SECURE_COOKIE=true 强制 secure，false 强制不 secure）
+  if (SECURE_COOKIE !== undefined) return SECURE_COOKIE;
+
   try {
     const proto = headers().get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase();
     if (proto === 'https' || proto === 'http') return proto === 'https';
@@ -76,7 +82,7 @@ export async function setSessionCookie(userId: number) {
     secure: shouldSecureCookie(),
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: 60 * 60 * 24 * SESSION_TTL_DAYS,
   });
 }
 

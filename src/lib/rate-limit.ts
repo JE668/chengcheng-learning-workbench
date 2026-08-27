@@ -9,6 +9,10 @@ export interface RateLimitRule {
   maxRequests: number;
 }
 
+/** 登录限流默认配置（可通过环境变量覆盖） */
+const LOGIN_RATE_LIMIT_WINDOW = Number(process.env.LOGIN_RATE_LIMIT_WINDOW) || 300; // 5 分钟
+const LOGIN_RATE_LIMIT_MAX = Number(process.env.LOGIN_RATE_LIMIT_MAX) || 10; // 10 次
+
 interface Bucket {
   count: number;
   resetAt: number;
@@ -67,10 +71,10 @@ export function getClientIp(req: Request): string {
  * 这里额外按 username 累计连续失败次数，达到阈值后锁定一段时间（内存级，单实例适用）。
  */
 
-/** 连续失败达到该次数即锁定 */
-export const MAX_LOGIN_FAILS = 5;
-/** 锁定持续时间（秒） */
-export const LOGIN_LOCK_SECONDS = 15 * 60;
+/** 连续失败达到该次数即锁定（可通过环境变量覆盖） */
+export const MAX_LOGIN_FAILS = Number(process.env.MAX_LOGIN_FAILS) || 5;
+/** 锁定持续时间（秒，可通过环境变量覆盖） */
+export const LOGIN_LOCK_SECONDS = Number(process.env.LOGIN_LOCK_SECONDS) || 15 * 60;
 
 const failStore = new Map<string, { count: number; resetAt: number }>();
 

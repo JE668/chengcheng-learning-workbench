@@ -24,7 +24,7 @@ const VOICE_EDGE: Record<string, string> = {
   en: 'en-US-AriaNeural',
 };
 
-const TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
+const TOKEN = process.env.EDGE_TTS_TOKEN || '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
 const WS_BASE = 'speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1';
 
 async function edgeTTS(
