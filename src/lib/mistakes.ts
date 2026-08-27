@@ -16,13 +16,13 @@ export interface MistakeRow {
   resolved: number;
 }
 
-function localDate(offset = 0): string {
+export function localDate(offset = 0): string {
   const d = new Date();
   d.setDate(d.getDate() + offset);
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return y + '-' + m + '-' + day;
 }
 
 export function toMistakeRow(r: Record<string, unknown>): MistakeRow {
@@ -48,11 +48,7 @@ export function toMistakeRow(r: Record<string, unknown>): MistakeRow {
 export async function getDueMistakes(childId: number, limit = 2): Promise<MistakeRow[]> {
   const db = getDb();
   const res = await db.execute({
-    sql: `SELECT id, child_id, subject, kind, prompt, answer, wrong, next_review, interval_days, reps, easiness_factor, resolved
-          FROM mistakes
-          WHERE child_id = ? AND resolved = 0 AND next_review <= ?
-          ORDER BY next_review ASC, id ASC
-          LIMIT ?`,
+    sql: 'SELECT id, child_id, subject, kind, prompt, answer, wrong, next_review, interval_days, reps, easiness_factor, resolved FROM mistakes WHERE child_id = ? AND resolved = 0 AND next_review <= ? ORDER BY next_review ASC, id ASC LIMIT ?',
     args: [childId, localDate(), limit],
   });
   return res.rows.map(toMistakeRow);
@@ -142,11 +138,11 @@ export async function reviewMistake(childId: number, id: number, correct: boolea
   return true;
 }
 
-function addDaysToDate(dateStr: string, days: number): string {
+export function addDaysToDate(dateStr: string, days: number): string {
   const date = new Date(dateStr + 'T00:00:00');
   date.setDate(date.getDate() + days);
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return y + '-' + m + '-' + day;
 }

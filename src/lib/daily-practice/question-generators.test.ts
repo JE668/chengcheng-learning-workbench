@@ -16,17 +16,17 @@ import {
 // Mock PINYIN_TONES 等外部依赖
 vi.mock('../study-data', () => ({
   PINYIN_TONES: {
-    'ba': ['bā', 'bá', 'bǎ', 'bà'],
-    'ma': ['mā', 'má', 'mǎ', 'mà'],
-    'ai': ['āi', 'ái', 'ǎi', 'ài'],
-    'ei': ['ēi', 'éi', 'ěi', 'èi'],
-    'ao': ['āo', 'áo', 'ǎo', 'ào'],
-    'ou': ['ōu', 'óu', 'ǒu', 'òu'],
+    ba: ['bā', 'bá', 'bǎ', 'bà'],
+    ma: ['mā', 'má', 'mǎ', 'mà'],
+    ai: ['āi', 'ái', 'ǎi', 'ài'],
+    ei: ['ēi', 'éi', 'ěi', 'èi'],
+    ao: ['āo', 'áo', 'ǎo', 'ào'],
+    ou: ['ōu', 'óu', 'ǒu', 'òu'],
   },
   applyTone: (base: string, tone: number) => {
-    const tones = {
-      'ba': ['bā', 'bá', 'bǎ', 'bà'],
-      'ma': ['mā', 'má', 'mǎ', 'mà'],
+    const tones: Record<string, string[]> = {
+      ba: ['bā', 'bá', 'bǎ', 'bà'],
+      ma: ['mā', 'má', 'mǎ', 'mà'],
     };
     return tones[base]?.[tone - 1] || base;
   },
@@ -164,15 +164,18 @@ describe('genEnglishQ', () => {
     const q = genEnglishQ({ word: 'apple', cn: '苹果', emoji: '🍎' });
     expect(q.kind).toBe('english');
     expect(q.subject).toBe('英语');
-    expect(q.word).toBe('apple');
-    expect(q.cn).toBe('苹果');
-    expect(q.emoji).toBe('🍎');
-    expect(q.options.length).toBe(4);
-    expect(q.answer).toBeGreaterThanOrEqual(0);
-    expect(q.answer).toBeLessThan(4);
-    expect(q.options[q.answer]).toBe('apple');
-    // 干扰项不包含正确答案
-    expect(q.options.filter(o => o === 'apple').length).toBe(1);
+    // Type narrow for english variant
+    if (q.kind === 'english') {
+      expect(q.word).toBe('apple');
+      expect(q.cn).toBe('苹果');
+      expect(q.emoji).toBe('🍎');
+      expect(q.options.length).toBe(4);
+      expect(q.answer).toBeGreaterThanOrEqual(0);
+      expect(q.answer).toBeLessThan(4);
+      expect(q.options[q.answer]).toBe('apple');
+      // 干扰项不包含正确答案
+      expect(q.options.filter(o => o === 'apple').length).toBe(1);
+    }
   });
 });
 
