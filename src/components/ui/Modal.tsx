@@ -258,10 +258,12 @@ export function ConfirmDialog(props: Omit<ModalProps, 'confirm' | 'title' | 'chi
   title?: string;
 }) {
   return (
+    // eslint-disable-next-line react/no-children-prop
     <Modal
       {...props}
       confirm
       title={props.title}
+      // eslint-disable-next-line react/no-children-prop
       children={<p className="text-text-secondary">{props.message}</p>}
     />
   );
