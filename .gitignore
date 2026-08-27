@@ -16,3 +16,4 @@ local.db-journal
 
 # Python deps for PDF splitting script (not committed)
 /.pylibs
+package-lock.json
