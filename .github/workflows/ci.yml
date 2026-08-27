@@ -18,6 +18,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 调试工作目录
+        run: |
+          pwd
+          ls -la
+          ls -la package.json pnpm-lock.yaml
+
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
@@ -27,9 +33,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: 验证 package.json 存在
-        run: ls -la package.json pnpm-lock.yaml
 
       - name: 安装依赖
         run: pnpm install
@@ -83,6 +86,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 调试工作目录
+        run: |
+          pwd
+          ls -la
+          ls -la package.json pnpm-lock.yaml
+
       - uses: pnpm/action-setup@v4
         with:
           version: 9
@@ -91,9 +100,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: 验证 package.json 存在
-        run: ls -la package.json pnpm-lock.yaml
 
       - name: 安装依赖
         run: pnpm install
@@ -126,6 +132,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 调试工作目录
+        run: |
+          pwd
+          ls -la
+          ls -la package.json pnpm-lock.yaml
+
       - uses: pnpm/action-setup@v4
         with:
           version: 9
@@ -134,9 +146,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: 验证 package.json 存在
-        run: ls -la package.json pnpm-lock.yaml
 
       - name: 安装依赖
         run: pnpm install
@@ -169,6 +178,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 调试工作目录
+        run: |
+          pwd
+          ls -la
+          ls -la package.json pnpm-lock.yaml
+
       - uses: pnpm/action-setup@v4
         with:
           version: 9
@@ -177,9 +192,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: 验证 package.json 存在
-        run: ls -la package.json pnpm-lock.yaml
 
       - name: 安装依赖
         run: pnpm install
