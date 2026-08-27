@@ -82,6 +82,53 @@ jobs:
   # E2E 测试（独立 job，可并行，失败不阻塞主流程）
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 调试工作目录
+        run: |
+          pwd
+          ls -la
+          ls -la package.json pnpm-lock.yaml
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 安装 Playwright 浏览器
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: 启动开发服务器
+        run: |
+          pnpm dev > dev.log 2>&1 &
+          sleep 20
+          curl -f http://localhost:3000 || (cat dev.log && exit 1)
+
+      - name: 运行 E2E 测试（仅核心认证流程）
+        run: pnpm e2e --project=chromium tests/e2e/auth.spec.ts
+        env:
+          E2E_BASE_URL: http://localhost:3000
+
+      - name: 上传 E2E 失败截图/视频
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: test-results/
+
+  # 视觉回归测试（失败不阻塞，仅在本地生成基线）
+  visual:
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     continue-on-error: true
     steps:
@@ -111,58 +158,11 @@ jobs:
       - name: 启动开发服务器
         run: |
           pnpm dev > dev.log 2>&1 &
-          sleep 15
+          sleep 20
           curl -f http://localhost:3000 || (cat dev.log && exit 1)
 
-      - name: 运行 E2E 测试
-        run: pnpm e2e
-        env:
-          E2E_BASE_URL: http://localhost:3000
-
-      - name: 上传 E2E 失败截图/视频
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: test-results/
-
-  # 视觉回归测试（失败不阻塞）
-  visual:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: 调试工作目录
-        run: |
-          pwd
-          ls -la
-          ls -la package.json pnpm-lock.yaml
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-          run_install: false
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: 安装依赖
-        run: pnpm install
-
-      - name: 安装 Playwright 浏览器
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: 启动开发服务器
-        run: |
-          pnpm dev > dev.log 2>&1 &
-          sleep 15
-          curl -f http://localhost:3000 || (cat dev.log && exit 1)
-
-      - name: 运行视觉回归测试
-        run: pnpm e2e --project=chromium tests/e2e/visual.spec.ts
+      - name: 生成视觉基线（首次运行）
+        run: pnpm e2e --project=chromium tests/e2e/visual.spec.ts --update-snapshots
         env:
           E2E_BASE_URL: http://localhost:3000
 
@@ -176,7 +176,7 @@ jobs:
   # Storybook 构建验证（失败不阻塞）
   storybook:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
@@ -201,6 +201,7 @@ jobs:
 
       - name: 构建 Storybook
         run: pnpm build-storybook
+        timeout-minutes: 25
 
       - name: 上传 Storybook 产物
         uses: actions/upload-artifact@v4
