@@ -32,9 +32,36 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'pnpm'
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Cache pnpm store
+        id: pnpm-store-cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - uses: actions/cache@v4
+        name: Cache node_modules
+        id: node-modules-cache
+        with:
+          path: |
+            **/node_modules
+            .next/cache
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
 
       - name: 安装依赖
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: TypeScript 类型检查（主代码库）
         run: npx tsc --noEmit --skipLibCheck -p tsconfig.json
@@ -50,6 +77,18 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: 1
           NODE_ENV: production
+
+      - name: 性能预算检查
+        run: |
+          # 检查 JS bundle 大小不超过预算
+          BUDGET_KB=200
+          ACTUAL_KB=$(find .next -name "*.js" -type f -exec wc -c {} + | awk '{sum+=$1} END {print int(sum/1024)}')
+          echo "Bundle size: ${ACTUAL_KB}KB (budget: ${BUDGET_KB}KB)"
+          if [ "$ACTUAL_KB" -gt "$BUDGET_KB" ]; then
+            echo "❌ Bundle size exceeds budget!"
+            exit 1
+          fi
+          echo "✅ Bundle size within budget"
 
       - name: API 路由鉴权自动检查
         run: |
@@ -99,12 +138,48 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'pnpm'
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Cache pnpm store
+        id: pnpm-store-cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - uses: actions/cache@v4
+        name: Cache node_modules
+        id: node-modules-cache
+        with:
+          path: |
+            **/node_modules
+            .next/cache
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
+
+      - uses: actions/cache@v4
+        name: Cache Playwright browsers
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
 
       - name: 安装依赖
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: 安装 Playwright 浏览器（全部）
-        run: pnpm exec playwright install --with-deps
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: 启动开发服务器
         run: |
@@ -127,8 +202,8 @@ jobs:
           # 最后确认
           curl -f http://localhost:3000 || (cat dev.log && exit 1)
 
-      - name: 运行 E2E 测试（仅核心认证流程）
-        run: pnpm e2e --project=chromium tests/e2e/auth.spec.ts --timeout=120000
+      - name: 运行 E2E 测试（核心认证 + 业务流程）
+        run: pnpm e2e --project=chromium tests/e2e/auth.spec.ts tests/e2e/business-flows.spec.ts --timeout=120000
         env:
           E2E_BASE_URL: http://localhost:3000
 
@@ -160,12 +235,48 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'pnpm'
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Cache pnpm store
+        id: pnpm-store-cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - uses: actions/cache@v4
+        name: Cache node_modules
+        id: node-modules-cache
+        with:
+          path: |
+            **/node_modules
+            .next/cache
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
+
+      - uses: actions/cache@v4
+        name: Cache Playwright browsers
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
 
       - name: 安装依赖
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: 安装 Playwright 浏览器（全部）
-        run: pnpm exec playwright install --with-deps
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: 启动开发服务器
         run: |
@@ -200,5 +311,3 @@ jobs:
         with:
           name: visual-regression-report
           path: test-results/
-
-

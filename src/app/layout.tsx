@@ -2,6 +2,7 @@ import './globals.css';
 import { ensureSchema } from '@/lib/db';
 import PwaRegister from '@/components/PwaRegister';
 import OfflineIndicator from '@/components/OfflineIndicator';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +30,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="zh-CN">
       <body className="min-h-screen bg-moko-cream">
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
         <OfflineIndicator />
         <PwaRegister />
       </body>

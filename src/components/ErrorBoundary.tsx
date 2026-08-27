@@ -1,33 +1,58 @@
 'use client';
 
-import { Component, ReactNode } from 'react';
+import { Component, ReactNode, ErrorInfo } from 'react';
 
-interface Props { children: ReactNode; fallback?: ReactNode; }
-interface State { hasError: boolean; error?: Error; }
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+}
+
+interface State {
+  hasError: boolean;
+  error?: Error;
+}
 
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
+
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    this.props.onError?.(error, errorInfo);
+  }
+
   render() {
     if (this.state.hasError) {
       return this.props.fallback || (
-        <div className="max-w-lg mx-auto mt-20 p-8 text-center">
-          <div className="text-6xl mb-4">😅</div>
-          <h2 className="text-xl font-black text-moko-violet mb-2">哎呀，出了点小问题</h2>
-          <p className="text-gray-500 text-sm mb-4">萌可们正在努力修复，试试刷新页面吧～</p>
-          <button
-            onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
-            className="px-6 py-3 rounded-full bg-moko-rose text-white font-bold shadow hover:scale-105 transition"
-          >刷新页面 🔄</button>
-          <details className="mt-4 text-left">
-            <summary className="text-xs text-gray-400 cursor-pointer">错误详情</summary>
-            <pre className="text-xs text-red-500 mt-2 p-2 bg-red-50 rounded overflow-auto max-h-32">{this.state.error?.message}</pre>
-          </details>
+        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
+          <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
+            <div className="text-6xl mb-4">😵</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">出错了</h2>
+            <p className="text-gray-600 mb-6">
+              页面加载时发生了意外错误，请刷新页面重试。
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-gradient-to-r from-moko-rose to-moko-pink text-white rounded-2xl font-bold hover:scale-105 transition"
+            >
+              刷新页面
+            </button>
+            <details className="mt-6 text-left text-sm text-gray-500">
+              <summary className="cursor-pointer mb-2">查看错误详情</summary>
+              <pre className="bg-gray-100 p-4 rounded-lg overflow-auto max-h-40 text-xs">
+                {this.state.error?.message}
+              </pre>
+            </details>
+          </div>
         </div>
       );
     }
     return this.props.children;
   }
 }
+
+export default ErrorBoundary;
