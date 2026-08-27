@@ -107,7 +107,11 @@ export async function getCurrentUser(): Promise<User | null> {
   return { id: Number(r.id), username: String(r.username), role: r.role as 'parent' | 'child', displayName: String(r.display_name) };
 }
 
-export function requireAuth(allowed?: ('parent' | 'child')[]) {
+/**
+ * 创建鉴权守卫（工厂函数）：返回一个异步函数，用于在 API 路由中验证登录态与角色。
+ * 用法：const getUser = createAuthGuard(['parent']); const user = await getUser();
+ */
+export function createAuthGuard(allowed?: ('parent' | 'child')[]) {
   return async function (): Promise<User> {
     const user = await getCurrentUser();
     if (!user) throw new Error('UNAUTHORIZED');

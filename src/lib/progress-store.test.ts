@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
 import { getDb } from './db';
 import { ensureSchema } from './schema';
 import {
@@ -161,10 +161,12 @@ describe('progress-store 进度存储层', () => {
         const progress = await getModuleProgress(cid, '语文', 'poems');
 
         expect(progress).not.toBeNull();
-        expect(progress.subject).toBe('语文');
-        expect(progress.moduleKey).toBe('poems');
-        expect(progress.stars).toBe(3);
-        expect(progress.rounds).toBe(1);
+        if (progress) {
+          expect(progress.subject).toBe('语文');
+          expect(progress.moduleKey).toBe('poems');
+          expect(progress.stars).toBe(3);
+          expect(progress.rounds).toBe(1);
+        }
       });
 
       it('getModuleProgress returns null for missing', async () => {
