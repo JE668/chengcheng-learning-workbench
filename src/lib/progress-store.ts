@@ -19,7 +19,7 @@ export interface ModuleProgressRow {
   lastPlayed: number;
 }
 
-function tsToMs(v: unknown): number {
+export function tsToMs(v: unknown): number {
   if (!v) return 0;
   const t = new Date(String(v)).getTime();
   return Number.isNaN(t) ? 0 : t;
