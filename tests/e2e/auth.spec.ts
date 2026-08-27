@@ -2,9 +2,15 @@ import { test, expect } from '@playwright/test';
 
 test.describe('认证流程', () => {
   test.beforeEach(async ({ page }) => {
-    // 清理 localStorage 和 cookie
+    // 清理 localStorage 和 cookie - 使用 addInitScript 在页面加载前执行
     await page.context().clearCookies();
-    await page.evaluate(() => localStorage.clear());
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+      } catch {
+        // 忽略跨域或无权限错误
+      }
+    });
   });
 
   test('家长登录', async ({ page }) => {
