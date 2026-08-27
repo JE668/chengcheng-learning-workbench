@@ -39,14 +39,14 @@
   ],
   "exclude": [
     "node_modules",
-    "src/components/ui/**",      # 新增 UI 组件待修复 TS
-    "src/hooks/**",              # 新增 Hooks 待修复 TS
-    "src/lib/tts/**",            # TTS 重构待修复 TS
-    "src/lib/db/kysely.ts",      # Kysely 适配器待修复
-    "src/lib/repos/**",          # Repository 待修复 TS
-    "src/lib/dal/**",            # DAL 待修复 TS
-    "src/lib/stores/index.ts",   # Store 待修复 TS
-    "src/lib/index.ts",          # 导出冲突待修复
-    "src/env.mjs"                # 环境变量配置
+    "src/components/ui/**",
+    "src/hooks/**",
+    "src/lib/tts/**",
+    "src/lib/db/kysely.ts",
+    "src/lib/repos/**",
+    "src/lib/dal/**",
+    "src/lib/stores/index.ts",
+    "src/lib/index.ts",
+    "src/env.mjs"
   ]
 }

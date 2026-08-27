@@ -51,6 +51,7 @@ const iconSizeStyles = {
   md: 'w-4 h-4',
   lg: 'w-5 h-5',
   xl: 'w-6 h-6',
+  icon: 'w-5 h-5',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

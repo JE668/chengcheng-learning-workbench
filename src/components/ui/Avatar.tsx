@@ -1,6 +1,6 @@
 'use client';
 
-import { HTMLAttributes, forwardRef, useMemo, useState } from 'react';
+import React, { HTMLAttributes, forwardRef, useMemo, useState } from 'react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

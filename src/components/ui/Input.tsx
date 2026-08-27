@@ -4,7 +4,7 @@ import { InputHTMLAttributes, forwardRef, useId } from 'react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   /** 标签文本 */
   label?: string;
   /** 错误信息 */
@@ -156,7 +156,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = 'Input';
 
 /** Textarea 组件 */
-export interface TextareaProps extends Omit<InputProps, 'leftIcon' | 'rightIcon'> {
+export interface TextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'size'> {
+  /** 标签文本 */
+  label?: string;
+  /** 错误信息 */
+  error?: string;
+  /** 帮助文本 */
+  hint?: string;
+  /** 尺寸 */
+  size?: 'sm' | 'md' | 'lg';
+  /** 是否全宽 */
+  block?: boolean;
+  /** 变体 */
+  variant?: 'default' | 'filled' | 'outlined';
   rows?: number;
 }
 
