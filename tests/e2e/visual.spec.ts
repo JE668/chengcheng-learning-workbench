@@ -3,7 +3,13 @@ import { test, expect } from '@playwright/test';
 test.describe('视觉回归测试', () => {
   test.beforeEach(async ({ page }) => {
     await page.context().clearCookies();
-    await page.evaluate(() => localStorage.clear());
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+      } catch {
+        // 忽略跨域或无权限错误
+      }
+    });
   });
 
   test('登录页面视觉基线', async ({ page }) => {
