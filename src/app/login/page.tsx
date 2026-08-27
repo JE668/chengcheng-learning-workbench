@@ -104,6 +104,7 @@ export default function LoginPage() {
         <form id="login-form" onSubmit={submit} className="space-y-4">
           <input
             type="text"
+            name="username"
             placeholder="用户名"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -111,7 +112,8 @@ export default function LoginPage() {
           />
           <div className="relative">
             <input
-              type='password'
+              type="password"
+              name="password"
               placeholder="密码"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
