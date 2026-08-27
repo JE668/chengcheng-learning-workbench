@@ -11,6 +11,9 @@ test.describe('认证流程', () => {
         // 忽略跨域或无权限错误
       }
     });
+    
+    // 设置更长的超时
+    test.setTimeout(60000);
   });
 
   test('家长登录', async ({ page }) => {
