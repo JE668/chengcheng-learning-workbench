@@ -26,7 +26,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
+
+      - name: 验证 package.json 存在
+        run: ls -la package.json pnpm-lock.yaml
 
       - name: 安装依赖
         run: pnpm install
@@ -87,7 +90,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
+
+      - name: 验证 package.json 存在
+        run: ls -la package.json pnpm-lock.yaml
 
       - name: 安装依赖
         run: pnpm install
@@ -127,7 +133,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
+
+      - name: 验证 package.json 存在
+        run: ls -la package.json pnpm-lock.yaml
 
       - name: 安装依赖
         run: pnpm install
@@ -167,7 +176,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
+
+      - name: 验证 package.json 存在
+        run: ls -la package.json pnpm-lock.yaml
 
       - name: 安装依赖
         run: pnpm install
