@@ -9,6 +9,10 @@ export default defineConfig({
   timeout: 60000,
   expect: {
     timeout: 10000,
+    toHaveScreenshot: {
+      maxDiffPixels: 100,
+      threshold: 0.2,
+    },
   },
   reporter: 'html',
   use: {
@@ -46,11 +50,5 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: true,
     timeout: 120000,
-  },
-  expect: {
-    toHaveScreenshot: {
-      maxDiffPixels: 100,
-      threshold: 0.2,
-    },
   },
 });
