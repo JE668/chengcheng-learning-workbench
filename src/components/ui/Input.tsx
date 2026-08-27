@@ -75,7 +75,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const describedBy = [error && errorId, hint && hintId].filter(Boolean).join(' ') || undefined;
 
     return (
-      <div className={twMerge('w-full', block && 'block', className)}>
+      <div className={twMerge('w-full', block && 'block', classNameProp)}>
         {label && (
           <label
             htmlFor={id}
@@ -225,7 +225,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
               error && 'border-danger focus-visible:ring-danger focus-visible:border-danger',
               disabled && 'bg-surface-hover'
             ),
-            classNameProp
+            className
           )}
           disabled={disabled}
           required={required}
