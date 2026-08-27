@@ -60,11 +60,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       size = 'md',
       block = true,
       variant = 'default',
-      className,
+      className: classNameProp,
       id: providedId,
       disabled,
       required,
-      ...props
+      ...restProps
     },
     ref
   ) => {
@@ -110,14 +110,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 error && 'border-danger focus-visible:ring-danger focus-visible:border-danger',
                 disabled && 'bg-surface-hover'
               ),
-              props.className
+              classNameProp
             )}
             disabled={disabled}
             required={required}
             aria-invalid={error ? 'true' : 'false'}
             aria-describedby={describedBy}
             aria-required={required}
-            {...props}
+            {...restProps}
           />
           {rightIcon && (
             <div
@@ -186,7 +186,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       disabled,
       required,
       rows = 3,
-      ...props
+      ...restProps
     },
     ref
   ) => {
@@ -225,14 +225,14 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
               error && 'border-danger focus-visible:ring-danger focus-visible:border-danger',
               disabled && 'bg-surface-hover'
             ),
-            props.className
+            classNameProp
           )}
           disabled={disabled}
           required={required}
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={describedBy}
           aria-required={required}
-          {...props}
+          {...restProps}
         />
         {error && (
           <p
@@ -260,11 +260,11 @@ Textarea.displayName = 'Textarea';
 
 /** Label 组件 */
 export const Label = forwardRef<HTMLLabelElement, React.LabelHTMLAttributes<HTMLLabelElement>>(
-  ({ className, ...props }, ref) => (
+  ({ className, ...restProps }, ref) => (
     <label
       ref={ref}
       className={twMerge('block text-sm font-semibold text-text mb-1.5', className)}
-      {...props}
+      {...restProps}
     />
   )
 );

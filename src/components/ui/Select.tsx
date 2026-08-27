@@ -76,7 +76,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const listboxRef = useRef<HTMLDivElement>(null);
-    const optionsRef = useRef<HTMLLIElement[]>([]);
+    const optionsRef = useRef<(HTMLLIElement | null)[]>([]);
 
     const filteredOptions = searchable
       ? options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()))
@@ -288,7 +288,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(
                           option.disabled && 'opacity-50 cursor-not-allowed'
                         )
                       )}
-                      onClick={() => handleOptionClick(option.value, option.disabled)}
+                      onClick={() => handleOptionClick(option.value, option.disabled ?? false)}
                       onMouseEnter={() => setHighlightedIndex(index)}
                     >
                       {option.label}

@@ -7,6 +7,7 @@ Object.assign(process.env, {
 
 // Testing Library 扩展匹配器
 import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
