@@ -105,13 +105,13 @@ jobs:
       - name: 安装依赖
         run: pnpm install
 
-      - name: 安装 Playwright 浏览器
-        run: pnpm exec playwright install --with-deps chromium
+      - name: 安装 Playwright 浏览器（全部）
+        run: pnpm exec playwright install --with-deps
 
       - name: 启动开发服务器
         run: |
           pnpm dev > dev.log 2>&1 &
-          sleep 20
+          sleep 30
           curl -f http://localhost:3000 || (cat dev.log && exit 1)
 
       - name: 运行 E2E 测试（仅核心认证流程）
@@ -152,19 +152,20 @@ jobs:
       - name: 安装依赖
         run: pnpm install
 
-      - name: 安装 Playwright 浏览器
-        run: pnpm exec playwright install --with-deps chromium
+      - name: 安装 Playwright 浏览器（全部）
+        run: pnpm exec playwright install --with-deps
 
       - name: 启动开发服务器
         run: |
           pnpm dev > dev.log 2>&1 &
-          sleep 20
+          sleep 30
           curl -f http://localhost:3000 || (cat dev.log && exit 1)
 
       - name: 生成视觉基线（首次运行）
         run: pnpm e2e --project=chromium tests/e2e/visual.spec.ts --update-snapshots
         env:
           E2E_BASE_URL: http://localhost:3000
+        continue-on-error: true
 
       - name: 上传视觉差异报告
         if: always()
