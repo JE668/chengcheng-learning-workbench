@@ -3,7 +3,13 @@ import { test, expect } from '@playwright/test';
 test.describe('学习核心流程', () => {
   test.beforeEach(async ({ page }) => {
     await page.context().clearCookies();
-    await page.evaluate(() => localStorage.clear());
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+      } catch {
+        // 跨域或无权限时忽略
+      }
+    });
 
     // 登录孩子账号
     await page.goto('/login');

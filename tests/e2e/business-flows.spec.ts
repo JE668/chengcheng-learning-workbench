@@ -3,7 +3,15 @@ import { test, expect } from '@playwright/test';
 test.describe('核心业务流程', () => {
   test.beforeEach(async ({ page }) => {
     await page.context().clearCookies();
-    await page.evaluate(() => localStorage.clear());
+    // 在导航前用 addInitScript 清理，避免页面仍处于 about:blank 时
+    // page.evaluate 触发 SecurityError: Access is denied for this document。
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+      } catch {
+        // 跨域或无权限时忽略
+      }
+    });
   });
 
   test.describe('每日一练完整流程', () => {

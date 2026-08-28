@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/auth';
 import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
@@ -72,6 +73,12 @@ const QuestionSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    // 鉴权：必须登录
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: '未登录' }, { status: 401 });
+    }
+
     if (!process.env.NVIDIA_API_KEY) {
       return new Response(
         JSON.stringify({ error: 'NVIDIA_API_KEY not configured' }),

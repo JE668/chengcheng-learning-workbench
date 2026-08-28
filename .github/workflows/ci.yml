@@ -7,6 +7,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # 供 build.yml 通过 `uses:` 复用调用；缺此项时 GitHub 会拒绝实例化
+  # precheck job，导致整个 build run 0 jobs 直接失败。
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -201,6 +204,9 @@ jobs:
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
 
+      - name: 初始化测试数据库（seed 默认账号，local.db 被 gitignore 未入库）
+        run: pnpm seed
+
       - name: 安装 Playwright 浏览器（全部）
         run: pnpm exec playwright install --with-deps chromium
 
@@ -297,6 +303,9 @@ jobs:
 
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
+
+      - name: 初始化测试数据库（seed 默认账号，local.db 被 gitignore 未入库）
+        run: pnpm seed
 
       - name: 安装 Playwright 浏览器（全部）
         run: pnpm exec playwright install --with-deps chromium

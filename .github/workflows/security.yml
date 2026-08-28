@@ -149,7 +149,9 @@ jobs:
   snyk:
     name: Snyk Security Scan
     runs-on: ubuntu-latest
-    if: env.SNYK_TOKEN != ''
+    # job 级 if 不能引用 env context（env 在该条件求值时尚未生效），
+    # 否则整个 workflow 校验失败、0 job 创建。改引用 secrets，语义不变。
+    if: ${{ secrets.SNYK_TOKEN != '' }}
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:

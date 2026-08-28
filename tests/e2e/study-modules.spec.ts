@@ -3,7 +3,13 @@ import { test, expect } from '@playwright/test';
 test.describe('学习模块完整流程', () => {
   test.beforeEach(async ({ page }) => {
     await page.context().clearCookies();
-    await page.evaluate(() => localStorage.clear());
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+      } catch {
+        // 跨域或无权限时忽略
+      }
+    });
     // 孩子登录
     await page.goto('/login');
     await page.fill('input[name="username"]', 'cara');
@@ -205,7 +211,13 @@ test.describe('学习模块完整流程', () => {
 test.describe('TTS 语音功能', () => {
   test.beforeEach(async ({ page }) => {
     await page.context().clearCookies();
-    await page.evaluate(() => localStorage.clear());
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+      } catch {
+        // 跨域或无权限时忽略
+      }
+    });
     await page.goto('/login');
     await page.fill('input[name="username"]', 'cara');
     await page.fill('input[name="password"]', '0000');
@@ -232,7 +244,13 @@ test.describe('TTS 语音功能', () => {
 test.describe('Sentry 错误上报验证', () => {
   test.beforeEach(async ({ page }) => {
     await page.context().clearCookies();
-    await page.evaluate(() => localStorage.clear());
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+      } catch {
+        // 跨域或无权限时忽略
+      }
+    });
     await page.goto('/login');
     await page.fill('input[name="username"]', 'cara');
     await page.fill('input[name="password"]', '0000');

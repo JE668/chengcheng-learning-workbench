@@ -10,6 +10,11 @@
 *.log
 local.db
 local.db-journal
+local.db-shm
+local.db-wal
+# Playwright 产物（每次 e2e 运行产生）
+/test-results/
+/playwright-report/
 .DS_Store
 .vercel
 .env*
