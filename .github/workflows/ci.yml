@@ -11,15 +11,21 @@ on:
   # precheck job，导致整个 build run 0 jobs 直接失败。
   workflow_call:
 
-# 注意：group 不能写 `${{ github.workflow }}`。本 workflow 被 build.yml 以
-# `uses:` 复用调用时，嵌套 run 的 github.workflow 会取调用方名字
-# （"Build and Push Image"），与 build.yml 自身的 concurrency group 撞车，
-# 所以 group 不能用 `${{ github.workflow }}`，必须用固定标识 "CI-"。
-# group 还必须包含 event_name：本 workflow 既被 push 独立触发，也被 build.yml
-# 以 workflow_call 嵌套调用；若不区分，两者共享同一 group，cancel-in-progress
-# 会杀掉正在运行的兄弟 run（表现为 CI 被 cancelled、precheck 失败）。
+# 本 workflow 被 build.yml 以 `uses:` 复用调用，因此 concurrency group 必须同时
+# 区分「谁在调用」。关键点：
+#   - github.event_name 在嵌套调用中继承父事件（仍为 "push"），无法区分来源，
+#     用它会再次撞车。
+#   - github.workflow 在嵌套调用中取调用方名字（"Build and Push Image"），可区分。
+#   - 必须加 "CI-" 前缀：否则嵌套 run 的 group 会变成
+#     "Build and Push Image-refs/heads/main"，与 build.yml 自身的 group 完全相同，
+#     cancel-in-progress 会让 build.yml 与它自己的 precheck 互相取消。
+#
+# 最终三条线互不干扰：
+#   CI push 独立运行      -> CI-CI-refs/heads/main
+#   ci.yml 被 build 调用  -> CI-Build and Push Image-refs/heads/main
+#   build.yml 自身        -> Build and Push Image-refs/heads/main
 concurrency:
-  group: CI-${{ github.event_name }}-${{ github.ref }}
+  group: CI-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
