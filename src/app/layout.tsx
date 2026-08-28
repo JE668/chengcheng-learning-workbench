@@ -5,7 +5,7 @@ import OfflineIndicator from '@/components/OfflineIndicator';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import * as Sentry from '@sentry/nextjs';
 import { reportWebVitals } from '@/lib/web-vitals';
-import { PageTransition } from '@/components/atomic';
+import { PageTransition } from '@/components/PageTransition';
 import { QueryProvider } from '@/providers/QueryProvider';
 
 export const dynamic = 'force-dynamic';
