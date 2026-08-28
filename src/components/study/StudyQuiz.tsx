@@ -5,6 +5,7 @@ import { speakZh, speakEn, playTtsEnd } from '@/lib/speak';
 import { pickMokoLine, getMokoPraise, MokoPraiseBanner } from '@/components/study/MokoPraise';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { useModuleProgress } from '@/lib/module-progress';
+import { useStudyContext } from '@/lib/study-context';
 
 /** 一道选择题：prompt 为题目展示（可含 emoji / JSX），options 含正确项，answer 为正确项文本 */
 export interface QuizItem {
@@ -54,6 +55,7 @@ function waitSpeechEnd(p: Promise<void>, ms: number): Promise<void> {
  * 12 个幼小衔接模块里大部分（应用题 / 阅读理解 / 序数 / 比轻重 / 星期 / 英语句型 …）
  * 直接喂数据即可，无需各自重写交互。
  * 传入 moduleKey 后，每完成一轮（默认 8 题）按正确率结算 0~3 颗星并记录关卡进度。
+ * 优先使用 RSC 父组件通过 Context 传入的初始进度（直查库），兜底回退到客户端 Hook 请求 API。
  */
 export function StudyQuiz({
   items,
@@ -68,7 +70,15 @@ export function StudyQuiz({
   roundSize = 8,
 }: Props) {
   const sKey = subjectKey ?? SUBJ_KEY[subject] ?? subject;
-  const progress = useModuleProgress(sKey, moduleKey ?? '');
+  const ctx = useStudyContext();
+  const ctxModuleKey = ctx?.moduleKey ?? moduleKey ?? '';
+  const ctxSubjectKey = ctx?.subject ?? sKey;
+
+  // 优先使用 Context 传入的初始进度（RSC 直查库），兜底用 Hook 请求 API
+  const hookProgress = useModuleProgress(ctxSubjectKey, ctxModuleKey);
+  const initialStars = ctx?.initialProgress?.stars ?? hookProgress.stars ?? 0;
+  const initialRounds = ctx?.initialProgress?.rounds ?? hookProgress.rounds ?? 0;
+  const initialLastPlayed = ctx?.initialProgress?.lastPlayed ?? hookProgress.lastPlayed ?? 0;
 
   const order = useMemo(
     () => (randomOrder ? shuffle(items.map((_, i) => i)) : items.map((_, i) => i)),
@@ -85,6 +95,8 @@ export function StudyQuiz({
   const [roundDone, setRoundDone] = useState(false);
   const [roundStars, setRoundStars] = useState(0);
   const [roundAcc, setRoundAcc] = useState(0);
+  // 使用 initialProgress 初始化显示用星数
+  const [displayStars, setDisplayStars] = useState(initialStars);
   const attemptsRef = useRef(0);
   const rightRef = useRef(0);
   const answeredRef = useRef(0);
@@ -119,7 +131,9 @@ export function StudyQuiz({
     // 星获取门槛调低：做够一轮就至少 1 星（参与奖，保护一年级孩子积极性）；
     // 正确率 ≥70% 给 2 星，≥90% 给 3 星。
     const stars = acc >= 0.9 ? 3 : acc >= 0.7 ? 2 : 1;
-    if (moduleKey) progress.record(stars);
+    if (moduleKey) hookProgress.record(stars);
+    // 乐观更新显示用星数
+    setDisplayStars((prev) => Math.max(prev, stars));
     setRoundAcc(Math.round(acc * 100));
     setRoundStars(stars);
     setRoundDone(true);

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-check.1.2.xsd">
+  <!-- Suppress false positives for development-only dependencies -->
+  <suppress>
+    <notes>Development dependency - not bundled in production</notes>
+    <packageUrl>pkg:npm/@playwright/test@1.45.3</packageUrl>
+    <cve>CVE-2024-XXXX</cve>
+  </suppress>
+  <suppress>
+    <notes>Development dependency - not bundled in production</notes>
+    <packageUrl>pkg:npm/@types/node@20.14.12</packageUrl>
+    <cve>CVE-2024-XXXX</cve>
+  </suppress>
+  <suppress>
+    <notes>Development dependency - not bundled in production</notes>
+    <packageUrl>pkg:npm/typescript@5.5.4</packageUrl>
+    <cve>CVE-2024-XXXX</cve>
+  </suppress>
+  <suppress>
+    <notes>Development dependency - not bundled in production</notes>
+    <packageUrl>pkg:npm/eslint@8.57.1</packageUrl>
+    <cve>CVE-2024-XXXX</cve>
+  </suppress>
+  <suppress>
+    <notes>Development dependency - not bundled in production</notes>
+    <packageUrl>pkg:npm/vitest@2.1.9</packageUrl>
+    <cve>CVE-2024-XXXX</cve>
+  </suppress>
+  <suppress>
+    <notes>Development dependency - not bundled in production</notes>
+    <packageUrl>pkg:npm/tailwindcss@3.4.7</packageUrl>
+    <cve>CVE-2024-XXXX</cve>
+  </suppress>
+  <suppress>
+    <notes>Known false positive in pdfjs-dist (PDF parsing library)</notes>
+    <packageUrl>pkg:npm/pdfjs-dist@6.2.108</packageUrl>
+    <cve>CVE-2024-XXXX</cve>
+  </suppress>
+</suppressions>

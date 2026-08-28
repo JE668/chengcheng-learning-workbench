@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 const USERS = [
   { username: 'parent', label: '👩 爸爸妈妈', role: 'parent', color: 'from-moko-purple to-moko-violet', emoji: '👑' },
@@ -80,7 +81,14 @@ export default function LoginPage() {
         {/* 乐美欢迎头像 */}
         <div className="relative mx-auto mb-5 w-32 h-32">
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-moko-pink to-moko-purple opacity-20 animate-pulse" />
-          <img src="/moko/lemei.jpg" alt="乐美" className="w-28 h-28 rounded-full border-4 border-moko-pink shadow-lg mx-auto object-cover relative z-10" />
+          <Image
+            src="/moko/lemei.jpg"
+            alt="乐美"
+            fill
+            className="w-28 h-28 rounded-full border-4 border-moko-pink shadow-lg mx-auto object-cover relative z-10"
+            priority
+            sizes="112px"
+          />
           <span className="absolute -bottom-1 -right-1 text-3xl z-20">👑</span>
         </div>
 

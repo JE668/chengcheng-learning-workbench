@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { ModuleProgressRow } from '@/lib/progress-store';
 
 const SUBJ_META: Record<string, { label: string; color: string; text: string; emoji: string }> = {
   chinese: { label: '语文', color: 'bg-moko-pink', text: 'text-moko-rose', emoji: '❤️' },
@@ -8,17 +9,36 @@ const SUBJ_META: Record<string, { label: string; color: string; text: string; em
   english: { label: '英语', color: 'bg-moko-yellow', text: 'text-moko-yellow', emoji: '🔤' },
 };
 
+const SUBJECTS = ['chinese', 'math', 'english'] as const;
+
 interface P {
   stars: number;
   rounds: number;
   lastPlayed: number;
 }
 
-export default function GrowthTree() {
+interface GrowthTreeProps {
+  /** 进度数据（由 RSC 父组件直查库获取），为空时兜底请求 API */
+  progressData?: ModuleProgressRow[];
+}
+
+export default function GrowthTree({ progressData }: GrowthTreeProps) {
   const [data, setData] = useState<Record<string, P>>({});
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    if (progressData) {
+      // 使用 RSC 传入的数据
+      const m: Record<string, P> = {};
+      progressData.forEach((it) => {
+        m[`${it.subject}:${it.moduleKey}`] = { stars: it.stars || 0, rounds: it.rounds || 0, lastPlayed: it.lastPlayed || 0 };
+      });
+      setData(m);
+      setLoaded(true);
+      return;
+    }
+
+    // 兜底：客户端请求 API
     let active = true;
     fetch('/api/module-progress')
       .then((r) => r.json())
@@ -37,9 +57,7 @@ export default function GrowthTree() {
     return () => {
       active = false;
     };
-  }, []);
-
-  const subjects = ['chinese', 'math', 'english'];
+  }, [progressData]);
   // 动态读取 STUDY_MODULES，避免 SSR 阶段访问 window
   const [summary, setSummary] = useState({
     per: [] as { s: string; total: number; mastered: number; got: number; count: number; mods: { key: string; label: string; emoji: string }[] }[],
@@ -54,7 +72,7 @@ export default function GrowthTree() {
     let active = true;
     import('@/lib/study-modules').then(({ STUDY_MODULES }) => {
       if (!active) return;
-      const perCalc = subjects.map((s) => {
+      const perCalc = SUBJECTS.map((s) => {
         const mods = STUDY_MODULES[s] || [];
         let total = 0;
         let mastered = 0;

@@ -112,17 +112,20 @@ export class WebSpeechLooseEngine implements TTSEngine {
         finish(started, e.error);
       };
 
-      // 等待队列清空
-      const waitForQueue = () => {
+      // 先取消现有语音，等待取消完成
+      window.speechSynthesis.cancel();
+      
+      // 使用 requestAnimationFrame 等待下一帧确保 cancel 生效
+      const waitForCancel = () => {
         if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
           window.speechSynthesis.speak(utterance);
         } else {
-          setTimeout(waitForQueue, 10);
+          // 递归检查，使用更短的间隔减少延迟
+          setTimeout(waitForCancel, 5);
         }
       };
-
-      window.speechSynthesis.cancel();
-      waitForQueue();
+      
+      requestAnimationFrame(waitForCancel);
 
       const startTimer = setTimeout(() => {
         if (!started) finish(false, 'start timeout');

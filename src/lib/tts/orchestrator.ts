@@ -11,12 +11,33 @@ import {
 import { WebSpeechStrictEngine } from './engines/web-speech-strict';
 import { WebSpeechLooseEngine } from './engines/web-speech-loose';
 import { EdgeTTSEngine } from './engines/edge-tts';
+import { logger } from '@/lib/logger';
 
 /** 熔断器状态 */
 interface CircuitBreakerState {
   failures: number;
   lastFailure: number;
   open: boolean;
+}
+
+/**
+ * 平台检测 - 识别已知有问题的平台
+ */
+function detectPlatform(): { isEdgeOnAndroid: boolean; isProblematic: boolean } {
+  if (typeof navigator === 'undefined') return { isEdgeOnAndroid: false, isProblematic: false };
+  
+  const ua = navigator.userAgent;
+  const isEdge = /Edg\//i.test(ua);
+  const isAndroid = /Android/i.test(ua);
+  const isMobile = /Mobile|Tablet/i.test(ua) || (isAndroid && !/Chrome/i.test(ua));
+  
+  // Edge on Android (包括小米平板 Edge) - Web Speech 支持有限
+  const isEdgeOnAndroid = isEdge && isAndroid;
+  
+  // 其他已知问题平台
+  const isProblematic = isEdgeOnAndroid;
+  
+  return { isEdgeOnAndroid, isProblematic };
 }
 
 /**
@@ -43,6 +64,9 @@ export class TTSOrchestrator {
   private circuitBreakers: Map<TTSEngineType, CircuitBreakerState> = new Map();
   private readonly FAILURE_THRESHOLD = 5;
   private readonly RESET_TIMEOUT = 60000; // 60秒
+  
+  // 平台信息缓存
+  private platformInfo = detectPlatform();
 
   constructor() {
     this.initEngines();
@@ -50,11 +74,19 @@ export class TTSOrchestrator {
   }
 
   private initEngines(): void {
-    this.engines = [
-      new WebSpeechStrictEngine(),
-      new WebSpeechLooseEngine(),
-      new EdgeTTSEngine(),
-    ];
+    // 在有问题的平台上，直接跳过 Web Speech，使用 Edge TTS
+    if (this.platformInfo.isProblematic) {
+      logger.warn('[TTS] Detected problematic platform, skipping Web Speech engines');
+      this.engines = [
+        new EdgeTTSEngine(),
+      ];
+    } else {
+      this.engines = [
+        new WebSpeechStrictEngine(),
+        new WebSpeechLooseEngine(),
+        new EdgeTTSEngine(),
+      ];
+    }
   }
 
   private initCircuitBreakers(): void {
@@ -73,22 +105,24 @@ export class TTSOrchestrator {
   async speak(text: string, lang: TTSLanguage, options: TTSOptions = {}): Promise<TTSResult> {
     this.metrics.totalRequests++;
 
-    for (const engine of this.engines) {
+    for (let i = 0; i < this.engines.length; i++) {
+      const engine = this.engines[i];
+      
       // 检查熔断器
       if (this.isCircuitOpen(engine.type)) {
-        console.log(`[TTS] ${engine.name} circuit open, skipping`);
+        logger.debug(`[TTS] ${engine.name} circuit open, skipping`);
         continue;
       }
 
       // 检查可用性
       const available = await engine.isAvailable(lang);
       if (!available) {
-        console.log(`[TTS] ${engine.name} not available`);
+        logger.debug(`[TTS] ${engine.name} not available`);
         continue;
       }
 
       try {
-        console.log(`[TTS] Trying ${engine.name} for: "${text.slice(0, 30)}..."`);
+        logger.debug(`[TTS] Trying ${engine.name} for: "${text.slice(0, 30)}..."`);
         const result = await engine.speak(text, lang, options);
 
         if (result.success) {
@@ -96,15 +130,20 @@ export class TTSOrchestrator {
           return result;
         } else {
           this.recordFailure(engine.type, result.error ?? 'Unknown error');
-          console.warn(`[TTS] ${engine.name} failed: ${result.error}`);
+          logger.warn(`[TTS] ${engine.name} failed: ${result.error}`);
         }
       } catch (e: any) {
         this.recordFailure(engine.type, e.message);
-        console.error(`[TTS] ${engine.name} threw:`, e);
+        logger.error(`[TTS] ${engine.name} threw`, undefined, e);
       }
 
       // 记录降级
       this.metrics.fallbackCount++;
+      
+      // 降级前短暂等待，确保前一个引擎的音频完全停止
+      if (i < this.engines.length - 1) {
+        await new Promise(r => setTimeout(r, 50));
+      }
     }
 
     // 全部失败
@@ -187,7 +226,7 @@ export class TTSOrchestrator {
     if (Date.now() - state.lastFailure > this.RESET_TIMEOUT) {
       state.failures = 0;
       state.open = false;
-      console.log(`[TTS] Circuit breaker for ${type} reset`);
+      logger.debug(`[TTS] Circuit breaker for ${type} reset`);
       return false;
     }
 
@@ -214,7 +253,7 @@ export class TTSOrchestrator {
       state.lastFailure = Date.now();
       if (state.failures >= this.FAILURE_THRESHOLD) {
         state.open = true;
-        console.warn(`[TTS] Circuit breaker OPENED for ${type} after ${state.failures} failures`);
+        logger.warn(`[TTS] Circuit breaker OPENED for ${type} after ${state.failures} failures`);
       }
     }
 

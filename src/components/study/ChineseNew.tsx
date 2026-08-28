@@ -109,11 +109,12 @@ function StrokeOrderCard({ item, learned, onLearned }: { item: { char: string; p
 
   useEffect(() => {
     let active = true;
+    const el = elRef.current;
     import('hanzi-writer').then((mod: any) => {
       const HW = mod.default ?? mod;
-      if (!active || !elRef.current) return;
-      elRef.current.innerHTML = '';
-      writerRef.current = HW.create(elRef.current, item.char, {
+      if (!active || !el) return;
+      el.innerHTML = '';
+      writerRef.current = HW.create(el, item.char, {
         width: 220,
         height: 220,
         padding: 10,
@@ -126,7 +127,7 @@ function StrokeOrderCard({ item, learned, onLearned }: { item: { char: string; p
     });
     return () => {
       active = false;
-      if (elRef.current) elRef.current.innerHTML = '';
+      if (el) el.innerHTML = '';
       writerRef.current = null;
     };
   }, [item.char]);
@@ -264,12 +265,30 @@ export function TextComprehensionModule() {
  * 连词成句（造句）
  * ===================================================================== */
 const SENTENCE_BUILD: { words: string[]; answer: string }[] = [
+  // 简单句（3-4 词）
   { words: ['我', '爱', '妈妈'], answer: '我爱妈妈' },
   { words: ['天上', '有', '小鸟'], answer: '天上有小鸟' },
   { words: ['我', '是', '小学生'], answer: '我是小学生' },
   { words: ['弟弟', '在', '看书'], answer: '弟弟在看书' },
   { words: ['花儿', '真', '美丽'], answer: '花儿真美丽' },
   { words: ['我们', '去', '上学'], answer: '我们去上学' },
+  // 稍长句（4-5 词）
+  { words: ['小明', '喜欢', '吃', '苹果'], answer: '小明喜欢吃苹果' },
+  { words: ['今天', '天气', '真', '好'], answer: '今天天气真好' },
+  { words: ['小鸟', '在', '树上', '唱歌'], answer: '小鸟在树上唱歌' },
+  { words: ['爸爸', '带', '我', '去', '公园'], answer: '爸爸带我去公园' },
+  { words: ['妹妹', '正在', '画', '画'], answer: '妹妹正在画画' },
+  { words: ['我们', '一起', '做', '游戏'], answer: '我们一起做游戏' },
+  // 生活常用句
+  { words: ['早上', '好', '老师'], answer: '早上好老师' },
+  { words: ['谢谢', '你', '的', '帮助'], answer: '谢谢你的帮助' },
+  { words: ['请', '借', '我', '一支', '笔'], answer: '请借我一支笔' },
+  { words: ['我', '想', '喝', '水'], answer: '我想喝水' },
+  { words: ['放学', '了', '我们', '回家'], answer: '放学了我们回家' },
+  // 观察句
+  { words: ['大树', '长', '得', '真', '高'], answer: '大树长得真高' },
+  { words: ['小河', '里', '的', '水', '清'], answer: '小河里的水清' },
+  { words: ['云朵', '像', '棉花', '糖'], answer: '云朵像棉花糖' },
 ];
 
 export function SentenceBuildModule() {
@@ -279,7 +298,7 @@ export function SentenceBuildModule() {
   const { record } = useModuleProgress('chinese', 'sentence');
   const correctRef = useRef(0);
   const s = SENTENCE_BUILD[idx % SENTENCE_BUILD.length];
-  const scrambled = useMemo(() => shuffle(s.words.map((_, i) => i)), [idx]); // 下标打乱
+  const scrambled = useMemo(() => shuffle(s.words.map((_, i) => i)), [s.words]); // 下标打乱
 
   function tapWord(originalIndex: number) {
     if (result !== 'idle') return;

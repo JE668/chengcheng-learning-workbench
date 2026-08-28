@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 import { User } from '@/lib/types';
 
 const childLinks = [
@@ -65,7 +66,14 @@ export default function Nav({ user }: { user: User }) {
       {/* desktop sidebar */}
       <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 bg-gradient-to-b from-moko-purple to-moko-violet p-4 text-white shadow-xl">
         <div className="flex items-center gap-3 mb-8 px-2">
-          <img src="/moko/lemei.jpg" alt="logo" className="w-12 h-12 rounded-full border-4 border-white shadow" />
+          <Image
+            src="/moko/lemei.jpg"
+            alt="logo"
+            width={48}
+            height={48}
+            className="w-12 h-12 rounded-full border-4 border-white shadow"
+            sizes="48px"
+          />
           <div>
             <h1 className="font-bold text-xl leading-tight">程程学习工作台</h1>
             <p className="text-xs opacity-80">{user.displayName} · {isParent ? '爸爸妈妈' : '小朋友'}</p>

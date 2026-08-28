@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const ROUNDS = [
   { char: '大', options: ['大象', '小草', '太阳', '小河'], answer: '大象' },
@@ -30,6 +30,11 @@ export default function CharacterMatch({ onFinish, level = 1 }: { onFinish: (sco
   const [done, setDone] = useState(false);
   const current = order[index];
 
+  const finish = useCallback((c: number) => {
+    setDone(true);
+    onFinish(c * 15 + Math.max(0, time));
+  }, [onFinish, time]);
+
   useEffect(() => {
     if (done) return;
     const id = setInterval(() => setTime((t) => (t > 0 ? t - 1 : 0)), 1000);
@@ -38,12 +43,7 @@ export default function CharacterMatch({ onFinish, level = 1 }: { onFinish: (sco
 
   useEffect(() => {
     if (time === 0 && !done) finish(correct);
-  }, [time, done, correct]);
-
-  function finish(c: number) {
-    setDone(true);
-    onFinish(c * 15 + Math.max(0, time));
-  }
+  }, [time, done, correct, finish]);
 
   function choose(opt: string) {
     if (done) return;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useEffect, useState } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * 防抖 Hook
@@ -80,6 +81,7 @@ export function useHotkey(
 
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, callback, ...deps]);
 }
 
@@ -126,7 +128,7 @@ export function useLocalStorage<T>(key: string, initialValue: T | (() => T)) {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       }
     } catch (error) {
-      console.error(`Error setting localStorage key "${key}":`, error);
+      logger.error(`Error setting localStorage key "${key}"`, undefined, error as Error);
     }
   }, [key, storedValue]);
 
@@ -157,7 +159,7 @@ export function useSessionStorage<T>(key: string, initialValue: T | (() => T)) {
         window.sessionStorage.setItem(key, JSON.stringify(valueToStore));
       }
     } catch (error) {
-      console.error(`Error setting sessionStorage key "${key}":`, error);
+      logger.error(`Error setting sessionStorage key "${key}"`, undefined, error as Error);
     }
   }, [key, storedValue]);
 
@@ -176,7 +178,7 @@ export function useCopyToClipboard(): [boolean, (text: string) => Promise<void>]
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      logger.error('Failed to copy', undefined, err as Error);
       setCopied(false);
     }
   }, []);

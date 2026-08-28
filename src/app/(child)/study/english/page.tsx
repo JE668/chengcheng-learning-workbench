@@ -1,14 +1,23 @@
 import Link from 'next/link';
+import { getCurrentUser, resolveChildId } from '@/lib/auth';
+import { getModuleProgressAll } from '@/lib/progress-store';
 import { STUDY_MODULES, SUBJECT_META } from '@/lib/study-modules';
 import { ModuleCover } from '@/components/study/ModuleCover';
 import { ModuleStars } from '@/components/study/ModuleStars';
 import { MokoHelper } from '@/components/MokoHelper';
 import { EN_UNITS } from '@/lib/study-data';
 
-export default function EnglishStudyPage() {
+export default async function EnglishStudyPage() {
   const modules = STUDY_MODULES.english;
   const meta = SUBJECT_META.english;
   const labelOf = new Map(modules.map((m) => [m.key, m]));
+
+  // RSC 直查库：获取当前孩子英语科目的所有模块进度
+  const user = await getCurrentUser();
+  const childId = user ? await resolveChildId(user) : null;
+  const allProgress = childId ? await getModuleProgressAll(childId) : [];
+  const starsMap = new Map(allProgress.filter(p => p.subject === 'english').map(p => [p.moduleKey, p.stars]));
+
   return (
     <div className="max-w-4xl mx-auto pb-28 fade-up">
       <div className="flex items-center gap-3 mb-4">
@@ -59,7 +68,7 @@ export default function EnglishStudyPage() {
               <div className="p-2.5">
                 <h3 className="text-sm font-black text-gray-800">{m.label}</h3>
                 <div className="mt-1">
-                  <ModuleStars subject="english" moduleKey={m.key} />
+                  <ModuleStars subject="english" moduleKey={m.key} stars={starsMap.get(m.key)} />
                 </div>
               </div>
             </Link>

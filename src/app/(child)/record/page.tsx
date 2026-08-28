@@ -1,6 +1,7 @@
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { getDb, getChildPoints } from '@/lib/db';
 import { getGrowthDiary } from '@/lib/castle';
+import { getModuleProgressAll } from '@/lib/progress-store';
 import Link from 'next/link';
 import GrowthTree from '@/components/GrowthTree';
 import CheckinCalendar from '@/components/CheckinCalendar';
@@ -26,6 +27,10 @@ export default async function RecordPage() {
   });
   const redeems = await db.execute({ sql: 'SELECT * FROM redemptions WHERE child_id = ? ORDER BY created_at DESC LIMIT 10', args: [user.id] });
   const diary = await getGrowthDiary(user.id, 20);
+
+  // RSC 直查库：获取当前孩子的所有模块进度，传给 GrowthTree 避免客户端请求 API
+  const childId = await resolveChildId(user);
+  const moduleProgress = childId ? await getModuleProgressAll(childId) : [];
 
   // 近 7 天积分趋势
   const weekAgo = new Date();
@@ -156,7 +161,7 @@ export default async function RecordPage() {
 
       {/* 🌳 成长树 */}
       <h2 className="text-2xl font-black text-moko-violet mb-3">🌳 我的成长树</h2>
-      <GrowthTree />
+      <GrowthTree progressData={moduleProgress} />
 
       {/* 📔 萌可成长日记 */}
       <h2 className="text-2xl font-black text-moko-violet mb-3">📔 萌可成长日记</h2>

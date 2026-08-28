@@ -1,0 +1,181 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Run daily at 03:00 UTC to catch new vulnerabilities
+    - cron: '0 3 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write  # for codeql upload
+  actions: read  # for checking workflow runs
+
+jobs:
+  # npm audit - fast, built-in
+  npm-audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Cache pnpm store
+        id: pnpm-store-cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - uses: actions/cache@v4
+        name: Cache node_modules
+        id: node-modules-cache
+        with:
+          path: |
+            **/node_modules
+            .next/cache
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: Run npm audit
+        run: |
+          # Use official npm registry for audit (npmmirror doesn't support audit endpoint)
+          pnpm audit --json --registry=https://registry.npmjs.org > audit-report.json || true
+          # Exit with error if high/critical vulnerabilities found
+          HIGH_CRITICAL=$(cat audit-report.json | jq '[.advisories[] | select(.severity == "high" or .severity == "critical")] | length')
+          if [ "$HIGH_CRITICAL" -gt 0 ]; then
+            echo "❌ Found $HIGH_CRITICAL high/critical vulnerabilities"
+            cat audit-report.json | jq '.advisories[] | select(.severity == "high" or .severity == "critical") | {title: .title, severity: .severity, module: .module_name, url: .url}'
+            exit 1
+          else
+            echo "✅ No high/critical vulnerabilities found"
+          fi
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: audit-report.json
+
+  # OWASP Dependency Check - more comprehensive
+  dependency-check:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        id: depcheck
+        with:
+          project: 'chengcheng-learning-workbench'
+          path: '.'
+          format: 'JSON'
+          out: 'dependency-check-report'
+          args: >
+            --failOnCVSS 7
+            --suppression suppression.xml
+            --enableExperimental
+            --enableRetired
+
+      - name: Upload dependency check report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: dependency-check-report/
+
+  # CodeQL Analysis (GitHub's built-in SAST)
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript, typescript]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: +security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
+
+  # Snyk (optional - requires SNYK_TOKEN secret)
+  snyk:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+    if: env.SNYK_TOKEN != ''
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Snyk test
+        uses: snyk/actions/node@master
+        with:
+          command: test
+          args: --severity-threshold=high --json-file-output=snyk-report.json
+
+      - name: Upload Snyk report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-report
+          path: snyk-report.json

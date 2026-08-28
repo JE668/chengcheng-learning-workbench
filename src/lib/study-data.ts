@@ -1261,6 +1261,15 @@ export const ORDINALS: OrdinalItem[] = [
   { row: ['🍓', '🍉', '🍇', '🍒', '🍑'], ask: 3, question: '从左边数，🍒排第几？', answer: '第4' },
   { row: ['🦁', '🐯', '🐻', '🐼', '🐨'], ask: 4, question: '从左边数，🐨排第几？', answer: '第5' },
   { row: ['⭐', '🌙', '☁️', '⚡', '❄️'], ask: 3, question: '从左边数，⚡排第几？', answer: '第4' },
+  // 新增：扩充到 15 道，减少重复
+  { row: ['🐷', '🐮', '🐔', '🐴', '🐑'], ask: 1, question: '从左边数，🐮排第几？', answer: '第2' },
+  { row: ['🚁', '✈️', '🚀', '🛸', '🛩️'], ask: 2, question: '从左边数，🚀排第几？', answer: '第3' },
+  { row: ['🍞', '🥐', '🥖', '🍩', '🍪'], ask: 4, question: '从左边数，🍪排第几？', answer: '第5' },
+  { row: ['🌈', '☔', '⛄', '☀️', '🌪️'], ask: 0, question: '从左边数，🌈排第几？', answer: '第1' },
+  { row: ['🎃', '👻', '🧛', '🧟', '🧙'], ask: 3, question: '从左边数，🧟排第几？', answer: '第4' },
+  { row: ['🎁', '🎀', '🎈', '🎊', '🎉'], ask: 2, question: '从左边数，🎈排第几？', answer: '第3' },
+  { row: ['🧱', '🧲', '🔧', '🔨', '⚙️'], ask: 1, question: '从左边数，🔧排第几？', answer: '第2' },
+  { row: ['🥕', '🥔', '🥦', '🌽', '🍅'], ask: 4, question: '从左边数，🍅排第几？', answer: '第5' },
 ];
 
 /* -------------------- 数学 · 钟表半时（分针指 6） -------------------- */
@@ -1270,11 +1279,17 @@ export interface ClockHalfItem {
 }
 export const CLOCK_HALF: ClockHalfItem[] = [
   { hour: 1, label: '1时半' },
+  { hour: 2, label: '2时半' },
   { hour: 3, label: '3时半' },
+  { hour: 4, label: '4时半' },
   { hour: 5, label: '5时半' },
+  { hour: 6, label: '6时半' },
   { hour: 7, label: '7时半' },
+  { hour: 8, label: '8时半' },
   { hour: 9, label: '9时半' },
+  { hour: 10, label: '10时半' },
   { hour: 11, label: '11时半' },
+  { hour: 12, label: '12时半' },
 ];
 
 /* -------------------- 数学 · 比轻重 / 比长短 -------------------- */

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const AL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const al = 'abcdefghijklmnopqrstuvwxyz';
@@ -33,6 +33,11 @@ export default function LetterAdventure({ onFinish, level = 1 }: { onFinish: (sc
   const [time, setTime] = useState(TIME[lv]);
   const [done, setDone] = useState(false);
 
+  const finish = useCallback((c: number) => {
+    setDone(true);
+    onFinish(c * 10 + Math.max(0, time));
+  }, [onFinish, time]);
+
   useEffect(() => {
     if (done) return;
     const id = setInterval(() => setTime((t) => (t > 0 ? t - 1 : 0)), 1000);
@@ -41,12 +46,7 @@ export default function LetterAdventure({ onFinish, level = 1 }: { onFinish: (sc
 
   useEffect(() => {
     if (time === 0 && !done) finish(correct);
-  }, [time, done, correct]);
-
-  function finish(c: number) {
-    setDone(true);
-    onFinish(c * 10 + Math.max(0, time));
-  }
+  }, [time, done, correct, finish]);
 
   function pick(l: string) {
     if (done) return;

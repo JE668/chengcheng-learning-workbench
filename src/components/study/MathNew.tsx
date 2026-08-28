@@ -120,64 +120,19 @@ function ClockHalfFace({ hour }: { hour: number }) {
 }
 
 export function ClockHalfModule() {
-  const [idx, setIdx] = useState(0);
-  const [picked, setPicked] = useState<string | null>(null);
-  const correctRef = useRef(0);
-  const { record } = useModuleProgress('math', 'clock-half');
-  const logM = useMistakeLogger();
-  const current: ClockHalfItem = CLOCK_HALF[idx % CLOCK_HALF.length];
-  const choices = shuffle(CLOCK_HALF.map((c) => c.label)).slice(0, 4);
-  if (!choices.includes(current.label)) choices[0] = current.label;
-
-  function choose(label: string) {
-    if (picked) return;
-    setPicked(label);
-    const ok = label === current.label;
-    speakZh(ok ? '答对啦！' : `现在是 ${current.label}`);
-    if (ok) {
-      correctRef.current += 1;
-      record(Math.min(3, Math.ceil(correctRef.current / 3)));
-      setTimeout(() => {
-        setPicked(null);
-        setIdx((i) => i + 1);
-      }, 1200);
-    } else {
-      logM({ subject: '数学', kind: '认识钟表', prompt: '现在是几点半？', answer: current.label, wrong: label });
-      setTimeout(() => setPicked(null), 1500);
-    }
-  }
-
-  return (
-    <div className="space-y-5">
-      <div className="rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-cyan/30">
-        <ClockHalfFace hour={current.hour} />
-        <div className="text-center text-lg font-black text-moko-cyan mt-2">现在几点半？</div>
-        <div className="grid grid-cols-2 gap-3 mt-3">
-          {choices.map((label) => {
-            const isAnswer = label === current.label;
-            const isPicked = label === picked;
-            let cls = 'bg-white text-moko-cyan border-2 border-moko-cyan';
-            if (picked) {
-              if (isAnswer) cls = 'bg-green-100 text-green-700 border-2 border-green-500';
-              else if (isPicked) cls = 'bg-red-100 text-red-600 border-2 border-red-500';
-              else cls = 'bg-white text-moko-cyan border-2 border-moko-cyan opacity-60';
-            }
-            return (
-              <button
-                key={label}
-                disabled={!!picked}
-                onClick={() => choose(label)}
-                className={`py-3 rounded-xl font-black text-2xl shadow active:scale-95 transition disabled:cursor-default ${cls}`}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
+  const items: QuizItem[] = CLOCK_HALF.map((c) => ({
+    prompt: (
+      <div className="space-y-3">
+        <ClockHalfFace hour={c.hour} />
+        <div className="font-black text-moko-cyan">现在几点半？</div>
       </div>
-      <p className="text-center text-sm text-gray-500">分针指着 6，时针走过几，就是几点半。</p>
-    </div>
-  );
+    ),
+    speak: `现在是${c.label}`,
+    options: shuffle(CLOCK_HALF.map((x) => x.label).filter((x) => x !== c.label)).slice(0, 3).concat([c.label]),
+    answer: c.label,
+    kind: '钟表半时',
+  }));
+  return <StudyQuiz items={items} subject="数学" color="bg-moko-cyan" textColor="text-moko-cyan" autoSpeak="zh" moduleKey="clock-half" roundSize={6} />;
 }
 
 /* ========================================================================

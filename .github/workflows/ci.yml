@@ -117,6 +117,27 @@ jobs:
           if [ "$FAIL" = 1 ]; then echo "---"; echo "新增路由必须调用 getCurrentUser()；已知公开路由请加入 ALLOWED_MISSING 白名单。"; exit 1; fi
           echo "✅ 全部路由均已鉴权"
 
+      - name: 依赖安全扫描
+        run: |
+          # 快速 npm audit 检查 - 只阻断 high/critical
+          # 使用官方 registry（npmmirror 不支持 audit endpoint）
+          pnpm audit --json --registry=https://registry.npmjs.org > audit-report.json || true
+          HIGH_CRITICAL=$(cat audit-report.json | jq '[.advisories[] | select(.severity == "high" or .severity == "critical")] | length')
+          if [ "$HIGH_CRITICAL" -gt 0 ]; then
+            echo "❌ Found $HIGH_CRITICAL high/critical vulnerabilities"
+            cat audit-report.json | jq '.advisories[] | select(.severity == "high" or .severity == "critical") | {title: .title, severity: .severity, module: .module_name, url: .url}'
+            exit 1
+          else
+            echo "✅ No high/critical vulnerabilities found"
+          fi
+
+      - name: 上传安全扫描报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: audit-report.json
+
   # E2E 测试（独立 job，可并行，失败不阻塞主流程）
   e2e:
     runs-on: ubuntu-latest
@@ -202,8 +223,8 @@ jobs:
           # 最后确认
           curl -f http://localhost:3000 || (cat dev.log && exit 1)
 
-      - name: 运行 E2E 测试（核心认证 + 业务流程）
-        run: pnpm e2e --project=chromium tests/e2e/auth.spec.ts tests/e2e/business-flows.spec.ts --timeout=120000
+      - name: 运行 E2E 测试（核心认证 + 业务流程 + 学习模块）
+        run: pnpm e2e --project=chromium tests/e2e/auth.spec.ts tests/e2e/business-flows.spec.ts tests/e2e/study-modules.spec.ts --timeout=180000
         env:
           E2E_BASE_URL: http://localhost:3000
 

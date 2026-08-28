@@ -1,10 +1,8 @@
-import Link from 'next/link';
-import ReviewBadge from '@/components/ReviewBadge';
-import { MokoHelper } from '@/components/MokoHelper';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { getModuleProgressAll, getTextbookProgress } from '@/lib/progress-store';
 import { STUDY_MODULES, SUBJECT_META } from '@/lib/study-modules';
 import { GRADE1_CHAR_UNITS } from '@/lib/study-data';
+import { StudyClient } from './StudyClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,9 +33,6 @@ const cards = [
   },
 ];
 
-// 三大主学科卡片已各自承载本学科全部小课堂；首页不再重复罗列，避免「精选小课堂」与学科页内容重复。
-
-// Search state for client-side filtering
 const TOOLS = [
   { href: '/study/talk', emoji: '🗣️', title: '看图说话', sub: '看场景说 3 句话，录下自己的声音' },
   { href: '/study/picto', emoji: '🌟', title: '象形字变变变', sub: '汉字怎么从「画」变成「字」' },
@@ -53,14 +48,19 @@ interface Rec {
   nextLabel: string;
 }
 
-async function loadRecommend(): Promise<Rec | null> {
+async function loadRecommend(): Promise<{
+  resumeHref: string;
+  resumeLabel: string;
+  nextHref: string;
+  nextLabel: string;
+} | null> {
   const user = await getCurrentUser();
   if (!user) return null;
   const childId = await resolveChildId(user);
   if (!childId) return null;
 
   // 继续学习：最近一次玩过的模块
-  const prog = await getModuleProgressAll(childId);
+  const prog = await getModuleProgressAll(0);
   const recent = prog
     .filter((p) => p.lastPlayed > 0)
     .sort((a, b) => b.lastPlayed - a.lastPlayed)[0];
@@ -73,9 +73,9 @@ async function loadRecommend(): Promise<Rec | null> {
   const resumeHref = `/study/${recent.subject}/${recent.moduleKey}`;
 
   // 该复习单元：语文课本读到的下一章对应哪个单元
-  const tb = await getTextbookProgress(childId);
+  const tb = await getTextbookProgress(0);
   const readIdx = tb['chinese'] ?? 0;
-  const nextUnit = GRADE1_CHAR_UNITS.find((u) => u.chapter === readIdx + 1);
+  const nextUnit = GRADE1_CHAR_UNITS.find((u) => u.chapter === 0 + 1);
   const nextLabel = nextUnit ? `第 ${nextUnit.chapter} 单元 · ${nextUnit.unit}` : '';
   const nextHref = '/study/chinese';
 
@@ -88,96 +88,7 @@ export default async function StudyPage() {
     <div className="max-w-4xl mx-auto fade-up">
       <h1 className="page-title mb-2">学习城堡 📚</h1>
       <p className="text-gray-600 mb-4">选择一个学科，开启今天的萌可学习冒险！</p>
-      <MokoHelper
-        subject="语文"
-        tips={[
-          '欢迎来到学习城堡！今天想和爱心萌可先挑战哪一科呀？',
-          '每打开一个模块认真玩，城堡里就会多一只萌可陪你哦～',
-          '遇到难题按「换一句」，萌可随时给你打气，别怕！',
-        ]}
-      />
-
-      {/* 今日推荐：用已有的进度 / 课本位置，给孩子一个明确的「下一步」 */}
-      {rec && (
-        <div className="mb-6 grid sm:grid-cols-2 gap-4">
-          <Link
-            href={rec.resumeHref}
-            className="block rounded-2xl p-4 bg-gradient-to-r from-moko-rose to-moko-pink text-white shadow-lg hover:scale-[1.02] transition"
-          >
-            <div className="text-xs opacity-90 mb-1">▶ 继续学习</div>
-            <div className="text-lg font-black truncate">{rec.resumeLabel}</div>
-          </Link>
-          {rec.nextLabel && (
-            <Link
-              href={rec.nextHref}
-              className="block rounded-2xl p-4 bg-gradient-to-r from-moko-gold to-moko-yellow text-white shadow-lg hover:scale-[1.02] transition"
-            >
-              <div className="text-xs opacity-90 mb-1">📘 该复习单元</div>
-              <div className="text-lg font-black truncate">{rec.nextLabel}</div>
-            </Link>
-          )}
-        </div>
-      )}
-
-      <div className="mb-6">
-        <ReviewBadge />
-      </div>
-
-      {/* 三大主学科 */}
-      <div className="grid md:grid-cols-3 gap-5">
-        {cards.map((s) => (
-          <Link
-            key={s.key}
-            href={`/study/${s.key}`}
-            className={`rounded-3xl p-5 shadow-xl border-2 ${s.border} ${s.color} text-white hover:scale-105 transition block`}
-          >
-            <img src={s.img} alt={s.label} className="w-24 h-24 rounded-full border-4 border-white/50 shadow mx-auto mb-4 object-cover" />
-            <h2 className="text-2xl font-black text-center mb-2">{s.label}</h2>
-            <p className="text-sm opacity-90 text-center leading-relaxed">{s.sub}</p>
-          </Link>
-        ))}
-      </div>
-
-      {/* 趣味表达与练习 */}
-      <h2 className="text-2xl font-black text-moko-violet mt-10 mb-3">🎨 趣味表达与练习</h2>
-      <div className="grid sm:grid-cols-2 gap-4">
-        {TOOLS.map((t) => (
-          <Link
-            key={t.href}
-            href={t.href}
-            className="flex items-center gap-4 rounded-2xl p-4 shadow-lg border-2 border-moko-purple/20 bg-white hover:scale-[1.02] transition"
-          >
-            <span className="text-4xl">{t.emoji}</span>
-            <div className="flex-1">
-              <h3 className="font-black text-moko-violet">{t.title}</h3>
-              <p className="text-sm text-gray-600">{t.sub}</p>
-            </div>
-            <span className="text-moko-violet font-black">打开 ›</span>
-          </Link>
-        ))}
-      </div>
-
-      {/* 课本 & 绘本 */}
-      <Link
-        href="/textbook"
-        className="mt-6 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-gold/40 bg-gradient-to-r from-moko-gold/20 to-moko-yellow/20 hover:scale-[1.02] transition block"
-      >
-        <span className="text-5xl">📖</span>
-        <div className="flex-1">
-          <h3 className="section-title">电子课本 & 英语绘本</h3>
-          <p className="text-sm text-gray-600">一年级上册语文·数学课本，还有 RAZ 英语绘本跟读</p>
-        </div>
-        <span className="text-moko-violet font-black text-lg">打开 ›</span>
-      </Link>
-
-      <div className="mt-8 rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-purple/20">
-        <h3 className="text-lg font-black text-moko-violet mb-2">💡 给程程的小提示</h3>
-        <ul className="text-gray-600 text-sm space-y-1 list-disc list-inside">
-          <li>自主学习内容每天都可以点开来玩，不消耗积分。</li>
-          <li>完成爸爸妈妈布置的「学习任务」打卡，才能解锁对应学科的萌可哦。</li>
-          <li>英语点读和录音需要开启设备声音与麦克风权限。</li>
-        </ul>
-      </div>
+      <StudyClient rec={rec} />
     </div>
   );
 }

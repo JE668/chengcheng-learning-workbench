@@ -17,6 +17,7 @@ export class EdgeTTSEngine implements TTSEngine {
 
   private healthCheckCache: { available: boolean; timestamp: number } | null = null;
   private readonly HEALTH_CHECK_TTL = 30000; // 30秒缓存
+  private prewarmed = false;
 
   async isAvailable(_lang: TTSLanguage): Promise<boolean> {
     // 检查缓存
@@ -38,11 +39,31 @@ export class EdgeTTSEngine implements TTSEngine {
     }
   }
 
+  /**
+   * 预热连接 - 建立 HTTP/2 连接、DNS 预解析
+   */
+  async warmup(): Promise<void> {
+    if (this.prewarmed) return;
+    
+    try {
+      // 预热健康检查端点
+      await fetch('/api/tts/health', { method: 'GET', keepalive: true });
+      this.prewarmed = true;
+    } catch {
+      // 忽略预热失败
+    }
+  }
+
   async speak(text: string, lang: TTSLanguage, options: TTSOptions = {}): Promise<TTSResult> {
     const startTime = performance.now();
     const timeout = options.timeout ?? 12000;
 
     try {
+      // 先取消 Web Speech 语音，防止重叠
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -149,5 +170,6 @@ export class EdgeTTSEngine implements TTSEngine {
 
   dispose(): void {
     this.healthCheckCache = null;
+    this.prewarmed = false;
   }
 }

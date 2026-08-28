@@ -187,6 +187,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(
             ref={triggerRef}
             id={triggerId}
             type="button"
+            role="combobox"
             className={twMerge(
               clsx(
                 'w-full flex items-center justify-between',
@@ -207,7 +208,6 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(
             aria-activedescendant={highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined}
             aria-describedby={describedBy}
             aria-invalid={error ? 'true' : 'false'}
-            aria-required={required}
           >
             <span className={twMerge('truncate flex-1', value ? 'text-text' : 'text-text-tertiary')}>
               {selectedOption?.label ?? placeholder}
@@ -267,7 +267,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(
               )}
               <ul className="py-1" role="presentation">
                 {filteredOptions.length === 0 ? (
-                  <li className="px-3 py-4 text-center text-text-tertiary text-sm" role="option" aria-disabled="true">
+                  <li className="px-3 py-4 text-center text-text-tertiary text-sm" role="option" aria-selected="false" aria-disabled="true">
                     {searchable ? '没有匹配的选项' : '没有可用选项'}
                   </li>
                 ) : (

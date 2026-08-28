@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useTTSStore } from '@/lib/stores';
 import { getTTSOrchestrator, TTSOrchestrator } from '@/lib/tts/orchestrator';
 import { TTSLanguage, TTSOptions } from '@/lib/tts/types';
+import { logger } from '@/lib/logger';
 
 /** TTS Hook 选项 */
 export interface UseTTSOptions {
@@ -78,7 +79,7 @@ export function useTTS(options: UseTTSOptions = {}): UseTTSReturn {
   useEffect(() => {
     orchestratorRef.current = getTTSOrchestrator();
     if (autoWarmup) {
-      orchestratorRef.current.warmup().catch(console.warn);
+      orchestratorRef.current.warmup().catch((e) => logger.warn('[TTS] Warmup failed', undefined, e as Error));
     }
     return () => {
       // 不要在这里 dispose，因为是单例
@@ -104,14 +105,14 @@ export function useTTS(options: UseTTSOptions = {}): UseTTSReturn {
       const result = await orchestrator.speak(item.text, item.lang, item.opts);
       item.resolve(result.success);
     } catch (e) {
-      console.error('[TTS] Queue processing error:', e);
+      logger.error('[TTS] Queue processing error', undefined, e as Error);
       item.resolve(false);
     } finally {
       processingRef.current = false;
       setPlaying(false, null);
-      // 处理下一个
+      // 处理下一个 - 短暂延迟确保音频完全停止
       if (queue.length > 0) {
-        setTimeout(processQueue, 0);
+        setTimeout(processQueue, 50);
       }
     }
   }, [dequeue, setPlaying, queue.length]);
@@ -139,14 +140,15 @@ export function useTTS(options: UseTTSOptions = {}): UseTTSReturn {
     const mergedOptions = { ...defaultOptions, ...options };
 
     if (priority === 'high') {
-      // 直接播放，不入队
+      // 直接播放，先清空队列并取消正在播放的语音
+      interrupt();
       setPlaying(true, { id: 'immediate', text, lang, opts: mergedOptions, resolve: () => {} } as any);
       try {
         const result = await orchestrator.speak(text, lang, mergedOptions);
         setPlaying(false, null);
         return result.success;
       } catch (e) {
-        console.error('[TTS] Immediate speak error:', e);
+        logger.error('[TTS] Immediate speak error', undefined, e as Error);
         setPlaying(false, null);
         return false;
       }
@@ -161,7 +163,7 @@ export function useTTS(options: UseTTSOptions = {}): UseTTSReturn {
         resolve,
       });
     });
-  }, [defaultLang, defaultOptions, enqueue, setPlaying]);
+  }, [defaultLang, defaultOptions, enqueue, setPlaying, interrupt]);
 
   /** 中文朗读 */
   const speakZh = useCallback(async (text: string, options?: TTSOptions) => {

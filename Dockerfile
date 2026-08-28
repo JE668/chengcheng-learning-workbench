@@ -6,17 +6,20 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
 
 WORKDIR /app
 
+# 启用 corepack + pnpm
+RUN corepack enable && corepack prepare pnpm@10.12.1 --activate
+
 # 先装依赖（利用 Docker 缓存层）
-COPY --link package.json package-lock.json ./
-RUN npm ci && npm cache clean --force
+COPY --link package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile && pnpm store prune
 
 # 复制源码并构建
 COPY . .
-RUN npm run lint && npx tsc --noEmit --skipLibCheck && \
-    npm run build && \
+RUN pnpm lint && npx tsc --noEmit --skipLibCheck && \
+    pnpm build && \
     rm -rf .next/cache tsconfig.tsbuildinfo && \
-    npm prune --omit=dev --no-optional && \
-    npm cache clean --force
+    pnpm prune --prod && \
+    pnpm store prune
 
 # ============ 运行阶段 ============
 FROM node:22-bookworm-slim AS runner

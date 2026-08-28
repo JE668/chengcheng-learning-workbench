@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 function makeRound(lv: number) {
   const range = [20, 50, 100][Math.min(2, Math.max(0, lv - 1))];
@@ -21,6 +21,11 @@ export default function CompareBalance({ onFinish, level = 1 }: { onFinish: (sco
   const [done, setDone] = useState(false);
   const total = 12;
 
+  const finish = useCallback((c: number) => {
+    setDone(true);
+    onFinish(c * 12 + Math.max(0, time));
+  }, [onFinish, time]);
+
   useEffect(() => {
     if (done) return;
     const id = setInterval(() => setTime((t) => (t > 0 ? t - 1 : 0)), 1000);
@@ -29,12 +34,7 @@ export default function CompareBalance({ onFinish, level = 1 }: { onFinish: (sco
 
   useEffect(() => {
     if (time === 0 && !done) finish(correct);
-  }, [time, done, correct]);
-
-  function finish(c: number) {
-    setDone(true);
-    onFinish(c * 12 + Math.max(0, time));
-  }
+  }, [time, done, correct, finish]);
 
   function pick(sym: string) {
     if (done) return;

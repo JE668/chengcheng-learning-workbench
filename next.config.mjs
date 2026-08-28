@@ -1,11 +1,21 @@
 import path from 'node:path';
 import bundleAnalyzer from '@next/bundle-analyzer';
+import { withSentryConfig } from '@sentry/nextjs';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // 整站自托管（NAS / 轻量云）需要：产出 .next/standalone 精简运行包
   output: 'standalone',
-  images: { unoptimized: true },
+  images: { 
+    unoptimized: true,
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
+  },
   // 容器内生产构建时跳过 ESLint（lint 属开发期检查，避免阻塞构建）
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
@@ -67,7 +77,7 @@ const nextConfig = {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "connect-src 'self'",
+      "connect-src 'self' https://o1319462.ingest.sentry.io",
       "media-src 'self' blob:",
       "frame-ancestors 'self'",
       "base-uri 'self'",
@@ -90,5 +100,29 @@ const nextConfig = {
   },
 };
 
+// Sentry configuration - only apply when DSN is provided
+const sentryWebpackPluginOptions = {
+  // Silent mode (no output during build)
+  silent: true,
+  // Only upload source maps for production builds
+  widenClientFileUpload: true,
+  // Automatically annotate React components
+  reactComponentAnnotation: {
+    enabled: true,
+  },
+  // Hide source maps from generated client bundles
+  hideSourceMaps: true,
+  // Disable logger
+  disableLogger: true,
+  // Automatic Vercel/Netlify/Heroku deployment detection
+  automaticVercelMonitors: false,
+};
+
 const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
-export default withBundleAnalyzer(nextConfig);
+
+// Only wrap with Sentry if DSN is provided
+const configWithSentry = process.env.SENTRY_DSN
+  ? withSentryConfig(withBundleAnalyzer(nextConfig), sentryWebpackPluginOptions)
+  : withBundleAnalyzer(nextConfig);
+
+export default configWithSentry;
