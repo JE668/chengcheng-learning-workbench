@@ -17,7 +17,14 @@ function sendToSentry(metric: WebVitalsMetric) {
   // Only send in production or when explicitly enabled
   if (process.env.NODE_ENV !== 'production' && process.env.NEXT_PUBLIC_SEND_WEB_VITALS !== 'true') {
     // Log in development for debugging
-    logger.debug('[Web Vitals]', metric);
+    logger.debug('[Web Vitals]', { 
+      name: metric.name,
+      value: metric.value,
+      rating: metric.rating,
+      delta: metric.delta,
+      id: metric.id,
+      navigationType: metric.navigationType,
+    });
     return;
   }
 

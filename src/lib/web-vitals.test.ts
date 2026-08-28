@@ -42,16 +42,14 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 describe('web-vitals', () => {
-  const originalEnv = process.env.NODE_ENV;
-
   beforeEach(() => {
     vi.clearAllMocks();
     mockScope.setTag.mockClear();
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
   });
 
   afterEach(() => {
-    process.env.NODE_ENV = originalEnv;
+    vi.unstubAllEnvs();
   });
 
   describe('sendToConsole', () => {
@@ -74,7 +72,7 @@ describe('web-vitals', () => {
 
   describe('sendToSentry', () => {
     it('logs to logger in development', () => {
-      process.env.NODE_ENV = 'development';
+      vi.stubEnv('NODE_ENV', 'development');
       
       sendToSentry({ name: 'CLS', value: 0.1, rating: 'good', delta: 0.1, id: '1', navigationType: 'navigate' });
       
@@ -84,7 +82,7 @@ describe('web-vitals', () => {
     });
 
     it('sends to Sentry in production', () => {
-      process.env.NODE_ENV = 'production';
+      vi.stubEnv('NODE_ENV', 'production');
       
       sendToSentry({ name: 'LCP', value: 2500, rating: 'needs-improvement', delta: 2500, id: '2', navigationType: 'navigate' });
       

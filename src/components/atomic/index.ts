@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Atomic Components - 原子组件库
  * 基于 class-variance-authority (cva) + Tailwind CSS

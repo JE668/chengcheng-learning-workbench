@@ -98,7 +98,8 @@ export default function TtsDiagPage() {
         push(`  总请求数: ${metrics.totalRequests}`);
         push(`  降级次数: ${metrics.fallbackCount}`);
         Object.entries(metrics.successByEngine).forEach(([engine, count]) => {
-          const avgLatency = metrics.avgLatencyByEngine[engine];
+          const engineType = engine as 'web-speech-strict' | 'web-speech-loose' | 'edge-tts';
+          const avgLatency = metrics.avgLatencyByEngine[engineType];
           push(`  ${engine}: 成功=${count}, 平均延迟=${avgLatency.toFixed(0)}ms`);
         });
       }

@@ -1,6 +1,6 @@
 'use client';
 
-import { TTSEngine, TTSEngineType, TTSLanguage, TTSOptions, TTSResult } from './types';
+import { TTSEngine, TTSEngineType, TTSLanguage, TTSOptions, TTSResult } from '../types';
 
 /**
  * Web Speech API - 严格模式

@@ -1,7 +1,9 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { PracticeQuestion, PracticeSubmitResult, ModuleProgressRow, ChildPreferences } from '@/lib/types';
+import type { PracticeQuestion, PracticeSubmitResult } from '@/lib/daily-practice/types';
+import type { ModuleProgressRow } from '@/lib/progress-store';
+import type { ChildPreferencesState } from '@/lib/stores';
 
 // ===== 查询键常量 =====
 export const queryKeys = {
@@ -14,7 +16,6 @@ export const queryKeys = {
   castleState: (childId: number) => ['castle', childId] as const,
   childTasks: (childId: number) => ['tasks', childId] as const,
   childPreferences: (childId: number) => ['preferences', childId] as const,
-  moduleProgressAll: (childId: number) => ['moduleProgress', childId, 'all'] as const,
 } as const;
 
 // ===== 通用请求函数 =====
@@ -91,7 +92,7 @@ export function useChildTasks(childId: number) {
 export function useChildPreferences(childId: number) {
   return useQuery({
     queryKey: queryKeys.childPreferences(childId),
-    queryFn: () => fetchJson<ChildPreferences>(`/api/child/preferences?childId=${childId}`),
+    queryFn: () => fetchJson<ChildPreferencesState>(`/api/child/preferences?childId=${childId}`),
     enabled: !!childId,
   });
 }
@@ -156,7 +157,7 @@ export function useUpdatePreferences() {
   
   return useMutation({
     mutationFn: ({ childId, preferences }: { childId: number; preferences: Partial<any> }) => 
-      fetchJson<ChildPreferences>(`/api/child/preferences`, {
+      fetchJson<ChildPreferencesState>(`/api/child/preferences`, {
         method: 'POST',
         body: JSON.stringify({ childId, ...preferences }),
       }),

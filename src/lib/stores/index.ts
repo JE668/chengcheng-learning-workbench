@@ -32,7 +32,7 @@ export const useAuthStore = create<AuthState>()(
 );
 
 /** 孩子学习偏好 Store */
-interface ChildPreferencesState {
+export interface ChildPreferencesState {
   // 数学难度
   mathDiffLevel: 'easy' | 'medium' | 'hard';
   setMathDiffLevel: (level: 'easy' | 'medium' | 'hard') => void;
@@ -117,7 +117,8 @@ export const useTTSStore = create<TTSState>((set, get) => ({
   enqueue: (item) => {
     const id = `tts-${Date.now()}-${++ttsId}`;
     const newItem = { ...item, id };
-    set((s) => ({ queue: [...s.queue, newItem].sort((a, b) => (b.opts.priority ?? 0) - (a.opts.priority ?? 0)) }));
+    const priorityValue = (p?: 'normal' | 'high') => p === 'high' ? 1 : 0;
+    set((s) => ({ queue: [...s.queue, newItem].sort((a, b) => priorityValue(b.opts.priority) - priorityValue(a.opts.priority)) }));
     return id;
   },
 

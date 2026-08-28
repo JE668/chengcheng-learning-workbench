@@ -1,6 +1,6 @@
 'use client';
 
-import { TTSEngine, TTSEngineType, TTSLanguage, TTSOptions, TTSResult } from './types';
+import { TTSEngine, TTSEngineType, TTSLanguage, TTSOptions, TTSResult } from '../types';
 
 /**
  * Edge TTS 服务端引擎

@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useToast } from '@/components/atomic';
+import { useUIStore } from '@/lib/stores';
 
 export default function PwaRegister() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [pushSupported, setPushSupported] = useState(false);
-  const { showToast } = useToast();
+  const showToast = useUIStore((s) => s.showToast);
 
   useEffect(() => {
     if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
@@ -28,22 +28,7 @@ export default function PwaRegister() {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               setUpdateAvailable(true);
-              showToast({
-                title: '发现新版本',
-                description: '点击刷新获取最新功能',
-                variant: 'info',
-                action: (
-                  <button
-                    onClick={() => {
-                      newWorker.postMessage({ type: 'SKIP_WAITING' });
-                      window.location.reload();
-                    }}
-                    className="px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
-                  >
-                    立即刷新
-                  </button>
-                ),
-              });
+              showToast('发现新版本，点击刷新获取最新功能', 'info');
             }
           });
         });
@@ -59,25 +44,21 @@ export default function PwaRegister() {
         // 监听同步完成
         navigator.serviceWorker.addEventListener('message', (event) => {
           if (event.data?.type === 'SYNC_COMPLETE') {
-            showToast({
-              title: '同步完成',
-              description: '离线数据已同步到服务器',
-              variant: 'success',
-            });
+            showToast('离线数据已同步到服务器', 'success');
           }
         });
 
         // 监听在线/离线状态
         window.addEventListener('online', () => {
-          showToast({ title: '网络已恢复', variant: 'success' });
+          showToast('网络已恢复', 'success');
           // 触发同步
-          if (registration) {
-            registration.sync?.register('sync-offline-actions');
+          if (registration && 'sync' in registration) {
+            (registration as any).sync?.register('sync-offline-actions');
           }
         });
 
         window.addEventListener('offline', () => {
-          showToast({ title: '已离线', description: '数据将在本地保存，联网后自动同步', variant: 'warning' });
+          showToast('已离线，数据将在本地保存，联网后自动同步', 'info');
         });
 
       } catch (error) {
@@ -87,7 +68,7 @@ export default function PwaRegister() {
 
     window.addEventListener('load', onLoad);
     return () => window.removeEventListener('load', onLoad);
-  }, []);
+  }, [showToast]);
 
   // 请求推送通知权限并订阅
   const subscribeToPush = async () => {
