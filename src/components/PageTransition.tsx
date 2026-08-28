@@ -29,16 +29,22 @@ export function PageTransition({ children }: { children: ReactNode }) {
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
     : false;
 
+  const motionProps = prefersReducedMotion 
+    ? {} 
+    : {
+        initial: 'initial',
+        animate: 'enter',
+        exit: 'exit',
+        variants: pageVariants,
+        transition,
+      };
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={pathname}
-        initial={prefersReducedMotion ? false : 'initial'}
-        animate={prefersReducedMotion ? false : 'enter'}
-        exit={prefersReducedMotion ? false : 'exit'}
-        variants={pageVariants}
-        transition={transition}
         className="min-h-screen"
+        {...motionProps}
       >
         {children}
       </motion.div>
