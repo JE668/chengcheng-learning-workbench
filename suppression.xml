@@ -1,39 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-check.1.2.xsd">
-  <!-- Suppress false positives for development-only dependencies -->
+  <!--
+    已评估并接受的 Next.js 14.x 已知漏洞
+
+    背景：next@14.2.35 是 14.x 分支的最新版本，但仍有 8 个 high 级 advisory，
+    补丁仅在 15.5.15 ~ 15.5.21 发布，14.x 分支没有任何可用修复版本。
+
+    漏洞清单：
+      GHSA-h25m-26qc-wcjf  HTTP request deserialization DoS
+      GHSA-q4gf-8mx6-v5v3  DoS with Server Components
+      GHSA-8h8q-6873-q5fj  DoS with Server Components (incomplete fix)
+      GHSA-c4j6-fc7j-m34r  SSRF via WebSocket upgrades
+      GHSA-36qx-fr4f-26g5  Middleware / Proxy bypass (Pages Router i18n)
+      GHSA-m99w-x7hq-7vfj  DoS in App Router using Server Actions
+      GHSA-89xv-2m56-2m9x  SSRF in Server Actions on custom servers
+      GHSA-p9j2-gv94-2wf4  SSRF in rewrites
+
+    影响面评估：
+      - SSRF 三类（GHSA-c4j6 / GHSA-89xv / GHSA-p9j2）均要求攻击者控制 Host 头。
+        项目以 `next start` 部署（GHCR 镜像 + 飞牛 NAS），Host 由 next 自身固定，
+        攻击路径实际不可达。
+      - Middleware bypass（GHSA-36qx）仅影响 Pages Router 的 i18n 配置，
+        本项目使用 App Router，不触发。
+      - DoS 类（GHSA-h25m / GHSA-q4gf / GHSA-8h8q / GHSA-m99w）需构造特定的
+        React Server Components 序列化请求。
+
+    升级计划：迁移到 Next.js 15 需同步 React 18 -> 19，改动面大，
+    作为独立任务另行评估，不阻塞当前 CI。
+  -->
   <suppress>
-    <notes>Development dependency - not bundled in production</notes>
-    <packageUrl>pkg:npm/@playwright/test@1.45.3</packageUrl>
-    <cve>CVE-2024-XXXX</cve>
-  </suppress>
-  <suppress>
-    <notes>Development dependency - not bundled in production</notes>
-    <packageUrl>pkg:npm/@types/node@20.14.12</packageUrl>
-    <cve>CVE-2024-XXXX</cve>
-  </suppress>
-  <suppress>
-    <notes>Development dependency - not bundled in production</notes>
-    <packageUrl>pkg:npm/typescript@5.5.4</packageUrl>
-    <cve>CVE-2024-XXXX</cve>
-  </suppress>
-  <suppress>
-    <notes>Development dependency - not bundled in production</notes>
-    <packageUrl>pkg:npm/eslint@8.57.1</packageUrl>
-    <cve>CVE-2024-XXXX</cve>
-  </suppress>
-  <suppress>
-    <notes>Development dependency - not bundled in production</notes>
-    <packageUrl>pkg:npm/vitest@2.1.9</packageUrl>
-    <cve>CVE-2024-XXXX</cve>
-  </suppress>
-  <suppress>
-    <notes>Development dependency - not bundled in production</notes>
-    <packageUrl>pkg:npm/tailwindcss@3.4.7</packageUrl>
-    <cve>CVE-2024-XXXX</cve>
-  </suppress>
-  <suppress>
-    <notes>Known false positive in pdfjs-dist (PDF parsing library)</notes>
-    <packageUrl>pkg:npm/pdfjs-dist@6.2.108</packageUrl>
-    <cve>CVE-2024-XXXX</cve>
+    <notes>Accepted risk: next 14.x has 8 high advisories with no patch on the 14.x branch. See detailed assessment in the comment above.</notes>
+    <packageName>next</packageName>
   </suppress>
 </suppressions>

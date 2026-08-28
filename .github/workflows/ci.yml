@@ -14,10 +14,12 @@ on:
 # 注意：group 不能写 `${{ github.workflow }}`。本 workflow 被 build.yml 以
 # `uses:` 复用调用时，嵌套 run 的 github.workflow 会取调用方名字
 # （"Build and Push Image"），与 build.yml 自身的 concurrency group 撞车，
-# cancel-in-progress 会互相取消，导致 precheck 嵌套 run 起不来、build job 被 skip。
-# 复用型 workflow 的 group 必须用固定标识。
+# 所以 group 不能用 `${{ github.workflow }}`，必须用固定标识 "CI-"。
+# group 还必须包含 event_name：本 workflow 既被 push 独立触发，也被 build.yml
+# 以 workflow_call 嵌套调用；若不区分，两者共享同一 group，cancel-in-progress
+# 会杀掉正在运行的兄弟 run（表现为 CI 被 cancelled、precheck 失败）。
 concurrency:
-  group: CI-${{ github.ref }}
+  group: CI-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
