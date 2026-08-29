@@ -55,9 +55,9 @@ test.describe('核心业务流程', () => {
       await page.click('button[type="submit"]');
       await expect(page).toHaveURL(/home/);
 
-      // 进入城堡
+      // 进入城堡（页面有多个"萌可城堡"文字：导航链接、卡片标签、加载状态，用 first 取第一个）
       await page.goto('/castle');
-      await expect(page.locator('text=萌可城堡')).toBeVisible();
+      await expect(page.locator('text=萌可城堡').first()).toBeVisible();
 
       // 查找收获按钮
       const harvestBtn = page.locator('button:has-text("收获")').or(page.locator('button:has-text("收割")')).or(page.locator('button:has-text("收取")'));
@@ -76,7 +76,7 @@ test.describe('核心业务流程', () => {
       await expect(page).toHaveURL(/home/);
 
       await page.goto('/castle');
-      await expect(page.locator('text=萌可城堡')).toBeVisible();
+      await expect(page.locator('text=萌可城堡').first()).toBeVisible();
 
       // 验证城堡基础信息显示
       await expect(page.locator('text=繁荣度')).toBeVisible();
@@ -126,16 +126,20 @@ test.describe('核心业务流程', () => {
       await expect(page).toHaveURL(/dashboard/);
 
       await page.goto('/tasks');
-      await page.locator('button:has-text("新建任务")').or(page.locator('a:has-text("新建任务")')).click();
+      // 展开发布表单（点击第一个"发布任务"按钮）
+      await page.locator('button:has-text("发布任务")').first().click();
+      await page.waitForTimeout(500);
 
-      await page.fill('input[name="title"]', 'E2E测试任务：朗读课文');
-      await page.selectOption('select[name="subject"]', '语文');
-      await page.fill('input[name="points"]', '5');
-      await page.fill('textarea[name="description"]', 'E2E自动化测试任务');
-      await page.locator('button[type="submit"]:has-text("创建")').click();
+      // 填写表单（input 无 name 属性，通过相邻 label 定位）
+      await page.locator('label:has-text("任务名称") + input').fill('E2E测试任务：朗读课文');
+      await page.locator('label:has-text("学科") + select').selectOption('语文');
+      await page.locator('label:has-text("积分奖励") + input').fill('5');
 
-      // 验证任务创建成功
-      await expect(page.locator('text=E2E测试任务：朗读课文')).toBeVisible();
+      // 提交表单（表单内的"发布任务"按钮）
+      await page.locator('form button:has-text("发布任务")').click();
+
+      // 验证任务发布成功
+      await expect(page.locator('text=E2E测试任务：朗读课文')).toBeVisible({ timeout: 10000 });
 
       // 2. 切换到孩子账号完成任务
       await page.goto('/login');
