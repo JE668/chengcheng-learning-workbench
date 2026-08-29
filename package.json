@@ -30,7 +30,7 @@
     "analyze": "ANALYZE=true next build",
     "db:generate": "kysely-codegen --out-file src/lib/db/generated.ts --dialect sqlite --url file:local.db",
     "db:migrate": "node scripts/migrate.mjs",
-    "prepare": "husky install"
+    "prepare": "husky install || true"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.50",
