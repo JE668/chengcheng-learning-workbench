@@ -116,6 +116,7 @@ jobs:
             --suppression suppression.xml
             --enableExperimental
             --enableRetired
+            --javaHome /usr/lib/jvm/temurin-21-jdk-amd64
 
       - name: Upload dependency check report
         if: always()

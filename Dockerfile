@@ -9,9 +9,9 @@ WORKDIR /app
 # 启用 corepack + pnpm
 RUN corepack enable && corepack prepare pnpm@10.12.1 --activate
 
-# 先装依赖（利用 Docker 缓存层），HUSKY=0 禁用 git hooks（Docker 无 .git 目录）
+# 先装依赖（利用 Docker 缓存层），HUSKY=0 + --ignore-scripts 禁用 git hooks 和 build scripts（Docker 无 .git 目录）
 COPY --link package.json pnpm-lock.yaml ./
-RUN HUSKY=0 pnpm install --frozen-lockfile && pnpm store prune
+RUN HUSKY=0 pnpm install --frozen-lockfile --ignore-scripts && pnpm store prune
 
 # 复制源码并构建
 COPY . .
