@@ -78,10 +78,13 @@ test.describe('核心业务流程', () => {
       await page.goto('/castle');
       await expect(page.locator('text=萌可城堡').first()).toBeVisible();
 
-      // 验证城堡基础信息显示
+      // 验证城堡基础信息显示（大厅标签，默认）
       await expect(page.locator('text=繁荣度')).toBeVisible();
+      await expect(page.locator('text=星星币').first()).toBeVisible();
+
+      // 切换到商店标签验证阳光能量（阳光在 shop 标签中条件渲染）
+      await page.click('button:has-text("商店")');
       await expect(page.locator('text=阳光')).toBeVisible();
-      await expect(page.locator('text=星星币')).toBeVisible();
     });
   });
 
