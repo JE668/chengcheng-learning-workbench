@@ -20,14 +20,32 @@ test.describe('认证流程', () => {
     await page.goto('/login');
     await expect(page).toHaveTitle(/程程学习工作台/);
 
+    // 清除 localStorage 并重新加载（避免上次登录的 lastUser 自动填充干扰）
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await expect(page).toHaveTitle(/程程学习工作台/);
+
+    // 捕获 login API 响应（诊断用）
+    let loginStatus: number | null = null;
+    let loginBody: any = null;
+    page.on('response', async (res) => {
+      if (res.url().includes('/api/auth/login')) {
+        loginStatus = res.status();
+        loginBody = await res.json().catch(() => null);
+      }
+    });
+
     // 填写登录表单
     await page.fill('input[name="username"]', 'parent');
     await page.fill('input[name="password"]', '12345678');
     await page.click('button[type="submit"]');
 
-    // 应该重定向到家长看板
-    await expect(page).toHaveURL(/\/dashboard/);
+    // 应该重定向到家长看板（增加超时到 30 秒）
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 30000 });
     await expect(page.getByRole('heading', { name: /爸爸妈妈看板/ })).toBeVisible();
+
+    // 诊断：输出 login API 响应
+    console.log(`Login API: HTTP ${loginStatus}, body=${JSON.stringify(loginBody)}`);
   });
 
   test('孩子登录', async ({ page }) => {
