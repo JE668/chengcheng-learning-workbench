@@ -107,12 +107,8 @@ jobs:
         run: |
           wget -q https://github.com/dependency-check/DependencyCheck/releases/download/v5.3.2/dependency-check-5.3.2-release.zip
           unzip -q dependency-check-5.3.2-release.zip
-          echo "=== Extracted ==="
-          find . -maxdepth 2 -type d | grep -i "dependency"
-          echo "=== Scripts ==="
-          find . -name "dependency-check.sh" -type f
-          chmod +x ./dependency-check-5.3.2/dependency-check.sh
-          ./dependency-check-5.3.2/dependency-check.sh \
+          chmod +x ./dependency-check/bin/dependency-check.sh
+          ./dependency-check/bin/dependency-check.sh \
             --project "chengcheng-learning-workbench" \
             --scan . \
             --format JSON \
