@@ -110,13 +110,12 @@ jobs:
           path: '.'
           format: 'JSON'
           out: 'dependency-check-report'
-          docker: false
+          javaToolOptions: '-Djava.home=/usr/lib/jvm/temurin-21-jdk-amd64'
           args: >
             --failOnCVSS 7
             --suppression suppression.xml
             --enableExperimental
             --enableRetired
-            --javaHome /usr/lib/jvm/temurin-21-jdk-amd64
 
       - name: Upload dependency check report
         if: always()
