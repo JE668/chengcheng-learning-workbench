@@ -108,6 +108,7 @@ jobs:
           wget -q https://github.com/dependency-check/DependencyCheck/releases/download/v13.0.0/dependency-check-13.0.0-release.zip
           unzip -q dependency-check-13.0.0-release.zip
           chmod +x ./dependency-check/bin/dependency-check.sh
+          ./dependency-check/bin/dependency-check.sh --autoupdate
           ./dependency-check/bin/dependency-check.sh \
             --project "chengcheng-learning-workbench" \
             --scan . \
