@@ -57,7 +57,7 @@ test.describe('学习核心流程', () => {
   test('萌可城堡 - 查看城堡', async ({ page }) => {
     await page.goto('/castle');
 
-    await expect(page.locator('text=萌可城堡')).toBeVisible();
+    await expect(page.locator('text=萌可城堡').first()).toBeVisible();
     await expect(page.locator('text=繁荣度')).toBeVisible();
   });
 
@@ -86,6 +86,6 @@ test.describe('学习核心流程', () => {
 
     // 4. 城堡
     await page.goto('/castle');
-    await expect(page.locator('text=萌可城堡')).toBeVisible();
+    await expect(page.locator('text=萌可城堡').first()).toBeVisible();
   });
 });
