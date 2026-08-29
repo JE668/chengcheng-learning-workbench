@@ -107,8 +107,7 @@ jobs:
         run: |
           wget -q https://github.com/dependency-check/Dependency-Check/releases/download/v10.1.0/dependency-check-10.1.0-release.zip
           unzip -q dependency-check-10.1.0-release.zip
-          chmod +x ./dependency-check-10.1.0/dependency-check.sh
-          ./dependency-check-10.1.0/dependency-check.sh \
+          java -jar ./dependency-check-10.1.0/dependency-check-10.1.0-release.jar \
             --project "chengcheng-learning-workbench" \
             --scan . \
             --format JSON \
