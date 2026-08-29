@@ -75,7 +75,7 @@ export default function Nav({ user }: { user: User }) {
             sizes="48px"
           />
           <div>
-            <h1 className="font-bold text-xl leading-tight">程程学习工作台</h1>
+            <div className="font-bold text-xl leading-tight">程程学习工作台</div>
             <p className="text-xs opacity-80">{user.displayName} · {isParent ? '爸爸妈妈' : '小朋友'}</p>
           </div>
         </div>

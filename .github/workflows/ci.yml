@@ -233,6 +233,11 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: 启动开发服务器
+        env:
+          # e2e 有 23 次登录尝试，默认限流 5 分钟 10 次会导致后半段测试全部 429。
+          # 测试环境放宽：1 小时 100 次（仅影响本测试 run 的 dev server 进程）。
+          LOGIN_RATE_LIMIT_WINDOW: '3600'
+          LOGIN_RATE_LIMIT_MAX: '100'
         run: |
           pnpm dev > dev.log 2>&1 &
           DEV_PID=$!
@@ -333,6 +338,11 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: 启动开发服务器
+        env:
+          # e2e 有 23 次登录尝试，默认限流 5 分钟 10 次会导致后半段测试全部 429。
+          # 测试环境放宽：1 小时 100 次（仅影响本测试 run 的 dev server 进程）。
+          LOGIN_RATE_LIMIT_WINDOW: '3600'
+          LOGIN_RATE_LIMIT_MAX: '100'
         run: |
           pnpm dev > dev.log 2>&1 &
           DEV_PID=$!

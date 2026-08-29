@@ -23,18 +23,15 @@ test.describe('核心业务流程', () => {
       await page.click('button[type="submit"]');
       await expect(page).toHaveURL(/home/);
 
-      // 2. 进入每日一练页面
+      // 2. 进入每日一练页面（答题界面无 h1，用攻略按钮验证加载完成）
       await page.goto('/daily-practice');
-      await expect(page.locator('h1')).toContainText('今日一练');
+      await expect(page.getByText('攻略')).toBeVisible();
 
-      // 3. 验证三科题目存在
-      await expect(page.locator('text=语文')).toBeVisible();
-      await expect(page.locator('text=数学')).toBeVisible();
-      await expect(page.locator('text=英语')).toBeVisible();
+      // 3. 验证答题界面存在（daily-practice 一次只显示一题，进度条显示第 X / Y 题）
+      await expect(page.getByText(/第 \d+ \/ \d+ 题/)).toBeVisible();
 
-      // 4. 简单模拟答题（选择第一个选项）
-      // 注意：实际题目渲染是动态的，这里只验证页面结构
-      await expect(page.locator('button[type="submit"]').or(page.locator('button:has-text("提交")'))).toBeVisible();
+      // 4. 验证题目卡片渲染
+      await expect(page.locator('.card-moko').first()).toBeVisible();
     });
 
     test('每日一练 - 错题复习模式', async ({ page }) => {
@@ -46,7 +43,7 @@ test.describe('核心业务流程', () => {
 
       await page.goto('/daily-practice');
       // 验证错题复习入口（如果有到期错题）
-      await expect(page.locator('h1')).toContainText('今日一练');
+      await expect(page.getByText('攻略')).toBeVisible();
     });
   });
 
@@ -96,9 +93,9 @@ test.describe('核心业务流程', () => {
       await page.click('button[type="submit"]');
       await expect(page).toHaveURL(/home/);
 
-      // 进入错题本
-      await page.goto('/mistakes');
-      await expect(page.locator('h1')).toContainText('错题本');
+      // 进入错题本（路由 /record，页面标题「学习记录」）
+      await page.goto('/record');
+      await expect(page.locator('h1')).toContainText('学习记录');
     });
 
     test('错题复习 - 答对后验证间隔重复推进', async ({ page }) => {
@@ -166,8 +163,8 @@ test.describe('核心业务流程', () => {
       await page.click('button[type="submit"]');
       await expect(page).toHaveURL(/home/);
 
-      await page.goto('/redeem');
-      await expect(page.locator('h1')).toContainText('奖励兑换');
+      await page.goto('/shop');
+      await expect(page.locator('h1')).toContainText('星星币商城');
 
       // 尝试兑换一个奖励
       const redeemBtn = page.locator('button:has-text("兑换")').or(page.locator('button:has-text("申请")')).first();

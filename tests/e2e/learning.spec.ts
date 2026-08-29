@@ -70,10 +70,9 @@ test.describe('学习核心流程', () => {
   });
 
   test('完整学习流程：今日一练 -> 学习 -> 游戏 -> 城堡收获', async ({ page }) => {
-    // 1. 今日一练
+    // 1. 今日一练（答题界面无 h1，用攻略按钮验证加载完成）
     await page.goto('/daily-practice');
-    // 这里模拟完成练习（实际测试需要更复杂的交互）
-    await expect(page.locator('h1')).toContainText('今日一练');
+    await expect(page.getByText('攻略')).toBeVisible();
 
     // 2. 学习模块
     await page.goto('/study');
