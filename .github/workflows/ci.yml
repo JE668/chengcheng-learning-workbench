@@ -236,8 +236,11 @@ jobs:
         env:
           # e2e 有 23 次登录尝试，默认限流 5 分钟 10 次会导致后半段测试全部 429。
           # 测试环境放宽：1 小时 100 次（仅影响本测试 run 的 dev server 进程）。
+          # 账号级锁定：5 次失败锁 15 分钟，测试中多次登录同一账号可能误触（parent 在 auth 和 business-flows 各登录 1 次）。
           LOGIN_RATE_LIMIT_WINDOW: '3600'
           LOGIN_RATE_LIMIT_MAX: '100'
+          MAX_LOGIN_FAILS: '100'
+          LOGIN_LOCK_SECONDS: '0'
         run: |
           pnpm dev > dev.log 2>&1 &
           DEV_PID=$!
@@ -341,8 +344,11 @@ jobs:
         env:
           # e2e 有 23 次登录尝试，默认限流 5 分钟 10 次会导致后半段测试全部 429。
           # 测试环境放宽：1 小时 100 次（仅影响本测试 run 的 dev server 进程）。
+          # 账号级锁定：5 次失败锁 15 分钟，测试中多次登录同一账号可能误触（parent 在 auth 和 business-flows 各登录 1 次）。
           LOGIN_RATE_LIMIT_WINDOW: '3600'
           LOGIN_RATE_LIMIT_MAX: '100'
+          MAX_LOGIN_FAILS: '100'
+          LOGIN_LOCK_SECONDS: '0'
         run: |
           pnpm dev > dev.log 2>&1 &
           DEV_PID=$!
