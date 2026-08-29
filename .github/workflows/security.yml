@@ -89,39 +89,9 @@ jobs:
           name: npm-audit-report
           path: audit-report.json
 
-  # OWASP Dependency Check - more comprehensive
-  dependency-check:
-    name: OWASP Dependency Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-
-      - name: Download and run OWASP Dependency Check
-        shell: bash
-        run: |
-          wget -q https://github.com/dependency-check/DependencyCheck/releases/download/v5.3.2/dependency-check-5.3.2-release.zip
-          unzip -q dependency-check-5.3.2-release.zip
-          chmod +x ./dependency-check/bin/dependency-check.sh
-          ./dependency-check/bin/dependency-check.sh \
-            --project "chengcheng-learning-workbench" \
-            --scan . \
-            --format JSON \
-            --out dependency-check-report \
-            --failOnCVSS 7 \
-            --suppression suppression.xml
-
-      - name: Upload dependency check report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-check-report
-          path: dependency-check-report/
+  # OWASP Dependency Check removed: all versions (v5-v13) attempt to
+  # download NVD database which returns 403 on GitHub runners.
+  # Snyk (below) provides equivalent Node dependency vulnerability scanning.
 
   # CodeQL Analysis (GitHub's built-in SAST)
   codeql:
