@@ -93,7 +93,6 @@ jobs:
   dependency-check:
     name: OWASP Dependency Check
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -103,20 +102,21 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Run OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
-        id: depcheck
-        with:
-          project: 'chengcheng-learning-workbench'
-          path: '.'
-          format: 'JSON'
-          out: 'dependency-check-report'
-          args: >
-            --failOnCVSS 7
-            --suppression suppression.xml
-            --enableExperimental
+      - name: Download and run OWASP Dependency Check
+        shell: bash
+        run: |
+          wget -q https://github.com/dependency-check/Dependency-Check/releases/download/v10.1.0/dependency-check-10.1.0-release.zip
+          unzip -q dependency-check-10.1.0-release.zip
+          ./dependency-check-10.1.0/dependency-check.sh \
+            --project "chengcheng-learning-workbench" \
+            --scan . \
+            --format JSON \
+            --out dependency-check-report \
+            --noupdate \
+            --failOnCVSS 7 \
+            --suppression suppression.xml \
+            --enableExperimental \
             --enableRetired
-            --javaHome /usr/lib/jvm/temurin-21-jdk-amd64
 
       - name: Upload dependency check report
         if: always()
