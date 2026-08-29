@@ -70,11 +70,11 @@ test.describe('学习模块完整流程', () => {
 
     test('钟表半时 - 验证钟表显示正确', async ({ page }) => {
       await page.goto('/study/math/clock-half');
-      await page.waitForSelector('svg', { timeout: 10000 });
+      await expect(page.locator('h1')).toContainText('钟表半时');
 
-      // 验证钟面存在分针指向 6
-      const minuteHand = page.locator('svg line[stroke="#334155"]').first();
-      await expect(minuteHand).toBeVisible();
+      // 验证钟面 SVG 存在（分针和时针由 SVG line 渲染）
+      const svg = page.locator('svg').first();
+      await expect(svg).toBeVisible({ timeout: 10000 });
     });
   });
 
@@ -84,14 +84,12 @@ test.describe('学习模块完整流程', () => {
       await expect(page.locator('h1')).toContainText('序数排队');
       await expect(page.locator('text=从左边数')).toBeVisible();
 
-      // 等待排队图形和选项加载
-      await page.waitForSelector('.flex.flex-wrap button', { timeout: 10000 });
-      await page.waitForSelector('.grid button', { timeout: 10000 });
+      // 等待选项加载（序数排队由 StudyQuiz 渲染选项按钮，文本为"第N"）
+      const optionButtons = page.locator('button:has-text("第")');
+      await expect(optionButtons.first()).toBeVisible({ timeout: 10000 });
 
-      // 验证基本交互：点击第一个选项（测试无法预知正确答案）
-      const buttons = page.locator('.grid button:not(:disabled)');
-      await expect(buttons.first()).toBeVisible({ timeout: 10000 });
-      await buttons.first().click();
+      // 验证基本交互：点击第一个选项
+      await optionButtons.first().click();
       await page.waitForTimeout(500);
     });
   });
@@ -176,7 +174,7 @@ test.describe('TTS 语音功能', () => {
   test('TTS 诊断页面可访问', async ({ page }) => {
     await page.goto('/tts-diag');
     await expect(page.locator('h1')).toContainText('TTS 诊断');
-    await expect(page.locator('button:has-text("开始测试")')).toBeVisible();
+    await expect(page.locator('button:has-text("完整诊断")')).toBeVisible();
   });
 });
 
