@@ -110,6 +110,7 @@ jobs:
           path: '.'
           format: 'JSON'
           out: 'dependency-check-report'
+          docker: false
           args: >
             --failOnCVSS 7
             --suppression suppression.xml
