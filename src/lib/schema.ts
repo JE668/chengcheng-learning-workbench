@@ -74,6 +74,22 @@ export async function ensureSchema() {
     });
   }
 
+  // 通用迁移：为所有含 status 列的旧表添加缺失的 status 列
+  // CREATE TABLE IF NOT EXISTS 不会给已有表加列，需要逐个检查
+  const statusMigrations: { table: string; sql: string }[] = [
+    { table: 'redemptions', sql: `ALTER TABLE redemptions ADD COLUMN status TEXT DEFAULT 'pending'` },
+    { table: 'wishes', sql: `ALTER TABLE wishes ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'` },
+    { table: 'moko_owned', sql: `ALTER TABLE moko_owned ADD COLUMN status TEXT NOT NULL DEFAULT 'resident'` },
+    { table: 'daily_checkins', sql: `ALTER TABLE daily_checkins ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'` },
+  ];
+  for (const { table, sql } of statusMigrations) {
+    const cols = await db.execute({ sql: `PRAGMA table_info(${table})`, args: [] });
+    const hasCol = cols.rows.some((r: any) => r.name === 'status');
+    if (!hasCol) {
+      await db.execute({ sql, args: [] });
+    }
+  }
+
   // 增量表（每次启动都跑，幂等）：模块关卡进度——按 学科+模块 记录历史最佳星数/轮数，
   // 跨设备一致（原来存在 localStorage，换设备会丢）。放在守卫之前，已部署旧库自动补齐。
   await db.execute({
