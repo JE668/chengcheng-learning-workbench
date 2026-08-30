@@ -134,6 +134,10 @@ export async function ensureMigrationTable(db: Client): Promise<void> {
     )`,
     args: [],
   });
+  // 迁移：旧版 schema_migrations 表可能缺少 status 列
+  try {
+    await db.execute({ sql: `ALTER TABLE schema_migrations ADD COLUMN status TEXT DEFAULT 'applied'`, args: [] });
+  } catch { /* 列已存在时忽略 */ }
 }
 
 /** 执行尚未应用的迁移，并在 schema_migrations 中记录。幂等：已记录的版本不会重跑。 */
