@@ -35,14 +35,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     await ensureSchema();
   } catch (error) {
     console.error('Database initialization failed:', error);
-    // Serialize error for Client Component (must be plain object)
+    // Serialize error for Client Component (must be plain object, no functions)
     const serializedError = {
       name: error instanceof Error ? error.name : 'Error',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       digest: (error as { digest?: string }).digest,
     };
-    return <DatabaseErrorFallback error={serializedError} reset={() => window.location.reload()} />;
+    return <DatabaseErrorFallback error={serializedError} />;
   }
   return (
     <html lang="zh-CN">

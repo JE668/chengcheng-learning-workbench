@@ -11,10 +11,9 @@ interface SerializedError {
 
 interface DatabaseErrorFallbackProps {
   error: SerializedError;
-  reset: () => void;
 }
 
-export default function DatabaseErrorFallback({ error, reset }: DatabaseErrorFallbackProps) {
+export default function DatabaseErrorFallback({ error }: DatabaseErrorFallbackProps) {
   const [showError, setShowError] = useState(false);
 
   useEffect(() => {
@@ -54,7 +53,7 @@ export default function DatabaseErrorFallback({ error, reset }: DatabaseErrorFal
           </pre>
         )}
         <button
-          onClick={reset}
+          onClick={() => window.location.reload()}
           style={{
             padding: '12px 24px',
             borderRadius: 16,
