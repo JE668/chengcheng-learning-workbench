@@ -374,6 +374,7 @@ export function genClockQ(): PracticeQuestion {
     answer,
     explain: `答案是 ${c.label}`,
     emoji: '🕐',
+    clockHour: c.hour,
   };
 }
 
@@ -392,6 +393,8 @@ export function genClockHalfQ(): PracticeQuestion {
     answer,
     explain: `答案是 ${c.label}`,
     emoji: '🕐',
+    clockHour: c.hour,
+    clockHalf: true,
   };
 }
 

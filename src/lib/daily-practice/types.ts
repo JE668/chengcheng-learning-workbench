@@ -54,6 +54,10 @@ export type PracticeQuestion =
       answer: number;
       explain: string;
       emoji?: string;
+      /** 钟表题：小时数，用于渲染钟表图 */
+      clockHour?: number;
+      /** 钟表题：是否为半点题 */
+      clockHalf?: boolean;
     }
   | {
       id: string;

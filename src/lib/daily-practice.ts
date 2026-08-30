@@ -62,6 +62,10 @@ export type PracticeQuestion =
       options: string[];
       answer: number;
       explain: string;
+      /** 钟表题：小时数 */
+      clockHour?: number;
+      /** 钟表题：是否半点 */
+      clockHalf?: boolean;
     }
   | {
       id: string;
@@ -406,6 +410,7 @@ export function genClockQ(): PracticeQuestion {
     options,
     answer,
     explain: c.label,
+    clockHour: c.hour,
   };
 }
 

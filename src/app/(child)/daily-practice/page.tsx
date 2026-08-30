@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { GuideModal } from '@/components/GuideModal';
 import { EmptyState } from '@/components/EmptyState';
+import { ClockFace } from '@/components/study/ClockFace';
 import { playTts } from '@/lib/speak';
 import type { PracticeDayRecord, PracticeQuestion, PracticeSubmitResult } from '@/lib/daily-practice';
 import { sfxComplete, sfxWrong } from '@/lib/sfx';
@@ -347,7 +348,12 @@ export default function DailyPracticePage() {
               <button onClick={() => playTts(q.han, 'zh', { wsRate: 0.6, pauseMs: 300 })} className="text-sm bg-white/30 rounded-full px-4 py-1.5">🔊 听写 · 再听一遍</button>
             </>
           )}
-          {q.kind === 'math' && <div className="text-5xl font-black">{q.prompt}</div>}
+          {q.kind === 'math' && (
+            <>
+              {q.clockHour !== undefined && <ClockFace hour={q.clockHour} half={q.clockHalf ?? false} />}
+              <div className="text-5xl font-black">{q.prompt}</div>
+            </>
+          )}
           {q.kind === 'poem' && <div className="text-2xl font-black leading-relaxed">{q.prompt}</div>}
           {q.kind === 'english' && (
             <>
