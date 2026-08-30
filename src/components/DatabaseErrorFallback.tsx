@@ -2,8 +2,15 @@
 
 import { useState, useEffect } from 'react';
 
+interface SerializedError {
+  name: string;
+  message: string;
+  stack?: string;
+  digest?: string;
+}
+
 interface DatabaseErrorFallbackProps {
-  error: Error & { digest?: string };
+  error: SerializedError;
   reset: () => void;
 }
 
@@ -42,7 +49,8 @@ export default function DatabaseErrorFallback({ error, reset }: DatabaseErrorFal
         </p>
         {process.env.NODE_ENV !== 'production' && (
           <pre style={{ background: '#fef2f2', color: '#991b1b', padding: 12, borderRadius: 8, maxWidth: 500, overflow: 'auto', fontSize: 12, textAlign: 'left' }}>
-            {String(error)}
+            {error.message}
+            {error.stack && `\n\n${error.stack}`}
           </pre>
         )}
         <button
