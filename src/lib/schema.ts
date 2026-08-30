@@ -74,22 +74,6 @@ export async function ensureSchema() {
     });
   }
 
-  // 通用迁移：为所有含 status 列的旧表添加缺失的 status 列
-  // CREATE TABLE IF NOT EXISTS 不会给已有表加列，需要逐个检查
-  const statusMigrations: { table: string; sql: string }[] = [
-    { table: 'redemptions', sql: `ALTER TABLE redemptions ADD COLUMN status TEXT DEFAULT 'pending'` },
-    { table: 'wishes', sql: `ALTER TABLE wishes ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'` },
-    { table: 'moko_owned', sql: `ALTER TABLE moko_owned ADD COLUMN status TEXT NOT NULL DEFAULT 'resident'` },
-    { table: 'daily_checkins', sql: `ALTER TABLE daily_checkins ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'` },
-  ];
-  for (const { table, sql } of statusMigrations) {
-    const cols = await db.execute({ sql: `PRAGMA table_info(${table})`, args: [] });
-    const hasCol = cols.rows.some((r: any) => r.name === 'status');
-    if (!hasCol) {
-      await db.execute({ sql, args: [] });
-    }
-  }
-
   // 增量表（每次启动都跑，幂等）：模块关卡进度——按 学科+模块 记录历史最佳星数/轮数，
   // 跨设备一致（原来存在 localStorage，换设备会丢）。放在守卫之前，已部署旧库自动补齐。
   await db.execute({
@@ -374,6 +358,13 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
   ], 'write');
+
+  // 迁移：为旧数据库添加缺失的 status 列（CREATE TABLE IF NOT EXISTS 不会给已有表加列）
+  // 用 try-catch 忽略 "duplicate column" 错误，与下方其他 ALTER 迁移保持一致
+  try { await db.execute({ sql: `ALTER TABLE redemptions ADD COLUMN status TEXT DEFAULT 'pending'`, args: [] }); } catch { }
+  try { await db.execute({ sql: `ALTER TABLE wishes ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`, args: [] }); } catch { }
+  try { await db.execute({ sql: `ALTER TABLE moko_owned ADD COLUMN status TEXT NOT NULL DEFAULT 'resident'`, args: [] }); } catch { }
+  try { await db.execute({ sql: `ALTER TABLE daily_checkins ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`, args: [] }); } catch { }
 
   // 迁移：castle_state 增加 skin 字段（城堡皮肤切换）
   // 幂等：列已存在时 ALTER 抛 "duplicate column"，直接忽略。
