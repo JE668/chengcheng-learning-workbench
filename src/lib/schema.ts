@@ -64,10 +64,15 @@ export async function ensureSchema() {
   });
 
   // 迁移：为旧数据库添加缺失的 status 列（CREATE TABLE IF NOT EXISTS 不会给已有表加列）
-  await db.execute({
-    sql: `ALTER TABLE cert_requests ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`,
-    args: [],
-  });
+  // 先检查列是否存在，避免 "duplicate column name" 错误
+  const certReqCols = await db.execute({ sql: `PRAGMA table_info(cert_requests)`, args: [] });
+  const hasStatus = certReqCols.rows.some((r: any) => r.name === 'status');
+  if (!hasStatus) {
+    await db.execute({
+      sql: `ALTER TABLE cert_requests ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`,
+      args: [],
+    });
+  }
 
   // 增量表（每次启动都跑，幂等）：模块关卡进度——按 学科+模块 记录历史最佳星数/轮数，
   // 跨设备一致（原来存在 localStorage，换设备会丢）。放在守卫之前，已部署旧库自动补齐。
