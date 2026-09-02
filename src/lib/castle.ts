@@ -270,8 +270,9 @@ export async function restoreDay(
 
   // 解决该日捣蛋萌可
   await db.execute({ sql: 'UPDATE troublemakers SET resolved = 1 WHERE child_id = ? AND day = ?', args: [childId, day] });
-  // 召回逃亡萌可
+  // 召回逃亡萌可 + 恢复所有萌可的心情（时光沙漏补打卡后，城堡应该恢复欢乐状态）
   await db.execute({ sql: "UPDATE moko_owned SET status = 'resident', mood = 3 WHERE child_id = ? AND status = 'fled'", args: [childId] });
+  await db.execute({ sql: "UPDATE moko_owned SET mood = 3 WHERE child_id = ? AND mood < 3", args: [childId] });
 
   // 找回被藏起来的星星币
   let coinsReturned = 0;
