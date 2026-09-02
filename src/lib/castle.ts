@@ -283,6 +283,20 @@ export async function restoreDay(
     await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + ?, last_stolen = 0 WHERE child_id = ?', args: [coinsReturned, childId] });
   }
 
+  // 恢复连胜天数：往前找连续全勤天数，更新 streak_days 和 last_settled_day
+  let newStreak = 1; // 至少恢复 1 天
+  let checkCursor = addDays(day, -1);
+  while (true) {
+    const count = await db.execute({
+      sql: "SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'",
+      args: [childId, checkCursor],
+    });
+    if (Number(count.rows[0]?.n) < 3) break;
+    newStreak++;
+    checkCursor = addDays(checkCursor, -1);
+  }
+  await db.execute({ sql: 'UPDATE castle_state SET streak_days = ?, last_settled_day = ? WHERE child_id = ?', args: [newStreak, day, childId] });
+
   await logGrowthEvent(childId, 'repair', '⏳', '用时光沙漏补打卡 ' + day, day + ' 补打卡 ' + restored.join('、') + '，连续天数已恢复！捣蛋萌可被赶走，萌可们全部回来啦～');
   return { ok: true, message: '补打卡成功', restored, coinsReturned };
 }
