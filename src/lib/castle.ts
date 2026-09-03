@@ -1,4 +1,4 @@
-import { getDb } from './db';
+import { getDb, withWriteLock } from './db';
 import { dateStr, addDays } from './date';
 import { mokoCollection } from './moko-collection';
 import { mokoChars, subjectMokoKey, STAR_PER_FRIEND, SUN_PER_SUBJECT, PROSPERITY_BONUS, SHIELD_STREAK_REQ } from './moko';
@@ -55,60 +55,63 @@ export async function confirm(childId: number, day: string, subject: Subject) {
     return { ok: false, message: '该科今天已确认' };
   }
 
-  // 新确认：在事务中发放奖励
-  await db.execute('BEGIN IMMEDIATE');
-  try {
-    // 只有新确认才发奖励，避免重复发积分/阳光/萌可/捕捉券
-    await db.execute({
-      sql: 'INSERT INTO completions (child_id, points, source) VALUES (?, ?, ?)',
-      args: [childId, POINTS_PER_CHECKIN, 'checkin:' + subject],
-    });
-
-    await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight + ? WHERE child_id = ?', args: [SUN_PER_SUBJECT, childId] });
-    await awardSubjectMoko(childId, subject);
-    const mokoName = mokoChars[subjectMokoKey[subject]]?.name ?? '萌可';
-    const subjectEmoji: Record<Subject, string> = { 语文: '❤️', 数学: '💪', 英语: '🎵' };
-    await logGrowthEvent(childId, 'checkin', subjectEmoji[subject] ?? '🌟', '「' + subject + '」打卡成功',
-      '阳光能量 +' + SUN_PER_SUBJECT + '，召唤 ' + mokoName + ' 入驻城堡');
-
-    if (day === today) {
+  // 新确认：奖励发放整体串行化（本地 sqlite3 是单连接同步驱动，
+  // 手写 BEGIN/COMMIT 之间若被并发请求的 await 穿插会串事务，用互斥锁兜住）。
+  return withWriteLock(async () => {
+    await db.execute('BEGIN IMMEDIATE');
+    try {
+      // 只有新确认才发奖励，避免重复发积分/阳光/萌可/捕捉券
       await db.execute({
-        sql: 'INSERT INTO capture_tickets (child_id, total, used) VALUES (?, 1, 0) ON CONFLICT(child_id) DO UPDATE SET total = total + 1',
-        args: [childId],
+        sql: 'INSERT INTO completions (child_id, points, source) VALUES (?, ?, ?)',
+        args: [childId, POINTS_PER_CHECKIN, 'checkin:' + subject],
       });
-      const c = await db.execute({
-        sql: "SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'",
-        args: [childId, today],
-      });
-      if (Number(c.rows[0]?.n) === 3) {
-        await db.execute({ sql: 'UPDATE castle_state SET prosperity = prosperity + ? WHERE child_id = ?', args: [PROSPERITY_BONUS, childId] });
-        await logGrowthEvent(childId, 'prosperity', '🏰', '三科全勤！城堡升级', '繁荣度 +' + PROSPERITY_BONUS + '，萌可们更开心啦');
-      }
-    } else {
-      const c = await db.execute({
-        sql: "SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'",
-        args: [childId, day],
-      });
-      const trouble = await db.execute({
-        sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ? AND day = ? AND resolved = 0',
-        args: [childId, day],
-      });
-      if (Number(c.rows[0]?.n) === 3 && Number(trouble.rows[0]?.n) > 0) {
+
+      await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight + ? WHERE child_id = ?', args: [SUN_PER_SUBJECT, childId] });
+      await awardSubjectMoko(childId, subject);
+      const mokoName = mokoChars[subjectMokoKey[subject]]?.name ?? '萌可';
+      const subjectEmoji: Record<Subject, string> = { 语文: '❤️', 数学: '💪', 英语: '🎵' };
+      await logGrowthEvent(childId, 'checkin', subjectEmoji[subject] ?? '🌟', '「' + subject + '」打卡成功',
+        '阳光能量 +' + SUN_PER_SUBJECT + '，召唤 ' + mokoName + ' 入驻城堡');
+
+      if (day === today) {
         await db.execute({
-          sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1',
-          args: [childId, 'spray'],
+          sql: 'INSERT INTO capture_tickets (child_id, total, used) VALUES (?, 1, 0) ON CONFLICT(child_id) DO UPDATE SET total = total + 1',
+          args: [childId],
         });
-        await logGrowthEvent(childId, 'rescue', '🧴', '补作业完成，乐美来帮忙！', '捣蛋萌可溜进城堡捣乱，乐美送来魔法喷雾，快帮她把捣蛋萌可捉回去！');
-        await db.execute('COMMIT');
-        return { ok: true, message: '补作业完成！乐美送来 1 瓶魔法喷雾，去背包帮她把捣蛋萌可捉回去吧～' };
+        const c = await db.execute({
+          sql: "SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'",
+          args: [childId, today],
+        });
+        if (Number(c.rows[0]?.n) === 3) {
+          await db.execute({ sql: 'UPDATE castle_state SET prosperity = prosperity + ? WHERE child_id = ?', args: [PROSPERITY_BONUS, childId] });
+          await logGrowthEvent(childId, 'prosperity', '🏰', '三科全勤！城堡升级', '繁荣度 +' + PROSPERITY_BONUS + '，萌可们更开心啦');
+        }
+      } else {
+        const c = await db.execute({
+          sql: "SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'",
+          args: [childId, day],
+        });
+        const trouble = await db.execute({
+          sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ? AND day = ? AND resolved = 0',
+          args: [childId, day],
+        });
+        if (Number(c.rows[0]?.n) === 3 && Number(trouble.rows[0]?.n) > 0) {
+          await db.execute({
+            sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1',
+            args: [childId, 'spray'],
+          });
+          await logGrowthEvent(childId, 'rescue', '🧴', '补作业完成，乐美来帮忙！', '捣蛋萌可溜进城堡捣乱，乐美送来魔法喷雾，快帮她把捣蛋萌可捉回去！');
+          await db.execute('COMMIT');
+          return { ok: true, message: '补作业完成！乐美送来 1 瓶魔法喷雾，去背包帮她把捣蛋萌可捉回去吧～' };
+        }
       }
+      await db.execute('COMMIT');
+      return { ok: true, message: '确认「' + subject + '」完成，获得 ' + SUN_PER_SUBJECT + ' 阳光能量 + 1 只萌可！' };
+    } catch (e) {
+      await db.execute('ROLLBACK');
+      throw e;
     }
-    await db.execute('COMMIT');
-    return { ok: true, message: '确认「' + subject + '」完成，获得 ' + SUN_PER_SUBJECT + ' 阳光能量 + 1 只萌可！' };
-  } catch (e) {
-    await db.execute('ROLLBACK');
-    throw e;
-  }
+  });
 }
 
 export async function buy(childId: number, itemKey: string) {

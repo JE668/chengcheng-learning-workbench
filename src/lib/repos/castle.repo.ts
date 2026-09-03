@@ -104,7 +104,11 @@ export class CastleRepository {
     return this.toState(row);
   }
 
-  /** 收获星星币 */
+  /**
+   * 收获星星币：只结算「好朋友」阶段且当日尚未收获的萌可。
+   * 注意：last_harvest_day 属于 moko_owned 表，不在 castle_state 上——
+   * 之前误写到 castle_state 会触发「no such column: last_harvest_day」。
+   */
   async harvestStars(childId: number): Promise<HarvestResult> {
     return withTransaction(async (trx) => {
       await this.ensureState(childId);
@@ -113,43 +117,55 @@ export class CastleRepository {
         .selectFrom('castle_state')
         .selectAll()
         .where('child_id', '=', childId)
-        .forUpdate()
         .executeTakeFirstOrThrow();
 
+      const today = dateStr();
+
+      // 可收获的萌可：resident + friend 阶段 + 当日尚未收获（last_harvest_day 为空或非今日）。
       const friends = await trx
         .selectFrom('moko_owned')
         .select('id')
         .where('child_id', '=', childId)
         .where('status', '=', 'resident')
+        .where('stage', '=', 'friend')
+        .where('last_harvest_day', '!=', today)
         .execute();
 
       const friendTotal = friends.length;
       const stars = friendTotal * 5;
-      const today = dateStr();
+      const newBalance = state.star_coins + stars;
 
-      await trx
-        .updateTable('castle_state')
-        .set({
-          star_coins: state.star_coins + stars,
-          last_harvest_day: today,
-        })
-        .where('child_id', '=', childId)
-        .execute();
+      if (friendTotal > 0) {
+        // 原子累加星星币；已收获标记写回 moko_owned.last_harvest_day。
+        await trx
+          .updateTable('castle_state')
+          .set({ star_coins: newBalance })
+          .where('child_id', '=', childId)
+          .execute();
 
-      // 记录成长事件
-      await trx
-        .insertInto('growth_events')
-        .values({
-          child_id: childId,
-          day: today,
-          type: 'harvest',
-          emoji: '⭐',
-          title: '城堡收获',
-          desc: `好朋友萌可送来 ${stars} 星星币`,
-        })
-        .execute();
+        for (const f of friends) {
+          await trx
+            .updateTable('moko_owned')
+            .set({ last_harvest_day: today })
+            .where('id', '=', f.id)
+            .execute();
+        }
 
-      return { stars, newBalance: state.star_coins + stars, friendTotal };
+        // 记录成长事件
+        await trx
+          .insertInto('growth_events')
+          .values({
+            child_id: childId,
+            day: today,
+            type: 'harvest',
+            emoji: '⭐',
+            title: '城堡收获',
+            desc: `好朋友萌可送来 ${stars} 星星币`,
+          })
+          .execute();
+      }
+
+      return { stars, newBalance, friendTotal };
     });
   }
 

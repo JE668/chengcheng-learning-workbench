@@ -7,7 +7,7 @@
  *   - schema.ts   ：ensureSchema() 建表 / 迁移 / 账号种子
  *   - users.ts    ：getChildrenOfParent / getSelectedChildId / getChildId / getChildPoints
  */
-export { getDb } from './db-core';
+export { getDb, withWriteLock } from './db-core';
 export { ensureSchema } from './schema';
 export {
   getChildrenOfParent,

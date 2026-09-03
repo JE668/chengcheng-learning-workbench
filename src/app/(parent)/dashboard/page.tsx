@@ -1,7 +1,8 @@
 import { getCurrentUser } from '@/lib/auth';
-import { getDb, getChildId, getChildPoints } from '@/lib/db';
+import { getDb, getChildId, getChildPoints, getChildrenOfParent } from '@/lib/db';
 import { getCastleState } from '@/lib/castle';
 import { getTodayPractice } from '@/lib/daily-practice';
+import { dateStr } from '@/lib/date';
 import ParentCastlePanel from '@/components/ParentCastlePanel';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
 import TimeGlassApproveList from '@/components/parent/TimeGlassApproveList';
@@ -11,26 +12,23 @@ export default async function DashboardPage() {
   if (!user || user.role !== 'parent') return null;
   const childId = await getChildId(user);
   const db = getDb();
-  // 多娃对比数据：取该家长名下所有孩子
+  // 多娃对比数据：取该家长名下所有孩子（按 parent_id 隔离，避免读到他人家孩子）
   let allChildren: { name: string; points: number; streak: number; mokoCount: number }[] = [];
   try {
-    if (user) {
-      const childRows2 = await db.execute({ sql: "SELECT id, name FROM users WHERE role = 'child' ORDER BY id", args: [] });
-      const childrenList = childRows2.rows;
-      if (childrenList.length > 1) {
-        const results = await Promise.all(
-          childrenList.map(async (ch) => {
-            const cid = Number(ch.id);
-            const pts = await getChildPoints(cid);
-            let streak = 0;
-            try { const p = await getTodayPractice(cid, false); streak = p.practiceStreak ?? 0; } catch {}
-            let mokos = 0;
-            try { const owned = await db.execute({ sql: 'SELECT COUNT(*) as n FROM moko_owned WHERE child_id = ?', args: [cid] }); mokos = Number(owned.rows[0]?.n || 0); } catch {}
-            return { name: String(ch.name), points: pts, streak, mokoCount: mokos };
-          })
-        );
-        allChildren = results;
-      }
+    const childrenList = await getChildrenOfParent(user.id);
+    if (childrenList.length > 1) {
+      const results = await Promise.all(
+        childrenList.map(async (ch) => {
+          const cid = ch.id;
+          const pts = await getChildPoints(cid);
+          let streak = 0;
+          try { const p = await getTodayPractice(cid, false); streak = p.practiceStreak ?? 0; } catch {}
+          let mokos = 0;
+          try { const owned = await db.execute({ sql: 'SELECT COUNT(*) as n FROM moko_owned WHERE child_id = ?', args: [cid] }); mokos = Number(owned.rows[0]?.n || 0); } catch {}
+          return { name: ch.displayName, points: pts, streak, mokoCount: mokos };
+        })
+      );
+      allChildren = results;
     }
   } catch { /* 忽略 */ }
 
@@ -89,10 +87,12 @@ export default async function DashboardPage() {
     if (cId) {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 6);
-      const weekStart = weekAgo.toISOString().split('T')[0];
+      // 用本地日（dateStr），与 SQL 的 DATE(created_at,'localtime') 保持一致，
+      // 避免 UTC 日界在本地时区（东八区等）午夜前后错一天。
+      const weekStart = dateStr(weekAgo);
       const pts = await db.execute({
         sql: `SELECT DATE(created_at, 'localtime') as day, COALESCE(SUM(points), 0) as pts
-              FROM completions WHERE child_id = ? AND created_at >= ? GROUP BY day ORDER BY day`,
+              FROM completions WHERE child_id = ? AND DATE(created_at, 'localtime') >= ? GROUP BY day ORDER BY day`,
         args: [cId, weekStart],
       });
       // 补齐 7 天（含 0 分日）
@@ -101,7 +101,7 @@ export default async function DashboardPage() {
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
-        const key = d.toISOString().split('T')[0];
+        const key = dateStr(d);
         weeklyPoints.push({ day: key, points: dayMap.get(key) ?? 0 });
       }
     }
@@ -136,7 +136,7 @@ export default async function DashboardPage() {
               const maxPts = Math.max(...allChildren.map(c => c.points), 1);
               const maxMokos = Math.max(...allChildren.map(c => c.mokoCount), 1);
               return allChildren.sort((a, b) => b.points - a.points).map((ch, i) => {
-                const isCurrent = ch.name === (c?.name ?? '');
+                const isCurrent = ch.name === (c?.display_name ?? '');
                 return (
                   <div key={ch.name} className={`${isCurrent ? 'bg-moko-purple/10 border-moko-purple/30' : 'bg-gray-50 border-gray-100'} rounded-2xl p-3 border-2`}>
                     <div className="flex items-center justify-between mb-2">

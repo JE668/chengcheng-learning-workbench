@@ -31,15 +31,13 @@ export async function getSelectedChildId(parentId: number): Promise<number | nul
  * 解析「当前要操作的孩子 id」：
  * - 传入 child 用户 → 自己；
  * - 传入 parent 用户 → 其选中的孩子（多娃切换支点）；
- * - 未传用户（旧调用兜底）→ 全局第一个孩子。
+ * - 未传用户 → null（调用方据此回 401，绝不回退到「全局第一个孩子」造成越权）。
  * 所有按孩子隔离的查询都应走这里，多娃扩展只改本函数即可全站生效。
  */
 export async function getChildId(user?: User | null): Promise<number | null> {
   if (user && user.role === 'child') return user.id;
   if (user && user.role === 'parent') return getSelectedChildId(user.id);
-  const db = getDb();
-  const res = await db.execute({ sql: 'SELECT id FROM users WHERE role = ? LIMIT 1', args: ['child'] });
-  return res.rows.length ? Number(res.rows[0].id) : null;
+  return null;
 }
 
 export async function getChildPoints(childId: number): Promise<number> {

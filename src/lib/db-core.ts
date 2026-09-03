@@ -31,3 +31,23 @@ export function getDb(): Client {
   }
   return client;
 }
+
+/**
+ * 进程内写事务互斥锁。
+ *
+ * 本地 sqlite3 驱动是单连接、同步执行：手写 BEGIN IMMEDIATE/COMMIT 之间若被
+ * 并发请求的 await 穿插，会把别的语句卷入同一事务，导致串写/半提交。用一把
+ * 串行队列把所有写事务锁成一条龙，保证「BEGIN … COMMIT」整段原子执行。
+ * 单实例部署（NAS/轻量云）足够；多实例需上 Redis 锁，本项目暂无此场景。
+ */
+let writeQueue: Promise<void> = Promise.resolve();
+
+export function withWriteLock<T>(fn: () => Promise<T>): Promise<T> {
+  const run = writeQueue.then(fn);
+  // 无论成功失败都放行队列，避免一次异常卡死后续所有写操作。
+  writeQueue = run.then(
+    () => {},
+    () => {},
+  );
+  return run;
+}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getDb, withWriteLock } from '@/lib/db';
 import { safeJson } from '@/lib/safe-json';
 import { getCurrentUser } from '@/lib/auth';
 import { logGrowthEvent } from '@/lib/castle';
@@ -56,65 +56,68 @@ export async function POST(req: NextRequest) {
   const mokoKey = chapter.mokoKey ?? resolveChapterMokoKey(chapter.mokoName);
   if (!mokoKey) return NextResponse.json({ error: 'moko data missing' }, { status: 500 });
 
-  // Atomic idempotent capture (transaction)
-  await db.execute('BEGIN IMMEDIATE');
-  try {
-    // 1) Record progress (unique constraint child_id + chapter_id)
-    const progressResult = await db.execute({
-      sql: `INSERT OR IGNORE INTO story_progress (child_id, chapter_id) VALUES (?, ?)`,
-      args: [user.id, chapterId],
-    });
-    const isNewCapture = Number(progressResult.rowsAffected ?? 0) > 0;
-    if (!isNewCapture) {
-      await db.execute('COMMIT');
-      return NextResponse.json({ ok: false, code: 'already', error: 'Already captured!' }, { status: 409 });
-    }
-
-    // 2) Consume capture ticket for chapters after first
-    if (idx > 0) {
-      await db.execute({
-        sql: `INSERT INTO capture_tickets (child_id, total, used) VALUES (?, 0, 0)
-              ON CONFLICT(child_id) DO NOTHING`,
-        args: [user.id],
+  // Atomic idempotent capture：单连接同步驱动下用手写事务 + 互斥锁串行化，
+  // 避免并发请求穿插进 BEGIN/COMMIT 之间（本地 sqlite3 驱动 transaction() 会新开连接，勿用）。
+  return withWriteLock(async () => {
+    await db.execute('BEGIN IMMEDIATE');
+    try {
+      // 1) Record progress (unique constraint child_id + chapter_id)
+      const progressResult = await db.execute({
+        sql: `INSERT OR IGNORE INTO story_progress (child_id, chapter_id) VALUES (?, ?)`,
+        args: [user.id, chapterId],
       });
-      const dec = await db.execute({
-        sql: 'UPDATE capture_tickets SET used = used + 1 WHERE child_id = ? AND used < total',
-        args: [user.id],
-      });
-      if (Number(dec.rowsAffected ?? 0) === 0) {
-        await db.execute('ROLLBACK');
-        return NextResponse.json({
-          ok: false, code: 'no_ticket',
-          error: 'Need capture ticket! Do practice to earn tickets.'
-        }, { status: 409 });
+      const isNewCapture = Number(progressResult.rowsAffected ?? 0) > 0;
+      if (!isNewCapture) {
+        await db.execute('COMMIT');
+        return NextResponse.json({ ok: false, code: 'already', error: 'Already captured!' }, { status: 409 });
       }
+
+      // 2) Consume capture ticket for chapters after first
+      if (idx > 0) {
+        await db.execute({
+          sql: `INSERT INTO capture_tickets (child_id, total, used) VALUES (?, 0, 0)
+                ON CONFLICT(child_id) DO NOTHING`,
+          args: [user.id],
+        });
+        const dec = await db.execute({
+          sql: 'UPDATE capture_tickets SET used = used + 1 WHERE child_id = ? AND used < total',
+          args: [user.id],
+        });
+        if (Number(dec.rowsAffected ?? 0) === 0) {
+          await db.execute('ROLLBACK');
+          return NextResponse.json({
+            ok: false, code: 'no_ticket',
+            error: 'Need capture ticket! Do practice to earn tickets.'
+          }, { status: 409 });
+        }
+      }
+
+      // 3) Moko moves into castle
+      await db.execute({
+        sql: `INSERT INTO moko_owned (child_id, moko_key, subject, stage, stage_at, mood, status)
+              VALUES (?, ?, NULL, 'obtained', CURRENT_TIMESTAMP, 3, 'resident')
+              ON CONFLICT(child_id, moko_key) DO UPDATE SET status = 'resident', mood = 3`,
+        args: [user.id, mokoKey],
+      });
+
+      // 4) Growth log
+      await logGrowthEvent(
+        user.id, 'story_capture', chapter.emoji,
+        `Captured ${chapter.mokoName}!`,
+        `Followed story "${chapter.title}" to bring ${chapter.mokoName} home.`,
+      );
+
+      // 5) Capture points (only for new captures)
+      await db.execute({
+        sql: 'INSERT INTO completions (child_id, points, source) VALUES (?, ?, ?)',
+        args: [user.id, POINTS_PER_CAPTURE, `story:${chapterId}`]
+      });
+
+      await db.execute('COMMIT');
+      return NextResponse.json({ ok: true, mokoName: chapter.mokoName, chapterId });
+    } catch (e) {
+      await db.execute('ROLLBACK');
+      throw e;
     }
-
-    // 3) Moko moves into castle
-    await db.execute({
-      sql: `INSERT INTO moko_owned (child_id, moko_key, subject, stage, stage_at, mood, status)
-            VALUES (?, ?, NULL, 'obtained', CURRENT_TIMESTAMP, 3, 'resident')
-            ON CONFLICT(child_id, moko_key) DO UPDATE SET status = 'resident', mood = 3`,
-      args: [user.id, mokoKey],
-    });
-
-    // 4) Growth log
-    await logGrowthEvent(
-      user.id, 'story_capture', chapter.emoji,
-      `Captured ${chapter.mokoName}!`,
-      `Followed story "${chapter.title}" to bring ${chapter.mokoName} home.`,
-    );
-
-    // 5) Capture points (only for new captures)
-    await db.execute({
-      sql: 'INSERT INTO completions (child_id, points, source) VALUES (?, ?, ?)',
-      args: [user.id, POINTS_PER_CAPTURE, `story:${chapterId}`]
-    });
-
-    await db.execute('COMMIT');
-    return NextResponse.json({ ok: true, mokoName: chapter.mokoName, chapterId });
-  } catch (e) {
-    await db.execute('ROLLBACK');
-    throw e;
-  }
+  });
 }

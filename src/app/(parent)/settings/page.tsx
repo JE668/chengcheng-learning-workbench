@@ -73,11 +73,13 @@ export default function SettingsPage() {
         setMsg('备份文件格式不正确（缺少 users 表）');
         return;
       }
+      const password = window.prompt('请输入家长密码以确认恢复（覆盖全部数据）');
+      if (!password) { setMsg('已取消恢复'); return; }
       setRestoring(true);
       const r = await fetch('/api/backup/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: parsed, password: 'CONFIRM' }),
+        body: JSON.stringify({ data: parsed, password }),
       });
       const j = await r.json();
       setMsg(j.message || j.error || '恢复完成');

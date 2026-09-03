@@ -2,11 +2,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import WebSocket from 'ws';
 import { randomUUID } from 'node:crypto';
+import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// 诊断端点会对外发起多次探测，成本更高，限流更严。
+const TTS_DEBUG_LIMIT = { windowSeconds: 60, maxRequests: 5 };
+
 export async function GET(req: NextRequest) {
+  const ip = getClientIp(req);
+  const limit = rateLimit('tts-debug:' + ip, TTS_DEBUG_LIMIT);
+  if (!limit.ok) {
+    return NextResponse.json({ error: `请求太频繁，请 ${limit.retryAfter} 秒后再试` }, { status: 429 });
+  }
+
   const results: Record<string, any> = {};
   const date = new Date().toUTCString();
 

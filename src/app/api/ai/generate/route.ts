@@ -90,15 +90,19 @@ export async function POST(req: Request) {
     const {
       subject = '语文',
       kind = 'chinese',
-      count = 3,
+      count: rawCount = 3,
       difficulty = 'medium',
       grade = 1,
       excludeIds = [],
       context = '',
     } = body;
 
-    const systemPrompt = getSystemPrompt(kind);
-    const questionCount = Math.min(Math.max(1, count), 5);
+    // count 钳制：必须是 1~5 的整数，防止传入超大值造成巨额 token 成本 / DoS。
+    // 之前的实现只把结果存进未使用的 questionCount，prompt 里仍用原始 count，钳制形同虚设。
+    const parsedCount = Number(rawCount);
+    const questionCount = Number.isFinite(parsedCount)
+      ? Math.min(Math.max(1, Math.floor(parsedCount)), 5)
+      : 3;
 
     // 创建 NVIDIA API 兼容的 OpenAI 客户端
     const nvidiaOpenAI = createOpenAI({
@@ -125,7 +129,7 @@ export async function POST(req: Request) {
 3. 输出JSON格式，包含id、kind、subject、prompt、speak、options、answer、chapter
 4. options数组包含4个选项，answer是正确选项的文本
 5. id格式：${kind}-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
-      prompt: `生成 ${count} 道${kind === 'pinyin' ? '拼音' : kind === 'math' ? '数学' : kind === 'english' ? '英语' : '语文'}题目，难度：${difficulty || 'medium'}，年级：${grade || 1}年级。${context ? `额外要求：${context}` : ''}`,
+      prompt: `生成 ${questionCount} 道${kind === 'pinyin' ? '拼音' : kind === 'math' ? '数学' : kind === 'english' ? '英语' : '语文'}题目，难度：${difficulty || 'medium'}，年级：${grade || 1}年级。${context ? `额外要求：${context}` : ''}`,
       temperature: 0.7,
     });
 

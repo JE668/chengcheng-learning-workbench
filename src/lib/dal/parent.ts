@@ -5,11 +5,12 @@ import { dailyPracticeRepo } from '@/lib/repos/learning.repo';
 import { exportLearningDataCSV } from '@/lib/dal/child';
 import { getKysely } from '@/lib/db/kysely';
 import { dateStr } from '@/lib/date';
+import { getSelectedChildId } from '@/lib/users';
 
 export async function getParentDashboardData(parentId: number) {
-  const parent = await userRepo.findById(parentId);
   const children = await userRepo.findChildrenByParent(parentId);
-  const selectedChildId = parent?.id; // 实际应从 selected_child_id 读取
+  // 选中孩子：读取 users.selected_child_id（getSelectedChildId 已含回退到第一个孩子的逻辑）。
+  const selectedChildId = await getSelectedChildId(parentId);
 
   const childData = await Promise.all(
     children.map(async (child) => {
@@ -40,7 +41,7 @@ export async function getParentDashboardData(parentId: number) {
 
   return {
     children: childData,
-    selectedChildId: selectedChildId ? children.find(c => c.id === selectedChildId)?.id ?? children[0]?.id : children[0]?.id,
+    selectedChildId,
     weekTrend,
   };
 }

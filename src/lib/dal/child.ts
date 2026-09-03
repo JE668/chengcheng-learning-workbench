@@ -4,6 +4,7 @@ import { dailyPracticeRepo, captureTicketRepo, moduleProgressRepo, childTaskRepo
 import { taskRepo, redemptionRepo, wishRepo } from '@/lib/repos/task.repo';
 import { dateStr } from '@/lib/date';
 import { getKysely } from '@/lib/db/kysely';
+import { getSelectedChildId } from '@/lib/users';
 
 /**
  * Data Access Layer - 供 Server Components 直接调用
@@ -226,9 +227,8 @@ async function getAllQuizPassed(childId: number) {
 
 export async function getParentDashboardData(parentId: number) {
   const children = await userRepo.findChildrenByParent(parentId);
-  const selectedChildId = (await userRepo.findById(parentId))?.id; // 需要修正：应从用户表读取 selected_child_id
-
-  // 这里简化，实际需要从用户表读取 selected_child_id
+  // 选中孩子：读取 users.selected_child_id（含回退到第一个孩子），而非家长自己的 id。
+  const selectedChildId = await getSelectedChildId(parentId);
   const childData = await Promise.all(
     children.map(async (child) => {
       const [points, castle, practice, streak] = await Promise.all([

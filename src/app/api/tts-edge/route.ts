@@ -15,6 +15,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import WebSocket from 'ws';
 import { randomUUID } from 'node:crypto';
+import { getClientIp, rateLimit } from '@/lib/rate-limit';
+
+// 与 /api/tts 一致的按 IP 限流：这是公开中转代理，必须防滥用。
+const TTS_EDGE_LIMIT = { windowSeconds: 60, maxRequests: 30 };
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -111,6 +115,12 @@ async function edgeTTS(
 }
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const limit = rateLimit('tts-edge:' + ip, TTS_EDGE_LIMIT);
+  if (!limit.ok) {
+    return NextResponse.json({ error: `请求太频繁，请 ${limit.retryAfter} 秒后再试` }, { status: 429 });
+  }
+
   try {
     const { text, lang = 'zh', rate = 1.0, pause = 0.1 } = (await request.json()) as {
       text?: string;
