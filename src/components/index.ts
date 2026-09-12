@@ -1,7 +1,7 @@
 /** 组件库统一导出 */
 
 // UI 原子组件
-export * from './ui';
+export * from './atomic';
 
 // 业务组件 - 默认导出
 export { default as CertRequestButton } from './CertRequestButton';
