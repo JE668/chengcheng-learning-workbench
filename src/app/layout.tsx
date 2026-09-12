@@ -7,7 +7,6 @@ import DatabaseErrorFallback from '@/components/DatabaseErrorFallback';
 import * as Sentry from '@sentry/nextjs';
 import { reportWebVitals } from '@/lib/web-vitals';
 import { PageTransition } from '@/components/PageTransition';
-import { QueryProvider } from '@/providers/QueryProvider';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,27 +46,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="zh-CN">
       <body className="min-h-screen bg-moko-cream">
-        <QueryProvider>
-          <Sentry.ErrorBoundary fallback={({ error, resetError }) => (
-            <div className="flex flex-col items-center justify-center min-h-[300px] p-4 text-center">
-              <h2 className="text-xl font-semibold text-red-600 mb-2">出错了 😢</h2>
-              <p className="text-gray-600 mb-4">{error && typeof error === 'object' && 'message' in error ? String((error as { message: string }).message) : '未知错误'}</p>
-              <button
-                onClick={resetError}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                重试
-              </button>
-            </div>
-          )}>
-            <ErrorBoundary>
-              <PageTransition>{children}</PageTransition>
-            </ErrorBoundary>
-          </Sentry.ErrorBoundary>
-          <OfflineIndicator />
-          <PwaRegister />
-          <WebVitalsReporter />
-        </QueryProvider>
+        <Sentry.ErrorBoundary fallback={({ error, resetError }) => (
+          <div className="flex flex-col items-center justify-center min-h-[300px] p-4 text-center">
+            <h2 className="text-xl font-semibold text-red-600 mb-2">出错了 😢</h2>
+            <p className="text-gray-600 mb-4">{error && typeof error === 'object' && 'message' in error ? String((error as { message: string }).message) : '未知错误'}</p>
+            <button
+              onClick={resetError}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              重试
+            </button>
+          </div>
+        )}>
+          <ErrorBoundary>
+            <PageTransition>{children}</PageTransition>
+          </ErrorBoundary>
+        </Sentry.ErrorBoundary>
+        <OfflineIndicator />
+        <PwaRegister />
+        <WebVitalsReporter />
       </body>
     </html>
   );
