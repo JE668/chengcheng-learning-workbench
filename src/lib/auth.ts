@@ -108,19 +108,6 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 /**
- * 创建鉴权守卫（工厂函数）：返回一个异步函数，用于在 API 路由中验证登录态与角色。
- * 用法：const getUser = createAuthGuard(['parent']); const user = await getUser();
- */
-export function createAuthGuard(allowed?: ('parent' | 'child')[]) {
-  return async function (): Promise<User> {
-    const user = await getCurrentUser();
-    if (!user) throw new Error('UNAUTHORIZED');
-    if (allowed && !allowed.includes(user.role)) throw new Error('FORBIDDEN');
-    return user;
-  };
-}
-
-/**
  * 解析「当前要操作的孩子 id」（统一入口）：
  * - 孩子本人 → 自己；
  * - 家长 → 其选中的孩子（多娃切换支点，逻辑在 getChildId）；

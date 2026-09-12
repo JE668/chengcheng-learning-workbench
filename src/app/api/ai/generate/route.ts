@@ -3,73 +3,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
-
-const SYSTEM_PROMPTS: Record<string, string> = {
-  pinyin: `你是专业的小学语文拼音教学专家。生成拼音选择题，要求：
-1. 题目清晰，包含声母韵母组合
-2. 4个选项中仅1个正确，干扰项具有迷惑性
-3. 解释要包含声母韵母拼读规则
-4. 输出JSON格式`,
-  math: `你是小学数学教学专家。生成适合低年级的数学计算题：
-1. 根据难度控制数值范围（简单: 10以内/中等: 20以内/困难: 100以内）
-2. 加减法混合，包含进位退位
-3. 选项设计要有迷惑性（常见错误答案）
-4. 解释要体现计算过程`,
-  english: `你是小学英语教学专家。生成单词/句型练习题：
-1. 根据年级选择词汇难度
-2. 包含听音选词、选词填空、句型套用
-3. 选项包含常见拼写错误干扰项`,
-  dictation: `你是小学语文教学专家。生成听写题：
-1. 给出汉字，选正确拼音/组词
-2. 选项包含常见易错字`,
-  chinese: `你是小学语文教学专家。生成识字/造句/阅读理解题：
-1. 选项包含常见易错字/词
-2. 解释要包含字义/造句`,
-  reading: `你是小学语文教学专家。生成阅读理解题：
-1. 给出短文，设置选择题
-2. 选项包含干扰项`,
-};
-
-function getSystemPrompt(kind: string): string {
-  const PROMPTS: Record<string, string> = {
-    pinyin: `你是专业的小学语文拼音教学专家。生成拼音选择题，要求：
-1. 题目清晰，包含声母韵母组合
-2. 4个选项中仅1个正确，干扰项具有迷惑性
-3. 解释要包含声母韵母拼读规则
-4. 输出JSON格式`,
-    math: `你是小学数学教学专家。生成适合低年级的数学计算题：
-1. 根据难度控制数值范围（简单: 10以内/中等: 20以内/困难: 100以内）
-2. 加减法混合，包含进位退位
-3. 选项设计要有迷惑性（常见错误答案）
-4. 解释要体现计算过程`,
-    english: `你是小学英语教学专家。生成单词/句型练习题：
-1. 根据年级选择词汇难度
-2. 包含听音选词、选词填空、句型套用
-3. 选项包含常见拼写错误干扰项`,
-    dictation: `你是小学语文教学专家。生成听写题：
-1. 给出汉字，选正确拼音/组词
-2. 选项包含常见易错字`,
-    chinese: `你是小学语文教学专家。生成识字/造句/阅读理解题：
-1. 选项包含常见易错字/词
-2. 解释要包含字义/造句`,
-    reading: `你是小学语文教学专家。生成阅读理解题：
-1. 给出短文，设置选择题
-2. 选项包含干扰项`,
-  };
-  return PROMPTS[kind] || PROMPTS.chinese;
-}
-
-const QuestionSchema = z.object({
-  id: z.string(),
-  kind: z.string(),
-  subject: z.string(),
-  prompt: z.string(),
-  speak: z.string().optional(),
-  speakEn: z.string().optional(),
-  options: z.array(z.string()),
-  answer: z.string(),
-  chapter: z.string().optional(),
-});
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: Request) {
   try {
@@ -77,6 +11,13 @@ export async function POST(req: Request) {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
+    }
+
+    // 成本防护：该接口会调用 NVIDIA 付费 LLM，按用户限流，
+    // 防止登录用户在浏览器里反复请求造成持续 token 开销。
+    const limit = rateLimit(`ai:${user.id}`, { windowSeconds: 60, maxRequests: 10 });
+    if (!limit.ok) {
+      return NextResponse.json({ error: '生成太频繁，请稍后再试' }, { status: 429 });
     }
 
     if (!process.env.NVIDIA_API_KEY) {
@@ -98,7 +39,6 @@ export async function POST(req: Request) {
     } = body;
 
     // count 钳制：必须是 1~5 的整数，防止传入超大值造成巨额 token 成本 / DoS。
-    // 之前的实现只把结果存进未使用的 questionCount，prompt 里仍用原始 count，钳制形同虚设。
     const parsedCount = Number(rawCount);
     const questionCount = Number.isFinite(parsedCount)
       ? Math.min(Math.max(1, Math.floor(parsedCount)), 5)
@@ -131,6 +71,8 @@ export async function POST(req: Request) {
 5. id格式：${kind}-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
       prompt: `生成 ${questionCount} 道${kind === 'pinyin' ? '拼音' : kind === 'math' ? '数学' : kind === 'english' ? '英语' : '语文'}题目，难度：${difficulty || 'medium'}，年级：${grade || 1}年级。${context ? `额外要求：${context}` : ''}`,
       temperature: 0.7,
+      // 外部付费调用兜底超时，避免请求挂起、占用连接与成本
+      abortSignal: AbortSignal.timeout(30_000),
     });
 
     return NextResponse.json({ questions: result.object });
