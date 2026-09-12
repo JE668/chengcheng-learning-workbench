@@ -1,19 +1,7 @@
 /** lib 核心模块统一导出 */
 
 // 数据库
-export * from './db/schema';
-export * from './db/kysely';
 export { getDb } from './db-core'; // 兼容旧代码
-
-// Repository
-export * from './repos/user.repo';
-export * from './repos/castle.repo';
-export * from './repos/task.repo';
-export * from './repos/learning.repo';
-
-// DAL
-export * from './dal/child';
-export * from './dal/parent';
 
 // 状态管理
 export * from './stores';

@@ -28,7 +28,6 @@
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "analyze": "ANALYZE=true next build",
-    "db:generate": "kysely-codegen --out-file src/lib/db/generated.ts --dialect sqlite --url file:local.db",
     "db:migrate": "node scripts/migrate.mjs",
     "prepare": "husky install || true"
   },
@@ -84,8 +83,6 @@
     "eslint-config-next": "14.2.35",
     "husky": "^9.1.4",
     "jsdom": "^24.1.0",
-    "kysely": "^0.28.17",
-    "kysely-codegen": "^0.20.0",
     "lint-staged": "^15.2.7",
     "postcss": "8.5.26",
     "prettier": "^3.9.6",
