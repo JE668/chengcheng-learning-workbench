@@ -1,19 +1,15 @@
 import type { Client } from '@libsql/client';
 
 /**
- * 轻量 Schema 迁移机制。
+ * 轻量 Schema 迁移机制（唯一迁移入口）。
  *
- * 现状：ensureSchema() 已用「CREATE TABLE IF NOT EXISTS + ALTER TABLE … ADD COLUMN（try/catch 吞错）」
- * 做了幂等增量迁移，旧库每次启动都能补齐新表/新列。但它把「建表」和「迁移」混在一个大函数里，
- * 未来改动要么继续往里堆 IF NOT EXISTS，要么冒险改历史分支。
+ * 约定：
+ *   - ensureSchema() 只负责「初始建核心表 + 账号种子」，然后调用 runMigrations()；
+ *   - 所有增量表 / 增量列 / 历史数据回填，一律以版本化迁移追加到下方 MIGRATIONS；
+ *   - 每条 up 必须幂等（CREATE TABLE IF NOT EXISTS / 列存在检查 / 数据条件更新），
+ *     因为全新库（主批次建表已含部分新列）与已部署旧库都会跑同一份迁移。
  *
- * 本模块提供一个**版本化**的迁移跑道，作为既有 bootstrap 之上的「未来迁移」入口：
- *   - schema_migrations(version, name, applied_at) 记录已应用的迁移；
- *   - MIGRATIONS 是按 version 升序的迁移数组；
- *   - runMigrations() 只执行「version > 已记录最大值」的迁移，且每条只跑一次。
- *
- * 用法：未来要加字段/索引/表，只需往 MIGRATIONS 追加一条 { version: N, name, up }，
- * 不要再去改 ensureSchema 的历史分支。既有库与全新库都会安全补齐（up 内请用 IF NOT EXISTS / 幂等写法）。
+ * 不要再往 ensureSchema 里堆内联 ALTER —— 那是历史包袱，已在此轮重构中收口。
  */
 
 export interface Migration {
@@ -26,8 +22,7 @@ export interface Migration {
 
 export const MIGRATIONS: Migration[] = [
   {
-    // 版本锚点：标记「迁移机制就绪」。既有 ensureSchema 已建好基线库，这里无需建表，
-    // 仅占位记录 version=1，使后续迁移从 version=2 起算。
+    // 版本锚点：标记「迁移机制就绪」。
     version: 1,
     name: 'baseline_marker',
     up: async () => {},
@@ -40,7 +35,6 @@ export const MIGRATIONS: Migration[] = [
     description: '给热门查询补索引：daily_checkins、completions、daily_practice',
     up: async (db) => {
       await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_daily_checkins_child_day ON daily_checkins(child_id, day)', args: [] });
-      // completions 用 created_at（DATETIME）存时间，按天统计时由 DATE(created_at,'localtime') 派生，故索引落到 created_at
       await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_completions_child_created ON completions(child_id, created_at)', args: [] });
       await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_daily_practice_child_day ON daily_practice(child_id, day)', args: [] });
     },
@@ -117,6 +111,187 @@ export const MIGRATIONS: Migration[] = [
       });
       await db.execute({ sql: 'DROP TABLE moko_owned', args: [] });
       await db.execute({ sql: 'ALTER TABLE moko_owned_new RENAME TO moko_owned', args: [] });
+    },
+  },
+  {
+    // 增量表：剧情已读/已答对、奖状申请、模块关卡进度、萌可任务、电子课本进度。
+    // 原 ensureSchema 中「每次启动都跑」的 CREATE IF NOT EXISTS，收敛到此（跑一次即可，天然幂等）。
+    version: 6,
+    name: 'create_incremental_tables',
+    description: 'create story_read / story_quiz / cert_requests / module_progress / child_tasks / textbook_progress',
+    up: async (db) => {
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS story_read (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          child_id INTEGER NOT NULL,
+          chapter_id TEXT NOT NULL,
+          read_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(child_id, chapter_id),
+          FOREIGN KEY(child_id) REFERENCES users(id)
+        )`,
+        args: [],
+      });
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS story_quiz (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          child_id INTEGER NOT NULL,
+          chapter_id TEXT NOT NULL,
+          passed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(child_id, chapter_id),
+          FOREIGN KEY(child_id) REFERENCES users(id)
+        )`,
+        args: [],
+      });
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS cert_requests (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          child_id INTEGER NOT NULL,
+          status TEXT NOT NULL DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          decided_at DATETIME,
+          FOREIGN KEY(child_id) REFERENCES users(id)
+        )`,
+        args: [],
+      });
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS module_progress (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          child_id INTEGER NOT NULL,
+          subject TEXT NOT NULL,
+          module_key TEXT NOT NULL,
+          stars INTEGER NOT NULL DEFAULT 0,
+          rounds INTEGER NOT NULL DEFAULT 0,
+          last_played DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(child_id, subject, module_key),
+          FOREIGN KEY(child_id) REFERENCES users(id)
+        )`,
+        args: [],
+      });
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS child_tasks (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          child_id INTEGER NOT NULL,
+          task_key TEXT NOT NULL,
+          done INTEGER NOT NULL DEFAULT 0,
+          done_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(child_id, task_key),
+          FOREIGN KEY(child_id) REFERENCES users(id)
+        )`,
+        args: [],
+      });
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS textbook_progress (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          child_id INTEGER NOT NULL,
+          book_key TEXT NOT NULL,
+          chapter_idx INTEGER NOT NULL DEFAULT 0,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(child_id, book_key),
+          FOREIGN KEY(child_id) REFERENCES users(id)
+        )`,
+        args: [],
+      });
+    },
+  },
+  {
+    // 旧库 cert_requests 可能缺 status 列（CREATE IF NOT EXISTS 不会补列）。
+    version: 7,
+    name: 'add_cert_requests_status',
+    description: '为旧 cert_requests 表补 status 列',
+    up: async (db) => {
+      const cols = await db.execute({ sql: 'PRAGMA table_info(cert_requests)', args: [] });
+      const hasStatus = cols.rows.some((r: any) => r.name === 'status');
+      if (!hasStatus) {
+        await db.execute({
+          sql: `ALTER TABLE cert_requests ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`,
+          args: [],
+        });
+      }
+    },
+  },
+  {
+    // 一次性历史数据回填：旧版本打卡把爱心/正正/唱唱写成 heartping/courageping/singping，
+    // 与剧情捕捉写入的 col_01_*_render 重复，导致收集数多算。新写入已统一走 col_ key（见 moko.ts subjectMokoKey），
+    // 此处只需把存量旧 key 归一：已有 col_ 版则删旧 key，否则改名。
+    version: 8,
+    name: 'merge_subject_moko_keys',
+    description: '把旧 heartping/courageping/singping 归属 key 归一为 col_01_*',
+    up: async (db) => {
+      const merges: [string, string][] = [
+        ['heartping', 'col_01_爱心萌可_render'],
+        ['courageping', 'col_01_正正萌可_render'],
+        ['singping', 'col_01_唱唱萌可_render'],
+      ];
+      for (const [oldKey, newKey] of merges) {
+        await db.execute({
+          sql: `DELETE FROM moko_owned WHERE moko_key = ? AND child_id IN (SELECT child_id FROM moko_owned WHERE moko_key = ?)`,
+          args: [oldKey, newKey],
+        });
+        await db.execute({
+          sql: `UPDATE moko_owned SET moko_key = ? WHERE moko_key = ?`,
+          args: [newKey, oldKey],
+        });
+      }
+    },
+  },
+  {
+    version: 9,
+    name: 'add_mistakes_source_columns',
+    description: 'mistakes 增加 source_module / chapter 列',
+    up: async (db) => {
+      try { await db.execute({ sql: 'ALTER TABLE mistakes ADD COLUMN source_module TEXT', args: [] }); } catch { /* 已存在 */ }
+      try { await db.execute({ sql: 'ALTER TABLE mistakes ADD COLUMN chapter TEXT', args: [] }); } catch { /* 已存在 */ }
+    },
+  },
+  {
+    version: 10,
+    name: 'add_users_parentage',
+    description: 'users 增加 parent_id / selected_child_id 列（多娃扩展）',
+    up: async (db) => {
+      try { await db.execute({ sql: 'ALTER TABLE users ADD COLUMN parent_id INTEGER', args: [] }); } catch { /* 已存在 */ }
+      try { await db.execute({ sql: 'ALTER TABLE users ADD COLUMN selected_child_id INTEGER', args: [] }); } catch { /* 已存在 */ }
+    },
+  },
+  {
+    // 存量旧库的 cara 未关联 parent：一次性把 cara 挂到 parent 并让 parent 默认选中 cara。
+    // 全新库由 ensureSchema 的种子逻辑完成关联，此迁移主要用于已部署旧库。
+    version: 11,
+    name: 'link_cara_to_parent',
+    description: '把存量 cara 关联到 parent 并设为默认选中',
+    up: async (db) => {
+      const linkCheck = await db.execute({
+        sql: "SELECT id FROM users WHERE username = 'cara' AND parent_id IS NULL LIMIT 1",
+        args: [],
+      });
+      if (linkCheck.rows.length) {
+        const childId = Number(linkCheck.rows[0].id);
+        const pRow = (await db.execute({ sql: "SELECT id FROM users WHERE username = 'parent' LIMIT 1", args: [] })).rows;
+        if (pRow.length) {
+          const parentId = Number(pRow[0].id);
+          await db.execute({ sql: 'UPDATE users SET parent_id = ? WHERE id = ?', args: [parentId, childId] });
+          await db.execute({ sql: 'UPDATE users SET selected_child_id = ? WHERE id = ?', args: [childId, parentId] });
+        }
+      }
+    },
+  },
+  {
+    version: 12,
+    name: 'add_status_columns',
+    description: 'redemptions / wishes / moko_owned / daily_checkins 补 status 列',
+    up: async (db) => {
+      try { await db.execute({ sql: `ALTER TABLE redemptions ADD COLUMN status TEXT DEFAULT 'pending'`, args: [] }); } catch { /* 已存在 */ }
+      try { await db.execute({ sql: `ALTER TABLE wishes ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`, args: [] }); } catch { /* 已存在 */ }
+      try { await db.execute({ sql: `ALTER TABLE moko_owned ADD COLUMN status TEXT NOT NULL DEFAULT 'resident'`, args: [] }); } catch { /* 已存在 */ }
+      try { await db.execute({ sql: `ALTER TABLE daily_checkins ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`, args: [] }); } catch { /* 已存在 */ }
+    },
+  },
+  {
+    version: 13,
+    name: 'add_castle_and_user_extras',
+    description: 'castle_state 补 skin 列、users 补 cert_pref 列',
+    up: async (db) => {
+      try { await db.execute({ sql: "ALTER TABLE castle_state ADD COLUMN skin TEXT NOT NULL DEFAULT 'default'", args: [] }); } catch { /* 已存在 */ }
+      try { await db.execute({ sql: 'ALTER TABLE users ADD COLUMN cert_pref TEXT', args: [] }); } catch { /* 已存在 */ }
     },
   },
 ];

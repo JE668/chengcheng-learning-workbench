@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { getDb } from '@/lib/db';
 import { ensureSchema } from '@/lib/db';
-import { runMigrations, getCurrentVersion, getMigrationHistory } from './migrations';
+import { runMigrations, getCurrentVersion, getMigrationHistory, MIGRATIONS } from './migrations';
 
 describe('轻量 Schema 迁移机制', () => {
   beforeAll(async () => {
@@ -32,7 +32,7 @@ describe('轻量 Schema 迁移机制', () => {
     // 再跑一次：已记录的版本不重跑，记录数不变
     await runMigrations(getDb());
     const r = await getDb().execute({ sql: 'SELECT COUNT(*) AS n FROM schema_migrations', args: [] });
-    expect(Number(r.rows[0]?.n)).toBe(5);
+    expect(Number(r.rows[0]?.n)).toBe(MIGRATIONS.length);
   });
 
   it('ensureSchema 内含迁移跑道，全新/旧库均可安全执行', async () => {
@@ -55,5 +55,28 @@ describe('轻量 Schema 迁移机制', () => {
     expect(history[0].version).toBe(1);
     expect(history[0].name).toBe('baseline_marker');
     expect(history[0].status).toBe('applied');
+  });
+
+  it('全新库 ensureSchema 后增量表与增量列全部就位', async () => {
+    await ensureSchema();
+    const tableNames = (await getDb().execute({
+      sql: "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+      args: [],
+    })).rows.map((r) => String(r.name));
+
+    for (const t of ['story_read', 'story_quiz', 'cert_requests', 'module_progress', 'child_tasks', 'textbook_progress', 'learning_streak', 'speech_scores']) {
+      expect(tableNames).toContain(t);
+    }
+
+    const colCheck = async (table: string, col: string) => {
+      const cols = (await getDb().execute({ sql: `PRAGMA table_info(${table})`, args: [] })).rows;
+      return cols.some((c: any) => c.name === col);
+    };
+    expect(await colCheck('users', 'parent_id')).toBe(true);
+    expect(await colCheck('users', 'cert_pref')).toBe(true);
+    expect(await colCheck('mistakes', 'source_module')).toBe(true);
+    expect(await colCheck('castle_state', 'skin')).toBe(true);
+    expect(await colCheck('redemptions', 'status')).toBe(true);
+    expect(await colCheck('moko_owned', 'rarity')).toBe(true);
   });
 });
