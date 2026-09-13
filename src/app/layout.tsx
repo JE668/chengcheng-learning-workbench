@@ -2,6 +2,7 @@ import './globals.css';
 import { ensureSchema } from '@/lib/db';
 import PwaRegister from '@/components/PwaRegister';
 import OfflineIndicator from '@/components/OfflineIndicator';
+import OfflineSync from '@/components/OfflineSync';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import DatabaseErrorFallback from '@/components/DatabaseErrorFallback';
 import * as Sentry from '@sentry/nextjs';
@@ -63,6 +64,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </ErrorBoundary>
         </Sentry.ErrorBoundary>
         <OfflineIndicator />
+        <OfflineSync />
         <PwaRegister />
         <WebVitalsReporter />
       </body>

@@ -6,6 +6,7 @@ import { GuideModal } from '@/components/GuideModal';
 import { EmptyState } from '@/components/EmptyState';
 import { ClockFace } from '@/components/study/ClockFace';
 import { playTts } from '@/lib/speak';
+import { useOfflineStore } from '@/lib/stores';
 import type { PracticeDayRecord, PracticeQuestion, PracticeSubmitResult } from '@/lib/daily-practice';
 import { sfxComplete, sfxWrong } from '@/lib/sfx';
 import { PROSPERITY_BONUS } from '@/lib/moko';
@@ -35,6 +36,8 @@ export default function DailyPracticePage() {
   const [selected, setSelected] = useState<number[]>([]);
   const [result, setResult] = useState<PracticeSubmitResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // 离线暂存：网络异常时本地保存打卡，联网后由 OfflineSync 自动重放
+  const [offlineQueued, setOfflineQueued] = useState(false);
   // 时光沙漏：是否拥有（已完成态下显示「再做一次」按钮用）
   const [hasTimeGlass, setHasTimeGlass] = useState(false);
 
@@ -112,6 +115,10 @@ export default function DailyPracticePage() {
         if (j?.completed) sfxComplete();
         else sfxWrong();
       } catch { /* 忽略音效异常 */ }
+    } catch {
+      // 离线/网络异常 → 本地暂存打卡。服务端提交是幂等的，联网后 OfflineSync 重放不会重复发奖。
+      useOfflineStore.getState().addAction({ type: 'checkin', payload: { answers: selected } });
+      setOfflineQueued(true);
     } finally {
       setSubmitting(false);
     }
@@ -122,6 +129,22 @@ export default function DailyPracticePage() {
       <div className="max-w-2xl mx-auto p-10 flex flex-col items-center gap-3 text-moko-violet font-bold">
         <span className="moko-loader"><span></span><span></span><span></span></span>
         <span>萌可正在准备今天的练习…</span>
+      </div>
+    );
+  }
+
+  // 离线暂存：打卡已安全保存，联网后自动提交
+  if (offlineQueued) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="card-moko text-center p-8 bg-gradient-to-br from-moko-violet to-moko-purple text-white">
+          <div className="text-6xl mb-3">📡</div>
+          <h1 className="text-3xl font-black mb-2">打卡已离线保存</h1>
+          <p className="text-lg opacity-90">现在是离线状态，你的打卡已安全保存在本机，联网后会自动提交、不影响连续天数～</p>
+          <div className="flex gap-3 justify-center mt-6">
+            <Link href="/home" className="px-6 py-3 rounded-full bg-white text-moko-violet font-black">返回首页</Link>
+          </div>
+        </div>
       </div>
     );
   }
