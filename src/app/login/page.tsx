@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Button } from '@/components/atomic/Button';
+import { Input } from '@/components/atomic/Input';
 
 const USERS = [
   { username: 'parent', label: '👩 爸爸妈妈', role: 'parent', color: 'from-moko-purple to-moko-violet', emoji: '👑' },
@@ -110,38 +112,26 @@ export default function LoginPage() {
         </div>
 
         <form id="login-form" onSubmit={submit} className="space-y-4">
-          <input
+          <Input
             type="text"
             name="username"
             placeholder="用户名"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full px-5 py-3 rounded-2xl border-2 border-gray-200 text-lg focus:border-moko-pink outline-none transition bg-white/70"
+            size="lg"
           />
-          <div className="relative">
-            <input
-              type="password"
-              name="password"
-              placeholder="密码"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-5 py-3 rounded-2xl border-2 border-gray-200 text-lg focus:border-moko-pink outline-none transition bg-white/70 pr-12"
-            />
-
-          </div>
+          <Input
+            type="password"
+            name="password"
+            placeholder="密码"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            size="lg"
+          />
           {error && <p className="text-red-500 font-bold text-sm bg-red-50 rounded-2xl p-3">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-moko-rose to-moko-pink text-white text-xl font-extrabold rounded-2xl shadow-lg hover:scale-[1.02] hover:shadow-xl transition disabled:opacity-60 active:scale-95"
-          >
-            {loading ? (
-              <span className="inline-flex items-center gap-2">
-                <span className="moko-loader"><span></span><span></span><span></span></span>
-                登录中…
-              </span>
-            ) : '✨ 进入学习世界'}
-          </button>
+          <Button type="submit" variant="brand" size="xl" fullWidth loading={loading}>
+            ✨ 进入学习世界
+          </Button>
         </form>
 
 

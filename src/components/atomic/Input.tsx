@@ -60,7 +60,7 @@ export const inputVariants = cva(
 );
 
 export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement>,
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
     VariantProps<typeof inputVariants> {
   /** 标签文本 */
   label?: string;
@@ -106,7 +106,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const describedBy = [error && errorId, hint && hintId].filter(Boolean).join(' ') || undefined;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      props.onChange?.(e);
+      onChange?.(e);
       if (error && e.target.value) {
         // 用户开始输入时清除错误
       }
@@ -114,8 +114,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
     const handleClear = (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
-      props.onChange?.({ target: { value: '', name: props.name } } as any);
-      props.onBlur?.(e);
+      onChange?.({ target: { value: '', name: props.name } } as any);
+      onBlur?.(e);
       ref.current?.focus();
     };
 
