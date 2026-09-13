@@ -39,16 +39,11 @@
   ],
   "exclude": [
     "node_modules",
-    "src/components/ui/**",
     "src/hooks/**",
     "src/lib/tts/**",
-    "src/lib/db/kysely.ts",
-    "src/lib/repos/**",
-    "src/lib/dal/**",
     "src/lib/stores/index.ts",
     "src/lib/index.ts",
     "src/env.mjs",
-    "src/components/atomic/**",
-    "src/components/examples/**"
+    "src/components/atomic/**"
   ]
 }

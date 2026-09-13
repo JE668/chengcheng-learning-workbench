@@ -34,11 +34,8 @@ export default defineConfig({
         'src/middleware.ts',
         'src/lib/design-tokens.ts',
         'src/env.mjs',
-        'src/lib/repos/**',
         'src/lib/stores/**',
         'src/lib/tts/**',
-        'src/lib/db/**',
-        'src/lib/dal/**',
       ],
       thresholds: {
         lines: 35,

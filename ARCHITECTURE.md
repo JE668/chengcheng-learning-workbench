@@ -1,266 +1,161 @@
 # 架构文档
 
-## 概览
-
-本文档记录了程程学习工作台的重构架构设计，旨在提高代码质量、可维护性和开发体验。
+> 本文档描述程程学习工作台的**当前真实架构**。历史上曾规划过 Kysely / Repository / DAL 分层、双设计系统、React Query 等，经评估后已统一收敛为下面的单一数据通路与单一设计系统（详见文末「演进记录」）。
 
 ---
 
-## 核心架构层
+## 概览
 
 ```
 src/
-├── app/                    # Next.js App Router 页面
-│   ├── (child)/           # 孩子端页面组
-│   ├── (parent)/          # 家长端页面组
-│   └── api/               # API 路由
+├── app/                    # Next.js App Router 页面 + API 路由
+│   ├── (child)/           # 孩子端页面组（home/castle/daily-practice/study/games/story/…）
+│   ├── (parent)/          # 家长端页面组（dashboard/tasks/settings/…）
+│   ├── api/               # ~45 条 API 路由（每路由 = 一个领域动作）
+│   ├── login/             # 登录页
+│   └── layout.tsx          # 根布局：ensureSchema() 初始化 + ErrorBoundary + 全局壳
 ├── components/
-│   ├── ui/                # Design System 原子组件
-│   ├── games/             # 游戏组件
-│   ├── study/             # 学习模块组件
-│   └── parent/            # 家长端专用组件
-├── lib/
-│   ├── db/                # 数据库层
-│   │   ├── schema.ts      # Kysely 类型定义
-│   │   └── kysely.ts      # Kysely 客户端
-│   ├── repos/             # Repository 层（数据访问）
-│   ├── dal/               # Data Access Layer（组合查询）
-│   ├── stores/            # Zustand 状态管理
-│   ├── tts/               # TTS 系统
-│   │   ├── engines/       # 引擎实现
-│   │   ├── orchestrator.ts # 编排器
-│   │   └── types.ts       # 类型定义
-│   ├── design-tokens.ts   # 设计令牌
-│   └── hooks/             # 自定义 Hooks
-└── hooks/                 # 通用 Hooks
+│   ├── atomic/            # 设计系统（唯一）：Button/Card/Modal/Select/Tabs/Toast/… + utils + a11y 测试
+│   └── *.tsx              # 业务组件（MokoCarousel/Castle/GrowthTree/games/…）
+├── lib/                    # 领域逻辑（纯 TS，无 React）
+│   ├── db-core.ts          # getDb() 单例连接 + withWriteLock 写事务互斥
+│   ├── schema.ts           # ensureSchema()：建核心表 + 账号种子 + 跑迁移
+│   ├── migrations.ts       # 版本化迁移（唯一迁移入口，幂等）
+│   ├── auth.ts             # 会话认证（cookie + bcrypt）
+│   ├── castle*.ts          # 城堡/经济/惩罚领域
+│   ├── daily-practice/     # 每日一练出题（math/chinese/english 生成器）
+│   ├── stores/             # Zustand 状态管理
+│   ├── tts/                # TTS 三层降级（engines + orchestrator）
+│   └── …                   # moko/story/mistakes/sm2/media/… 领域模块
+├── middleware.ts           # 路由级统一鉴权（软闸，只查 cookie 存在性）
+└── env.mjs                 # 环境变量类型校验（Zod）
 ```
 
 ---
 
-## 数据层架构
+## 数据层（单一通路：裸 SQL）
 
-### 1. Kysely 类型安全 ORM
-- `src/lib/db/schema.ts` - 完整的数据库 Schema 类型定义
-- `src/lib/db/kysely.ts` - libSQL 适配器 + 事务工具
-- 编译期捕获 SQL 错误，IDE 自动补全
+### 连接与访问
+- **唯一入口 `getDb()`**（`db-core.ts`）：基于 `@libsql/client` 的单例，包装 `execute` 自动补 `args`。
+- 所有数据访问走**手写 SQL**（`db.execute`），不再使用 ORM——对自托管单机 + libSQL 足够，且避免「两条腿」心智负担。
+- `withWriteLock()`：进程内写事务互斥队列，保证单实例下 `BEGIN…COMMIT` 整段原子执行（多实例部署需另上锁，本项目暂无此场景）。
 
-### 2. Repository 模式
-每个业务领域一个 Repository：
-- `user.repo.ts` - 用户管理
-- `castle.repo.ts` - 城堡系统
-- `task.repo.ts` - 任务/兑换/愿望
-- `learning.repo.ts` - 学习进度/错题/故事
+### Schema 与迁移（单一真源）
+- `schema.ts` 的 `ensureSchema()` 只做三件事：
+  1. 开启 WAL / `synchronous=NORMAL`（NAS 断电保护）；
+  2. 主批次 `CREATE TABLE IF NOT EXISTS` 建核心表；
+  3. 全新库账号种子（`cara` / `parent`，受 `_schema_meta` 守卫限制）。
+- 所有**增量表 / 增量列 / 历史数据回填**统一放在 `migrations.ts` 的版本化 `MIGRATIONS` 数组（`runMigrations` 只执行未应用的版本，天然幂等）。
+- **约定：改 schema 只加一条迁移，不要在 `ensureSchema` 里堆内联 `ALTER`。**
 
-### 3. DAL (Data Access Layer)
-- `dal/child.ts` - 孩子端组合查询
-- `dal/parent.ts` - 家长端组合查询
-- 页面组件仅调用 DAL，不直接操作 Repository
+### 关键实现决策
+| 决策 | 结论 | 理由 |
+|------|------|------|
+| ORM | 不用（裸 SQL） | 单机 libSQL 足够；曾引入 Kysely 但未铺开，已移除 |
+| 迁移 | 版本化 + 幂等 | 单一入口，避免历史 schema 漂移 |
+| 并发写 | 进程内互斥队列 | 单实例部署足够，明确标注多实例需换方案 |
 
 ---
 
-## 状态管理
+## 认证
 
-### Zustand Stores (`src/lib/stores/index.ts`)
+- 自定义 session cookie（`token` 随机 32 字节），`users.sessions` 表存储。
+- bcrypt 密码哈希；`httpOnly` + `sameSite=lax` + 按反代头决定 `secure`。
+- 家长/孩子双角色（`role: parent | child`）。
+- 登录：IP 级限流 + 账号级连续失败锁定（内存级，单实例适用，见 `rate-limit.ts`）。
+- `middleware.ts`：未带 cookie 的请求页面跳登录 / API 返 401（软闸），真值仍由各路由 `getCurrentUser()` 比对数据库决定。
+
+---
+
+## 状态管理（Zustand）
+
+`lib/stores/index.ts`：
+
 | Store | 用途 | 持久化 |
 |-------|------|--------|
 | `useAuthStore` | 认证状态 | ✅ |
 | `useChildPreferencesStore` | 学习偏好/设置 | ✅ |
 | `useTTSStore` | TTS 播放队列 | ❌ |
 | `useCaptureStore` | 萌可捕捉动画 | ❌ |
-| `useOfflineStore` | 离线同步队列 | ✅ |
 | `useUIStore` | 全局 Loading/Toast/Modal | ❌ |
 
----
-
-## UI 组件库
-
-### Design Tokens (`src/lib/design-tokens.ts`)
-统一的设计语言：
-- **颜色**: 品牌色、语义色、萌可专属色
-- **间距**: 4px 基准网格
-- **圆角**: 4px - 32px
-- **阴影**: 标准 + 萌可特色阴影
-- **字体**: 显示/正文/等宽
-- **动画**: 时长/缓动/预设
-- **断点**: 响应式断点
-- **Z-Index**: 分层规范
-
-### 原子组件 (`src/components/ui/`)
-| 组件 | 状态 | 特性 |
-|------|------|------|
-| Button | ✅ | 7变体、5尺寸、加载态、图标 |
-| Card | ✅ | 5变体、可悬停、组合式 |
-| Input/Textarea | ✅ | 3变体、3尺寸、错误/提示、图标 |
-| Badge | ✅ | 8色调、4变体、4尺寸、可关闭 |
-| Avatar | ✅ | 6尺寸、3形状、状态点、组 |
-| Modal | ✅ | 焦点陷阱、ESC关闭、确认对话框 |
-| Select | ✅ | 搜索、键盘导航、分组 |
+> 说明：`useOfflineStore`（离线同步队列）当前仅定义了结构、尚未接入业务，属于「路线图」项，见文末。
 
 ---
 
-## TTS 系统重构
+## UI 组件
 
-### 三层降级策略
-1. **Web Speech Strict** - 严格匹配 zh-CN/en-US
-2. **Web Speech Loose** - 宽松匹配任意 zh/en 嗓音
-3. **Edge TTS Server** - 服务端神经嗓音兜底
+### 设计系统（`components/atomic/`）
+唯一设计系统，基于 class-variance-authority + Tailwind，含 Button/Input/Card/Badge/Avatar/Modal/ConfirmDialog/Select/Tabs/Tooltip/DropdownMenu/Popover/Toast/Motion（动画）等，附带 `utils.ts`（cn helper）与 `a11y.test.tsx`。
 
-### 核心组件
-- `TTSEngine` 接口 - 统一引擎契约
-- `TTSOrchestrator` - 编排器 + 熔断器 + 指标收集
-- `useTTS` Hook - React 集成 + 队列管理
+> 现状提醒：原子组件尚未全量推广进页面——多数页面仍用顶层业务组件 + 页面内自建样式。将设计系统逐步铺开是独立的后续工程（见「路线图」）。
+
+### 业务组件
+`components/*.tsx` 顶层组件承载业务视图（MokoCarousel、GrowthTree、Castle、games/ 等），按需 `next/dynamic` 懒加载游戏等重组件。
+
+---
+
+## TTS 系统（三层降级）
+
+1. **Web Speech Strict** — 严格匹配 zh-CN / en-US
+2. **Web Speech Loose** — 宽松匹配任意 zh/en 嗓音
+3. **Edge TTS Server** — 服务端神经嗓音兜底（含熔断 + 指标）
+
+核心：`lib/tts/`（`TTSEngine` 接口 + `engines/` 三实现 + `orchestrator.ts` 编排器），React 集成走 `useTTS` Hook。
 
 ---
 
 ## 测试策略
 
-### 测试金字塔
-| 层级 | 工具 | 覆盖目标 |
-|------|------|----------|
-| Unit | Vitest | 纯函数、算法、Store、Utils |
-| Component | Vitest + RTL | UI 组件、交互逻辑 |
-| Integration | Vitest + MSW | API、DAL、Repository |
-| E2E | Playwright | 关键用户流程 |
-| Visual | Playwright | 关键页面像素对比 |
+| 层级 | 工具 | 说明 |
+|------|------|------|
+| 单元/集成 | Vitest（298 用例） | 领域逻辑、算法、Store、迁移（`file::memory:` 隔离，不碰真实 DB） |
+| E2E | Playwright | 关键用户流程（tests/e2e/） |
+| 可访问性 | axe-core | `atomic/a11y.test.tsx` + `test-axe.mjs` |
 
-### 运行命令
-```bash
-pnpm test           # 单元测试
-pnpm test:ui        # Vitest UI
-pnpm test:coverage  # 覆盖率报告
-pnpm e2e            # E2E 测试
-pnpm e2e:ui         # Playwright UI
-```
-
----
-
-## Storybook
-
-### 启动
-```bash
-pnpm storybook      # 开发模式
-pnpm build-storybook # 静态构建
-```
-
-### 组件分类
-- **UI/** - Design System 原子组件
-- **Games/** - 游戏组件
-- **Study/** - 学习模块
-- **Forms/** - 表单组合
+命令：`pnpm test` / `pnpm test:coverage` / `pnpm e2e`。
 
 ---
 
 ## 代码规范
 
-### Git Hooks (Husky)
-- **pre-commit**: lint-staged (ESLint + Prettier + TypeCheck)
-- **commit-msg**: commitlint (Conventional Commits)
-
-### 提交规范
-```
-feat: 新功能
-fix: 修复 bug
-docs: 文档更新
-style: 代码格式
-refactor: 重构
-perf: 性能优化
-test: 测试相关
-chore: 构建/工具
-revert: 回滚
-build: 构建系统
-ci: CI 配置
-```
-
----
-
-## 环境变量验证
-
-使用 `@t3-oss/env-nextjs` + Zod：
-- 构建时验证必填变量
-- 类型安全的环境变量访问
-- 客户端/服务端变量分离
-
----
-
-## 性能优化
-
-### Bundle 分析
-```bash
-pnpm analyze  # 生成 bundle 分析报告
-```
-
-### 关键指标预算
-| 指标 | 目标 |
-|------|------|
-| LCP | < 2.5s |
-| CLS | < 0.1 |
-| INP | < 200ms |
-| Bundle (gz) | < 150KB |
-
-### 优化手段
-- 动态导入游戏组件 (`next/dynamic`)
-- 代码分包策略 (webpack splitChunks)
-- 图片优化 (next/image)
-- 字体预加载
-- 服务端组件优先
+- Husky + lint-staged（pre-commit：ESLint + Prettier + TypeCheck）
+- commitlint（Conventional Commits：feat/fix/refactor/perf/test/docs/chore/…）
 
 ---
 
 ## 部署
 
-### Docker 多阶段构建
-- 构建阶段: Node 22 + npm ci + build
-- 运行阶段: Node 22 + Python + edge-tts
-- 镜像大小 ~550MB (zstd 压缩)
-
-### 环境变量
-```env
-TURSO_URL=libsql://xxx.turso.io
-TURSO_AUTH_TOKEN=xxx
-CRON_SECRET=xxx
-NEXT_PUBLIC_APP_URL=https://xxx.com
-```
+- Docker 多阶段构建（Node 22 + Python edge-tts）→ GHCR，镜像约 550MB（zstd）。
+- 环境变量：`TURSO_URL` / `TURSO_AUTH_TOKEN` / `CRON_SECRET` / `NEXT_PUBLIC_APP_URL`（见 `.env.example`）。
+- 单实例假设：进程内限流/写锁/会话修剪均为单节点设计，**不要多副本水平扩展**。
 
 ---
 
-## 迁移指南
+## 演进记录（本次整改）
 
-### 从旧代码迁移
-1. 页面组件 → 调用 DAL 而非直接 SQL
-2. 组件类名 → 使用 UI 组件库
-3. localStorage → 迁移到对应 Store
-4. TTS 调用 → 使用 `useTTS` Hook
-5. 手写 SQL → 使用 Repository
+- 数据层：移除未使用的 Kysely / Repository / DAL 层（~1900 行孤儿代码），统一裸 SQL。
+- 设计系统：移除 `components/ui`，保留 `components/atomic` 作为唯一设计系统。
+- 移除未使用的 React Query 依赖与示例。
+- 迁移：内联 `ALTER/CREATE` 全部收敛进版本化 `migrations.ts`，`ensureSchema` 职责收口。
+- 移除冗余的 `scripts/migrate.mjs`（硬编码过时 schema，且未被引用）。
 
 ---
 
-## 目录结构约定
+## 路线图（规划中，未实现）
 
-```
-src/
-├── app/                    # 路由页面 (Server Components 优先)
-├── components/
-│   ├── ui/                # 通用原子组件
-│   ├── [domain]/          # 业务组件
-├── lib/
-│   ├── db/                # 数据库核心
-│   ├── repos/             # Repository (单表/领域操作)
-│   ├── dal/               # DAL (多表组合查询)
-│   ├── stores/            # 客户端状态
-│   ├── [feature]/         # 领域逻辑
-├── hooks/                 # 通用 Hooks
-├── types/                 # 共享类型
-└── styles/                # 全局样式
-```
+- **PWA 离线补打卡**：离线同步队列（`useOfflineStore`）尚未接入业务，需补齐「本地暂存 → 联网批量同步 → 失败重试」。
+- **设计系统推广**：将 `components/atomic` 组件逐步替换页面内自建样式，收敛重复 UI。
+- **多实例支持**：若未来上 Serverless/多副本，需把进程内限流/写锁/会话锁定替换为共享存储（Redis 等）。
+- **Feature 减法**：对非核心模块（部分小游戏等）做取舍，把维护成本集中到「每日一练 + 城堡 + 打卡」核心闭环。
 
 ---
 
 ## 参考资源
 
 - [Next.js App Router](https://nextjs.org/docs/app)
-- [Kysely](https://kysely.dev/)
+- [Turso / libSQL](https://turso.tech/libsql)
 - [Zustand](https://zustand-demo.pmnd.rs/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Vitest](https://vitest.dev/)
 - [Playwright](https://playwright.dev/)
-- [Storybook](https://storybook.js.org/)
