@@ -241,23 +241,6 @@ export async function ensureSchema() {
       });
     }
 
-    // 多娃关联：把现存的孩子(cara)与其家长(parent)关联，并让家长默认选中该孩子。
-    // 仅尚未关联时执行，存量孩子的城堡/打卡等数据全部保留。
-    // （注意：旧库的存量关联由 migrations.ts 的 link_cara_to_parent 负责。）
-    const linkCheck = await db.execute({
-      sql: "SELECT id FROM users WHERE username = 'cara' AND parent_id IS NULL LIMIT 1",
-      args: [],
-    });
-    if (linkCheck.rows.length) {
-      const childId = Number(linkCheck.rows[0].id);
-      const pRow = (await db.execute({ sql: "SELECT id FROM users WHERE username = 'parent' LIMIT 1", args: [] })).rows;
-      if (pRow.length) {
-        const parentId = Number(pRow[0].id);
-        await db.execute({ sql: 'UPDATE users SET parent_id = ? WHERE id = ?', args: [parentId, childId] });
-        await db.execute({ sql: 'UPDATE users SET selected_child_id = ? WHERE id = ?', args: [childId, parentId] });
-      }
-    }
-
     // 标记初始化完成（供守卫识别，避免每次冷启动重跑账号种子）
     await db.execute({ sql: 'CREATE TABLE IF NOT EXISTS _schema_meta (initialized INTEGER PRIMARY KEY DEFAULT 1)', args: [] });
     await db.execute({ sql: 'INSERT OR IGNORE INTO _schema_meta (initialized) VALUES (1)', args: [] });
