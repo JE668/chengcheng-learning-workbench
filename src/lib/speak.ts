@@ -204,7 +204,7 @@ function tryServer(
       return;
     }
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
+    const timer = setTimeout(() => controller.abort(), 5000);
     fetch('/api/tts', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -218,6 +218,7 @@ function tryServer(
       .then((blob) => {
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
+        audio.preload = 'auto';
         audio.onended = () => {
           URL.revokeObjectURL(url);
           // pauseMs 暂停：音频播放结束后延迟 resolve
@@ -287,10 +288,9 @@ function speakEnd(text: string, lang: string, rate: number, pitch: number, pause
     const fire = () => {
       try {
         window.speechSynthesis.cancel();
-        // ⚠️ 修复连续点击降级：cancel() 后不等待队列清空就 speak，
-        // 会导致 onstart 在 1.5s 内不触发 → 误判失败 → 走服务端降级。
-        // 轮询 speaking/pending 都变为 false 后再 speak，最多等 200ms。
-        let retries = 20;
+        // cancel() 后等待队列清空再 speak，避免 onstart 不触发。
+        // 轮询从 20 次降为 5 次（50ms），绝大多数情况首次即命中。
+        let retries = 5;
         const trySpeak = () => {
           if (retries <= 0) {
             window.speechSynthesis.speak(u);
@@ -308,10 +308,12 @@ function speakEnd(text: string, lang: string, rate: number, pitch: number, pause
         finish(false);
       }
     };
-    const startTimer = setTimeout(() => { if (!started) finish(false); }, 1500);
+    // onstart 超时从 1500ms 降为 800ms：iPad Safari 首句不触发 onstart 的场景
+    // 800ms 内未触发即可判定失败，不必多等 700ms。
+    const startTimer = setTimeout(() => { if (!started) finish(false); }, 800);
     if (window.speechSynthesis.getVoices().length > 0) fire();
     else window.speechSynthesis.addEventListener('voiceschanged', fire, { once: true });
-    setTimeout(() => finish(started), 30000);
+    setTimeout(() => finish(started), 20000);
   });
 }
 
@@ -353,7 +355,7 @@ function speakEndLoose(text: string, lang: string, rate: number, pitch: number, 
     u.onerror = () => finish(started);
     try {
       window.speechSynthesis.cancel();
-      let retries = 20;
+      let retries = 5;
       const trySpeak = () => {
         if (retries <= 0) {
           window.speechSynthesis.speak(u);
@@ -370,7 +372,7 @@ function speakEndLoose(text: string, lang: string, rate: number, pitch: number, 
     } catch {
       finish(false);
     }
-    const startTimer = setTimeout(() => { if (!started) finish(false); }, 1500);
+    const startTimer = setTimeout(() => { if (!started) finish(false); }, 800);
     setTimeout(() => finish(started), 15000);
   });
 }

@@ -37,6 +37,12 @@ const TTS_CACHE_MAX = 500;
 const TTS_IDLE_TIMEOUT = 30 * 60 * 1000;
 let ttsIdleTimer: ReturnType<typeof setTimeout> | null = null;
 
+// 模块加载即预启动 Python 进程：Next.js route handler 模块在首次请求时加载，
+// 在顶层调用 getTtsProcess() 让进程在请求到达前就已运行，消除 ~200-300ms 冷启动。
+// spawn 是异步的，但 Python 脚本的 warmup 调用（连接 Bing WebSocket）只需 ~100ms，
+// 通常在后端 handle 函数执行前就已完成。
+try { getTtsProcess(); } catch { /* 模块加载期 spawn 失败不影响后续请求 */ }
+
 // 持久化 Python TTS 进程（避免每次请求启动 Python）
 let ttsProcess: import('node:child_process').ChildProcess | null = null;
 let ttsReqId = 0;
