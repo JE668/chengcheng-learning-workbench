@@ -1,4 +1,4 @@
-import { getDb } from '../db';
+import { getDb, withWriteLock } from '../db';
 import { confirm, logGrowthEvent } from '../castle';
 import { 
   PINYIN_TONES, applyTone, CHARACTERS, PROVERBS, ANTONYMS, RIDDLES, POEMS, 
@@ -316,27 +316,30 @@ export async function submitPractice(childId: number, answers: number[]): Promis
 
   if (allDone) {
     practiceStreak = await computePracticeStreak(childId, dateStr());
-    const stRow = (await db.execute({ sql: 'SELECT streak_rewarded FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, dateStr()] })).rows[0];
-    if (MILESTONE_DAYS.includes(practiceStreak!) && Number(stRow?.streak_rewarded ?? 0) !== 1) {
-      // 先查候选萌可（图鉴里下一只未拥有的 col_ 萌可）
-      const ownedKeys = (await getDb().execute({ sql: 'SELECT moko_key FROM moko_owned WHERE child_id = ?', args: [childId] })).rows.map((r) => String(r.moko_key));
-      const candidate = mokoCollection.find((m) => m.key.startsWith('col_') && !ownedKeys.includes(m.key));
-      // +10 星星币与事件日志独立于「是否能再解锁新萌可」，
-      // 否则图鉴集齐后（无候选萌可）里程碑奖励会静默消失。
-      await getDb().execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + 10 WHERE child_id = ?', args: [childId] });
-      const mokoNote = candidate ? `解锁新萌可「${candidate.name}」，并` : '';
-      await logGrowthEvent(childId, 'milestone', '🌟', `连续 ${practiceStreak} 日一练达成！`, `${mokoNote}收获 10 星星币！`);
-      if (candidate) {
-        await getDb().execute({
-          sql: `INSERT INTO moko_owned (child_id, moko_key, subject, stage, stage_at, mood, status)
-                VALUES (?, ?, NULL, 'obtained', CURRENT_TIMESTAMP, 3, 'resident')
-                ON CONFLICT(child_id, moko_key) DO UPDATE SET status = 'resident', mood = 3`,
-          args: [childId, candidate.key],
-        });
-        milestone = { mokoKey: candidate.key, mokoName: candidate.name ?? '新萌可', img: candidate.img ?? '' };
+    // 读 streak_rewarded + 写奖励必须在同一把写锁内，否则两个并发提交都能通过检查导致双倍奖励。
+    await withWriteLock(async () => {
+      const stRow = (await db.execute({ sql: 'SELECT streak_rewarded FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, dateStr()] })).rows[0];
+      if (MILESTONE_DAYS.includes(practiceStreak!) && Number(stRow?.streak_rewarded ?? 0) !== 1) {
+        // 先查候选萌可（图鉴里下一只未拥有的 col_ 萌可）
+        const ownedKeys = (await getDb().execute({ sql: 'SELECT moko_key FROM moko_owned WHERE child_id = ?', args: [childId] })).rows.map((r) => String(r.moko_key));
+        const candidate = mokoCollection.find((m) => m.key.startsWith('col_') && !ownedKeys.includes(m.key));
+        // +10 星星币与事件日志独立于「是否能再解锁新萌可」，
+        // 否则图鉴集齐后（无候选萌可）里程碑奖励会静默消失。
+        await getDb().execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + 10 WHERE child_id = ?', args: [childId] });
+        const mokoNote = candidate ? `解锁新萌可「${candidate.name}」，并` : '';
+        await logGrowthEvent(childId, 'milestone', '🌟', `连续 ${practiceStreak} 日一练达成！`, `${mokoNote}收获 10 星星币！`);
+        if (candidate) {
+          await getDb().execute({
+            sql: `INSERT INTO moko_owned (child_id, moko_key, subject, stage, stage_at, mood, status)
+                  VALUES (?, ?, NULL, 'obtained', CURRENT_TIMESTAMP, 3, 'resident')
+                  ON CONFLICT(child_id, moko_key) DO UPDATE SET status = 'resident', mood = 3`,
+            args: [childId, candidate.key],
+          });
+          milestone = { mokoKey: candidate.key, mokoName: candidate.name ?? '新萌可', img: candidate.img ?? '' };
+        }
+        await getDb().execute({ sql: 'UPDATE daily_practice SET streak_rewarded = 1 WHERE child_id = ? AND day = ?', args: [childId, dateStr()] });
       }
-      await getDb().execute({ sql: 'UPDATE daily_practice SET streak_rewarded = 1 WHERE child_id = ? AND day = ?', args: [childId, dateStr()] });
-    }
+    });
   }
 
   const rewards = newlyMokos.length > 0 ? { mokos: newlyMokos, sunlight: sunlightGain, prosperity } : undefined;

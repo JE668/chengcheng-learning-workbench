@@ -1,4 +1,4 @@
-import { getDb } from './db';
+import { getDb, withWriteLock } from './db';
 import { dateStr, addDays } from './date';
 import { mokoChars, troubleMokoKeys } from './moko';
 import { getRow, ensureCastle, logGrowthEvent, shuffle } from './castle-core';
@@ -118,55 +118,57 @@ async function applyPenalty(childId: number, day: string, consecutiveMissed: num
 
 /* ----------------------------- 每日结算 ----------------------------- */
 export async function settleCastle(childId: number, today: string) {
-  const row = await getRow(childId);
-  if (!row) return;
-  const initialLast = row.last_settled_day ? String(row.last_settled_day) : today;
-  let cursor = addDays(initialLast, 1);
-  const yesterday = addDays(today, -1);
-  if (cursor > yesterday) return;
-  const db = getDb();
-  const res = await db.execute({
-    sql: "SELECT day, COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND status = 'confirmed' AND day >= ? AND day <= ? GROUP BY day",
-    args: [childId, cursor, yesterday],
-  });
-  const confirmedByDay = new Map<string, number>();
-  for (const r of res.rows) confirmedByDay.set(String(r.day), Number(r.n));
+  return withWriteLock(async () => {
+    const row = await getRow(childId);
+    if (!row) return;
+    const initialLast = row.last_settled_day ? String(row.last_settled_day) : today;
+    let cursor = addDays(initialLast, 1);
+    const yesterday = addDays(today, -1);
+    if (cursor > yesterday) return;
+    const db = getDb();
+    const res = await db.execute({
+      sql: "SELECT day, COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND status = 'confirmed' AND day >= ? AND day <= ? GROUP BY day",
+      args: [childId, cursor, yesterday],
+    });
+    const confirmedByDay = new Map<string, number>();
+    for (const r of res.rows) confirmedByDay.set(String(r.day), Number(r.n));
 
-  let streak = Number(row.streak_days ?? 0);
-  let consecutiveMissed = 0;
-  let last = initialLast;
-  while (cursor <= yesterday) {
-    const confirmed = confirmedByDay.get(cursor) ?? 0;
-    const isFullDay = confirmed === 3;
-    if (!isFullDay) {
-      // 🧊 检查冰冻徽章：有则消耗保护一天连胜（与连胜更新在同一条 SQL 中保证一致性）
-      let frozen = false;
-      try {
-        const fr = await db.execute({ sql: "SELECT id, qty FROM inventory WHERE child_id = ? AND item_key = 'freeze' AND qty > 0", args: [childId] });
-        if (fr.rows.length > 0) {
-          const freezeId = Number(fr.rows[0].id);
-          await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE id = ?', args: [freezeId] });
-          await db.execute({ sql: "DELETE FROM inventory WHERE id = ? AND qty <= 0", args: [freezeId] });
-          frozen = true;
-          streak = streak + 1;
-          await db.execute({ sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?', args: [streak, childId] });
-          await logGrowthEvent(childId, 'freeze', '🧊', '冰冻徽章保护', '🧊 冰冻徽章自动消耗，' + cursor + ' 漏卡但连胜未中断！');
+    let streak = Number(row.streak_days ?? 0);
+    let consecutiveMissed = 0;
+    let last = initialLast;
+    while (cursor <= yesterday) {
+      const confirmed = confirmedByDay.get(cursor) ?? 0;
+      const isFullDay = confirmed === 3;
+      if (!isFullDay) {
+        // 🧊 检查冰冻徽章：有则消耗保护一天连胜（与连胜更新在同一条 SQL 中保证一致性）
+        let frozen = false;
+        try {
+          const fr = await db.execute({ sql: "SELECT id, qty FROM inventory WHERE child_id = ? AND item_key = 'freeze' AND qty > 0", args: [childId] });
+          if (fr.rows.length > 0) {
+            const freezeId = Number(fr.rows[0].id);
+            await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE id = ?', args: [freezeId] });
+            await db.execute({ sql: "DELETE FROM inventory WHERE id = ? AND qty <= 0", args: [freezeId] });
+            frozen = true;
+            streak = streak + 1;
+            await db.execute({ sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?', args: [streak, childId] });
+            await logGrowthEvent(childId, 'freeze', '🧊', '冰冻徽章保护', '🧊 冰冻徽章自动消耗，' + cursor + ' 漏卡但连胜未中断！');
+          }
+        } catch { /* inventory 表可能不存在 */ }
+        if (!frozen) {
+          consecutiveMissed++;
+          await applyPenalty(childId, cursor, consecutiveMissed);
+          streak = 0;
         }
-      } catch { /* inventory 表可能不存在 */ }
-      if (!frozen) {
-        consecutiveMissed++;
-        await applyPenalty(childId, cursor, consecutiveMissed);
-        streak = 0;
+      } else {
+        consecutiveMissed = 0;
+        streak = streak + 1;
       }
-    } else {
-      consecutiveMissed = 0;
-      streak = streak + 1;
+      await db.execute({ sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?', args: [streak, childId] });
+      last = cursor;
+      cursor = addDays(cursor, 1);
     }
-    await db.execute({ sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?', args: [streak, childId] });
-    last = cursor;
-    cursor = addDays(cursor, 1);
-  }
-  if (last !== initialLast) {
-    await db.execute({ sql: 'UPDATE castle_state SET last_settled_day = ? WHERE child_id = ?', args: [last, childId] });
-  }
+    if (last !== initialLast) {
+      await db.execute({ sql: 'UPDATE castle_state SET last_settled_day = ? WHERE child_id = ?', args: [last, childId] });
+    }
+  });
 }

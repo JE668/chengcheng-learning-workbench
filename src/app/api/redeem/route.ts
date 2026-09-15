@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, getChildPoints, getChildId } from '@/lib/db';
+import { getDb, getChildPoints, getChildId, withWriteLock } from '@/lib/db';
 import { safeJson } from '@/lib/safe-json';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 
@@ -47,14 +47,17 @@ export async function POST(req: NextRequest) {
   const childId = await resolveChildId(user);
   if (!childId) return NextResponse.json({ error: '没有孩子账号' }, { status: 404 });
 
-  const points = await getChildPoints(childId);
-  if (points < numCost) return NextResponse.json({ error: '积分不够' }, { status: 400 });
+  // 读余额 + 写入兑换必须在同一把写锁内，否则两个并发兑换都能通过余额检查导致透支。
+  return withWriteLock(async () => {
+    const points = await getChildPoints(childId);
+    if (points < numCost) return NextResponse.json({ error: '积分不够' }, { status: 400 });
 
-  await db.execute({
-    sql: 'INSERT INTO redemptions (child_id, reward_name, cost, created_by) VALUES (?, ?, ?, ?)',
-    args: [childId, rewardName.trim(), numCost, user.id],
+    await db.execute({
+      sql: 'INSERT INTO redemptions (child_id, reward_name, cost, created_by) VALUES (?, ?, ?, ?)',
+      args: [childId, rewardName.trim(), numCost, user.id],
+    });
+    return NextResponse.json({ ok: true });
   });
-  return NextResponse.json({ ok: true });
 }
 
 export async function PATCH(req: NextRequest) {

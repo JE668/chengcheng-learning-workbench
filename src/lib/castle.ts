@@ -115,41 +115,43 @@ export async function confirm(childId: number, day: string, subject: Subject) {
 }
 
 export async function buy(childId: number, itemKey: string) {
-  const db = getDb();
-  await ensureCastle(childId);
-  const row = await getRow(childId);
-  if (itemKey === 'spray') {
-    const cost = COST_SPRAY;
-    const res = await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight - ? WHERE child_id = ? AND sunlight >= ?', args: [cost, childId, cost] });
-    if (Number(res.rowsAffected ?? 0) === 0) return { ok: false, message: '阳光能量不足' };
-    await db.execute({ sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1', args: [childId, 'spray'] });
-    return { ok: true, message: '购买魔法喷雾成功！' };
-  }
-  if (itemKey === 'freeze') {
-    const cost = COST_FREEZE;
-    const res = await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight - ? WHERE child_id = ? AND sunlight >= ?', args: [cost, childId, cost] });
-    if (Number(res.rowsAffected ?? 0) === 0) return { ok: false, message: '阳光能量不足（需要 ' + cost + ' 阳光）' };
-    await db.execute({ sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1', args: [childId, 'freeze'] });
-    return { ok: true, message: '🧊 冰冻徽章购买成功！下次漏卡会自动消耗保护一天连胜。' };
-  }
-  if (itemKey === 'shield') {
-    const cost = COST_SHIELD;
-    const streak = await computeStreak(childId, dateStr());
-    if (streak < SHIELD_STREAK_REQ) return { ok: false, message: '需连续打卡 ' + SHIELD_STREAK_REQ + ' 天才能兑换护盾（当前 ' + streak + ' 天）' };
-    const res = await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight - ?, shield_equipped = shield_equipped + 1 WHERE child_id = ? AND sunlight >= ?', args: [cost, childId, cost] });
-    if (Number(res.rowsAffected ?? 0) === 0) return { ok: false, message: '阳光能量不足' };
-    return { ok: true, message: '护盾已兑换并自动装备到城堡！' };
-  }
-  const starItem = (await import('./moko')).starShop.find((s: any) => s.key === itemKey);
-  if (!starItem) return { ok: false, message: '未知商品' };
-  const starRes = await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins - ? WHERE child_id = ? AND star_coins >= ?', args: [starItem.cost, childId, starItem.cost] });
-  if (Number(starRes.rowsAffected ?? 0) === 0) return { ok: false, message: '星星币不足' };
-  await db.execute({ sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1', args: [childId, itemKey] });
-  if (itemKey.startsWith('skin_')) {
-    await db.execute({ sql: 'UPDATE castle_state SET skin = ? WHERE child_id = ?', args: [itemKey, childId] });
-    return { ok: true, message: '兑换「' + starItem.name + '」成功，城堡已换上新皮肤！' };
-  }
-  return { ok: true, message: '兑换「' + starItem.name + '」成功！' };
+  return withWriteLock(async () => {
+    const db = getDb();
+    await ensureCastle(childId);
+    const row = await getRow(childId);
+    if (itemKey === 'spray') {
+      const cost = COST_SPRAY;
+      const res = await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight - ? WHERE child_id = ? AND sunlight >= ?', args: [cost, childId, cost] });
+      if (Number(res.rowsAffected ?? 0) === 0) return { ok: false, message: '阳光能量不足' };
+      await db.execute({ sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1', args: [childId, 'spray'] });
+      return { ok: true, message: '购买魔法喷雾成功！' };
+    }
+    if (itemKey === 'freeze') {
+      const cost = COST_FREEZE;
+      const res = await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight - ? WHERE child_id = ? AND sunlight >= ?', args: [cost, childId, cost] });
+      if (Number(res.rowsAffected ?? 0) === 0) return { ok: false, message: '阳光能量不足（需要 ' + cost + ' 阳光）' };
+      await db.execute({ sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1', args: [childId, 'freeze'] });
+      return { ok: true, message: '🧊 冰冻徽章购买成功！下次漏卡会自动消耗保护一天连胜。' };
+    }
+    if (itemKey === 'shield') {
+      const cost = COST_SHIELD;
+      const streak = await computeStreak(childId, dateStr());
+      if (streak < SHIELD_STREAK_REQ) return { ok: false, message: '需连续打卡 ' + SHIELD_STREAK_REQ + ' 天才能兑换护盾（当前 ' + streak + ' 天）' };
+      const res = await db.execute({ sql: 'UPDATE castle_state SET sunlight = sunlight - ?, shield_equipped = shield_equipped + 1 WHERE child_id = ? AND sunlight >= ?', args: [cost, childId, cost] });
+      if (Number(res.rowsAffected ?? 0) === 0) return { ok: false, message: '阳光能量不足' };
+      return { ok: true, message: '护盾已兑换并自动装备到城堡！' };
+    }
+    const starItem = (await import('./moko')).starShop.find((s: any) => s.key === itemKey);
+    if (!starItem) return { ok: false, message: '未知商品' };
+    const starRes = await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins - ? WHERE child_id = ? AND star_coins >= ?', args: [starItem.cost, childId, starItem.cost] });
+    if (Number(starRes.rowsAffected ?? 0) === 0) return { ok: false, message: '星星币不足' };
+    await db.execute({ sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1', args: [childId, itemKey] });
+    if (itemKey.startsWith('skin_')) {
+      await db.execute({ sql: 'UPDATE castle_state SET skin = ? WHERE child_id = ?', args: [itemKey, childId] });
+      return { ok: true, message: '兑换「' + starItem.name + '」成功，城堡已换上新皮肤！' };
+    }
+    return { ok: true, message: '兑换「' + starItem.name + '」成功！' };
+  });
 }
 
 export async function setSkin(childId: number, skin: string): Promise<{ ok: boolean; message: string }> {
@@ -164,25 +166,27 @@ export async function setSkin(childId: number, skin: string): Promise<{ ok: bool
 }
 
 export async function castSpray(childId: number) {
-  const db = getDb();
-  await ensureCastle(childId);
-  const inv = await db.execute({ sql: 'SELECT qty FROM inventory WHERE child_id = ? AND item_key = ?', args: [childId, 'spray'] });
-  if (!inv.rows.length || Number(inv.rows[0].qty) <= 0) return { ok: false, message: '没有魔法喷雾' };
-  const row = await getRow(childId);
-  // 只清除最近一天的捣蛋萌可（而非全部历史），避免一次喷雾清掉多天惩罚
-  const latestTrouble = await db.execute({ sql: 'SELECT day FROM troublemakers WHERE child_id = ? AND resolved = 0 ORDER BY day DESC LIMIT 1', args: [childId] });
-  if (latestTrouble.rows.length) {
-    await db.execute({ sql: 'UPDATE troublemakers SET resolved = 1 WHERE child_id = ? AND resolved = 0 AND day = ?', args: [childId, String(latestTrouble.rows[0].day)] });
-  }
-  await db.execute({ sql: "UPDATE moko_owned SET mood = 3, status = 'resident' WHERE child_id = ?", args: [childId] });
-  const returnCoins = Math.ceil(Number(row?.last_stolen ?? 0) * 0.5);
-  await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + ?, last_stolen = 0 WHERE child_id = ?', args: [returnCoins, childId] });
-  const today = dateStr();
-  const yesterday = addDays(today, -1);
-  await db.execute({ sql: 'UPDATE castle_state SET last_settled_day = ? WHERE child_id = ?', args: [yesterday, childId] });
-  await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'spray'] });
-  await logGrowthEvent(childId, 'repair', '🧼', '捉回捣蛋萌可，城堡恢复欢乐！', '和乐美一起捉回捣蛋萌可，萌可们心情全满，找回 ' + returnCoins + ' 星星币');
-  return { ok: true, message: '太棒了！和乐美一起捉回捣蛋萌可，找回 ' + returnCoins + ' 星星币～' };
+  return withWriteLock(async () => {
+    const db = getDb();
+    await ensureCastle(childId);
+    const inv = await db.execute({ sql: 'SELECT qty FROM inventory WHERE child_id = ? AND item_key = ?', args: [childId, 'spray'] });
+    if (!inv.rows.length || Number(inv.rows[0].qty) <= 0) return { ok: false, message: '没有魔法喷雾' };
+    const row = await getRow(childId);
+    // 只清除最近一天的捣蛋萌可（而非全部历史），避免一次喷雾清掉多天惩罚
+    const latestTrouble = await db.execute({ sql: 'SELECT day FROM troublemakers WHERE child_id = ? AND resolved = 0 ORDER BY day DESC LIMIT 1', args: [childId] });
+    if (latestTrouble.rows.length) {
+      await db.execute({ sql: 'UPDATE troublemakers SET resolved = 1 WHERE child_id = ? AND resolved = 0 AND day = ?', args: [childId, String(latestTrouble.rows[0].day)] });
+    }
+    await db.execute({ sql: "UPDATE moko_owned SET mood = 3, status = 'resident' WHERE child_id = ?", args: [childId] });
+    const returnCoins = Math.ceil(Number(row?.last_stolen ?? 0) * 0.5);
+    await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + ?, last_stolen = 0 WHERE child_id = ?', args: [returnCoins, childId] });
+    const today = dateStr();
+    const yesterday = addDays(today, -1);
+    await db.execute({ sql: 'UPDATE castle_state SET last_settled_day = ? WHERE child_id = ?', args: [yesterday, childId] });
+    await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'spray'] });
+    await logGrowthEvent(childId, 'repair', '🧼', '捉回捣蛋萌可，城堡恢复欢乐！', '和乐美一起捉回捣蛋萌可，萌可们心情全满，找回 ' + returnCoins + ' 星星币');
+    return { ok: true, message: '太棒了！和乐美一起捉回捣蛋萌可，找回 ' + returnCoins + ' 星星币～' };
+  });
 }
 
 export async function grantResource(childId: number, resource: 'sunlight' | 'starCoins' | 'tickets', amount: number): Promise<{ ok: boolean; message: string }> {
@@ -225,16 +229,29 @@ export async function applyTimeGlass(childId: number, day: string): Promise<{ ok
   if (missing.length === 0) {
     return { ok: false, message: day + ' 三科都已经打卡过了，不用补～' };
   }
-  // 扣减沙漏必须先于 confirm 执行：若 confirm 失败则跳过，不浪费沙漏。
-  await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
-  const restored = await restoreDay(childId, day, missing);
-  if (!restored.ok || restored.restored.length === 0) {
-    // confirm 都没成功，补回沙漏
-    await db.execute({ sql: 'UPDATE inventory SET qty = qty + 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
-    return { ok: false, message: restored.message };
+  // 原子扣减：UPDATE ... AND qty > 0 保证并发下只扣一次（qty=0 时第二个请求 rowsAffected=0）。
+  // 不再用 SELECT 后再 UPDATE，避免两个并发请求都通过 qty>0 检查导致 qty 变负。
+  const dec = await db.execute({
+    sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ? AND qty > 0',
+    args: [childId, 'timeglass'],
+  });
+  if (Number(dec.rowsAffected ?? 0) === 0) {
+    return { ok: false, message: '没有时光沙漏，请爸爸妈妈在家长端送给你吧～' };
   }
-  const extraMsg = restored.coinsReturned > 0 ? '，还找回了被藏起来的星星币！' : '！';
-  return { ok: true, message: '⏳ 时光沙漏生效！' + day + ' 的 ' + restored.restored.join('、') + ' 补打卡成功，连续天数已恢复' + extraMsg };
+  try {
+    const restored = await restoreDay(childId, day, missing);
+    if (!restored.ok || restored.restored.length === 0) {
+      // confirm 都没成功，补回沙漏
+      await db.execute({ sql: 'UPDATE inventory SET qty = qty + 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
+      return { ok: false, message: restored.message };
+    }
+    const extraMsg = restored.coinsReturned > 0 ? '，还找回了被藏起来的星星币！' : '！';
+    return { ok: true, message: '⏳ 时光沙漏生效！' + day + ' 的 ' + restored.restored.join('、') + ' 补打卡成功，连续天数已恢复' + extraMsg };
+  } catch (e) {
+    // restoreDay 抛异常时也补回沙漏，避免道具丢失
+    await db.execute({ sql: 'UPDATE inventory SET qty = qty + 1 WHERE child_id = ? AND item_key = ?', args: [childId, 'timeglass'] });
+    throw e;
+  }
 }
 
 /**
@@ -305,18 +322,20 @@ export async function restoreDay(
 }
 
 export async function harvest(childId: number) {
-  const db = getDb();
-  await ensureCastle(childId);
-  const today = dateStr();
-  const friends = (await db.execute({ sql: "SELECT * FROM moko_owned WHERE child_id = ? AND status = 'resident' AND stage = 'friend' AND last_harvest_day != ?", args: [childId, today] })).rows;
-  if (!friends.length) return { ok: true, gained: 0, message: '今天还没有可收获的星星币～' };
-  const gained = friends.length * STAR_PER_FRIEND;
-  await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + ? WHERE child_id = ?', args: [gained, childId] });
-  for (const r of friends) {
-    await db.execute({ sql: 'UPDATE moko_owned SET last_harvest_day = ? WHERE id = ?', args: [today, Number(r.id)] });
-  }
-  await logGrowthEvent(childId, 'harvest', '⭐', '收获星星币', '萌可朋友们产出了 ' + gained + ' 星星币');
-  return { ok: true, gained, message: '收获 ' + gained + ' 星星币！' };
+  return withWriteLock(async () => {
+    const db = getDb();
+    await ensureCastle(childId);
+    const today = dateStr();
+    const friends = (await db.execute({ sql: "SELECT * FROM moko_owned WHERE child_id = ? AND status = 'resident' AND stage = 'friend' AND last_harvest_day != ?", args: [childId, today] })).rows;
+    if (!friends.length) return { ok: true, gained: 0, message: '今天还没有可收获的星星币～' };
+    const gained = friends.length * STAR_PER_FRIEND;
+    await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + ? WHERE child_id = ?', args: [gained, childId] });
+    for (const r of friends) {
+      await db.execute({ sql: 'UPDATE moko_owned SET last_harvest_day = ? WHERE id = ?', args: [today, Number(r.id)] });
+    }
+    await logGrowthEvent(childId, 'harvest', '⭐', '收获星星币', '萌可朋友们产出了 ' + gained + ' 星星币');
+    return { ok: true, gained, message: '收获 ' + gained + ' 星星币！' };
+  });
 }
 
 export async function getCastleState(childId: number): Promise<CastleStateView> {

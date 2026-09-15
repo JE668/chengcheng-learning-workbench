@@ -39,8 +39,8 @@ export async function POST(req: Request) {
   }
 
   const wishText = String(wish.rows[0].text);
-  // 提取补打卡日期：格式 "⏳ 申请时光沙漏（补 08-18日）"
-  const dayMatch = wishText.match(/补\s*(\d{2})-(\d{2})日/);
+  // 提取补打卡日期：格式 "⏳ 申请时光沙漏（补 08月18日）"
+  const dayMatch = wishText.match(/补\s*(\d{2})月(\d{2})日/);
   const day = dayMatch
     ? `${new Date().getFullYear()}-${dayMatch[1]}-${dayMatch[2]}`
     : null;
