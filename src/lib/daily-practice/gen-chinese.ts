@@ -7,13 +7,23 @@ const PINYIN_FULL = Object.keys(PINYIN_TONES).filter((b) => PINYIN_TONES[b].ever
 
 /* —— 拼音题 —— */
 export function genPinyinQ(): PracticeQuestion {
-  let base = Object.keys(PINYIN_TONES)[Math.floor(Math.random() * Object.keys(PINYIN_TONES).length)];
-  const fullKeys = Object.keys(PINYIN_TONES).filter((b) => PINYIN_TONES[b].every((t) => t));
-  let baseKey = fullKeys[Math.floor(Math.random() * fullKeys.length)];
+  // 候选池：已验证 applyTone 能产出 4 个不同声调标记的音节，
+  // 避免随机到 er/ê 等无声调变体的音节导致 options 去重后 < 2。
+  const goodKeys = PINYIN_FULL.filter((b) => {
+    const marked = [1, 2, 3, 4].map((tn) => applyTone(b, tn));
+    return new Set(marked).size === 4;
+  });
+  const pool = goodKeys.length > 0 ? goodKeys : PINYIN_FULL;
+  let baseKey = pool[Math.floor(Math.random() * pool.length)];
   let marked = [1, 2, 3, 4].map((tn) => applyTone(baseKey, tn));
   let guard = 0;
   while (new Set(marked).size < 4 && guard++ < 20) {
-    baseKey = fullKeys[Math.floor(Math.random() * fullKeys.length)];
+    baseKey = pool[Math.floor(Math.random() * pool.length)];
+    marked = [1, 2, 3, 4].map((tn) => applyTone(baseKey, tn));
+  }
+  // 兜底：如果仍然 < 2 个选项（极端情况），直接用已知可靠的 'a'
+  if (new Set(marked).size < 2) {
+    baseKey = 'a';
     marked = [1, 2, 3, 4].map((tn) => applyTone(baseKey, tn));
   }
   const tones = PINYIN_TONES[baseKey];
