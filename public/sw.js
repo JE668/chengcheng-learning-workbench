@@ -282,9 +282,12 @@ self.addEventListener('pushsubscriptionchange', (event) => {
             body: JSON.stringify({ subscription: newSubscription }),
           });
         }
-      })()
-    );
-  });
+      } catch (error) {
+        // 订阅同步失败不阻断其它后台任务；下次唤醒时 SW 会重新发起变更回调
+        console.error('推送订阅同步失败:', error);
+      }
+    })()
+  );
 });
 
 // 接收客户端消息（如手动触发同步）
