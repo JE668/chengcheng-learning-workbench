@@ -179,13 +179,6 @@ async function networkFirstThenCache(request, cacheName) {
   }
 }
 
-// 添加到缓存
-async function addToCache(cacheName, request, response) {
-  const cache = await caches.open(cacheName);
-  await cache.put(request, response);
-  await limitCacheSize(cacheName, cacheName === API_CACHE ? 50 : 200);
-}
-
 // 后台同步离线动作
 async function syncOfflineActions() {
   try {
@@ -290,12 +283,3 @@ self.addEventListener('pushsubscriptionchange', (event) => {
   );
 });
 
-// 接收客户端消息（如手动触发同步）
-self.addEventListener('message', (event) => {
-  if (event.data?.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  if (event.data?.type === 'SYNC_NOW') {
-    syncOfflineActions();
-  }
-});
