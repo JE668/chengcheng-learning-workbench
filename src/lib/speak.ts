@@ -49,6 +49,39 @@ function ensureVoices() {
  * （Edge/Chrome/Android 对此更宽松，但统一解锁无副作用。）
  */
 let audioUnlocked = false;
+
+// ─── 客户端 TTS Blob 缓存 ──────────────────────────────────────
+// 服务端 TTS（Layer 3）的音频 blob 缓存，key = lang|rate|text。
+// 故事朗读时预取下一段 TTS 并存入缓存，实际播放时命中缓存秒回。
+// 最大 80 条（约 20 集 × 4 段），超出时删最早插入的。
+const ttsBlobCache = new Map<string, Blob>();
+const TTS_CACHE_MAX = 80;
+
+export function prefetchTts(text: string, lang: 'zh' | 'en', rate = '+0%'): void {
+  if (typeof window === 'undefined' || !('fetch' in window)) return;
+  const key = `${lang}|${rate}|${text}`;
+  if (ttsBlobCache.has(key)) return;
+  fetch('/api/tts', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ text, lang, rate }),
+  })
+    .then((res) => (res.ok ? res.blob() : null))
+    .then((blob) => {
+      if (!blob) return;
+      ttsBlobCache.set(key, blob);
+      if (ttsBlobCache.size > TTS_CACHE_MAX) {
+        const first = ttsBlobCache.keys().next().value;
+        if (first) ttsBlobCache.delete(first);
+      }
+    })
+    .catch(() => {});
+}
+
+function getCachedBlob(text: string, lang: 'zh' | 'en', rate: string): Blob | undefined {
+  return ttsBlobCache.get(`${lang}|${rate}|${text}`);
+}
+
 function unlockAudioOnce() {
   if (audioUnlocked) return;
   audioUnlocked = true;
@@ -198,9 +231,25 @@ function tryServer(
 ): Promise<boolean> {
   const wsRate = opts.wsRate ?? 0.8;
   const pauseMs = opts.pauseMs ?? 0;
-  return new Promise<boolean>((resolve) => {
+  return new Promise<boolean>(async (resolve) => {
     if (typeof window === 'undefined' || !('fetch' in window)) {
       resolve(false);
+      return;
+    }
+    // 缓存命中：跳过 fetch，直接播放 blob（~0ms 延迟）
+    const edgeRate = toEdgeRate(wsRate);
+    const cached = getCachedBlob(text, lang, edgeRate);
+    if (cached) {
+      const url = URL.createObjectURL(cached);
+      const audio = new Audio(url);
+      audio.preload = 'auto';
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        if (pauseMs > 0) setTimeout(() => resolve(true), pauseMs);
+        else resolve(true);
+      };
+      audio.onerror = () => { URL.revokeObjectURL(url); resolve(false); };
+      audio.play().catch(() => { URL.revokeObjectURL(url); resolve(false); });
       return;
     }
     const controller = new AbortController();
