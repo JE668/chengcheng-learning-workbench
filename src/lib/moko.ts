@@ -361,6 +361,22 @@ export const starShop = [
   { key: 'skin_ocean', name: '🌊 海洋城堡皮肤', cost: 80, icon: '🌊', desc: '把城堡变成清凉海洋主题' },
   { key: 'skin_garden', name: '🌸 花园城堡皮肤', cost: 80, icon: '🌸', desc: '把城堡变成繁花花园主题' },
   { key: 'skin_magic', name: '🔮 魔法城堡皮肤', cost: 80, icon: '🔮', desc: '把城堡变成神秘魔法主题' },
+  { key: 'deco_bookshelf', name: '📚 萌可书架', cost: 25, icon: '📚', desc: '装满故事书的小书架，放在城堡里很好看' },
+  { key: 'deco_plant', name: '🌱 幸运盆栽', cost: 15, icon: '🌱', desc: '会发光的绿色小盆栽，据说能带来好运' },
+  { key: 'deco_telescope', name: '🔭 星星望远镜', cost: 35, icon: '🔭', desc: '能看到很远很远的星星，天文爱好者的标配' },
+  { key: 'deco_drum', name: '🥁 节奏小鼓', cost: 20, icon: '🥁', desc: '咚咚咚，节奏感满满，学习累了敲一敲' },
+  { key: 'deco_guitar', name: '🎸 迷你吉他', cost: 30, icon: '🎸', desc: '弹一首小曲，唱唱萌可都会跟着哼' },
+  { key: 'deco_painting', name: '🎨 萌可画作', cost: 25, icon: '🎨', desc: '程程画的画，挂在城堡墙上最漂亮' },
+  { key: 'deco_robot', name: '🤖 学习机器人', cost: 40, icon: '🤖', desc: '会闪灯的机器人小助手，陪你一起复习' },
+  { key: 'deco_wand', name: '✨ 魔法棒', cost: 30, icon: '✨', desc: '闪闪发光的魔法棒，变变变！' },
+  { key: 'deco_lamp', name: '💡 星星台灯', cost: 20, icon: '💡', desc: '暖暖的星光灯光，晚上读书再也不怕黑' },
+  { key: 'deco_candy', name: '🍭 糖果机', cost: 25, icon: '🍭', desc: '里面装满五颜六色的糖果，棉花糖萌可最爱' },
+  { key: 'deco_fountain', name: '⛲ 迷你喷泉', cost: 45, icon: '⛲', desc: '城堡里的小喷泉，水花闪闪的很好看' },
+  { key: 'deco_balloon', name: '🎈 气球篮', cost: 15, icon: '🎈', desc: '五颜六色的气球，让城堡更有节日气氛' },
+  { key: 'deco_chest', name: '🎁 宝箱', cost: 35, icon: '🎁', desc: '里面藏着神秘宝物，说不定是惊喜礼物' },
+  { key: 'deco_music', name: '🎵 音乐盒', cost: 25, icon: '🎵', desc: '旋转的音乐盒，播放温柔的摇篮曲' },
+  { key: 'deco_map', name: '🗺️ 冒险地图', cost: 20, icon: '🗺️', desc: '标注了萌可王国所有地点的地图' },
+  { key: 'deco_clock', name: '⏰ 萌可时钟', cost: 25, icon: '⏰', desc: '圆圆的时钟，叮叮当当提醒学习时间' },
 ];
 
 /**

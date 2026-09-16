@@ -20,6 +20,20 @@ const WISH_META: Record<Wish['status'], { label: string; cls: string }> = {
   fulfilled: { label: '已经实现啦 🎉', cls: 'bg-moko-gold text-white' },
 };
 
+/** 常见愿望推荐：点一下直接填入输入框，不用自己想 */
+const WISH_SUGGESTIONS = [
+  '去公园玩一小时',
+  '多看一集动画片',
+  '吃一个冰淇淋',
+  '买一本课外书',
+  '周末去游乐园',
+  '和爸爸妈妈做手工',
+  '晚睡 15 分钟',
+  '去爷爷奶奶家玩',
+  '买一个新玩具',
+  '看一场电影',
+];
+
 export default function ShopPage() {
   const router = useRouter();
   const [state, setState] = useState<StateView | null>(null);
@@ -84,6 +98,18 @@ export default function ShopPage() {
             className="flex-1 rounded-2xl border-2 border-moko-pink/30 px-4 py-2 text-sm focus:border-moko-pink outline-none"
           />
           <button onClick={addWish} className="btn btn-primary text-sm whitespace-nowrap">存进去 💰</button>
+        </div>
+        {/* 💡 常见愿望推荐 */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {WISH_SUGGESTIONS.map((s) => (
+            <button
+              key={s}
+              onClick={() => setWishText(s)}
+              className="px-2.5 py-1 rounded-full bg-white/70 border border-moko-pink/20 text-xs text-gray-600 hover:bg-white hover:border-moko-pink/40 active:scale-95 transition"
+            >
+              {s}
+            </button>
+          ))}
         </div>
         <div className="space-y-2">
           {wishes.map((w) => {
