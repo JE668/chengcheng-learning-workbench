@@ -18,6 +18,9 @@ export async function POST(req: NextRequest) {
   const db = getDb();
 
   // Pre-checks (read-only, can be concurrent)
+  // ⚠️ TOCTOU 已知：并发请求可能同时通过 pre-check，但 pokedex 的
+  // UNIQUE(child_id, moko_key) 约束保证第二个 INSERT 失败（ON CONFLICT UPDATE），
+  // 不会双插。pre-check 仅做快速拒绝，不依赖锁保护。
   // Must read story first
   const rd = await db.execute({
     sql: 'SELECT 1 FROM story_read WHERE child_id = ? AND chapter_id = ?',

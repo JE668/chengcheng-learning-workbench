@@ -96,17 +96,20 @@ export async function POST(req: NextRequest) {
           const info = await db.execute({ sql: 'PRAGMA table_info(' + t + ')', args: [] });
           const validCols = new Set((info.rows as Array<{ name?: unknown }>).map((r) => String(r.name)));
           if (validCols.size === 0) continue;
+          // db.batch() 一次性提交，比逐行 execute() 快数倍（避免 5000+ 次 round-trip）
+          const stmts: { sql: string; args: (string | number | boolean | null)[] }[] = [];
           for (const row of rows) {
             const r = row as Record<string, unknown>;
             const cols = Object.keys(r).filter((c) => validCols.has(c));
             if (cols.length === 0) continue;
             const placeholders = cols.map(() => '?').join(', ');
             const values = cols.map((c) => (r[c] === undefined || r[c] === null ? null : r[c])) as (string | number | boolean | null)[];
-            await db.execute({
+            stmts.push({
               sql: 'INSERT INTO ' + t + ' (' + cols.join(', ') + ') VALUES (' + placeholders + ')',
-              args: values as (string | number | boolean | null)[],
+              args: values,
             });
           }
+          if (stmts.length > 0) await db.batch(stmts);
         } catch {
           // 单表恢复失败（如 schema 差异）跳过该表，不中断整体
           continue;
