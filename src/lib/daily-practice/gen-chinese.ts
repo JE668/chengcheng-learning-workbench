@@ -65,7 +65,10 @@ export function genDictationQ(): PracticeQuestion {
 
 /* —— 识字题：看释义选字 —— */
 export function genChineseQuizQ(): PracticeQuestion {
-  const c = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
+  // 题干显示释义，选项是字。如果释义包含目标字（如「子」→「孩子」），答案泄露，跳过
+  const safeChars = CHARACTERS.filter((c) => !c.meaning.includes(c.char));
+  const pool = safeChars.length > 0 ? safeChars : CHARACTERS;
+  const c = pool[Math.floor(Math.random() * pool.length)];
   const distractors = shuffle(CHARACTERS.filter((x) => x.meaning !== c.meaning)).slice(0, 3).map((x) => x.char);
   const options = shuffle([c.char, ...distractors]);
   const answer = options.indexOf(c.char);

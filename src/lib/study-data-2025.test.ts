@@ -24,8 +24,8 @@ import {
  */
 
 describe('语文 · 睿智名言（PROVERBS）', () => {
-  it('共 10 条，字段完整', () => {
-    expect(PROVERBS).toHaveLength(10);
+  it('共 29 条，字段完整', () => {
+    expect(PROVERBS).toHaveLength(29);
     for (const p of PROVERBS) {
       expect(p.first.trim().length, `「${p.first}」前半句为空`).toBeGreaterThan(0);
       expect(p.second.trim().length, `「${p.first}」后半句为空`).toBeGreaterThan(0);
@@ -70,8 +70,8 @@ describe('语文 · 儿歌乐园（NURSERY_RHYMES）', () => {
 });
 
 describe('语文 · 反义词（ANTONYMS）', () => {
-  it('共 16 对，词对不重复、a≠b', () => {
-    expect(ANTONYMS).toHaveLength(16);
+  it('共 29 对，词对不重复、a≠b', () => {
+    expect(ANTONYMS).toHaveLength(29);
     const seen = new Set<string>();
     for (const x of ANTONYMS) {
       expect(x.a, 'a 词为空').toBeTruthy();
@@ -108,8 +108,8 @@ describe('语文 · 量词宝箱（QUANTIFIERS）', () => {
 });
 
 describe('语文 · 谜语宝箱（RIDDLES）', () => {
-  it('共 10 条，谜底在选项里，选项不重复', () => {
-    expect(RIDDLES).toHaveLength(10);
+  it('共 29 条，谜底在选项里，选项不重复', () => {
+    expect(RIDDLES).toHaveLength(29);
     for (const r of RIDDLES) {
       expect(r.riddle, '谜面为空').toBeTruthy();
       expect(r.hint, '缺好奇萌可提示').toBeTruthy();

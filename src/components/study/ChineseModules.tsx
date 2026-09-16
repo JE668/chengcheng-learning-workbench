@@ -532,10 +532,15 @@ function buildQuestion(level: DiffLevel): CharQ {
   const pool = LEVEL_POOL[level];
   const target = pool[Math.floor(Math.random() * pool.length)];
   if (level === 'hard') {
-    const distractors = shuffle(pool.filter((c) => c.char !== target.char))
+    // mean2char: 题干显示释义，选项是字。如果释义包含目标字（如「子」→「孩子」），答案泄露，跳过
+    const safePool = pool.filter((c) => !c.meaning.includes(c.char));
+    const safeTarget = safePool.length > 0
+      ? safePool[Math.floor(Math.random() * safePool.length)]
+      : target;
+    const distractors = shuffle(pool.filter((c) => c.char !== safeTarget.char))
       .slice(0, 3)
       .map((c) => c.char);
-    return { mode: 'mean2char', target, options: shuffle([target.char, ...distractors]), answer: target.char };
+    return { mode: 'mean2char', target: safeTarget, options: shuffle([safeTarget.char, ...distractors]), answer: safeTarget.char };
   }
   // 释义可能撞车（比如两个字都写「小孩」），撞车的选项会让孩子答对被判错，先过滤掉
   const distractors = shuffle(pool.filter((c) => c.meaning !== target.meaning))
