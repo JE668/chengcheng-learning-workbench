@@ -119,6 +119,7 @@ jobs:
             'tts'
             'tts-edge'
             'tts-debug'
+            'tts/health'
           )
           FAIL=0
           while IFS= read -r f; do
