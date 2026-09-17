@@ -6,6 +6,8 @@ import { ModuleCover } from '@/components/study/ModuleCover';
 import { ModuleStars } from '@/components/study/ModuleStars';
 import { MokoHelper } from '@/components/MokoHelper';
 import { EN_UNITS } from '@/lib/study-data';
+import { RAZ_BOOKS } from '@/lib/raz-books';
+import { RAZ_ALL_WORDS } from '@/lib/raz-vocab';
 
 export default async function EnglishStudyPage() {
   const modules = STUDY_MODULES.english;
@@ -50,6 +52,42 @@ export default async function EnglishStudyPage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* RAZ 阅读 */}
+      <section className="mb-8">
+        <h2 className="section-title mb-3">📖 RAZ 绘本阅读</h2>
+        <p className="text-xs text-gray-400 mb-3">
+          {RAZ_BOOKS.length} 本 RAZ AA 级绘本 · {RAZ_ALL_WORDS.length} 个核心词汇 · 视频 + PDF + 词汇练习
+        </p>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <Link
+            href="/study/english/raz-reader"
+            className="rounded-2xl overflow-hidden shadow-lg border-2 border-moko-green/20 bg-white hover:scale-[1.02] transition block"
+          >
+            <div className="p-4 bg-gradient-to-br from-moko-green to-moko-mint">
+              <div className="text-3xl mb-1">📖</div>
+              <h3 className="font-black text-white">绘本阅读</h3>
+              <p className="text-xs text-white/80 mt-1">PDF + 视频，进度追踪</p>
+            </div>
+            <div className="p-3 text-xs text-gray-500">
+              已读 <span className="font-bold">0</span> / {RAZ_BOOKS.length} 本
+            </div>
+          </Link>
+          <Link
+            href="/study/english/raz-vocab"
+            className="rounded-2xl overflow-hidden shadow-lg border-2 border-moko-purple/20 bg-white hover:scale-[1.02] transition block"
+          >
+            <div className="p-4 bg-gradient-to-br from-moko-purple to-moko-violet">
+              <div className="text-3xl mb-1">🔤</div>
+              <h3 className="font-black text-white">词汇练习</h3>
+              <p className="text-xs text-white/80 mt-1">按主题分类，听音认词</p>
+            </div>
+            <div className="p-3 text-xs text-gray-500">
+              {RAZ_ALL_WORDS.length} 个词 · 11 个主题
+            </div>
+          </Link>
         </div>
       </section>
 
