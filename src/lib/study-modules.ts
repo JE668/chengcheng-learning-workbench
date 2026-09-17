@@ -45,6 +45,9 @@ import { SimilarCharModule } from '@/components/study/SimilarChar';
 import { OnomatopoeiaModule } from '@/components/study/Onomatopoeia';
 import { PolyphonicModule } from '@/components/study/Polyphonic';
 import { PinyinTipsModule } from '@/components/study/PinyinTips';
+import { PictographModule } from '@/components/study/Pictograph';
+import { IdiomModule } from '@/components/study/Idiom';
+import { NeutralToneModule } from '@/components/study/NeutralTone';
 
 export interface StudyModuleMeta {
   key: string;
@@ -87,6 +90,9 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'onomatopoeia', label: '拟声词乐园', emoji: '🎵', desc: '听听看：小狗汪汪、小猫喵喵、小鸭嘎嘎', Component: OnomatopoeiaModule, color: 'bg-moko-yellow' },
     { key: 'polyphonic', label: '多音字认认认', emoji: '🔀', desc: '一个字好几种读音：了/乐/好/得', Component: PolyphonicModule, color: 'bg-moko-violet' },
     { key: 'pinyin-tips', label: '拼音口诀歌', emoji: '🔤', desc: 'a o e、b p m f…口诀记起来更快哦', Component: PinyinTipsModule, color: 'bg-moko-pink' },
+    { key: 'pictograph', label: '象形字博物馆', emoji: '🎨', desc: '古人怎样造字？日→太阳，月→月亮，一字一图', Component: PictographModule, color: 'bg-moko-green' },
+    { key: 'idiom', label: '成语填空', emoji: '📚', desc: '缺一个字：耳（）一新、面红耳（）…', Component: IdiomModule, color: 'bg-moko-rose' },
+    { key: 'neutral-tone', label: '轻声小课堂', emoji: '🎵', desc: '妈妈、爸爸、哥哥…哪个字读轻声？', Component: NeutralToneModule, color: 'bg-moko-yellow' },
   ],
   math: [
     { key: 'count', label: '数感启蒙', emoji: '🔟', desc: '1~10 数一数', Component: NumberSenseModule, color: 'bg-moko-blue' },

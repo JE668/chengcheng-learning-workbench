@@ -1533,6 +1533,78 @@ export const SIMILAR_CHAR_RIDDLES: SimilarCharRiddle[] = [
   { char: '水', riddle: '四个小点，大自然的来源', answer: '水', emoji: '💧' },
 ];
 
+/* -------------------- 语文 · 象形字（一课一贴练习册） -------------------- */
+export interface PictographItem {
+  char: string;
+  py: string;
+  meaning: string;
+  hint: string;
+  emoji: string;
+}
+export const PICTOGRAPHS: PictographItem[] = [
+  { char: '日', py: 'rì', meaning: '太阳', hint: '古人画了一个圆圈，中间一点，代表太阳', emoji: '☀️' },
+  { char: '月', py: 'yuè', meaning: '月亮', hint: '古人画了一个弯弯的月牙', emoji: '🌙' },
+  { char: '山', py: 'shān', meaning: '山峰', hint: '古人画了三座尖尖的山峰', emoji: '⛰️' },
+  { char: '川', py: 'chuān', meaning: '河流', hint: '古人画了三条弯弯的河流', emoji: '🏞️' },
+  { char: '水', py: 'shuǐ', meaning: '水流', hint: '古人画了流动的水波', emoji: '💧' },
+  { char: '火', py: 'huǒ', meaning: '火焰', hint: '古人画了一团跳动的火焰', emoji: '🔥' },
+  { char: '田', py: 'tián', meaning: '田地', hint: '古人画了一个方方正正的田地', emoji: '🌾' },
+  { char: '禾', py: 'hé', meaning: '禾苗', hint: '古人画了一棵弯弯的禾苗', emoji: '🌱' },
+  { char: '木', py: 'mù', meaning: '树木', hint: '古人画了一棵大树，有树根有树枝', emoji: '🌳' },
+  { char: '网', py: 'wǎng', meaning: '渔网', hint: '古人画了一张方格渔网', emoji: '🕸️' },
+  { char: '羊', py: 'yáng', meaning: '山羊', hint: '古人画了一只长着弯曲羊角的羊', emoji: '🐑' },
+  { char: '兔', py: 'tù', meaning: '兔子', hint: '古人画了一只竖着长耳朵的兔子', emoji: '🐰' },
+  { char: '鸟', py: 'niǎo', meaning: '小鸟', hint: '古人画了一只尖嘴的小鸟', emoji: '🐦' },
+  { char: '竹', py: 'zhú', meaning: '竹子', hint: '古人画了两片竹叶', emoji: '🎋' },
+];
+
+/* -------------------- 语文 · 成语填空（一课一贴练习册） -------------------- */
+export interface IdiomItem {
+  idiom: string;
+  blank: string; // 缺的那个字
+  position: number; // blank 在成语中的位置（0-based）
+  meaning: string;
+  example: string;
+  emoji: string;
+}
+export const IDIOMS: IdiomItem[] = [
+  { idiom: '耳目一新', blank: '目', position: 2, meaning: '听到的、看到的都和以前不一样，形容事物焕然一新', example: '教室里焕然一新，耳目一新', emoji: '👀' },
+  { idiom: '面红耳赤', blank: '赤', position: 3, meaning: '脸和耳朵都红了，形容因激动或羞愧而脸色发红', example: '他争得面红耳赤', emoji: '😡' },
+  { idiom: '目中无人', blank: '中', position: 2, meaning: '眼里没有别人，形容骄傲自大', example: '他做事目中无人', emoji: '😤' },
+  { idiom: '口是心非', blank: '是', position: 2, meaning: '嘴里说的和心里想的不一样', example: '他是个口是心非的人', emoji: '🤐' },
+  { idiom: '苦口婆心', blank: '口', position: 2, meaning: '耐心地、善意地反复劝告', example: '妈妈苦口婆心地劝我', emoji: '👵' },
+  { idiom: '心直口快', blank: '直', position: 2, meaning: '心里怎么想，嘴上就怎么说，不拐弯抹角', example: '他心直口快', emoji: '💬' },
+  { idiom: '一目十行', blank: '十', position: 2, meaning: '一眼看十行，形容看书非常快', example: '他读书一目十行', emoji: '📖' },
+  { idiom: '手忙脚乱', blank: '脚', position: 3, meaning: '形容做事慌张，没有条理', example: '他做事手忙脚乱', emoji: '🤯' },
+  { idiom: '画蛇添足', blank: '足', position: 3, meaning: '比喻做了多余的事，反而不好', example: '别画蛇添足了', emoji: '🐍' },
+  { idiom: '守株待兔', blank: '兔', position: 3, meaning: '比喻死守经验，不知变通', example: '做事不能守株待兔', emoji: '🐰' },
+  { idiom: '掩耳盗铃', blank: '铃', position: 3, meaning: '捂住耳朵去偷铃铛，比喻自己欺骗自己', example: '别掩耳盗铃了', emoji: '🔔' },
+  { idiom: '刻舟求剑', blank: '剑', position: 3, meaning: '比喻不懂事物变化，拘泥于成例', example: '别刻舟求剑', emoji: '🗡️' },
+];
+
+/* -------------------- 语文 · 轻声词（一课一贴练习册） -------------------- */
+export interface NeutralToneItem {
+  word: string;
+  normal: string[]; // 正常读音的声调
+  light: string[]; // 轻声读音的声调
+  emoji: string;
+  tip: string;
+}
+export const NEUTRAL_TONE_WORDS: NeutralToneItem[] = [
+  { word: '妈妈', normal: ['mā', 'mā'], light: ['mā', 'ma'], emoji: '👩', tip: '第二个"妈"读轻声，不标调号' },
+  { word: '爸爸', normal: ['bà', 'bà'], light: ['bà', 'ba'], emoji: '👨', tip: '第二个"爸"读轻声' },
+  { word: '哥哥', normal: ['gē', 'gē'], light: ['gē', 'ge'], emoji: '👦', tip: '第二个"哥"读轻声' },
+  { word: '姐姐', normal: ['jiě', 'jiě'], light: ['jiě', 'jie'], emoji: '👧', tip: '第二个"姐"读轻声' },
+  { word: '弟弟', normal: ['dì', 'dì'], light: ['dì', 'de'], emoji: '👶', tip: '第二个"弟"读轻声' },
+  { word: '妹妹', normal: ['mèi', 'mèi'], light: ['mèi', 'mei'], emoji: '👧', tip: '第二个"妹"读轻声' },
+  { word: '奶奶', normal: ['nǎi', 'nǎi'], light: ['nǎi', 'nai'], emoji: '👵', tip: '第二个"奶"读轻声' },
+  { word: '爷爷', normal: ['yé', 'yé'], light: ['yé', 'ye'], emoji: '👴', tip: '第二个"爷"读轻声' },
+  { word: '伯伯', normal: ['bó', 'bó'], light: ['bó', 'bo'], emoji: '👨', tip: '第二个"伯"读轻声' },
+  { word: '叔叔', normal: ['shū', 'shū'], light: ['shū', 'shu'], emoji: '🧔', tip: '第二个"叔"读轻声' },
+  { word: '阿姨', normal: ['ā', 'yí'], light: ['ā', 'yi'], emoji: '👩', tip: '第二个"姨"读轻声' },
+  { word: '姑姑', normal: ['gū', 'gū'], light: ['gū', 'gu'], emoji: '👩', tip: '第二个"姑"读轻声' },
+];
+
 /* -------------------- 英语 · 常见句型（选词填空） -------------------- */
 export interface EnSentenceItem {
   sentence: string; // 含 ___ 表示空格
@@ -2023,23 +2095,23 @@ function deriveChineseUnits(): ChineseUnit[] {
       // 我上学了：入学准备 + 基础识字 + 安全
       keys = ['school-prep', 'characters', 'lessons', 'safety'];
     } else if (isPinyin) {
-      // 拼音单元：拼读 + 识字巩固 + 拼音口诀
-      keys = ['pinyin', 'pinyin-blend', 'characters', 'pinyin-tips'];
+      // 拼音单元：拼读 + 识字巩固 + 拼音口诀 + 轻声
+      keys = ['pinyin', 'pinyin-blend', 'characters', 'pinyin-tips', 'neutral-tone'];
     } else if (isReading && u.chapter === 6) {
-      // 阅读（一）：课文 + 古诗 + 量词
-      keys = ['texts', 'textchars', 'reading', 'poems', 'poem-fun', 'quantifiers'];
+      // 阅读（一）：课文 + 古诗 + 量词 + 成语
+      keys = ['texts', 'textchars', 'reading', 'poems', 'poem-fun', 'quantifiers', 'idiom'];
     } else if (isReading && u.chapter === 8) {
-      // 阅读（二）：课文 + 指读 + 古诗 + 谜语
-      keys = ['texts', 'textchars', 'reading', 'finger-read', 'poems', 'riddles'];
+      // 阅读（二）：课文 + 指读 + 古诗 + 谜语 + 成语
+      keys = ['texts', 'textchars', 'reading', 'finger-read', 'poems', 'riddles', 'idiom'];
     } else if (isReading && u.chapter === 9) {
       // 阅读（三）：课文 + 儿歌 + 生活 + 谚语
       keys = ['texts', 'textchars', 'reading', 'finger-read', 'nursery-rhymes', 'my-day', 'proverbs'];
     } else if (u.chapter === 2) {
-      // 识字（一）：核心识字 + 笔顺 + 汉字规律 + 形近字
-      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'char-transform', 'similar-char'];
+      // 识字（一）：核心识字 + 笔顺 + 汉字规律 + 形近字 + 象形字
+      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'char-transform', 'similar-char', 'pictograph'];
     } else if (u.chapter === 7) {
-      // 识字（二）：核心识字 + 笔顺 + 描红 + 组词 + 反义词 + 连词成句 + 形近字 + 拟声词 + 多音字
-      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'trace', 'char-transform', 'antonyms', 'sentence', 'similar-char', 'onomatopoeia', 'polyphonic'];
+      // 识字（二）：核心识字 + 笔顺 + 描红 + 组词 + 反义词 + 连词成句 + 形近字 + 拟声词 + 多音字 + 象形字
+      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'trace', 'char-transform', 'antonyms', 'sentence', 'similar-char', 'onomatopoeia', 'polyphonic', 'pictograph'];
     } else {
       // 兜底：通用识字模块
       keys = CHAR_LESSON;
