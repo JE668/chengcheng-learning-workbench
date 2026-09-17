@@ -1601,7 +1601,7 @@ export const GRADE1_CHAR_UNITS: CharUnit[] = [
       '影', '前', '后', '黑', '狗', '左', '右', '它', '好', '朋', '友',
       '尾', '巴', '谁', '长', '短', '把', '伞', '兔', '最', '公',
       '写', '诗', '点', '要', '过', '给', '当', '串', '们', '以', '成',
-      '数', '彩', '半', '空', '问', '到', '方', '没', '更', '绿', '出', '长',
+      '数', '彩', '半', '空', '问', '到', '方', '没', '更', '绿', '出',
     ],
     words: ['影子', '前后', '黑狗', '左右', '朋友', '尾巴', '长短', '一把', '兔子', '公鸡', '写字', '诗歌', '过来', '当心', '我们', '以后', '成长'],
   },
@@ -1833,13 +1833,38 @@ const CHAR_LESSON: string[] = [
 const PINYIN_LESSON: string[] = ['pinyin', 'pinyin-blend', 'characters'];
 const READ_LESSON: string[] = ['texts', 'textchars', 'reading', 'finger-read', 'quiz', 'poems', 'poem-fun', 'nursery-rhymes'];
 
-/** 由 GRADE1_CHAR_UNITS 派生：按单元性质挑出相关模块 key */
+/** 由 GRADE1_CHAR_UNITS 派生：按单元性质精挑相关模块 key */
 function deriveChineseUnits(): ChineseUnit[] {
   return GRADE1_CHAR_UNITS.map((u) => {
     let keys: string[];
-    if (u.unit.startsWith('汉语拼音')) keys = PINYIN_LESSON;
-    else if (u.unit.startsWith('阅读')) keys = READ_LESSON;
-    else keys = CHAR_LESSON; // 我上学了 / 识字（一）（二）
+    const isPinyin = u.unit.startsWith('汉语拼音');
+    const isReading = u.unit.startsWith('阅读');
+    // 精细化：每个单元只挂与当前学习内容最相关的模块
+    if (u.chapter === 1) {
+      // 我上学了：入学准备 + 基础识字 + 安全
+      keys = ['school-prep', 'characters', 'lessons', 'safety'];
+    } else if (isPinyin) {
+      // 拼音单元：拼读 + 识字巩固
+      keys = ['pinyin', 'pinyin-blend', 'characters'];
+    } else if (isReading && u.chapter === 6) {
+      // 阅读（一）：课文 + 古诗 + 量词
+      keys = ['texts', 'textchars', 'reading', 'poems', 'poem-fun', 'quantifiers'];
+    } else if (isReading && u.chapter === 8) {
+      // 阅读（二）：课文 + 指读 + 古诗 + 谜语
+      keys = ['texts', 'textchars', 'reading', 'finger-read', 'poems', 'riddles'];
+    } else if (isReading && u.chapter === 9) {
+      // 阅读（三）：课文 + 儿歌 + 生活 + 谚语
+      keys = ['texts', 'textchars', 'reading', 'finger-read', 'nursery-rhymes', 'my-day', 'proverbs'];
+    } else if (u.chapter === 2) {
+      // 识字（一）：核心识字 + 笔顺 + 汉字规律
+      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'char-transform'];
+    } else if (u.chapter === 7) {
+      // 识字（二）：核心识字 + 笔顺 + 描红 + 组词 + 反义词 + 连词成句
+      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'trace', 'char-transform', 'antonyms', 'sentence'];
+    } else {
+      // 兜底：通用识字模块
+      keys = CHAR_LESSON;
+    }
     return { chapter: u.chapter, unit: u.unit, emoji: u.emoji, goal: u.text, moduleKeys: keys };
   });
 }

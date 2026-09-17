@@ -1,10 +1,10 @@
 import { getDb } from './db';
 import { confirm, logGrowthEvent } from './castle';
-import { PINYIN_TONES, applyTone, ALL_EN_WORDS, CHARACTERS, PROVERBS, ANTONYMS, RIDDLES, POEMS, WORD_PROBLEMS, ORDINALS, CLOCKS, EN_SENTENCES } from './study-data';
+import { PINYIN_TONES, applyTone, ALL_EN_WORDS, CHARACTERS, PROVERBS, ANTONYMS, RIDDLES, POEMS, WORD_PROBLEMS, ORDINALS, CLOCKS, EN_SENTENCES, GRADE1_CHAR_UNITS, MATH_UNITS } from './study-data';
 import { mokoChars, subjectMokoKey, SUN_PER_SUBJECT } from './moko';
 import { mokoCollection } from './moko-collection';
 import { getDueMistakes, reviewMistake, type MistakeRow } from './mistakes';
-import { upsertModuleProgress } from './progress-store';
+import { upsertModuleProgress, getTextbookProgress } from './progress-store';
 import { dateStr, addDays } from './date';
 import { MILESTONE_DAYS } from './economy';
 import { safeJsonParse } from './safe-json';
@@ -123,6 +123,8 @@ export interface PracticeDayRecord {
   questions: PracticeQuestion[];
   practiceStreak: number;
   nextMilestone: number;
+  /** 教材进度提示：告诉孩子当前课本学到哪个单元，帮 TA 有的放矢 */
+  textbookHint?: string;
 }
 
 export type SubjectStatus = 'passed' | 'already' | 'failed';
@@ -691,8 +693,23 @@ export async function getTodayPractice(childId: number, generate = false): Promi
   const streak = await computePracticeStreak(childId, today);
   const nextMilestoneDay = MILESTONE_DAYS.find((d) => d > streak);
   const nextMilestone = nextMilestoneDay != null ? nextMilestoneDay - streak : 0;
+  // 教材进度提示：帮孩子知道当前学到哪、该重点练什么
+  let textbookHint: string | undefined;
+  try {
+    const tb = await getTextbookProgress(childId);
+    const chCh = tb['chinese'] ?? 0;
+    const mathCh = tb['math'] ?? 0;
+    const cnUnit = GRADE1_CHAR_UNITS.find((u) => u.chapter === chCh);
+    const mathUnit = MATH_UNITS.find((u) => u.chapter === mathCh);
+    const parts: string[] = [];
+    if (cnUnit) parts.push(`语文第${cnUnit.chapter}单元「${cnUnit.unit}」`);
+    if (mathUnit) parts.push(`数学第${mathUnit.chapter}单元「${mathUnit.unit}」`);
+    if (parts.length > 0) textbookHint = `📖 课本进度：${parts.join('，')}。每日一练的题型和课本同步，加油巩固！`;
+  } catch {
+    /* textbook progress 查询失败不影响出题 */
+  }
   if (!row) {
-    return { completed: false, correct: 0, total: 0, questions: [], practiceStreak: streak, nextMilestone };
+    return { completed: false, correct: 0, total: 0, questions: [], practiceStreak: streak, nextMilestone, textbookHint };
   }
   const questions: PracticeQuestion[] = row.questions
     ? safeJsonParse<PracticeQuestion[]>(String(row.questions), [])
@@ -704,6 +721,7 @@ export async function getTodayPractice(childId: number, generate = false): Promi
     questions,
     practiceStreak: streak,
     nextMilestone,
+    textbookHint,
   };
 }
 

@@ -356,6 +356,12 @@ export default function DailyPracticePage() {
         <p className="text-xs text-gray-400 mt-1 text-center">💡 答对 80% 以上就算通过（允许错 1~2 题），做错可以重选哦～</p>
       </div>
 
+      {data && 'textbookHint' in data && data.textbookHint && (
+        <div className="mb-3 rounded-2xl bg-gradient-to-r from-moko-yellow/10 to-moko-orange/10 border border-moko-yellow/20 px-4 py-2 text-sm text-gray-600 text-center">
+          {data.textbookHint}
+        </div>
+      )}
+
       {/* 题目卡片 */}
       <div className={`card-moko p-6 bg-gradient-to-br ${meta.grad} text-white`}>
         <div className="text-center mb-4">

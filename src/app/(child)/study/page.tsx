@@ -75,9 +75,11 @@ async function loadRecommend(): Promise<{
   // 该复习单元：语文课本读到的下一章对应哪个单元
   const tb = await getTextbookProgress(0);
   const readIdx = tb['chinese'] ?? 0;
-  const nextUnit = GRADE1_CHAR_UNITS.find((u) => u.chapter === 0 + 1);
+  const nextUnit = GRADE1_CHAR_UNITS.find((u) => u.chapter === readIdx);
   const nextLabel = nextUnit ? `第 ${nextUnit.chapter} 单元 · ${nextUnit.unit}` : '';
-  const nextHref = '/study/chinese';
+  const nextHref = nextUnit
+    ? `/study/chinese?chapter=${nextUnit.chapter}`
+    : '/study/chinese';
 
   return { resumeHref, resumeLabel, nextHref, nextLabel };
 }

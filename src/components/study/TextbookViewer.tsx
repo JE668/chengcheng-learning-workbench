@@ -1,11 +1,72 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { TEXTBOOKS, type Textbook, type Chapter } from '@/lib/textbooks';
+import { MATH_UNITS, GRADE1_CHAR_UNITS } from '@/lib/study-data';
+import { STUDY_MODULES } from '@/lib/study-modules';
 import PdfViewer from '@/components/PdfViewer';
 import { mediaUrl } from '@/lib/media';
 
 type Progress = Record<string, number>; // bookKey -> 上次读到的章节 idx
+
+/** 某章节对应的练习模块（从 MATH_UNITS / GRADE1_CHAR_UNITS 反查） */
+function getChapterModules(bookKey: string, chapterIdx: number): { key: string; label: string; emoji: string; desc: string; color: string }[] {
+  if (bookKey === 'math') {
+    const u = MATH_UNITS.find((x) => x.chapter === chapterIdx);
+    if (!u) return [];
+    return u.moduleKeys
+      .map((k) => STUDY_MODULES['math']?.find((m) => m.key === k))
+      .filter(Boolean) as { key: string; label: string; emoji: string; desc: string; color: string }[];
+  }
+  if (bookKey === 'chinese') {
+    const u = GRADE1_CHAR_UNITS.find((x) => x.chapter === chapterIdx);
+    if (!u) return [];
+    // 根据单元性质挑模块
+    const isPinyin = u.unit.startsWith('汉语拼音');
+    const isReading = u.unit.startsWith('阅读');
+    const keys = isPinyin
+      ? ['pinyin', 'pinyin-blend', 'characters']
+      : isReading
+        ? ['texts', 'textchars', 'reading', 'poems', 'poem-fun']
+        : ['characters', 'quiz', 'word-form', 'strokes-order', 'char-transform'];
+    return keys
+      .map((k) => STUDY_MODULES['chinese']?.find((m) => m.key === k))
+      .filter(Boolean) as { key: string; label: string; emoji: string; desc: string; color: string }[];
+  }
+  return [];
+}
+
+/** 本章练习推荐：读完这一章，来练一练巩固知识 */
+function PracticeRecommendation({ bookKey, chapterIdx }: { bookKey: string; chapterIdx: number }) {
+  const modules = useMemo(() => getChapterModules(bookKey, chapterIdx), [bookKey, chapterIdx]);
+  if (modules.length === 0) return null;
+  const subject = bookKey === 'math' ? '数学' : '语文';
+  const chapterTitle = bookKey === 'math'
+    ? MATH_UNITS.find((u) => u.chapter === chapterIdx)?.unit ?? ''
+    : GRADE1_CHAR_UNITS.find((u) => u.chapter === chapterIdx)?.unit ?? '';
+
+  return (
+    <div className="mt-4 rounded-3xl bg-gradient-to-br from-moko-yellow to-moko-orange p-5 shadow-lg border-2 border-moko-yellow/30">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-2xl">📝</span>
+        <h3 className="text-lg font-black text-moko-violet">{subject} · {chapterTitle} · 练一练</h3>
+      </div>
+      <p className="text-sm text-gray-600 mb-3">读完这一章，来巩固一下今天学到的知识吧～</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {modules.map((m) => (
+          <a
+            key={m.key}
+            href={`/study/${bookKey}/${m.key}`}
+            className="rounded-2xl bg-white/80 border-2 border-moko-purple/15 p-3 text-center hover:scale-[1.03] hover:shadow transition active:scale-95"
+          >
+            <div className="text-2xl mb-1">{m.emoji}</div>
+            <div className="text-sm font-bold text-gray-700">{m.label}</div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function TextbookViewer() {
   const [book, setBook] = useState<Textbook | null>(null);
@@ -163,6 +224,11 @@ export default function TextbookViewer() {
             </div>
           )}
         </div>
+
+        {/* 📝 本章练习推荐 */}
+        {openFile && (
+          <PracticeRecommendation bookKey={book.key} chapterIdx={book.chapters.find((c) => c.file === openFile)?.idx ?? 0} />
+        )}
       </div>
 
       <p className="text-xs text-gray-400 text-center">
