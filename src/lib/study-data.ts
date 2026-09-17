@@ -1605,6 +1605,68 @@ export const NEUTRAL_TONE_WORDS: NeutralToneItem[] = [
   { word: '姑姑', normal: ['gū', 'gū'], light: ['gū', 'gu'], emoji: '👩', tip: '第二个"姑"读轻声' },
 ];
 
+/* -------------------- 语文 · 声调表（一课一贴练习册） -------------------- */
+export interface ToneItem {
+  tone: number; // 1-4
+  label: string; // 一声平, 二声扬…
+  mark: string; // ā á ǎ à
+  example: string[]; // 例字
+  emoji: string;
+  mnemonic: string; // 记忆口诀
+}
+export const TONE_ITEMS: ToneItem[] = [
+  { tone: 1, label: '一声平', mark: 'ā', example: ['妈', '他', '花'], emoji: '😐', mnemonic: '一声平，像汽车' },
+  { tone: 2, label: '二声扬', mark: 'á', example: ['麻', '拿', '茶'], emoji: '😊', mnemonic: '二声扬，像爬坡' },
+  { tone: 3, label: '三声拐弯', mark: 'ǎ', example: ['马', '那', '洒'], emoji: '😯', mnemonic: '三声拐弯，先降后升' },
+  { tone: 4, label: '四声降', mark: 'à', example: ['骂', '大', '爸'], emoji: '😠', mnemonic: '四声降，像下楼' },
+];
+
+/* -------------------- 语文 · 形近字母（一课一贴练习册） -------------------- */
+export interface LetterPair {
+  a: string; // 字母 A
+  b: string; // 字母 B
+  aName: string; // A 的名称/含义
+  bName: string; // B 的名称/含义
+  tip: string; // 辨别口诀
+  emoji: string;
+}
+export const LETTER_PAIRS: LetterPair[] = [
+  { a: 'l', b: 'b', aName: 'l（el）', bName: 'b（bi）', tip: '6 个圈在右下是 b，1 个圈在左下是 l', emoji: '🅰️' },
+  { a: 'd', b: 'q', aName: 'd（di）', bName: 'q（qi）', tip: '6 个圈在右上是 d，9 个圈在左上是 q', emoji: '🅱️' },
+  { a: 'f', b: 't', aName: 'f（ef）', bName: 't（ti）', tip: '一拐一横是 f，一竖一横是 t', emoji: '🅲️' },
+  { a: 'm', b: 'n', aName: 'm（em）', bName: 'n（en）', tip: '两个门洞是 m，一个门洞是 n', emoji: '🅳️' },
+  { a: 'p', b: 'q', aName: 'p（pi）', bName: 'q（qi）', tip: 'p 像小旗，q 像气球', emoji: '🅴️' },
+  { a: 'j', b: 'r', aName: 'j（ji）', bName: 'r（er）', tip: 'j 像母鸡，r 像日出', emoji: '🅵️' },
+  { a: 'c', b: 's', aName: 'c（ci）', bName: 's（si）', tip: 'c 像刺猬，s 像蚕虫', emoji: '🅶️' },
+  { a: 'z', b: 'c', aName: 'z（zi）', bName: 'c（ci）', tip: 'z 像写字，c 像刺猬', emoji: '🅷️' },
+];
+
+/* -------------------- 语文 · 课文理解题（一课一贴练习册） -------------------- */
+export interface TextComprehensionQ {
+  textRef: string; // 引用 TEXTBOOK_TEXTS 的 title
+  question: string;
+  options: string[];
+  answer: number; // 0-based
+  explain: string;
+  emoji: string;
+}
+export const TEXT_COMPREHENSION_QS: TextComprehensionQ[] = [
+  // 《鹅》
+  { textRef: '鹅', question: '《鹅》的作者是谁？', options: ['骆宾王', '王维', '李白', '杜甫'], answer: 0, explain: '骆宾王是唐朝诗人，"初唐四杰"之一', emoji: '🦢' },
+  { textRef: '鹅', question: '鹅的羽毛是什么颜色？', options: ['黑色', '白色', '灰色', '彩色'], answer: 1, explain: '诗中"白毛浮绿水"，鹅的羽毛是白色的', emoji: '⚪' },
+  { textRef: '鹅', question: '鹅的脚掌是什么颜色？', options: ['白色', '黄色', '红色', '黑色'], answer: 2, explain: '诗中"红掌拨清波"，鹅的脚掌是红色的', emoji: '🦆' },
+  { textRef: '鹅', question: '"曲项向天歌"描写的是鹅的什么动作？', options: ['游水', '歪着脖子唱歌', '吃鱼', '睡觉'], answer: 1, explain: '曲项=弯着脖子，向天歌=对着天空唱歌', emoji: '🎵' },
+  // 《画》
+  { textRef: '画', question: '《画》的作者是谁？', options: ['骆宾王', '王维', '李白', '杜甫'], answer: 1, explain: '王维是唐朝诗人，画坛高手', emoji: '🖼️' },
+  { textRef: '画', question: '"远看山有色"是什么意思？', options: ['山很远', '从远处看，山是有颜色的', '山没有颜色', '山很大'], answer: 1, explain: '从远处看，山是有颜色的', emoji: '⛰️' },
+  { textRef: '画', question: '"近听水无声"说明这是什么？', options: ['真的水', '画中的水', '假的水', '没有水'], answer: 1, explain: '画中的水不会发出声音', emoji: '💧' },
+  { textRef: '画', question: '"春去花还在"说明这是什么？', options: ['真的花', '画中的花', '假的花', '没有花'], answer: 1, explain: '画中的花春天过去了还在开', emoji: '🌸' },
+  { textRef: '画', question: '"人来鸟不惊"说明这是什么？', options: ['真的鸟', '画中的鸟', '假の鸟', '没有鸟'], answer: 1, explain: '画中的鸟不会飞走', emoji: '🐦' },
+  // 通用
+  { textRef: '鹅', question: '这首诗描写的是什么季节？', options: ['春天', '夏天', '秋天', '冬天'], answer: 1, explain: '鹅在绿水中游，是夏天', emoji: '☀️' },
+  { textRef: '画', question: '这首诗写的是一幅什么？', options: ['照片', '画', '雕塑', '视频'], answer: 1, explain: '整首诗描写的是一幅画', emoji: '🎨' },
+];
+
 /* -------------------- 英语 · 常见句型（选词填空） -------------------- */
 export interface EnSentenceItem {
   sentence: string; // 含 ___ 表示空格
@@ -2095,23 +2157,23 @@ function deriveChineseUnits(): ChineseUnit[] {
       // 我上学了：入学准备 + 基础识字 + 安全
       keys = ['school-prep', 'characters', 'lessons', 'safety'];
     } else if (isPinyin) {
-      // 拼音单元：拼读 + 识字巩固 + 拼音口诀 + 轻声
-      keys = ['pinyin', 'pinyin-blend', 'characters', 'pinyin-tips', 'neutral-tone'];
+      // 拼音单元：拼读 + 识字巩固 + 拼音口诀 + 轻声 + 声调
+      keys = ['pinyin', 'pinyin-blend', 'characters', 'pinyin-tips', 'neutral-tone', 'tone-quiz'];
     } else if (isReading && u.chapter === 6) {
-      // 阅读（一）：课文 + 古诗 + 量词 + 成语
-      keys = ['texts', 'textchars', 'reading', 'poems', 'poem-fun', 'quantifiers', 'idiom'];
+      // 阅读（一）：课文 + 古诗 + 量词 + 成语 + 课文理解
+      keys = ['texts', 'textchars', 'reading', 'poems', 'poem-fun', 'quantifiers', 'idiom', 'text-comprehension'];
     } else if (isReading && u.chapter === 8) {
-      // 阅读（二）：课文 + 指读 + 古诗 + 谜语 + 成语
-      keys = ['texts', 'textchars', 'reading', 'finger-read', 'poems', 'riddles', 'idiom'];
+      // 阅读（二）：课文 + 指读 + 古诗 + 谜语 + 成语 + 课文理解
+      keys = ['texts', 'textchars', 'reading', 'finger-read', 'poems', 'riddles', 'idiom', 'text-comprehension'];
     } else if (isReading && u.chapter === 9) {
       // 阅读（三）：课文 + 儿歌 + 生活 + 谚语
       keys = ['texts', 'textchars', 'reading', 'finger-read', 'nursery-rhymes', 'my-day', 'proverbs'];
     } else if (u.chapter === 2) {
-      // 识字（一）：核心识字 + 笔顺 + 汉字规律 + 形近字 + 象形字
-      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'char-transform', 'similar-char', 'pictograph'];
+      // 识字（一）：核心识字 + 笔顺 + 汉字规律 + 形近字 + 象形字 + 书写描红
+      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'char-transform', 'similar-char', 'pictograph', 'writing-trace'];
     } else if (u.chapter === 7) {
-      // 识字（二）：核心识字 + 笔顺 + 描红 + 组词 + 反义词 + 连词成句 + 形近字 + 拟声词 + 多音字 + 象形字
-      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'trace', 'char-transform', 'antonyms', 'sentence', 'similar-char', 'onomatopoeia', 'polyphonic', 'pictograph'];
+      // 识字（二）：核心识字 + 笔顺 + 描红 + 组词 + 反义词 + 连词成句 + 形近字 + 拟声词 + 多音字 + 象形字 + 书写描红 + 形近字母
+      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'trace', 'char-transform', 'antonyms', 'sentence', 'similar-char', 'onomatopoeia', 'polyphonic', 'pictograph', 'writing-trace', 'letter-discriminate'];
     } else {
       // 兜底：通用识字模块
       keys = CHAR_LESSON;

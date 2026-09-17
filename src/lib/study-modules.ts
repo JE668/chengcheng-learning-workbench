@@ -48,6 +48,10 @@ import { PinyinTipsModule } from '@/components/study/PinyinTips';
 import { PictographModule } from '@/components/study/Pictograph';
 import { IdiomModule } from '@/components/study/Idiom';
 import { NeutralToneModule } from '@/components/study/NeutralTone';
+import { TextComprehensionModule as TextUnderstandingModule } from '@/components/study/TextComprehension';
+import { WritingTraceModule } from '@/components/study/WritingTrace';
+import { ToneModule } from '@/components/study/ToneQuiz';
+import { LetterDiscriminateModule } from '@/components/study/LetterDiscriminate';
 
 export interface StudyModuleMeta {
   key: string;
@@ -93,6 +97,10 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'pictograph', label: '象形字博物馆', emoji: '🎨', desc: '古人怎样造字？日→太阳，月→月亮，一字一图', Component: PictographModule, color: 'bg-moko-green' },
     { key: 'idiom', label: '成语填空', emoji: '📚', desc: '缺一个字：耳（）一新、面红耳（）…', Component: IdiomModule, color: 'bg-moko-rose' },
     { key: 'neutral-tone', label: '轻声小课堂', emoji: '🎵', desc: '妈妈、爸爸、哥哥…哪个字读轻声？', Component: NeutralToneModule, color: 'bg-moko-yellow' },
+    { key: 'text-comprehension', label: '课文理解', emoji: '📖', desc: '读读《鹅》《画》，回答小问题', Component: TextUnderstandingModule, color: 'bg-moko-purple' },
+    { key: 'writing-trace', label: '书写描红', emoji: '✍️', desc: '田字格里跟着写，记住笔顺规则', Component: WritingTraceModule, color: 'bg-moko-cyan' },
+    { key: 'tone-quiz', label: '声调辨别', emoji: '🎵', desc: '一声平、二声扬…听音选声调', Component: ToneModule, color: 'bg-moko-pink' },
+    { key: 'letter-discriminate', label: '形近字母辨析', emoji: '🔍', desc: 'l/b、d/q、f/t…长得像的字母辨一辨', Component: LetterDiscriminateModule, color: 'bg-moko-violet' },
   ],
   math: [
     { key: 'count', label: '数感启蒙', emoji: '🔟', desc: '1~10 数一数', Component: NumberSenseModule, color: 'bg-moko-blue' },
