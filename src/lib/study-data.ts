@@ -1354,6 +1354,185 @@ export const SCHOOL_ITEMS: SchoolItem[] = [
   { name: '游戏机', emoji: '🎮', bring: false },
 ];
 
+/* ============================== 【2025 练习册扩充】 ============================== */
+
+/* -------------------- 语文 · 形近字（一课一贴练习册） -------------------- */
+export interface SimilarCharGroup {
+  a: string; // 字 A
+  b: string; // 字 B
+  aMean: string; // A 的意思/组词
+  bMean: string; // B 的意思/组词
+  tip: string; // 辨别提示
+  emoji: string;
+}
+export const SIMILAR_CHARS: SimilarCharGroup[] = [
+  { a: '地', b: '他', aMean: '土地、地球', bMean: '他们、他的', tip: '土+也=地（和土地有关），亻+也=他（指人）', emoji: '🌍' },
+  { a: '日', b: '目', aMean: '日子、太阳', bMean: '眼睛、目光', tip: '日中间一点，目中间一横', emoji: '🌞' },
+  { a: '田', b: '四', aMean: '田野、田地', bMean: '四周、四月', tip: '田中间十字，四中间儿字', emoji: '🌾' },
+  { a: '禾', b: '木', aMean: '禾苗、禾田', bMean: '木头、树木', tip: '禾多一撇，木是一棵树', emoji: '🌱' },
+  { a: '人', b: '入', aMean: '人们、大人', bMean: '进入、出入', tip: '人撇低捺高，入撇高捺低', emoji: '🚶' },
+  { a: '天', b: '夫', aMean: '天空、天上', bMean: '丈夫、大夫', tip: '天是天上，夫是大夫', emoji: '🌤️' },
+  { a: '月', b: '用', aMean: '月亮、月份', bMean: '使用、用来', tip: '月里面两横，用里面三横', emoji: '🌙' },
+  { a: '火', b: '水', aMean: '大火、着火', bMean: '河水、水田', tip: '火是红色，水是蓝色', emoji: '🔥' },
+  { a: '己', b: '已', aMean: '自己、自我', bMean: '已经、早已', tip: '己右边开口，已右边封口', emoji: '🙋' },
+  { a: '又', b: '双', aMean: '又一个、又是', bMean: '双手、双人', tip: '又加又就是双', emoji: '✌️' },
+];
+
+/* -------------------- 语文 · 拟声词（一课一贴练习册） -------------------- */
+export interface OnomatopoeiaItem {
+  sound: string; // 拟声词
+  subject: string; // 发出声音的事物
+  emoji: string;
+}
+export const ONOMATOPOEIA: OnomatopoeiaItem[] = [
+  { sound: '哗哗', subject: '小溪流', emoji: '💧' },
+  { sound: '沙沙', subject: '小雨点', emoji: '🌧️' },
+  { sound: '咕咕', subject: '小鸽子', emoji: '🕊️' },
+  { sound: '嘎嘎', subject: '小鸭子', emoji: '🦆' },
+  { sound: '喵喵', subject: '小花猫', emoji: '🐱' },
+  { sound: '呱呱', subject: '小青蛙', emoji: '🐸' },
+  { sound: '汪汪', subject: '小狗', emoji: '🐶' },
+  { sound: '喵喵', subject: '小猫', emoji: '🐱' },
+  { sound: '嗡嗡', subject: '小蜜蜂', emoji: '🐝' },
+  { sound: '咚咚', subject: '心跳声', emoji: '💓' },
+  { sound: '哗哗', subject: '下雨声', emoji: '🌧️' },
+  { sound: '沙沙', subject: '风吹树叶', emoji: '🍃' },
+  { sound: '叽叽', subject: '小鸟', emoji: '🐦' },
+  { sound: '咯咯', subject: '母鸡', emoji: '🐔' },
+  { sound: '呱呱', subject: '青蛙', emoji: '🐸' },
+  { sound: '汪汪', subject: '小狗', emoji: '🐶' },
+  { sound: '哞哞', subject: '老牛', emoji: '🐮' },
+  { sound: '咩咩', subject: '小羊', emoji: '🐑' },
+  { sound: '嘎嘎', subject: '小鸭子', emoji: '🦆' },
+  { sound: '嗡嗡', subject: '小蜜蜂', emoji: '🐝' },
+];
+
+/* -------------------- 语文 · 多音字（一课一贴练习册） -------------------- */
+export interface PolyphonicChar {
+  char: string;
+  readings: { pinyin: string; meaning: string; example: string }[];
+  tip: string;
+  emoji: string;
+}
+export const POLYPHONIC_CHARS: PolyphonicChar[] = [
+  { char: '了', readings: [
+    { pinyin: 'le', meaning: '助词（表示完成）', example: '吃了、看了' },
+    { pinyin: 'liǎo', meaning: '明白、了解', example: '了解、清楚' },
+  ], tip: 'le=助词，liǎo=明白', emoji: '👀' },
+  { char: '乐', readings: [
+    { pinyin: 'lè', meaning: '快乐、高兴', example: '快乐、欢乐' },
+    { pinyin: 'yuè', meaning: '音乐、乐器', example: '音乐、乐器' },
+  ], tip: 'lè=快乐，yuè=音乐', emoji: '🎵' },
+  { char: '好', readings: [
+    { pinyin: 'hǎo', meaning: '好的、美好', example: '好人、好看' },
+    { pinyin: 'hào', meaning: '喜爱、爱好', example: '爱好、好学' },
+  ], tip: 'hǎo=好的，hào=喜爱', emoji: '😊' },
+  { char: '得', readings: [
+    { pinyin: 'dé', meaning: '得到、获得', example: '得到、获得' },
+    { pinyin: 'de', meaning: '助词（表示程度）', example: '跑得快' },
+    { pinyin: 'děi', meaning: '必须、需要', example: '得走、得来' },
+  ], tip: 'dé=得到，de=助词，děi=必须', emoji: '🤔' },
+  { char: '地', readings: [
+    { pinyin: 'dì', meaning: '土地、地面', example: '土地、地球' },
+    { pinyin: 'de', meaning: '助词（修饰动词）', example: '慢慢地走' },
+  ], tip: 'dì=土地，de=助词', emoji: '🌍' },
+];
+
+/* -------------------- 语文 · 课文（一课一贴练习册） -------------------- */
+export interface TextbookText {
+  title: string;
+  author: string;
+  type: string;
+  lines: string[];
+  analysis: string;
+  keywords: { word: string; meaning: string }[];
+  emoji: string;
+}
+export const TEXTBOOK_TEXTS: TextbookText[] = [
+  {
+    title: '鹅',
+    author: '骆宾王',
+    type: '古诗',
+    lines: ['鹅，鹅，鹅，', '曲项向天歌。', '白毛浮绿水，', '红掌拨清波。'],
+    analysis: '骆宾王小时候看到池塘里的白鹅，写了这首诗。鹅的脖子弯弯曲曲，对着天空唱歌。白色的羽毛浮在绿色的水面上，红色的脚掌拨动着清澈的波浪。',
+    keywords: [
+      { word: '曲', meaning: '弯曲' },
+      { word: '项', meaning: '脖子' },
+      { word: '拨', meaning: '划水、推动' },
+      { word: '骆宾王', meaning: '唐朝诗人，"初唐四杰"之一' },
+    ],
+    emoji: '🦢',
+  },
+  {
+    title: '画',
+    author: '王维',
+    type: '古诗',
+    lines: ['远看山有色，', '近听水无声。', '春去花还在，', '人来鸟不惊。'],
+    analysis: '从远处看，山是有颜色的；走近去听，却听不见流水的声音。春天过去了，花儿还在开着；人走近了，鸟儿也不会飞走。因为这是一幅画，画里的山有水有花有鸟，但它们都不会动。',
+    keywords: [
+      { word: '色', meaning: '颜色、色彩' },
+      { word: '声', meaning: '声音、响声' },
+      { word: '惊', meaning: '受惊、害怕' },
+    ],
+    emoji: '🖼️',
+  },
+];
+
+/* -------------------- 语文 · 拼音口诀（一课一贴练习册） -------------------- */
+export interface PinyinTip {
+  title: string;
+  tip: string;
+  emoji: string;
+}
+export const PINYIN_TIPS: PinyinTip[] = [
+  { title: '单韵母 a o e', tip: 'a（阿姨）：嘴巴张大 a a a；o（公鸡）：嘴巴圆圆 o o o；e（白鹅）：嘴巴扁扁 e e e', emoji: '🅰️' },
+  { title: '单韵母 i u ü', tip: 'i（衣服）：嘴巴尖尖 i i i；u（乌鸦）：嘴巴突出 u u u；ü（小鱼）：嘴巴撅撅 ü ü ü', emoji: '🅱️' },
+  { title: '声母 b p m f', tip: 'b（广播）：右下半圆 b b b；p（山坡）：右上半圆 p p p；m（门洞）：两个门洞 m m m；f（拐杖）：一根拐杖 f f f', emoji: '🅲️' },
+  { title: '声母 d t n l', tip: 'd（小鼓）：左下半圆 d d d；t（伞柄）：伞柄朝上 t t t；n（门洞）：一个门洞 n n n；l（木棍）：一根木棍 l l l', emoji: '🅳️' },
+  { title: '声母 g k h', tip: 'g（鸽子）：鸽子鸽子 g g g；k（蝌蚪）：蝌蚪蝌蚪 k k k；h（喝水）：喝水喝水 h h h', emoji: '🅴️' },
+  { title: '声母 j q x', tip: 'j（母鸡）：母鸡母鸡 j j j；q（气球）：气球气球 q q q；x（西瓜）：西瓜西瓜 x x x', emoji: '🅵️' },
+  { title: '声母 z c s', tip: 'z（写字）：写写字写 z z z；c（刺猬）：刺猬刺猬 c c c；s（蚕虫）：蚕虫吐丝 s s s', emoji: '🅶️' },
+  { title: '声母 zh ch sh r', tip: 'zh（蜘蛛）：织毛衣织毛衣 zh zh zh；ch（吃苹果）：吃苹果吃苹果 ch ch ch；sh（狮子）：狮子狮子 sh sh sh；r（日出）：日出日出 r r r', emoji: '🅷️' },
+  { title: '整体认读', tip: 'zhi chi shi ri、yi wu yu 这 8 个音节不用拼读，看到就直接认读', emoji: '🔤' },
+  { title: '书写规则', tip: '四线格里拼音字母占位：a o e 占中格；i u ü 占中上格；b p 占中下格；d t 占中上格；f 占上中格；m n l 占中格', emoji: '✍️' },
+];
+
+/* -------------------- 语文 · 田字格书写提示（一课一贴练习册） -------------------- */
+export interface WritingTip {
+  char: string;
+  rule: string;
+  tip: string;
+  emoji: string;
+}
+export const WRITING_TIPS: WritingTip[] = [
+  { char: '十', rule: '先横后竖', tip: '第一笔横，第二笔竖，竖要穿过横的中间', emoji: '➕' },
+  { char: '田', rule: '先外后里再封口', tip: '先写外面的大口框，再写里面的十字，最后封口', emoji: '⊞' },
+  { char: '八', rule: '先撇后捺', tip: '先写左边的撇，再写右边的捺，撇捺对称', emoji: '八' },
+  { char: '禾', rule: '先撇后捺', tip: '先写上面的撇，再写横，再写竖，最后写撇和捺', emoji: '🌱' },
+  { char: '王', rule: '先横后竖', tip: '三横一竖，横要长短匀称，竖要居中', emoji: '👑' },
+  { char: '六', rule: '先点后横', tip: '先写上面的点，再写横，最后写撇和点', emoji: '6️⃣' },
+  { char: '七', rule: '先横后竖', tip: '先写横，再写竖弯钩，竖弯钩要写圆润', emoji: '7️⃣' },
+  { char: '九', rule: '先撇后横折弯钩', tip: '先写撇，再写横折弯钩，钩要向上', emoji: '9️⃣' },
+];
+
+/* -------------------- 语文 · 形近字辨别儿歌（一课一贴练习册） -------------------- */
+export interface SimilarCharRiddle {
+  char: string;
+  riddle: string;
+  answer: string;
+  emoji: string;
+}
+export const SIMILAR_CHAR_RIDDLES: SimilarCharRiddle[] = [
+  { char: '地', riddle: '土加也，脚下有地，负载万物', answer: '地', emoji: '🌍' },
+  { char: '他', riddle: '亻加也，指你我之外的第三个人', answer: '他', emoji: '🙋' },
+  { char: '日', riddle: '头顶有天，覆盖万物，一个圆圈中间一点', answer: '日', emoji: '🌞' },
+  { char: '目', riddle: '日中间一横，能看东西', answer: '目', emoji: '👁️' },
+  { char: '田', riddle: '口中间十，四方方，写好汉字它来帮', answer: '田', emoji: '🌾' },
+  { char: '禾', riddle: '木多一撇，禾苗禾苗绿又大', answer: '禾', emoji: '🌱' },
+  { char: '火', riddle: '人字加两点，点燃万物暖洋洋', answer: '火', emoji: '🔥' },
+  { char: '水', riddle: '四个小点，大自然的来源', answer: '水', emoji: '💧' },
+];
+
 /* -------------------- 英语 · 常见句型（选词填空） -------------------- */
 export interface EnSentenceItem {
   sentence: string; // 含 ___ 表示空格
@@ -1844,8 +2023,8 @@ function deriveChineseUnits(): ChineseUnit[] {
       // 我上学了：入学准备 + 基础识字 + 安全
       keys = ['school-prep', 'characters', 'lessons', 'safety'];
     } else if (isPinyin) {
-      // 拼音单元：拼读 + 识字巩固
-      keys = ['pinyin', 'pinyin-blend', 'characters'];
+      // 拼音单元：拼读 + 识字巩固 + 拼音口诀
+      keys = ['pinyin', 'pinyin-blend', 'characters', 'pinyin-tips'];
     } else if (isReading && u.chapter === 6) {
       // 阅读（一）：课文 + 古诗 + 量词
       keys = ['texts', 'textchars', 'reading', 'poems', 'poem-fun', 'quantifiers'];
@@ -1856,11 +2035,11 @@ function deriveChineseUnits(): ChineseUnit[] {
       // 阅读（三）：课文 + 儿歌 + 生活 + 谚语
       keys = ['texts', 'textchars', 'reading', 'finger-read', 'nursery-rhymes', 'my-day', 'proverbs'];
     } else if (u.chapter === 2) {
-      // 识字（一）：核心识字 + 笔顺 + 汉字规律
-      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'char-transform'];
+      // 识字（一）：核心识字 + 笔顺 + 汉字规律 + 形近字
+      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'char-transform', 'similar-char'];
     } else if (u.chapter === 7) {
-      // 识字（二）：核心识字 + 笔顺 + 描红 + 组词 + 反义词 + 连词成句
-      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'trace', 'char-transform', 'antonyms', 'sentence'];
+      // 识字（二）：核心识字 + 笔顺 + 描红 + 组词 + 反义词 + 连词成句 + 形近字 + 拟声词 + 多音字
+      keys = ['characters', 'quiz', 'word-form', 'strokes', 'strokes-order', 'trace', 'char-transform', 'antonyms', 'sentence', 'similar-char', 'onomatopoeia', 'polyphonic'];
     } else {
       // 兜底：通用识字模块
       keys = CHAR_LESSON;

@@ -41,6 +41,10 @@ import { NurseryRhymeModule } from '@/components/study/NurseryRhyme';
 import { SafetyModule } from '@/components/study/Safety';
 import { EnSongModule } from '@/components/study/EnSong';
 import { EnSpellModule } from '@/components/study/EnSpell';
+import { SimilarCharModule } from '@/components/study/SimilarChar';
+import { OnomatopoeiaModule } from '@/components/study/Onomatopoeia';
+import { PolyphonicModule } from '@/components/study/Polyphonic';
+import { PinyinTipsModule } from '@/components/study/PinyinTips';
 
 export interface StudyModuleMeta {
   key: string;
@@ -79,6 +83,10 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'riddles', label: '谜语宝箱', emoji: '🔍', desc: '好奇萌可出谜语，猜中有惊喜', Component: RiddleModule, color: 'bg-moko-cyan' },
     { key: 'safety', label: '安全小课堂', emoji: '🌸', desc: '温柔萌可教安全常识，做个安全小卫士', Component: SafetyModule, color: 'bg-moko-mint' },
     { key: 'char-transform', label: '汉字变变变', emoji: '🔍', desc: '发现汉字规律：人→从→众，木→林→森', Component: CharTransformModule, color: 'bg-moko-rose' },
+    { key: 'similar-char', label: '形近字辨认', emoji: '👀', desc: '一字之差，意思大变：地/他、日/目…', Component: SimilarCharModule, color: 'bg-moko-cyan' },
+    { key: 'onomatopoeia', label: '拟声词乐园', emoji: '🎵', desc: '听听看：小狗汪汪、小猫喵喵、小鸭嘎嘎', Component: OnomatopoeiaModule, color: 'bg-moko-yellow' },
+    { key: 'polyphonic', label: '多音字认认认', emoji: '🔀', desc: '一个字好几种读音：了/乐/好/得', Component: PolyphonicModule, color: 'bg-moko-violet' },
+    { key: 'pinyin-tips', label: '拼音口诀歌', emoji: '🔤', desc: 'a o e、b p m f…口诀记起来更快哦', Component: PinyinTipsModule, color: 'bg-moko-pink' },
   ],
   math: [
     { key: 'count', label: '数感启蒙', emoji: '🔟', desc: '1~10 数一数', Component: NumberSenseModule, color: 'bg-moko-blue' },
