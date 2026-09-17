@@ -11,6 +11,15 @@ type Progress = Record<string, number>; // bookKey -> 上次读到的章节 idx
 
 /** 某章节对应的练习模块（从 MATH_UNITS / GRADE1_CHAR_UNITS 反查） */
 function getChapterModules(bookKey: string, chapterIdx: number): { key: string; label: string; emoji: string; desc: string; color: string }[] {
+  if (bookKey === 'chinese-workbook') {
+    // 练习册没有按章拆分的练习，推荐全部语文练习
+    const cn = STUDY_MODULES['chinese'];
+    if (!cn) return [];
+    // 返回前几个核心模块
+    return ['characters', 'quiz', 'word-form', 'strokes-order', 'poems', 'poem-fun'].map((k) =>
+      cn.find((m) => m.key === k),
+    ).filter(Boolean) as { key: string; label: string; emoji: string; desc: string; color: string }[];
+  }
   if (bookKey === 'math') {
     const u = MATH_UNITS.find((x) => x.chapter === chapterIdx);
     if (!u) return [];
@@ -40,10 +49,12 @@ function getChapterModules(bookKey: string, chapterIdx: number): { key: string; 
 function PracticeRecommendation({ bookKey, chapterIdx }: { bookKey: string; chapterIdx: number }) {
   const modules = useMemo(() => getChapterModules(bookKey, chapterIdx), [bookKey, chapterIdx]);
   if (modules.length === 0) return null;
-  const subject = bookKey === 'math' ? '数学' : '语文';
+  const subject = bookKey === 'math' ? '数学' : bookKey === 'chinese-workbook' ? '语文练习册' : '语文';
   const chapterTitle = bookKey === 'math'
     ? MATH_UNITS.find((u) => u.chapter === chapterIdx)?.unit ?? ''
-    : GRADE1_CHAR_UNITS.find((u) => u.chapter === chapterIdx)?.unit ?? '';
+    : bookKey === 'chinese-workbook'
+      ? '一课一贴'
+      : GRADE1_CHAR_UNITS.find((u) => u.chapter === chapterIdx)?.unit ?? '';
 
   return (
     <div className="mt-4 rounded-3xl bg-gradient-to-br from-moko-yellow to-moko-orange p-5 shadow-lg border-2 border-moko-yellow/30">

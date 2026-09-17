@@ -10,7 +10,7 @@ export type Chapter = {
   sizeKB: number;
 };
 export type Textbook = {
-  key: 'chinese' | 'math';
+  key: 'chinese' | 'math' | 'chinese-workbook';
   title: string;
   sub: string;
   emoji: string;
@@ -168,6 +168,25 @@ export const TEXTBOOKS: Textbook[] = [
         startPage: 108,
         pages: 11,
         sizeKB: 3599,
+      },
+    ],
+  },
+  {
+    key: 'chinese-workbook',
+    title: '语文 · 一课一贴（练习册）',
+    sub: '一年级上册配套练习，彩色印刷',
+    emoji: '📝',
+    color: 'bg-moko-purple',
+    border: 'border-moko-purple/40',
+    img: '/moko/wisdomping.jpg',
+    chapters: [
+      {
+        idx: 1,
+        title: '一课一贴 全册',
+        file: '/textbooks/workbooks/chinese-workbook.pdf',
+        startPage: 1,
+        pages: 14,
+        sizeKB: 13155,
       },
     ],
   },
