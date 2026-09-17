@@ -52,7 +52,6 @@ import { TextComprehensionModule as TextUnderstandingModule } from '@/components
 import { WritingTraceModule } from '@/components/study/WritingTrace';
 import { ToneModule } from '@/components/study/ToneQuiz';
 import { LetterDiscriminateModule } from '@/components/study/LetterDiscriminate';
-import { RazReaderModule } from '@/components/study/RazReader';
 import { RazVocabModule } from '@/components/study/RazVocab';
 
 export interface StudyModuleMeta {
@@ -139,7 +138,6 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
     { key: 'en-tpr', label: 'TPR 动作', emoji: '🏃', desc: '听指令做动作', Component: EnTprModule, color: 'bg-moko-violet' },
     { key: 'en-songs', label: '英文音乐会', emoji: '🎵', desc: '唱唱萌可带唱英文儿歌，甜心萌可伴舞', Component: EnSongModule, color: 'bg-moko-yellow' },
     { key: 'en-spell', label: '拼写练习', emoji: '✍️', desc: '看 emoji 猜单词，选出正确的字母填上', Component: EnSpellModule, color: 'bg-moko-yellow' },
-    { key: 'raz-reader', label: 'RAZ 绘本阅读', emoji: '📖', desc: 'RAZ AA 级绘本，PDF+视频，94 本', Component: RazReaderModule, color: 'bg-moko-green' },
     { key: 'raz-vocab', label: 'RAZ 词汇练习', emoji: '🔤', desc: 'RAZ AA 核心词，按主题分类练习', Component: RazVocabModule, color: 'bg-moko-purple' },
   ],
 };
