@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { RAZ_VOCAB, RAZ_ALL_WORDS } from '@/lib/raz-vocab';
+import { RAZ_BOOKS } from '@/lib/raz-books';
 import { speakEn } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -107,7 +108,7 @@ export function RazVocabModule() {
         {showAnswer && (
           <div className="rounded-xl p-3 bg-moko-purple/5 border border-moko-purple/20 mb-4">
             <div className="text-sm text-gray-600">📖 {word.sentence}</div>
-            <div className="text-xs text-gray-400 mt-1">来自《{word.book.replace('AA-', '').replace(/_/g, ' ')}》</div>
+            <div className="text-xs text-gray-400 mt-1">来自《{RAZ_BOOKS.find(b => b.id === word.book)?.title || word.book.replace('AA-', '').replace(/_/g, ' ')}》</div>
           </div>
         )}
 

@@ -6,7 +6,7 @@ import { ModuleCover } from '@/components/study/ModuleCover';
 import { ModuleStars } from '@/components/study/ModuleStars';
 import { MokoHelper } from '@/components/MokoHelper';
 import { EN_UNITS } from '@/lib/study-data';
-import { RAZ_ALL_WORDS } from '@/lib/raz-vocab';
+import { RAZ_VOCAB, RAZ_ALL_WORDS } from '@/lib/raz-vocab';
 
 export default async function EnglishStudyPage() {
   const modules = STUDY_MODULES.english;
@@ -58,7 +58,7 @@ export default async function EnglishStudyPage() {
       <section className="mb-8">
         <h2 className="section-title mb-3">📖 RAZ 词汇练习</h2>
         <p className="text-xs text-gray-400 mb-3">
-          {RAZ_ALL_WORDS.length} 个核心词汇 · 11 个主题分类 · 听音认词（绘本阅读见「课本」页）
+          {RAZ_ALL_WORDS.length} 个核心词汇 · {Object.keys(RAZ_VOCAB).length} 个主题分类 · 听音认词（绘本阅读见「课本」页）
         </p>
         <Link
           href="/study/english/raz-vocab"
@@ -70,7 +70,7 @@ export default async function EnglishStudyPage() {
             <p className="text-xs text-white/80 mt-1">按主题分类，听音认词</p>
           </div>
           <div className="p-3 text-xs text-gray-500">
-            {RAZ_ALL_WORDS.length} 个词 · 11 个主题
+            {RAZ_ALL_WORDS.length} 个词 · {Object.keys(RAZ_VOCAB).length} 个主题
           </div>
         </Link>
       </section>
