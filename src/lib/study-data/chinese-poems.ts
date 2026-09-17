@@ -208,6 +208,7 @@ export interface TextbookChar {
   category: string;
   chapter: number;
   unit: string;
+  altPinyin?: string;
 }
 
 export interface UnitWordItem {
@@ -261,16 +262,17 @@ for (const u of GRADE1_CHAR_UNITS) {
 }
 
 /* 派生：单元字/词选项（供「听写/组词」模块下拉选择） */
-export const CHAR_UNIT_OPTIONS = GRADE1_CHAR_UNITS.filter((u) => u.chapter > 0).map((u) => ({
-  chapter: u.chapter,
-  label: `第${u.chapter}单元·${u.unit}`,
-  chars: u.chars,
-  words: u.words,
-}));
+export const CHAR_UNIT_OPTIONS: { chapter: number; unit: string; emoji: string; count: number }[] =
+  GRADE1_CHAR_UNITS.map((u) => ({
+    chapter: u.chapter,
+    unit: u.unit,
+    emoji: u.emoji,
+    count: TEXTBOOK_CHARACTERS.filter((c) => c.chapter === u.chapter).length,
+  }));
 
 /* 派生：截至某章节的所有识字字（复习/测试用） */
-export function textbookCharsUpTo(chapter: number): string[] {
-  return GRADE1_CHAR_UNITS.filter((u) => u.chapter > 0 && u.chapter <= chapter).flatMap((u) => u.chars);
+export function textbookCharsUpTo(chapter: number): TextbookChar[] {
+  return TEXTBOOK_CHARACTERS.filter((c) => c.chapter <= chapter);
 }
 
 /* 派生：按单元生成组词题项（复用 WORD_FORM 逻辑） */
