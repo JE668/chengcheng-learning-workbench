@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { storyChapters } from '@/lib/story';
-import { STUDY_MODULES } from '@/lib/study-modules';
+import { STUDY_MODULES, type StudySubject } from '@/lib/study-modules';
 import { mokoImgByName } from '@/lib/moko-imgs';
 import { mokoCollectionByName } from '@/lib/moko-collection';
 import { playTtsEnd, prefetchTts } from '@/lib/speak';
@@ -67,7 +67,7 @@ export default function StoryPage() {
   function moduleInfo(c: (typeof storyChapters)[number]) {
     const mod = c.module;
     if (!mod) return null;
-    const list = STUDY_MODULES[mod.subject] ?? [];
+    const list = STUDY_MODULES[mod.subject as StudySubject] ?? [];
     const meta = list.find((m) => m.key === mod.key);
     const label = meta?.label ?? mod.key;
     const done = !!moduleDone[mod.key];

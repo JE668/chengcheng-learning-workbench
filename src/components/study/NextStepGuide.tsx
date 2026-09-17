@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { STUDY_MODULES } from '@/lib/study-modules';
+import { STUDY_MODULES, type StudySubject } from '@/lib/study-modules';
 
 /**
  * 模块间的「学完引导」——推荐下一步学习路径。
@@ -37,7 +37,7 @@ export function NextStepGuide({ subject, moduleKey }: { subject: string; moduleK
   const next = NEXT_STEP[moduleKey];
   if (!next) return null;
 
-  const list = STUDY_MODULES[next.subject] ?? [];
+  const list = STUDY_MODULES[next.subject as StudySubject] ?? [];
   const meta = list.find((m) => m.key === next.key);
   if (!meta) return null;
 

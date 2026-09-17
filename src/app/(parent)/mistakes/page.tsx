@@ -2,14 +2,14 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildId } from '@/lib/db';
-import { STUDY_MODULES } from '@/lib/study-modules';
+import { STUDY_MODULES, type StudySubject } from '@/lib/study-modules';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
 import { EmptyState } from '@/components/EmptyState';
 
 export const dynamic = 'force-dynamic';
 
 // 学科展示名（错题表存的是中文）→ 路由 key
-const SUBJECT_KEY: Record<string, string> = { 语文: 'chinese', 数学: 'math', 英语: 'english' };
+const SUBJECT_KEY: Record<string, StudySubject> = { 语文: 'chinese', 数学: 'math', 英语: 'english' };
 const SUBJECT_EMOJI: Record<string, string> = { 语文: '💗', 数学: '🔵', 英语: '💛' };
 const ALL_SUBJECTS = ['语文', '数学', '英语'];
 

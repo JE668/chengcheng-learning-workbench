@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DAILY_CORE_MODULE, genEnInitialQ } from './daily-practice';
 import { storyChapters } from './story';
-import { STUDY_MODULES } from './study-modules';
+import { STUDY_MODULES, type StudySubject } from './study-modules';
 
 /**
  * 闭环校验：每日一练某科全对 → 点亮该科核心模块 1 星 → 解锁对应萌可主线剧情。
@@ -35,7 +35,7 @@ describe('萌可闯关 → 剧情解锁 闭环', () => {
 
   it('所有绑定的模块 key 在 STUDY_MODULES 中真实存在（防止拼错 key 静默失效）', () => {
     for (const req of Object.values(DAILY_CORE_MODULE)) {
-      const metas = STUDY_MODULES[req.subjectKey];
+      const metas = STUDY_MODULES[req.subjectKey as StudySubject];
       expect(metas, `${req.subjectKey} 不是有效学科`).toBeTruthy();
       expect(
         metas!.some((m) => m.key === req.moduleKey),

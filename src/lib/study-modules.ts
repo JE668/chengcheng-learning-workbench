@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { ComponentType, ComponentProps } from 'react';
 import PinyinModule from '@/components/study/PinyinModule';
 import { CharacterModule, PoemModule, TraceModule, CharacterQuizModule } from '@/components/study/ChineseModules';
 import { CharacterLessonModule, TextModule } from '@/components/study/ChineseExtra';
@@ -54,17 +54,23 @@ import { ToneModule } from '@/components/study/ToneQuiz';
 import { LetterDiscriminateModule } from '@/components/study/LetterDiscriminate';
 import { RazVocabModule } from '@/components/study/RazVocab';
 
+/** 学科键名联合类型 */
+export type StudySubject = 'chinese' | 'math' | 'english';
+
+/** 学习模块组件类型（无 props，通过 StudyModuleProvider 获取上下文） */
+type StudyComponent = ComponentType<Record<string, never>>;
+
 export interface StudyModuleMeta {
   key: string;
   label: string;
   emoji: string;
   desc: string;
-  Component: ComponentType;
+  Component: StudyComponent;
   color: string;
 }
 
 /** 每个学科的「小页面」清单（细化到每一项一个页面） */
-export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
+export const STUDY_MODULES: Record<StudySubject, StudyModuleMeta[]> = {
   chinese: [
     { key: 'pinyin', label: '拼音乐园', emoji: '🔤', desc: '单韵母 · 声母 · 复韵母 · 整体认读', Component: PinyinModule, color: 'bg-moko-pink' },
     { key: 'lessons', label: '识字课文', emoji: '📖', desc: '天地人·金木水火土…按课本单元', Component: CharacterLessonModule, color: 'bg-moko-rose' },
@@ -142,7 +148,7 @@ export const STUDY_MODULES: Record<string, StudyModuleMeta[]> = {
   ],
 };
 
-export const SUBJECT_META: Record<string, { label: string; emoji: string; color: string; sub: string }> = {
+export const SUBJECT_META: Record<StudySubject, { label: string; emoji: string; color: string; sub: string }> = {
   chinese: { label: '语文城堡', emoji: '📖', color: 'text-moko-rose', sub: '爱心萌可陪你认字读诗' },
   math: { label: '数学星球', emoji: '🔢', color: 'text-moko-blue', sub: '正正萌可带你算算比一比' },
   english: { label: '英语乐园', emoji: '🔤', color: 'text-moko-yellow', sub: '唱唱萌可教你字母单词' },
