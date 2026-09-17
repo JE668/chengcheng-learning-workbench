@@ -20,8 +20,9 @@ export function genMathQ(hard = false): PracticeQuestion {
   const isAdd = Math.random() < 0.6;
   let a: number, b: number, ans: number, prompt: string;
   if (isAdd) {
-    a = randInt(hard ? 5 : 0, hard ? 50 : 10);
-    b = randInt(hard ? (10 - a) : 0, hard ? 50 : 10);
+    a = randInt(hard ? 5 : 1, hard ? 50 : 10);
+    // ⚠️ 修复：hard 模式下 a>10 时 10-a 为负数，randInt 会产出负 b
+    b = randInt(hard ? Math.max(0, 10 - a) : 0, hard ? 50 : 10);
     ans = a + b;
     prompt = `${a} + ${b} = ?`;
   } else {
@@ -274,6 +275,48 @@ export function genBorrowSubQ(): PracticeQuestion {
   };
 }
 
+/* 三位数加减法：3 个两位数相加或连减 */
+export function genThreeDigitAddSubQ(): PracticeQuestion {
+  const isAdd = Math.random() < 0.5;
+  let a: number, b: number, c: number, ans: number, prompt: string, explain: string;
+  if (isAdd) {
+    a = randInt(10, 49);
+    b = randInt(10, 49);
+    c = randInt(10, 49);
+    ans = a + b + c;
+    prompt = `${a} + ${b} + ${c} = ?`;
+    explain = `${a} + ${b} + ${c} = ${ans}（先算 ${a}+${b}=${a + b}，再算 ${a + b}+${c}=${ans}）`;
+  } else {
+    // 连减：确保结果为正数
+    a = randInt(80, 99);
+    b = randInt(10, 39);
+    c = randInt(10, 39);
+    if (a - b - c < 0) {
+      c = randInt(1, a - b - 1);
+    }
+    ans = a - b - c;
+    prompt = `${a} − ${b} − ${c} = ?`;
+    explain = `${a} − ${b} − ${c} = ${ans}（先算 ${a}-${b}=${a - b}，再算 ${a - b}-${c}=${ans}）`;
+  }
+  const set = new Set<number>([ans]);
+  while (set.size < 4) {
+    const d = ans + randInt(-15, 15);
+    if (d >= 0) set.add(d);
+  }
+  const options = shuffle(Array.from(set));
+  const answer = options.indexOf(ans);
+  return {
+    id: `3digit-${a}-${b}-${c}`,
+    kind: 'math',
+    subject: '数学',
+    prompt,
+    options: options.map(String),
+    answer,
+    explain,
+    emoji: isAdd ? '➕➕' : '➖➖',
+  };
+}
+
 /* 分数题 */
 export function genFractionQ(): PracticeQuestion {
   const fractions = [
@@ -514,6 +557,7 @@ export const MATH_QUESTION_GENERATORS = [
   genDivideQ,
   genCarryAddQ,
   genBorrowSubQ,
+  genThreeDigitAddSubQ,
   genFractionQ,
   genShapeQ,
   genAngleQ,
@@ -549,6 +593,7 @@ export function genMathQByType(type: string): PracticeQuestion | null {
     divide: genDivideQ,
     carry: genCarryAddQ,
     borrow: genBorrowSubQ,
+    threedigit: genThreeDigitAddSubQ,
     fraction: genFractionQ,
     shape: genShapeQ,
     angle: genAngleQ,
@@ -578,6 +623,7 @@ export function getAvailableMathTypes(): string[] {
     divide: '除法',
     carry: '进位加法',
     borrow: '退位减法',
+    threedigit: '三位数加减',
     fraction: '分数',
     shape: '平面图形',
     angle: '角度',
