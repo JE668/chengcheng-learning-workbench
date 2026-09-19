@@ -55,7 +55,7 @@ import {
   genOrdinalQ,
   genCompareQ,
   genMultiplyQ,
-  genDivideQ,
+  genThreeDigitAddSubQ,
   genClockQ,
 } from './gen-math';
 
@@ -130,7 +130,8 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
   const diffLevel = Math.min(4, Math.floor(streak / 7)); // 0~4：每7天升一级
   const useHard = (idx: number) => idx < diffLevel; // 前 diffLevel 道用难题
 
-  // 数学 10 题：基础口算+应用题+乘除法混合，每天随机（数字题天然不重复，无需去重）
+  // 数学 10 题：基础口算+应用题+乘法表+三位数加减等，每天随机（数字题天然不重复，无需去重）。
+  // 刻意排除除法：一年级尚未学除法，避免超纲。
   const mathPool: (() => PracticeQuestion)[] = [
     () => genMathQ(useHard(0)), () => genMathQ(useHard(1)), () => genMathQ(useHard(2)), () => genMathQ(useHard(3)),
     () => genMathQ(useHard(4)), () => genMathQ(useHard(5)),  // 6 道口算（难度递增）
@@ -138,8 +139,8 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
     () => genWordProblemQ(),                                  // 应用题
     () => genWordProblemQ(),                                  // 应用题
     () => genWordProblemQ(),                                  // 应用题
-    () => genMultiplyQ(),                                     // 乘法
-    () => genDivideQ(),                                       // 除法
+    () => genMultiplyQ(),                                     // 乘法口诀表（2~9）
+    () => genThreeDigitAddSubQ(),                             // 三个两位数相加减
     () => genCompareQ(),                                      // 比大小（老文件题型保留）
     () => genOrdinalQ(),                                      // 序数（老文件题型保留）
     () => genClockQ(),                                        // 钟表（老文件题型保留）

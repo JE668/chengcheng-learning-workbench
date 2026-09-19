@@ -275,29 +275,26 @@ export function genBorrowSubQ(): PracticeQuestion {
   };
 }
 
-/* 三位数加减法：3 个两位数相加或连减 */
+/* 三个两位数混合连算：a (+/−) b (+/−) c，两步运算符一加一减（真混合），
+ * 每一段的结果恒为正（一年级尚未学负数），如 11 + 22 − 10 = 23、33 − 12 + 8 = 29。 */
 export function genThreeDigitAddSubQ(): PracticeQuestion {
-  const isAdd = Math.random() < 0.5;
-  let a: number, b: number, c: number, ans: number, prompt: string, explain: string;
-  if (isAdd) {
-    a = randInt(10, 49);
-    b = randInt(10, 49);
-    c = randInt(10, 49);
-    ans = a + b + c;
-    prompt = `${a} + ${b} + ${c} = ?`;
-    explain = `${a} + ${b} + ${c} = ${ans}（先算 ${a}+${b}=${a + b}，再算 ${a + b}+${c}=${ans}）`;
-  } else {
-    // 连减：确保结果为正数
-    a = randInt(80, 99);
-    b = randInt(10, 39);
-    c = randInt(10, 39);
-    if (a - b - c < 0) {
-      c = randInt(1, a - b - 1);
-    }
-    ans = a - b - c;
-    prompt = `${a} − ${b} − ${c} = ?`;
-    explain = `${a} − ${b} − ${c} = ${ans}（先算 ${a}-${b}=${a - b}，再算 ${a - b}-${c}=${ans}）`;
-  }
+  // 第一步的符号；第二步强制取相反符号，保证「先加后减」或「先减后加」的真混合
+  const firstPlus = Math.random() < 0.5;
+  const op1 = firstPlus ? '+' : '−';
+  const op2 = firstPlus ? '−' : '+';
+  // 三个两位数。被减时保证被减数大于减数，使该步结果恒为正。
+  const a = firstPlus ? randInt(10, 30) : randInt(11, 30);
+  const b = firstPlus ? randInt(10, 30) : randInt(10, a - 1);
+  const mid = firstPlus ? a + b : a - b;
+  // 第二步：先加后减时需保 mid − c > 0（c 取两位数且小于 mid）
+  const c = firstPlus ? randInt(10, Math.min(30, mid - 1)) : randInt(10, 30);
+  const ans = firstPlus ? mid - c : mid + c;
+  const prompt = `${a} ${op1} ${b} ${op2} ${c} = ?`;
+  const explain =
+    firstPlus
+      ? `${a} ${op1} ${b} = ${mid}，再 ${mid} ${op2} ${c} = ${ans}`
+      : `${a} ${op1} ${b} = ${mid}，再 ${mid} ${op2} ${c} = ${ans}`;
+
   const set = new Set<number>([ans]);
   while (set.size < 4) {
     const d = ans + randInt(-15, 15);
@@ -306,14 +303,14 @@ export function genThreeDigitAddSubQ(): PracticeQuestion {
   const options = shuffle(Array.from(set));
   const answer = options.indexOf(ans);
   return {
-    id: `3digit-${a}-${b}-${c}`,
+    id: `2step-${a}${op1}${b}${op2}${c}`,
     kind: 'math',
     subject: '数学',
     prompt,
     options: options.map(String),
     answer,
     explain,
-    emoji: isAdd ? '➕➕' : '➖➖',
+    emoji: '🧮',
   };
 }
 
@@ -623,7 +620,7 @@ export function getAvailableMathTypes(): string[] {
     divide: '除法',
     carry: '进位加法',
     borrow: '退位减法',
-    threedigit: '三位数加减',
+    threedigit: '三个两位数混合加减',
     fraction: '分数',
     shape: '平面图形',
     angle: '角度',
