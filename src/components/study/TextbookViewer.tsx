@@ -50,6 +50,8 @@ function PracticeRecommendation({ bookKey, chapterIdx }: { bookKey: string; chap
   const modules = useMemo(() => getChapterModules(bookKey, chapterIdx), [bookKey, chapterIdx]);
   if (modules.length === 0) return null;
   const subject = bookKey === 'math' ? '数学' : bookKey === 'chinese-workbook' ? '语文练习册' : '语文';
+  // 练习链接的路径段用真正的学科名（chinese-workbook 属语文），否则 /study/chinese-workbook/* 会因 subject 非法而 404
+  const routeSubject = bookKey === 'math' ? 'math' : 'chinese';
   const chapterTitle = bookKey === 'math'
     ? MATH_UNITS.find((u) => u.chapter === chapterIdx)?.unit ?? ''
     : bookKey === 'chinese-workbook'
@@ -67,7 +69,7 @@ function PracticeRecommendation({ bookKey, chapterIdx }: { bookKey: string; chap
         {modules.map((m) => (
           <a
             key={m.key}
-            href={`/study/${bookKey}/${m.key}`}
+            href={`/study/${routeSubject}/${m.key}`}
             className="rounded-2xl bg-white/80 border-2 border-moko-purple/15 p-3 text-center hover:scale-[1.03] hover:shadow transition active:scale-95"
           >
             <div className="text-2xl mb-1">{m.emoji}</div>
