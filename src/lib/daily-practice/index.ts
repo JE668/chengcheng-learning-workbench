@@ -2,12 +2,13 @@ import { getDb, withWriteLock } from '../db';
 import { confirm, logGrowthEvent } from '../castle';
 import { 
   PINYIN_TONES, applyTone, CHARACTERS, PROVERBS, ANTONYMS, RIDDLES, POEMS, 
-  WORD_PROBLEMS, ORDINALS, CLOCKS, EN_SENTENCES, ALL_EN_WORDS 
+  WORD_PROBLEMS, ORDINALS, CLOCKS, EN_SENTENCES, ALL_EN_WORDS,
+  GRADE1_CHAR_UNITS, MATH_UNITS 
 } from '../study-data';
 import { mokoChars, subjectMokoKey, SUN_PER_SUBJECT } from '../moko';
 import { mokoCollection } from '../moko-collection';
 import { getDueMistakes, reviewMistake, type MistakeRow } from '../mistakes';
-import { upsertModuleProgress } from '../progress-store';
+import { upsertModuleProgress, getTextbookProgress } from '../progress-store';
 import { dateStr, addDays } from '../date';
 import { MILESTONE_DAYS } from '../economy';
 import { safeJsonParse } from '../safe-json';
@@ -55,6 +56,7 @@ import {
   genCompareQ,
   genMultiplyQ,
   genDivideQ,
+  genClockQ,
 } from './gen-math';
 
 import {
@@ -124,8 +126,8 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
   for (const fn of zhPick) qs.push(fn());
 
   // 根据连续天数决定难度：天数越多，难题比例越高
-  // 这里先用0作为占位，实际难度会在 getTodayPractice 中根据真实 streak 计算
-  const diffLevel = 0; // 默认基础难度，实际难度在 getTodayPractice 中根据真实 streak 计算
+  const streak = await computePracticeStreak(childId, dateStr());
+  const diffLevel = Math.min(4, Math.floor(streak / 7)); // 0~4：每7天升一级
   const useHard = (idx: number) => idx < diffLevel; // 前 diffLevel 道用难题
 
   // 数学 10 题：基础口算+应用题+乘除法混合，每天随机（数字题天然不重复，无需去重）
@@ -138,7 +140,9 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
     () => genWordProblemQ(),                                  // 应用题
     () => genMultiplyQ(),                                     // 乘法
     () => genDivideQ(),                                       // 除法
-    () => genCompareQ(),                                      // 比大小
+    () => genCompareQ(),                                      // 比大小（老文件题型保留）
+    () => genOrdinalQ(),                                      // 序数（老文件题型保留）
+    () => genClockQ(),                                        // 钟表（老文件题型保留）
   ];
   const mathPick = shuffle(mathPool).slice(0, 10);
   for (const fn of mathPick) qs.push(fn());
@@ -198,8 +202,23 @@ export async function getTodayPractice(childId: number, generate = false): Promi
   const streak = await computePracticeStreak(childId, today);
   const nextMilestoneDay = MILESTONE_DAYS.find((d) => d > streak);
   const nextMilestone = nextMilestoneDay != null ? nextMilestoneDay - streak : 0;
+  // 教材进度提示：帮孩子知道当前学到哪、该重点练什么
+  let textbookHint: string | undefined;
+  try {
+    const tb = await getTextbookProgress(childId);
+    const chCh = tb['chinese'] ?? 0;
+    const mathCh = tb['math'] ?? 0;
+    const cnUnit = GRADE1_CHAR_UNITS.find((u) => u.chapter === chCh);
+    const mathUnit = MATH_UNITS.find((u) => u.chapter === mathCh);
+    const parts: string[] = [];
+    if (cnUnit) parts.push(`语文第${cnUnit.chapter}单元「${cnUnit.unit}」`);
+    if (mathUnit) parts.push(`数学第${mathUnit.chapter}单元「${mathUnit.unit}」`);
+    if (parts.length > 0) textbookHint = `📖 课本进度：${parts.join('，')}。每日一练的题型和课本同步，加油巩固！`;
+  } catch {
+    /* textbook progress 查询失败不影响出题 */
+  }
   if (!row) {
-    return { completed: false, correct: 0, total: 0, questions: [], practiceStreak: streak, nextMilestone };
+    return { completed: false, correct: 0, total: 0, questions: [], practiceStreak: streak, nextMilestone, textbookHint };
   }
   const questions: PracticeQuestion[] = row.questions
     ? safeJsonParse<PracticeQuestion[]>(String(row.questions), [])
@@ -211,6 +230,7 @@ export async function getTodayPractice(childId: number, generate = false): Promi
     questions,
     practiceStreak: streak,
     nextMilestone,
+    textbookHint,
   };
 }
 
@@ -353,6 +373,6 @@ export async function submitPractice(childId: number, answers: number[]): Promis
     practiceStreak,
     rewards,
     milestone,
-    tickets: 0, // ticketGain 在 confirm 内部处理
+    tickets: ticketGain, // confirm 内部统一发放捕捉券；这里回传本次确认的科目数供页面展示
   };
 }

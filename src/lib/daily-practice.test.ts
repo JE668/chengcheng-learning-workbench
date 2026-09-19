@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DAILY_CORE_MODULE, genEnInitialQ } from './daily-practice';
+import { DAILY_CORE_MODULE } from './daily-practice';
+import { genEnInitialQ } from './daily-practice/gen-english';
 import { storyChapters } from './story';
 import { STUDY_MODULES, type StudySubject } from './study-modules';
 

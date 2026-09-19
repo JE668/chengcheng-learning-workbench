@@ -41,7 +41,7 @@ export function genEnPicQ(w: WordItem = ALL_EN_WORDS[Math.floor(Math.random() * 
 }
 
 /* 英语首字母题：听音辨字母 */
-export function genEnInitialQ(): PracticeQuestion {
+export function genEnInitialQ(): Extract<PracticeQuestion, { kind: 'english' }> {
   const w = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)];
   const first = w.word[0].toUpperCase();
   const distractors = shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.replace(first, '').split('')).slice(0, 3);

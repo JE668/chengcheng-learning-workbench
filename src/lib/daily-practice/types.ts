@@ -115,6 +115,8 @@ export interface PracticeDayRecord {
   questions: PracticeQuestion[];
   practiceStreak: number;
   nextMilestone: number;
+  /** 教材进度提示：告诉孩子当前课本学到哪个单元，帮 TA 有的放矢 */
+  textbookHint?: string;
 }
 
 export type SubjectStatus = 'passed' | 'already' | 'failed';
