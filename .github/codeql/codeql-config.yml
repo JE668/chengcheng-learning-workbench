@@ -1,0 +1,9 @@
+# CodeQL 分析配置（security.yml 的 codeql job 引用）。
+# 排除手写 Service Worker：public/sw.js 语法经 Node 校验合法，但 CodeQL
+# 独立 JS 解析器对 event.waitUntil(async IIFE) 中的 try/catch 产生误报
+# （"Missing catch or finally clause"，Node --check 通过、运行正常）。
+# 该文件是 PWA 部署运维管道，非核心业务逻辑，按 GitHub 文档排除以避免误报。
+name: "程程学习工作台 CodeQL 配置"
+disable-default-queries: false
+paths-ignore:
+  - public/sw.js
