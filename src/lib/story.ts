@@ -24,6 +24,8 @@ export interface StoryQuiz {
   answer: number;
   /** 题目类型：用于前端展示不同交互/难度标识 */
   type?: 'recall' | 'math' | 'logic' | 'chinese' | 'english' | 'identify';
+  /** 解题提示（如算式过程），可选；前端可读给孩子听 */
+  explain?: string;
 }
 
 /** 解锁条件：先完成某学习模块（拿到 ≥1 星）才能读/捕捉这一集。不设置则默认只受线性推进解锁。 */
@@ -345,6 +347,21 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
+// 确定性伪随机数工厂（LCG）：由固定种子派生一串在 [0,1) 间的"随机"数。
+// 用于自动章节的学科出题，保证前端渲染与服务端校验拿到同一道题、同一选项顺序。
+function seededRng(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+// 在 [min, max]（含）内取一个确定性随机整数；n > 1 时均匀分布，n <= 1 恒返回 min。
+function seededInt(rng: () => number, min: number, max: number): number {
+  const n = max - min + 1;
+  return n > 1 ? min + Math.floor(rng() * n) : min;
+}
+
 // 对题目选项做确定性洗牌，避免正确项总在 A（孩子会瞎猜第一个）；种子来自章节 id，保证服务端/客户端一致
 function shuffleQuiz(q: StoryQuiz, seedStr: string): StoryQuiz {
   const opts = seededShuffle(q.options, hashStr(seedStr));
@@ -353,124 +370,90 @@ function shuffleQuiz(q: StoryQuiz, seedStr: string): StoryQuiz {
 
 // 给图鉴远征章节自动出一道题：根据分类生成不同类型的题目
 function buildAutoQuiz(m: MokoChar): StoryQuiz {
-  const pool = mokoCollection.map((x) => x.name).filter((n) => n !== m.name);
   const seed = hashStr(m.key);
-  const distractors = seededShuffle(pool, seed).slice(0, 3);
-  const options = seededShuffle([m.name, ...distractors], seed ^ 0x9e3779b9);
+  const rng = seededRng(seed);
 
-  // 根据分类生成不同类型的题目
-  const cat = m.category;
-  let q = '';
-  let type: StoryQuiz['type'] = 'identify';
+  // 结合萌可主题物出题，让应用题贴合当前捕捉的萌可
+  const ITEM: Record<string, string> = {
+    royal: '魔法星星',
+    guide: '小星星',
+    mo: '魔方块',
+    key: '金钥匙',
+    jewel: '宝石',
+    sweetie: '小甜点',
+    star: '流星',
+    princess: '小皇冠',
+    prince: '小宝剑',
+    villain: '恶作剧',
+    legend: '幸运星',
+  };
+  const item = ITEM[m.category] ?? '小星星';
 
-  if (cat === 'royal') {
-    // 皇室萌可：语文/记忆类
-    const questions = [
-      `这一集，程程遇到了哪只皇室萌可？`,
-      `${m.name}的口癖是「${m.line.slice(0, m.line.indexOf('我'))}」，这只萌可是谁？`,
-      `程程在皇室萌可的城堡里认识了新朋友，这位新朋友是？`,
-    ];
-    q = questions[seed % questions.length];
-    type = 'chinese';
-  } else if (cat === 'mo') {
-    // 魔方萌可：逻辑/数学应用题
-    const a = (seed % 8) + 2; // 2-9
-    const b = ((seed >> 4) % 6) + 2; // 2-7
-    const questions = [
-      `${m.name}带程程玩魔方，有 ${a} 层魔方，每层 ${b} 个小方块，一共 ${a * b} 个小方块。这只萌可是谁？`,
-      `${m.name}说：「${m.line}」程程和它一起变魔术，这只萌可是？`,
-      `魔方萌可家族有 ${a + b} 只，其中 ${m.name} 最擅长 ${a > b ? '变身' : '解谜'}。遇到的是谁？`,
-    ];
-    q = questions[seed % questions.length];
-    type = 'math';
-  } else if (cat === 'key') {
-    // 钥匙萌可：解谜/英语
-    const questions = [
-      `${m.name}守护着知识宝盒，它说：「${m.line}」这只钥匙萌可是？`,
-      `程程需要 ${(seed % 3) + 2} 把钥匙才能打开 ${m.name} 守护的门，这只萌可是谁？`,
-      `钥匙萌可 ${m.name} 最喜欢说：「${m.line.slice(0, 8)}...」遇到的是？`,
-    ];
-    q = questions[seed % questions.length];
-    type = 'logic';
-  } else if (cat === 'jewel') {
-    // 宝石萌可：数数/数学
-    const gems = (seed % 20) + 10;
-    const friends = ((seed >> 3) % 4) + 2;
-    const questions = [
-      `${m.name}有 ${gems} 颗宝石，平均分给 ${friends} 个朋友，每人分 ${Math.floor(gems / friends)} 颗，剩 ${gems % friends} 颗。这只萌可是？`,
-      `闪亮宝石矿洞里，${m.name} 数宝石最快！它说：「${m.line}」这是谁？`,
-      `${m.name} 把 ${gems} 颗宝石分成 ${friends} 堆，这只宝石萌可是谁？`,
-    ];
-    q = questions[seed % questions.length];
-    type = 'math';
-  } else if (cat === 'sweetie') {
-    // 甜心萌可：甜点计算/记忆
-    const sweets = (seed % 15) + 5;
-    const eaten = ((seed >> 2) % 5) + 1;
-    const questions = [
-      `${m.name}做了 ${sweets} 个甜点，程程吃了 ${eaten} 个，还剩 ${sweets - eaten} 个。这只甜心萌可是？`,
-      `甜甜圈工厂里，${m.name} 说：「${m.line}」遇到的是哪只？`,
-      `${m.name} 把 ${sweets} 颗糖果分成 ${eaten + 1} 份，这只萌可是谁？`,
-    ];
-    q = questions[seed % questions.length];
-    type = 'math';
-  } else if (cat === 'star') {
-    // 星星萌可：天文/许愿/加减法
-    const stars = (seed % 12) + 3;
-    const wishes = ((seed >> 1) % 4) + 1;
-    const questions = [
-      `${m.name} 和程程数星星，看见 ${stars} 颗流星，每颗许 ${wishes} 个愿，共 ${stars * wishes} 个愿。这只萌可是？`,
-      `流星划过夜空，${m.name} 说：「${m.line}」程程遇到的是哪只星星萌可？`,
-      `${m.name} 守护 ${stars} 颗星星，这只闪耀流星萌可是谁？`,
-    ];
-    q = questions[seed % questions.length];
-    type = 'math';
-  } else if (cat === 'princess') {
-    // 公主萌可：优雅/礼仪/记忆
-    const questions = [
-      `公主萌可 ${m.name} 优雅地跳舞，它说：「${m.line}」这是哪位小公主？`,
-      `${m.name} 教程程礼仪：「${m.line.slice(0, 10)}...」遇到的是谁？`,
-      `闪亮公主舞会上，${m.name} 最受欢迎，这只萌可是？`,
-    ];
-    q = questions[seed % questions.length];
-    type = 'chinese';
-  } else if (cat === 'prince') {
-    // 王子萌可：守护/勇气/逻辑
-    const guards = (seed % 5) + 3;
-    const questions = [
-      `${m.name} 守护着 ${guards} 位伙伴，它说：「${m.line}」这只王子萌可是？`,
-      `王子萌可 ${m.name} 挥舞着剑，保护大家。它最常说：「${m.line.slice(0, 8)}...」是谁？`,
-      `守护王国的 ${m.name}，带着 ${guards} 个勇士，遇到的是谁？`,
-    ];
-    q = questions[seed % questions.length];
-    type = 'logic';
-  } else if (cat === 'villain') {
-    // 反派萌可：恶作剧/趣味
-    const tricks = (seed % 6) + 2;
-    const questions = [
-      `调皮的 ${m.name} 搞了 ${tricks} 个恶作剧，它笑道：「${m.line}」这是谁？`,
-      `${m.name} 说：「${m.line}」这只反派萌可是谁？`,
-      `捣蛋萌可 ${m.name} 最爱恶作剧，程程遇到的是？`,
-    ];
-    q = questions[seed % questions.length];
-    type = 'recall';
-  } else if (cat === 'legend') {
-    // 传奇萌可：奇迹/幸运/综合
-    const luck = (seed % 10) + 1;
-    const questions = [
-      `传说中的 ${m.name} 带来 ${luck} 份幸运，它说：「${m.line}」这是谁？`,
-      `${m.name} 降临时天空绽放烟花，它最爱说：「${m.line.slice(0, 10)}...」遇到的是？`,
-      `幸运女神眷顾的 ${m.name}，程程终于见到它了！它是？`,
-    ];
-    q = questions[seed % questions.length];
-    type = 'recall';
-  } else {
-    // 兜底：认萌可
-    q = `这一集，程程遇到了哪只萌可？`;
-    type = 'identify';
+  // 挖 1/6 的概率出一道「找萌可」识别题，给低龄孩子留点轻松的题
+  if (seededInt(rng, 0, 5) === 0) {
+    const pool = mokoCollection.map((x) => x.name).filter((n) => n !== m.name);
+    const distractors = seededShuffle(pool, seed).slice(0, 3);
+    const options = seededShuffle([m.name, ...distractors], seed ^ 0x9e3779b9);
+    return { q: `这一集，程程遇到了哪只${CAT_LABEL[m.category] ?? '萌可'}？`, options, answer: options.indexOf(m.name), type: 'identify' };
   }
 
-  return { q, options, answer: options.indexOf(m.name), type };
+  // ---- 确定性数学应用题：加 / 减 / 乘法表 / 比大小（一年级难度，可适当加大） ----
+  const kind = seededInt(rng, 0, 3); // 0 加 / 1 减 / 2 乘法表 / 3 比大小
+  let a = 0, b = 0, ans = 0, q = '', explain = '';
+
+  if (kind === 0) {
+    // 两位数加法（不进位偏多，结果 ≤ 50）
+    a = seededInt(rng, 10, 25);
+    b = seededInt(rng, 5, 25);
+    ans = a + b;
+    q = `${m.name}有 ${a} 个${item}，又得到 ${b} 个，一共有多少个${item}？`;
+    explain = `${a} + ${b} = ${ans}`;
+  } else if (kind === 1) {
+    // 两位数减法（结果为正，孩子未学负数）
+    a = seededInt(rng, 20, 50);
+    b = seededInt(rng, 5, a - 1);
+    ans = a - b;
+    q = `${m.name}有 ${a} 个${item}，送给程程 ${b} 个，还剩多少个${item}？`;
+    explain = `${a} − ${b} = ${ans}`;
+  } else if (kind === 2) {
+    // 乘法口诀表（2~5 的小九九，力所能及）
+    a = seededInt(rng, 2, 5);
+    b = seededInt(rng, 2, 5);
+    ans = a * b;
+    q = `${m.name}把${item}摆了 ${a} 排，每排 ${b} 个，一共多少个？`;
+    explain = `${a} × ${b} = ${ans}`;
+  } else {
+    // 比大小：两位数比较
+    let first: number, second: number;
+    do {
+      first = seededInt(rng, 10, 50);
+      second = seededInt(rng, 10, 50);
+    } while (first === second);
+    ans = first > second ? first : second;
+    q = `${m.name}捡到两个数：${first} 和 ${second}，哪个更大？`;
+    explain = first > second ? `${first} > ${second}` : `${second} > ${first}`;
+  }
+
+  // 确定性生成 4 个不含负数的选项（答案 + 3 个干扰值），并打乱顺序
+  const set = new Set<number>([ans]);
+  let guard = 0;
+  while (set.size < 4 && guard++ < 40) {
+    const d = ans + seededInt(rng, -8, 8);
+    if (d >= 0) set.add(d);
+  }
+  const optionNums = shuffledNums([...set], rng);
+  const options = optionNums.map(String);
+  return { q, options, answer: options.indexOf(String(ans)), type: 'math', explain };
+}
+
+// 确定性打乱数字数组（避免正确项总在固定位置）
+function shuffledNums(nums: number[], rng: () => number): number[] {
+  const a = nums.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = seededInt(rng, 0, i);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 function buildAutoChapter(m: MokoChar, idx: number): StoryChapter {
