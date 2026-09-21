@@ -19,16 +19,29 @@ const nextConfig = {
     // 优化包导入
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
-  webpack: (config) => {
+  webpack: (config, { dev, isServer }) => {
     // 显式把 @ 别名指向 src 目录，使用 webpack 原生 resolve.alias
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(process.cwd(), 'src'),
     };
 
-    // 注：历史上曾自定义 splitChunks（react/ui/commons 分包），但其中 db chunk 还残留着
-    // 已移除的 kysely 依赖，且整体覆盖了 Next 自带的分包策略、实测无收益——已删除，
-    // 交还 Next 默认的 chunk 优化。
+    // 学习模块全部 next/dynamic 懒加载后，共享的 src/lib、src/components 工具代码
+    // 会被复制进每个懒加载 chunk（"爱心萌可" 这类字符串曾出现在 15 个 chunk 里）。
+    // 加一个保守的共享组：被 ≥3 个 chunk 引用的 src 模块提取为公共 chunk，
+    // 仅在生产、客户端构建生效；不覆盖 Next 默认的 framework/vendors 分组。
+    if (!dev && !isServer) {
+      config.optimization.splitChunks.cacheGroups = {
+        ...config.optimization.splitChunks.cacheGroups,
+        shared: {
+          name: 'shared',
+          test: /[\\/]src[\\/](lib|components)[\\/]/,
+          minChunks: 3,
+          priority: 10,
+          reuseExistingChunk: true,
+        },
+      };
+    }
 
     return config;
   },
