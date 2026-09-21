@@ -4,27 +4,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
+import { MokoNavBtn, MokoMoreBtn } from '@/components/MokoNav';
+import { MOKO_NAV_ENTRIES, MOKO_NAV_PRIMARY, MOKO_NAV_SECONDARY } from '@/lib/moko-nav-mapping';
 import { User } from '@/lib/types';
 
-const childLinks = [
-  { href: '/home', label: '萌可小屋', icon: '🏠' },
-  { href: '/daily-practice', label: '萌可闯关', icon: '🎯' },
-  { href: '/study', label: '萌可学堂', icon: '📚' },
-  { href: '/my-tasks', label: '我的任务', icon: '📝' },
-  { href: '/textbook', label: '萌可课本', icon: '📖' },
-  { href: '/games', label: '萌可游戏', icon: '🎮' },
-  { href: '/moko-house', label: '萌可房间', icon: '🧸' },
-  { href: '/co-op', label: '萌可帮帮忙', icon: '🤝' },
-  { href: '/badges', label: '勋章墙', icon: '🥇' },
-  { href: '/record', label: '成长记录', icon: '🏆' },
-  { href: '/cert', label: '荣誉奖状', icon: '🎖️' },
-  { href: '/castle', label: '萌可城堡', icon: '🏰' },
-  { href: '/shop', label: '萌可商店', icon: '🛍️' },
-];
-
 /** 孩子端高频入口（移动端底部常驻，其余 8 个收入「更多」抽屉） */
-const childPrimary = ['/home', '/study', '/daily-practice', '/games', '/castle'];
-const childSecondary = childLinks.filter((l) => !childPrimary.includes(l.href));
+const childPrimary = MOKO_NAV_PRIMARY;
+const childSecondary = MOKO_NAV_SECONDARY;
 
 const parentLinks = [
   { href: '/dashboard', label: '看板', icon: '📊' },
@@ -40,7 +26,6 @@ const parentLinks = [
 export default function Nav({ user }: { user: User }) {
   const pathname = usePathname() ?? '';
   const isParent = user.role === 'parent';
-  const links = isParent ? parentLinks : childLinks;
   const logoutAction = '/api/auth/logout';
   // 登出前清空 Service Worker 缓存：SW 会缓存页面/API 响应，不清理则登出后离线仍能翻到上一个用户的数据
   const clearSwCaches = () => {
@@ -55,7 +40,7 @@ export default function Nav({ user }: { user: User }) {
   };
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const Item = ({ href, label, icon }: { href: string; label: string; icon: string }) => {
+  const Item = ({ href, label, moko, icon }: { href: string; label: string; moko?: { img: string; emoji: string }; icon?: string }) => {
     const active = pathname === href || pathname.startsWith(href + '/');
     return (
       <Link
@@ -66,7 +51,13 @@ export default function Nav({ user }: { user: User }) {
             : 'text-white/90 hover:bg-white/20'
         }`}
       >
-        <span className="text-2xl">{icon}</span>
+        {moko ? (
+          <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-white/30">
+            <Image src={moko.img} alt={label} fill className="object-cover" sizes="32px" />
+          </div>
+        ) : (
+          <span className="text-2xl">{icon}</span>
+        )}
         <span className="hidden md:inline">{label}</span>
       </Link>
     );
@@ -91,7 +82,7 @@ export default function Nav({ user }: { user: User }) {
           </div>
         </div>
         <nav className="flex-1 space-y-1 min-h-0 overflow-y-auto no-scrollbar pr-1">
-          {links.map((l) => <Item key={l.href} {...l} />)}
+          {(isParent ? parentLinks : MOKO_NAV_ENTRIES).map((l: any) => <Item key={l.href} {...l} />)}
         </nav>
         <form action={logoutAction} method="POST" onSubmit={clearSwCaches}>
           <button className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-2xl text-white/90 hover:bg-white/20">
@@ -127,24 +118,11 @@ export default function Nav({ user }: { user: User }) {
         <>
           <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-gradient-to-r from-moko-purple to-moko-violet px-2 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
             <div className="flex gap-1 justify-around">
-              {childPrimary.map((href) => {
-                const l = childLinks.find((x) => x.href === href)!;
-                const active = pathname === l.href || pathname.startsWith(l.href + '/');
-                return (
-                  <Link key={l.href} href={l.href} aria-label={l.label}
-                    className={`flex flex-col items-center justify-center min-w-0 flex-1 py-1.5 rounded-2xl transition tap ${active ? 'bg-white text-moko-rose shadow' : 'text-white/90 hover:bg-white/15'}`}
-                  >
-                    <span className="text-2xl leading-none">{l.icon}</span>
-                    <span className="text-[10px] leading-tight mt-0.5 font-bold truncate max-w-full">{l.label}</span>
-                  </Link>
-                );
+              {childPrimary.map((entry) => {
+                const active = pathname === entry.href || pathname.startsWith(entry.href + '/');
+                return <MokoNavBtn key={entry.href} entry={entry} active={active} />;
               })}
-              <button onClick={() => setMoreOpen(true)} aria-label="更多"
-                className="flex flex-col items-center justify-center min-w-0 flex-1 py-1.5 rounded-2xl text-white/90 hover:bg-white/15 tap"
-              >
-                <span className="text-2xl leading-none">⋯</span>
-                <span className="text-[10px] leading-tight mt-0.5 font-bold">更多</span>
-              </button>
+              <MokoMoreBtn onClick={() => setMoreOpen(true)} />
             </div>
           </nav>
 
@@ -165,14 +143,16 @@ export default function Nav({ user }: { user: User }) {
                   </button>
                 </div>
                 <div className="grid grid-cols-4 gap-3">
-                  {childSecondary.map((l) => {
-                    const active = pathname === l.href || pathname.startsWith(l.href + '/');
+                  {childSecondary.map((entry) => {
+                    const active = pathname === entry.href || pathname.startsWith(entry.href + '/');
                     return (
-                      <Link key={l.href} href={l.href} onClick={() => setMoreOpen(false)}
+                      <Link key={entry.href} href={entry.href} onClick={() => setMoreOpen(false)}
                         className={`flex flex-col items-center justify-center py-3 rounded-2xl transition tap ${active ? 'bg-white/30 text-white shadow' : 'text-white/90 hover:bg-white/15'}`}
                       >
-                        <span className="text-3xl">{l.icon}</span>
-                        <span className="text-[11px] font-bold mt-1 text-center leading-tight">{l.label}</span>
+                        <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white/30 mb-1">
+                          <Image src={entry.moko.img} alt={entry.label} fill className="object-cover" sizes="40px" />
+                        </div>
+                        <span className="text-[11px] font-bold mt-1 text-center leading-tight">{entry.label}</span>
                       </Link>
                     );
                   })}

@@ -10,6 +10,8 @@ import { GuideModal } from '@/components/GuideModal';
 import { MokoGroupBg } from '@/components/moko-bg';
 import { MokoCarousel } from '@/components/MokoCarousel';
 import { MokoAvatar } from '@/components/MokoAvatar';
+import { MokoIsland, type MokoIslandItem } from '@/components/MokoIsland';
+import { MOKO_NAV_ENTRIES } from '@/lib/moko-nav-mapping';
 
 export default async function HomePage() {
   const user = await getCurrentUser();
@@ -67,6 +69,54 @@ export default async function HomePage() {
     { label: '城堡繁荣度', value: castle.prosperity, icon: '🏰', color: 'bg-moko-blue', href: '/castle' },
   ];
 
+  // 萌可灵动岛推荐：基于今日进度生成个性化推荐
+  const islandItems: MokoIslandItem[] = [];
+  // 推荐 1：今日一练未完成的学科
+  if (!practiceDone) {
+    const moko = MOKO_NAV_ENTRIES.find((e) => e.href === '/daily-practice')!;
+    const incompleteSubjects = ['语文', '数学', '英语'].filter(
+      (s) => !checkedSubjects.has(s),
+    );
+    islandItems.push({
+      href: '/daily-practice',
+      label: '萌可闯关',
+      moko: moko.moko,
+      line: incompleteSubjects.length
+        ? `「${incompleteSubjects.join('、')}」还没练，继续吗？`
+        : '今天练得真好！明天再来挑战～',
+    });
+  }
+  // 推荐 2：今日已学模块的复习提示
+  if (todayModules.length > 0) {
+    const moko = MOKO_NAV_ENTRIES.find((e) => e.href === '/study')!;
+    islandItems.push({
+      href: '/study',
+      label: '萌可学堂',
+      moko: moko.moko,
+      line: `今天学了 ${todayModules.length} 个模块，${todayStars} 颗星，去复习一下吧！`,
+    });
+  }
+  // 推荐 3：未完成的待办任务
+  if (pendingTasks.length > 0) {
+    const moko = MOKO_NAV_ENTRIES.find((e) => e.href === '/my-tasks')!;
+    islandItems.push({
+      href: '/my-tasks',
+      label: '我的任务',
+      moko: moko.moko,
+      line: `有 ${pendingTasks.length} 个任务等你完成哦！`,
+    });
+  }
+  // 推荐 4：城堡有新活动
+  if (castle.prosperity < 100) {
+    const moko = MOKO_NAV_ENTRIES.find((e) => e.href === '/castle')!;
+    islandItems.push({
+      href: '/castle',
+      label: '萌可城堡',
+      moko: moko.moko,
+      line: `城堡繁荣度 ${castle.prosperity}%，一起建设吧！`,
+    });
+  }
+
   return (
     <div className="relative max-w-4xl mx-auto min-h-screen fade-up">
       <MokoGroupBg />
@@ -78,6 +128,9 @@ export default async function HomePage() {
           <p className="text-lg opacity-90">今天也要和萌可们一起加油学习哦～</p>
         </div>
       </div>
+
+      {/* 萌可灵动岛 —— 个性化推荐 */}
+      {islandItems.length > 0 && <MokoIsland items={islandItems} />}
 
       {/* 萌可旋转木马 */}
       <MokoCarousel items={carouselItems} />
