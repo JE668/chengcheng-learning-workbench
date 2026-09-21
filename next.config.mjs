@@ -6,15 +6,10 @@ import { withSentryConfig } from '@sentry/nextjs';
 const nextConfig = {
   // 整站自托管（NAS / 轻量云）需要：产出 .next/standalone 精简运行包
   output: 'standalone',
-  images: { 
+  images: {
+    // 整站自托管 + 代码里统一用带尺寸的原生 <img>，不启用 next/image 优化链路；
+    // （注意：unoptimized 时 formats/remotePatterns 均为死配置，已删除避免误导）
     unoptimized: true,
-    formats: ['image/avif', 'image/webp'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
   },
   // 容器内生产构建时跳过 ESLint（lint 属开发期检查，避免阻塞构建）
   eslint: { ignoreDuringBuilds: true },
@@ -24,48 +19,16 @@ const nextConfig = {
     // 优化包导入
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
-  webpack: (config, { dev, isServer }) => {
+  webpack: (config) => {
     // 显式把 @ 别名指向 src 目录，使用 webpack 原生 resolve.alias
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(process.cwd(), 'src'),
     };
 
-    // 生产环境优化
-    if (!dev && !isServer) {
-      // 分包策略
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          default: false,
-          vendors: false,
-          // React 相关
-          react: {
-            name: 'react',
-            test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
-            priority: 20,
-          },
-          // UI 库
-          ui: {
-            name: 'ui',
-            test: /[\\/]node_modules[\\/](lucide-react|@radix-ui|clsx|tailwind-merge)[\\/]/,
-            priority: 15,
-          },
-          // 数据库
-          db: {
-            name: 'db',
-            test: /[\\/]node_modules[\\/](@libsql|kysely)[\\/]/,
-            priority: 10,
-          },
-          // 公共代码
-          commons: {
-            name: 'commons',
-            minChunks: 2,
-            priority: 5,
-          },
-        },
-      };
-    }
+    // 注：历史上曾自定义 splitChunks（react/ui/commons 分包），但其中 db chunk 还残留着
+    // 已移除的 kysely 依赖，且整体覆盖了 Next 自带的分包策略、实测无收益——已删除，
+    // 交还 Next 默认的 chunk 优化。
 
     return config;
   },
@@ -73,7 +36,8 @@ const nextConfig = {
   async headers() {
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      // unsafe-eval 仅开发期需要（Next dev 热更新）；生产环境收紧
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",

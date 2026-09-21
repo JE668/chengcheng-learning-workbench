@@ -151,6 +151,9 @@ importers:
       eslint-config-next:
         specifier: 14.2.35
         version: 14.2.35(eslint@8.57.1)(typescript@5.9.3)
+      hanzi-writer-data:
+        specifier: ^2.0.1
+        version: 2.0.1
       husky:
         specifier: ^9.1.4
         version: 9.1.7
@@ -2882,6 +2885,9 @@ packages:
   gzip-size@6.0.0:
     resolution: {integrity: sha512-ax7ZYomf6jqPTQ4+XCpUGyXKHk5WweS+e05MBO4/y3WJ5RkmPXNKvX+bx1behVILVwr6JSQvZAku021CHPXG3Q==}
     engines: {node: '>=10'}
+
+  hanzi-writer-data@2.0.1:
+    resolution: {integrity: sha512-nbQwM+MaryGoq7pBMIZLCd3lFq03nXuJuwku1+6UbjL58uU+9OULVcMkoNvNuJSoIV7f1bbPRfD4D/LQa5S7qg==}
 
   hanzi-writer@3.7.3:
     resolution: {integrity: sha512-fdOFrb1cXWL/pV/oplJkcdziCvjJzhhf+qoIBm5IpVGxPBZEu4eLB6ZG5RJDbKXyNbNlyx8oIpa3XrcUBcSXpg==}
@@ -7574,6 +7580,8 @@ snapshots:
   gzip-size@6.0.0:
     dependencies:
       duplexer: 0.1.2
+
+  hanzi-writer-data@2.0.1: {}
 
   hanzi-writer@3.7.3: {}
 

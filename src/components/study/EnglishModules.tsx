@@ -12,6 +12,7 @@ import {
 import { speakEn } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { useModuleProgress } from '@/lib/module-progress';
+import { useRecorder, recognizeSpeech } from './useRecorder';
 
 function lev(a: string, b: string): number {
   const m = a.length,
@@ -50,95 +51,35 @@ export function LetterModule() {
 
 /* ---------- 单词（按主题，可点读 + 跟读录音；可选「我认识」完成标记） ---------- */
 function WordCard({ item, done, onDone }: { item: WordItem; done?: boolean; onDone?: () => void }) {
-  const [recording, setRecording] = useState(false);
-  const [recordUrl, setRecordUrl] = useState<string | null>(null);
   const [scoring, setScoring] = useState(false);
   const [score, setScore] = useState<number | null>(null);
   const [heard, setHeard] = useState('');
-  const mediaRecorder = useRef<MediaRecorder | null>(null);
-  const chunks = useRef<Blob[]>([]);
+  const { recording, audioUrl: recordUrl, micError, start: startRecord } = useRecorder({ maxMs: 3000 });
   const logM = useMistakeLogger();
 
-  async function startRecord() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
-      chunks.current = [];
-      mr.ondataavailable = (e) => {
-        if (e.data.size) chunks.current.push(e.data);
-      };
-      mr.onstop = () => {
-        const blob = new Blob(chunks.current, { type: 'audio/webm' });
-        setRecordUrl(URL.createObjectURL(blob));
-        stream.getTracks().forEach((t) => t.stop());
-      };
-      mr.start();
-      mediaRecorder.current = mr;
-      setRecording(true);
-      setRecordUrl(null);
-      setTimeout(() => {
-        if (mr.state !== 'inactive') mr.stop();
-        setRecording(false);
-      }, 3000);
-    } catch {
-      alert('需要麦克风权限才能录音哦，请允许后重试～');
-    }
-  }
-
-  function scorePronunciation() {
-    const SR =
-      (window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).SpeechRecognition ||
-      (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
-    if (!SR) {
-      alert('当前浏览器不支持发音评测，可以继续用「跟读」录音哦～');
-      return;
-    }
-    let rec: any;
-    try {
-      rec = new (SR as new () => any)();
-    } catch {
-      alert('发音评测启动失败，可以继续用「跟读」录音哦～');
-      return;
-    }
+  async function scorePronunciation() {
     setScoring(true);
     setScore(null);
     setHeard('');
-    // 兜底：部分浏览器(尤其 iPad Safari) onend 永不触发会导致按钮卡在「评测中」，
-    // 用 8s 安全计时强制结束，避免界面卡死。
-    const safety = setTimeout(() => setScoring(false), 8000);
-    const finish = () => {
-      clearTimeout(safety);
-      setScoring(false);
-    };
-    rec.lang = 'en-US';
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    rec.onresult = (e: any) => {
-      const text = String(e.results[0][0].transcript).toLowerCase().trim();
-      setHeard(text);
-      const target = item.word.toLowerCase().trim();
-      let s = 0;
-      if (text && (text.includes(target) || target.includes(text))) s = 3;
-      else {
-        const dist = lev(text, target);
-        const ratio = 1 - dist / Math.max(text.length, target.length, 1);
-        s = ratio >= 0.8 ? 3 : ratio >= 0.5 ? 2 : 1;
-      }
-      setScore(s);
-      if (s < 2) logM({ subject: '英语', kind: '单词', prompt: item.word, answer: item.word, wrong: text });
-      finish();
-    };
-    rec.onerror = () => {
-      finish();
-      alert('没听清，再试一次吧～');
-    };
-    rec.onend = finish;
-    try {
-      rec.start();
-    } catch {
-      finish();
-      alert('发音评测启动失败，可以继续用「跟读」录音哦～');
+    // recognizeSpeech 内部兜住：不支持 / 启动失败 / 超时 一律返回 null，不会卡按钮
+    const raw = await recognizeSpeech({ lang: 'en-US' });
+    setScoring(false);
+    if (raw === null) {
+      // 区分「不支持」和「没听清」没法可靠判断，统一温和提示
+      return;
     }
+    const text = raw.toLowerCase().trim();
+    setHeard(text);
+    const target = item.word.toLowerCase().trim();
+    let s = 0;
+    if (text && (text.includes(target) || target.includes(text))) s = 3;
+    else {
+      const dist = lev(text, target);
+      const ratio = 1 - dist / Math.max(text.length, target.length, 1);
+      s = ratio >= 0.8 ? 3 : ratio >= 0.5 ? 2 : 1;
+    }
+    setScore(s);
+    if (s < 2) logM({ subject: '英语', kind: '单词', prompt: item.word, answer: item.word, wrong: text });
   }
 
   const stars = score === null ? '' : '⭐'.repeat(score) + '☆'.repeat(3 - score);
@@ -186,6 +127,7 @@ function WordCard({ item, done, onDone }: { item: WordItem; done?: boolean; onDo
           </button>
         )}
       </div>
+      {micError && <p className="text-xs text-red-400 mt-2">{micError}</p>}
       {recordUrl && (
         <div className="mt-3">
           <audio src={recordUrl} controls className="w-full h-8" />
@@ -448,91 +390,32 @@ export function EnListenModule() {
 export function EnSpeakModule() {
   const practice = ALL_EN_WORDS.filter((w) => w.sentence);
   const [idx, setIdx] = useState(0);
-  const [recording, setRecording] = useState(false);
   const [scoring, setScoring] = useState(false);
   const [score, setScore] = useState<number | null>(null);
   const [heard, setHeard] = useState('');
-  const mediaRecorder = useRef<MediaRecorder | null>(null);
-  const chunks = useRef<Blob[]>([]);
+  const { recording, micError, start: startRecord } = useRecorder({ maxMs: 3000 });
   const item = practice[idx % practice.length];
   const logM = useMistakeLogger();
 
-  async function startRecord() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
-      chunks.current = [];
-      mr.ondataavailable = (e) => {
-        if (e.data.size) chunks.current.push(e.data);
-      };
-      mr.onstop = () => stream.getTracks().forEach((t) => t.stop());
-      mr.start();
-      mediaRecorder.current = mr;
-      setRecording(true);
-      setScore(null);
-      setTimeout(() => {
-        if (mr.state !== 'inactive') mr.stop();
-        setRecording(false);
-      }, 3000);
-    } catch {
-      alert('需要麦克风权限才能录音哦～');
-    }
-  }
-
-  function scorePronunciation() {
-    const SR =
-      (window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).SpeechRecognition ||
-      (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
-    if (!SR) {
-      alert('当前浏览器不支持发音评测，可以继续用「跟读」录音哦～');
-      return;
-    }
-    let rec: any;
-    try {
-      rec = new (SR as new () => any)();
-    } catch {
-      alert('发音评测启动失败，可以继续用「跟读」录音哦～');
-      return;
-    }
+  async function scorePronunciation() {
     setScoring(true);
     setScore(null);
     setHeard('');
-    // 兜底：部分浏览器(尤其 iPad Safari) onend 永不触发会导致按钮卡在「评测中」，
-    // 用 8s 安全计时强制结束，避免界面卡死。
-    const safety = setTimeout(() => setScoring(false), 8000);
-    const finish = () => {
-      clearTimeout(safety);
-      setScoring(false);
-    };
-    rec.lang = 'en-US';
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    rec.onresult = (e: any) => {
-      const text = String(e.results[0][0].transcript).toLowerCase().trim();
-      setHeard(text);
-      const target = item.word.toLowerCase().trim();
-      let s = 0;
-      if (text && (text.includes(target) || target.includes(text))) s = 3;
-      else {
-        const dist = lev(text, target);
-        const ratio = 1 - dist / Math.max(text.length, target.length, 1);
-        s = ratio >= 0.8 ? 3 : ratio >= 0.5 ? 2 : 1;
-      }
-      setScore(s);
-      if (s < 2) logM({ subject: '英语', kind: '口语', prompt: item.word, answer: item.word, wrong: text });
-      finish();
-    };
-    rec.onerror = () => {
-      finish();
-      alert('没听清，再试一次吧～');
-    };
-    rec.onend = finish;
-    try {
-      rec.start();
-    } catch {
-      finish();
-      alert('发音评测启动失败，可以继续用「跟读」录音哦～');
+    const raw = await recognizeSpeech({ lang: 'en-US' });
+    setScoring(false);
+    if (raw === null) return; // 不支持/没听清：安静失败，孩子可再点一次
+    const text = raw.toLowerCase().trim();
+    setHeard(text);
+    const target = item.word.toLowerCase().trim();
+    let s = 0;
+    if (text && (text.includes(target) || target.includes(text))) s = 3;
+    else {
+      const dist = lev(text, target);
+      const ratio = 1 - dist / Math.max(text.length, target.length, 1);
+      s = ratio >= 0.8 ? 3 : ratio >= 0.5 ? 2 : 1;
     }
+    setScore(s);
+    if (s < 2) logM({ subject: '英语', kind: '口语', prompt: item.word, answer: item.word, wrong: text });
   }
 
   const stars = score === null ? '' : '⭐'.repeat(score) + '☆'.repeat(3 - score);
@@ -564,6 +447,7 @@ export function EnSpeakModule() {
           {scoring ? '🎯 听…' : '🎯 评发音'}
         </button>
       </div>
+      {micError && <p className="text-xs text-red-200 mt-2">{micError}</p>}
       {score !== null && (
         <div className="mt-4">
           <div className="text-3xl">{stars}</div>

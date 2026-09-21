@@ -88,6 +88,18 @@ jobs:
       - name: ESLint 代码检测
         run: pnpm lint
 
+      - name: 媒体登记一致性（课本 PDF / 封面图是否存在）
+        run: pnpm check-media
+
+      - name: 生成物与源一致（萌可图鉴）
+        run: |
+          node scripts/gen-moko-collection.cjs
+          git diff --exit-code src/lib/moko-collection/ >/dev/null || {
+            echo '❌ src/lib/moko-collection 与生成器输出不一致，请本地跑 node scripts/gen-moko-collection.cjs 后提交';
+            exit 1;
+          }
+          echo '✅ moko-collection 与生成器输出一致'
+
       - name: 生产构建冒烟（next build）
         run: pnpm build
         env:

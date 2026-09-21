@@ -178,7 +178,7 @@ export const TEXTBOOKS: Textbook[] = [
     emoji: '📝',
     color: 'bg-moko-purple',
     border: 'border-moko-purple/40',
-    img: '/moko/wisdomping.jpg',
+    img: '/moko/gemsping.jpg',
     chapters: [
       {
         idx: 1,

@@ -65,7 +65,7 @@ export const config = {
   // /textbooks、/raz 仍显式纳入，但仅作「跳过页面级登录跳转」用——
   // 媒体本身已改为公开直出（见上方 MEDIA_PREFIXES 说明），不再逐字节鉴权。
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot|mp4|webm|mp3|pdf)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot|mp4|webm|mp3|pdf|json)$).*)',
     '/textbooks/:path*',
     '/raz/:path*',
   ],

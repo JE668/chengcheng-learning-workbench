@@ -238,11 +238,13 @@ export default function TextbookViewer() {
           )}
         </div>
 
-        {/* 📝 本章练习推荐 */}
-        {openFile && (
-          <PracticeRecommendation bookKey={book.key} chapterIdx={book.chapters.find((c) => c.file === openFile)?.idx ?? 0} />
-        )}
       </div>
+
+      {/* 📝 本章练习推荐：放在目录+阅读区栅格之外，独占整行
+          （若留在 grid 里会被挤到 260px 的目录列，排版变形） */}
+      {openFile && (
+        <PracticeRecommendation bookKey={book.key} chapterIdx={book.chapters.find((c) => c.file === openFile)?.idx ?? 0} />
+      )}
 
       <p className="text-xs text-gray-400 text-center">
         {openTitle} · 共 {openPages} 页；按章加载更省流量，进度会自动记住（下次打开直接续上）

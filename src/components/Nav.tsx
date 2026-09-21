@@ -42,6 +42,17 @@ export default function Nav({ user }: { user: User }) {
   const isParent = user.role === 'parent';
   const links = isParent ? parentLinks : childLinks;
   const logoutAction = '/api/auth/logout';
+  // 登出前清空 Service Worker 缓存：SW 会缓存页面/API 响应，不清理则登出后离线仍能翻到上一个用户的数据
+  const clearSwCaches = () => {
+    try {
+      navigator.serviceWorker?.controller?.postMessage({ type: 'CLEAR_CACHES' });
+      if ('caches' in window) {
+        void caches.keys().then((keys) => keys.forEach((k) => k.startsWith('ccwb-') && caches.delete(k)));
+      }
+    } catch {
+      /* 缓存清理失败不阻塞登出 */
+    }
+  };
   const [moreOpen, setMoreOpen] = useState(false);
 
   const Item = ({ href, label, icon }: { href: string; label: string; icon: string }) => {
@@ -82,7 +93,7 @@ export default function Nav({ user }: { user: User }) {
         <nav className="flex-1 space-y-1 min-h-0 overflow-y-auto no-scrollbar pr-1">
           {links.map((l) => <Item key={l.href} {...l} />)}
         </nav>
-        <form action={logoutAction} method="POST">
+        <form action={logoutAction} method="POST" onSubmit={clearSwCaches}>
           <button className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-2xl text-white/90 hover:bg-white/20">
             <span>🚪</span><span>退出</span>
           </button>
@@ -104,7 +115,7 @@ export default function Nav({ user }: { user: User }) {
                 </Link>
               );
             })}
-            <form action="/api/auth/logout" method="POST" className="flex-shrink-0">
+            <form action="/api/auth/logout" method="POST" className="flex-shrink-0" onSubmit={clearSwCaches}>
               <button aria-label="退出" className="flex flex-col items-center justify-center w-14 py-1.5 rounded-2xl text-white/90 hover:bg-white/15 tap">
                 <span className="text-2xl leading-none">🚪</span>
               </button>
@@ -166,7 +177,7 @@ export default function Nav({ user }: { user: User }) {
                     );
                   })}
                   {/* 退出按钮 */}
-                  <form action={logoutAction} method="POST" className="contents">
+                  <form action={logoutAction} method="POST" className="contents" onSubmit={clearSwCaches}>
                     <button aria-label="退出"
                       className="flex flex-col items-center justify-center py-3 rounded-2xl text-white/60 hover:bg-white/15 tap"
                     >

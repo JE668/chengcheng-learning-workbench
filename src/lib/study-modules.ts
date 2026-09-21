@@ -1,58 +1,94 @@
-import type { ComponentType, ComponentProps } from 'react';
-import PinyinModule from '@/components/study/PinyinModule';
-import { CharacterModule, PoemModule, TraceModule, CharacterQuizModule } from '@/components/study/ChineseModules';
-import { CharacterLessonModule, TextModule } from '@/components/study/ChineseExtra';
-import { StrokeRadicalModule, TextCharModule } from '@/components/study/MokoStudy';
-import { NumberSenseModule, CompareModule, ShapeModule, MathQuizModule, AngleModule, CarryModule } from '@/components/study/MathModules';
-import { PositionModule, SolidShapeModule, Numbers1120Module, ClockModule } from '@/components/study/MathExtra';
-import { SplitModule } from '@/components/study/MokoStudy';
-import { FindPatternModule } from '@/components/study/PatternModule';
-import { LetterModule, WordModule, EnListenModule, EnSpeakModule, UnitModule } from '@/components/study/EnglishModules';
-import {
-  PinyinBlendModule,
-  StrokeOrderModule,
-  TextComprehensionModule,
-  SentenceBuildModule,
-  SchoolPrepModule,
-} from '@/components/study/ChineseNew';
-import {
-  MathWordProblemModule,
-  OrdinalModule,
-  ClockHalfModule,
-  CompareMoreModule,
-  CalendarModule,
-} from '@/components/study/MathNew';
-import { EnglishPhonicsModule, EnglishSentenceModule } from '@/components/study/EnglishNew';
-import { MathTableModule } from '@/components/study/MathTable';
-import { BorrowModule, PictureEquationModule } from '@/components/study/MathRegroup';
-import { EnListenPicModule, EnInitialSoundModule, EnTprModule } from '@/components/study/EnglishListen';
-import { WordFormModule } from '@/components/study/ChineseWordForm';
-import { FingerReadModule } from '@/components/study/ChineseFingerRead';
-import { PoemFunModule } from '@/components/study/PoemFun';
-import { MyDayModule } from '@/components/study/MyDay';
-import { CharTransformModule } from '@/components/study/CharTransform';
-import {
-  ProverbModule,
-  AntonymModule,
-  QuantifierModule,
-  RiddleModule,
-} from '@/components/study/MokoFun';
-import { NurseryRhymeModule } from '@/components/study/NurseryRhyme';
-import { SafetyModule } from '@/components/study/Safety';
-import { EnSongModule } from '@/components/study/EnSong';
-import { EnSpellModule } from '@/components/study/EnSpell';
-import { SimilarCharModule } from '@/components/study/SimilarChar';
-import { OnomatopoeiaModule } from '@/components/study/Onomatopoeia';
-import { PolyphonicModule } from '@/components/study/Polyphonic';
-import { PinyinTipsModule } from '@/components/study/PinyinTips';
-import { PictographModule } from '@/components/study/Pictograph';
-import { IdiomModule } from '@/components/study/Idiom';
-import { NeutralToneModule } from '@/components/study/NeutralTone';
-import { TextComprehensionModule as TextUnderstandingModule } from '@/components/study/TextComprehension';
-import { WritingTraceModule } from '@/components/study/WritingTrace';
-import { ToneModule } from '@/components/study/ToneQuiz';
-import { LetterDiscriminateModule } from '@/components/study/LetterDiscriminate';
-import { RazVocabModule } from '@/components/study/RazVocab';
+import { createElement, type ComponentType } from 'react';
+import dynamic from 'next/dynamic';
+
+/**
+ * 全量学习模块都通过 next/dynamic 懒加载：
+ * 此处原本 70+ 个模块组件全部静态打包，打开任何一个模块页都会下载/解析全部模块代码。
+ * 改为动态导入后，每个模块独立 chunk，首屏只载当前模块。
+ */
+function lazy<C extends ComponentType<Record<string, never>>>(
+  loader: () => Promise<{ default: C }>,
+): C {
+  // 注：本文件是 .ts，loading 兜底用 createElement 而非 JSX
+  return dynamic(loader, {
+    loading: () =>
+      createElement(
+        'div',
+        { className: 'rounded-2xl p-8 bg-white/60 border-2 border-moko-purple/10 text-center text-gray-400' },
+        '🐣 模块加载中…',
+      ),
+  }) as unknown as C;
+}
+
+const PinyinModule = lazy(() => import('@/components/study/PinyinModule'));
+const CharacterModule = lazy(() => import('@/components/study/ChineseModules').then((m) => ({ default: m.CharacterModule })));
+const PoemModule = lazy(() => import('@/components/study/ChineseModules').then((m) => ({ default: m.PoemModule })));
+const TraceModule = lazy(() => import('@/components/study/ChineseModules').then((m) => ({ default: m.TraceModule })));
+const CharacterQuizModule = lazy(() => import('@/components/study/ChineseModules').then((m) => ({ default: m.CharacterQuizModule })));
+const CharacterLessonModule = lazy(() => import('@/components/study/ChineseExtra').then((m) => ({ default: m.CharacterLessonModule })));
+const TextModule = lazy(() => import('@/components/study/ChineseExtra').then((m) => ({ default: m.TextModule })));
+const StrokeRadicalModule = lazy(() => import('@/components/study/MokoStudy').then((m) => ({ default: m.StrokeRadicalModule })));
+const TextCharModule = lazy(() => import('@/components/study/MokoStudy').then((m) => ({ default: m.TextCharModule })));
+const SplitModule = lazy(() => import('@/components/study/MokoStudy').then((m) => ({ default: m.SplitModule })));
+const NumberSenseModule = lazy(() => import('@/components/study/MathModules').then((m) => ({ default: m.NumberSenseModule })));
+const CompareModule = lazy(() => import('@/components/study/MathModules').then((m) => ({ default: m.CompareModule })));
+const ShapeModule = lazy(() => import('@/components/study/MathModules').then((m) => ({ default: m.ShapeModule })));
+const MathQuizModule = lazy(() => import('@/components/study/MathModules').then((m) => ({ default: m.MathQuizModule })));
+const AngleModule = lazy(() => import('@/components/study/MathModules').then((m) => ({ default: m.AngleModule })));
+const CarryModule = lazy(() => import('@/components/study/MathModules').then((m) => ({ default: m.CarryModule })));
+const PositionModule = lazy(() => import('@/components/study/MathExtra').then((m) => ({ default: m.PositionModule })));
+const SolidShapeModule = lazy(() => import('@/components/study/MathExtra').then((m) => ({ default: m.SolidShapeModule })));
+const Numbers1120Module = lazy(() => import('@/components/study/MathExtra').then((m) => ({ default: m.Numbers1120Module })));
+const ClockModule = lazy(() => import('@/components/study/MathExtra').then((m) => ({ default: m.ClockModule })));
+const FindPatternModule = lazy(() => import('@/components/study/PatternModule').then((m) => ({ default: m.FindPatternModule })));
+const LetterModule = lazy(() => import('@/components/study/EnglishModules').then((m) => ({ default: m.LetterModule })));
+const WordModule = lazy(() => import('@/components/study/EnglishModules').then((m) => ({ default: m.WordModule })));
+const EnListenModule = lazy(() => import('@/components/study/EnglishModules').then((m) => ({ default: m.EnListenModule })));
+const EnSpeakModule = lazy(() => import('@/components/study/EnglishModules').then((m) => ({ default: m.EnSpeakModule })));
+const UnitModule = lazy(() => import('@/components/study/EnglishModules').then((m) => ({ default: m.UnitModule })));
+const PinyinBlendModule = lazy(() => import('@/components/study/ChineseNew').then((m) => ({ default: m.PinyinBlendModule })));
+const StrokeOrderModule = lazy(() => import('@/components/study/ChineseNew').then((m) => ({ default: m.StrokeOrderModule })));
+const TextComprehensionModule = lazy(() => import('@/components/study/ChineseNew').then((m) => ({ default: m.TextComprehensionModule })));
+const SentenceBuildModule = lazy(() => import('@/components/study/ChineseNew').then((m) => ({ default: m.SentenceBuildModule })));
+const SchoolPrepModule = lazy(() => import('@/components/study/ChineseNew').then((m) => ({ default: m.SchoolPrepModule })));
+const MathWordProblemModule = lazy(() => import('@/components/study/MathNew').then((m) => ({ default: m.MathWordProblemModule })));
+const OrdinalModule = lazy(() => import('@/components/study/MathNew').then((m) => ({ default: m.OrdinalModule })));
+const ClockHalfModule = lazy(() => import('@/components/study/MathNew').then((m) => ({ default: m.ClockHalfModule })));
+const CompareMoreModule = lazy(() => import('@/components/study/MathNew').then((m) => ({ default: m.CompareMoreModule })));
+const CalendarModule = lazy(() => import('@/components/study/MathNew').then((m) => ({ default: m.CalendarModule })));
+const EnglishPhonicsModule = lazy(() => import('@/components/study/EnglishNew').then((m) => ({ default: m.EnglishPhonicsModule })));
+const EnglishSentenceModule = lazy(() => import('@/components/study/EnglishNew').then((m) => ({ default: m.EnglishSentenceModule })));
+const MathTableModule = lazy(() => import('@/components/study/MathTable').then((m) => ({ default: m.MathTableModule })));
+const BorrowModule = lazy(() => import('@/components/study/MathRegroup').then((m) => ({ default: m.BorrowModule })));
+const PictureEquationModule = lazy(() => import('@/components/study/MathRegroup').then((m) => ({ default: m.PictureEquationModule })));
+const EnListenPicModule = lazy(() => import('@/components/study/EnglishListen').then((m) => ({ default: m.EnListenPicModule })));
+const EnInitialSoundModule = lazy(() => import('@/components/study/EnglishListen').then((m) => ({ default: m.EnInitialSoundModule })));
+const EnTprModule = lazy(() => import('@/components/study/EnglishListen').then((m) => ({ default: m.EnTprModule })));
+const WordFormModule = lazy(() => import('@/components/study/ChineseWordForm').then((m) => ({ default: m.WordFormModule })));
+const FingerReadModule = lazy(() => import('@/components/study/ChineseFingerRead').then((m) => ({ default: m.FingerReadModule })));
+const PoemFunModule = lazy(() => import('@/components/study/PoemFun').then((m) => ({ default: m.PoemFunModule })));
+const MyDayModule = lazy(() => import('@/components/study/MyDay').then((m) => ({ default: m.MyDayModule })));
+const CharTransformModule = lazy(() => import('@/components/study/CharTransform').then((m) => ({ default: m.CharTransformModule })));
+const ProverbModule = lazy(() => import('@/components/study/MokoFun').then((m) => ({ default: m.ProverbModule })));
+const AntonymModule = lazy(() => import('@/components/study/MokoFun').then((m) => ({ default: m.AntonymModule })));
+const QuantifierModule = lazy(() => import('@/components/study/MokoFun').then((m) => ({ default: m.QuantifierModule })));
+const RiddleModule = lazy(() => import('@/components/study/MokoFun').then((m) => ({ default: m.RiddleModule })));
+const NurseryRhymeModule = lazy(() => import('@/components/study/NurseryRhyme').then((m) => ({ default: m.NurseryRhymeModule })));
+const SafetyModule = lazy(() => import('@/components/study/Safety').then((m) => ({ default: m.SafetyModule })));
+const EnSongModule = lazy(() => import('@/components/study/EnSong').then((m) => ({ default: m.EnSongModule })));
+const EnSpellModule = lazy(() => import('@/components/study/EnSpell').then((m) => ({ default: m.EnSpellModule })));
+const SimilarCharModule = lazy(() => import('@/components/study/SimilarChar').then((m) => ({ default: m.SimilarCharModule })));
+const OnomatopoeiaModule = lazy(() => import('@/components/study/Onomatopoeia').then((m) => ({ default: m.OnomatopoeiaModule })));
+const PolyphonicModule = lazy(() => import('@/components/study/Polyphonic').then((m) => ({ default: m.PolyphonicModule })));
+const PinyinTipsModule = lazy(() => import('@/components/study/PinyinTips').then((m) => ({ default: m.PinyinTipsModule })));
+const PictographModule = lazy(() => import('@/components/study/Pictograph').then((m) => ({ default: m.PictographModule })));
+const IdiomModule = lazy(() => import('@/components/study/Idiom').then((m) => ({ default: m.IdiomModule })));
+const NeutralToneModule = lazy(() => import('@/components/study/NeutralTone').then((m) => ({ default: m.NeutralToneModule })));
+const TextUnderstandingModule = lazy(() => import('@/components/study/TextComprehension').then((m) => ({ default: m.TextComprehensionModule })));
+const WritingTraceModule = lazy(() => import('@/components/study/WritingTrace').then((m) => ({ default: m.WritingTraceModule })));
+const ToneModule = lazy(() => import('@/components/study/ToneQuiz').then((m) => ({ default: m.ToneModule })));
+const LetterDiscriminateModule = lazy(() => import('@/components/study/LetterDiscriminate').then((m) => ({ default: m.LetterDiscriminateModule })));
+const RazVocabModule = lazy(() => import('@/components/study/RazVocab').then((m) => ({ default: m.RazVocabModule })));
 
 /** 学科键名联合类型 */
 export type StudySubject = 'chinese' | 'math' | 'english';

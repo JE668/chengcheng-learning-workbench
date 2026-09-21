@@ -91,7 +91,7 @@ cloudflared tunnel --url http://localhost:3000
 拉最新代码 → 重建镜像 → 重启容器，数据库与媒体卷不受影响。
 
 ## 六、常见坑
-- **媒体 404**：检查 docker-compose 里两个媒体挂载路径是否指向真实的 `public/raz`、`public/textbooks`（里面应有 94 个 PDF + 97 个 MP4、16 个课本 PDF）。
+- **媒体 404**：检查 docker-compose 里两个媒体挂载路径是否指向真实的 `public/raz`、`public/textbooks`（里面应有 94 个 PDF + 97 个 MP4、17 个课本 PDF）。注意镜像**不含媒体**，挂载目录是手动拷贝的——**新增课本/绘本后必须把新文件同步到 NAS 的 media 目录**，否则页面上能看到入口但点开 404。本地可用 `pnpm check-media` 校验仓库内媒体完整性，或在 NAS 上 `node scripts/check-media.mjs /vol1/1000/Docker/chengcheng-workbench/media` 校验挂载目录。
 - **媒体需登录才能看**：为避免公开库中被直接遍历/盗链，`/textbooks/`、`/raz/` 下的 PDF/MP4 已加登录门禁——未登录点开页面会跳 `/login`，直链返回 401 JSON（不影响上面 404 的排查）。
 - **容器起不来 / 端口占用**：确认 NAS 的 3000 端口没被别的容器占用（`docker logs chengcheng` 看报错）。
 - **libSQL 原生模块**：镜像用 `node:22-bookworm-slim`（glibc），已包含 libSQL 原生绑定；不要用 alpine 镜像。（本地/其他构建也请保持 Node ≥ 22.13：pdfjs-dist@6 在 Node 20 下会导致 PDF 渲染相关页面构建失败。）

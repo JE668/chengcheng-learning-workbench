@@ -106,10 +106,14 @@ export function PinyinBlendModule() {
 function StrokeOrderCard({ item, learned, onLearned }: { item: { char: string; py: string; mean: string }; learned?: boolean; onLearned?: () => void }) {
   const elRef = useRef<HTMLDivElement>(null);
   const writerRef = useRef<any>(null);
+  // 笔顺数据加载状态：hanzi-writer 的 create 是同步返回的，字形数据异步拉取；
+  // 数据没到位时点「写一写/笔顺」无任何反应——所以显式追踪加载态，失败时给提示。
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
 
   useEffect(() => {
     let active = true;
     const el = elRef.current;
+    setLoadState('loading');
     import('hanzi-writer').then((mod: any) => {
       const HW = mod.default ?? mod;
       if (!active || !el) return;
@@ -123,6 +127,20 @@ function StrokeOrderCard({ item, learned, onLearned }: { item: { char: string; p
         strokeColor: '#FF5DA0',
         radicalColor: '#ef4444',
         outlineColor: '#fbcfe8',
+        // 关键修复：默认会去 cdn.jsdelivr.net 拉笔画数据，国内网络经常超时，
+        // 表现为「点笔顺按钮没反应」。改为加载 public/hanzi/ 下的同源静态文件
+        //（由 scripts/prepare-hanzi-data.mjs 从 hanzi-writer-data 包生成，全册生字都覆盖）。
+        charDataLoader: (char: string) =>
+          fetch(`/hanzi/${encodeURIComponent(char)}.json`).then((r) => {
+            if (!r.ok) throw new Error(`no stroke data for ${char}`);
+            return r.json();
+          }),
+        onLoadCharDataSuccess: () => {
+          if (active) setLoadState('ready');
+        },
+        onLoadCharDataError: () => {
+          if (active) setLoadState('error');
+        },
       });
     });
     return () => {
@@ -134,21 +152,35 @@ function StrokeOrderCard({ item, learned, onLearned }: { item: { char: string; p
 
   return (
     <div className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-pink/20 text-center">
-      <div ref={elRef} className="mx-auto w-[220px] h-[220px]" />
+      <div className="relative mx-auto w-[220px] h-[220px]">
+        <div ref={elRef} className="w-full h-full" />
+        {loadState === 'loading' && (
+          <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+            ✍️ 笔画加载中…
+          </div>
+        )}
+        {loadState === 'error' && (
+          <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm px-4">
+            😢「{item.char}」的笔画数据加载失败，请刷新重试
+          </div>
+        )}
+      </div>
       <div className="text-2xl font-black text-moko-rose mt-1">
         {item.char} <span className="text-sm text-gray-400">{item.py}</span>
       </div>
       <div className="text-sm text-gray-500 mb-3">{item.mean}</div>
       <div className="flex justify-center gap-2 flex-wrap">
         <button
-          onClick={() => writerRef.current?.animateCharacter()}
-          className="px-3 py-1 rounded-full bg-moko-pink text-white font-bold text-xs active:scale-95 transition"
+          onClick={() => loadState === 'ready' && writerRef.current?.animateCharacter()}
+          disabled={loadState !== 'ready'}
+          className="px-3 py-1 rounded-full bg-moko-pink text-white font-bold text-xs active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           ▶️ 写一写
         </button>
         <button
-          onClick={() => writerRef.current?.loopCharacterAnimation()}
-          className="px-3 py-1 rounded-full bg-moko-rose text-white font-bold text-xs active:scale-95 transition"
+          onClick={() => loadState === 'ready' && writerRef.current?.loopCharacterAnimation()}
+          disabled={loadState !== 'ready'}
+          className="px-3 py-1 rounded-full bg-moko-rose text-white font-bold text-xs active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           👀 笔顺
         </button>

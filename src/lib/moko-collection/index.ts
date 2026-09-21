@@ -1,5 +1,5 @@
 // 自动生成：由 scripts 按「季/文件夹」拆分扫描 public/moko/collection/ 生成，请勿手改。
-// 重新生成：node scripts/gen-moko-collection.js
+// 重新生成：node scripts/gen-moko-collection.cjs
 import type { MokoChar, MokoCategoryKey } from '../types';
 
 import { mokoCollection_01 } from './by-season/01';

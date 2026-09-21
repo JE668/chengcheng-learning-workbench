@@ -17,6 +17,7 @@ import { speakZh } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { useModuleProgress } from '@/lib/module-progress';
 import { ModuleStars } from '@/components/study/ModuleStars';
+import { useRecorder, recognizeSpeech } from './useRecorder';
 
 /* ---------- 识字（按类别，一屏一类） ---------- */
 function CharacterCard({ item, done, onDone }: { item: CharacterItem; done: boolean; onDone: () => void }) {
@@ -187,109 +188,33 @@ export function CharacterModule() {
 
 /* ---------- 古诗 ---------- */
 function PoemCard({ item }: { item: PoemItem }) {
-  const [recording, setRecording] = useState(false);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [reciteScore, setReciteScore] = useState<number | null>(null);
   const [reciteText, setReciteText] = useState('');
-  const [micError, setMicError] = useState('');
   // 古诗诵读（poems）关卡进度：背诵打分后记录星数，让孩子在中文城堡看到累计星星
   const { record: recordPoemStars } = useModuleProgress('chinese', 'poems');
-  const mrRef = useRef<MediaRecorder | null>(null);
-  const srRef = useRef<any>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const urlRef = useRef<string | null>(null);
+  // 录音与回放是核心需求，识别打分尽力而为（失败不影响录音）——统一走共享 hook
+  const { recording, audioUrl, micError, start, stop: stopRecite } = useRecorder({ maxMs: 60000 });
 
-  /** 我来背诵：
-   *  - 用 MediaRecorder 真正录音 → 可「停止」、可「回放」（核心需求）；
-   *  - 同时 best-effort 跑 SpeechRecognition 给背诵打分，识别不可用/失败都不影响录音与回放。
-   *  原实现只依赖 SpeechRecognition：在 iPad Safari 等环境 rec.start() 可能抛错或 onend 永不
-   *  触发，导致「背诵中…」卡死且根本没有回放——本次改为录音为主、识别为辅。 */
+  /** 我来背诵：开始录音 → 并行跑 zh 识别打分；背完点「停止录音」结束 */
   async function startRecite() {
-    setMicError('');
     setReciteScore(null);
     setReciteText('');
-    if (urlRef.current) {
-      URL.revokeObjectURL(urlRef.current);
-      urlRef.current = null;
+    const ok = await start();
+    if (!ok) return;
+    const raw = await recognizeSpeech({ lang: 'zh-CN', timeoutMs: 60000 });
+    if (raw === null) return; // 识别不可用/没听清：安静跳过打分，录音回放照常
+    const text = raw.replace(/[，。、；：“”‘’！？\s]/g, '');
+    setReciteText(text);
+    // 取原诗所有汉字，计算命中比例
+    const target = item.lines.join('').replace(/[，。、；：“”‘’！？\s]/g, '');
+    let hit = 0;
+    for (const ch of target) {
+      if (text.includes(ch)) hit++;
     }
-    setAudioUrl(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // ① 录音（核心：供回放）
-      const mr = new MediaRecorder(stream);
-      chunksRef.current = [];
-      mr.ondataavailable = (e: BlobEvent) => {
-        if (e.data && e.data.size) chunksRef.current.push(e.data);
-      };
-      mr.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: mr.mimeType || 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        urlRef.current = url;
-        setAudioUrl(url);
-        stream.getTracks().forEach((t) => t.stop());
-      };
-      mr.start();
-      mrRef.current = mr;
-      setRecording(true);
-      // 防止意外一直录：最长 60s 自动停止
-      timerRef.current = setTimeout(stopRecite, 60000);
-
-      // ② 尽力而为的语音识别打分（失败/不支持都不影响上面的录音与回放）
-      const SR =
-        (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any }).SpeechRecognition ||
-        (window as unknown as { webkitSpeechRecognition?: any }).webkitSpeechRecognition;
-      if (SR) {
-        try {
-          const rec = new SR();
-          rec.lang = 'zh-CN';
-          rec.interimResults = false;
-          rec.maxAlternatives = 1;
-          rec.onresult = (e: any) => {
-            const text = String(e.results[0][0].transcript).replace(/[，。、；：""''！？\s]/g, '');
-            setReciteText(text);
-            // 取原诗所有汉字
-            const target = item.lines.join('').replace(/[，。、；：""''！？\s]/g, '');
-            // 计算原诗中有多少字出现在孩子念的内容里
-            let hit = 0;
-            for (const ch of target) {
-              if (text.includes(ch)) hit++;
-            }
-            const ratio = target.length > 0 ? hit / target.length : 0;
-            const score = ratio >= 0.8 ? 3 : ratio >= 0.6 ? 2 : ratio >= 0.4 ? 1 : 0;
-            setReciteScore(score);
-            if (score > 0) recordPoemStars(score);
-          };
-          rec.onerror = () => {};
-          rec.start();
-          srRef.current = rec;
-        } catch {
-          /* 识别不可用则跳过打分 */
-        }
-      }
-    } catch {
-      setMicError('需要麦克风权限才能录音哦～请在 https 或 localhost 下访问，并在浏览器弹窗里允许麦克风。');
-    }
-  }
-
-  function stopRecite() {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-    try {
-      mrRef.current?.stop();
-    } catch {
-      /* ignore */
-    }
-    try {
-      srRef.current?.stop?.();
-    } catch {
-      /* ignore */
-    }
-    mrRef.current = null;
-    srRef.current = null;
-    setRecording(false);
+    const ratio = target.length > 0 ? hit / target.length : 0;
+    const score = ratio >= 0.8 ? 3 : ratio >= 0.6 ? 2 : ratio >= 0.4 ? 1 : 0;
+    setReciteScore(score);
+    if (score > 0) recordPoemStars(score);
   }
 
   const stars = reciteScore !== null && reciteScore > 0 ? '⭐'.repeat(reciteScore) + '☆'.repeat(3 - reciteScore) : '';

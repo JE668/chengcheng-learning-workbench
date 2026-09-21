@@ -1,4 +1,4 @@
-// 自动生成（按季拆分）：由 scripts/gen-moko-collection.js 生成，请勿手改。
+// 自动生成（按季拆分）：由 scripts/gen-moko-collection.cjs 生成，请勿手改。
 import type { MokoChar } from '../../types';
 
 export const mokoCollection_06: MokoChar[] = [
