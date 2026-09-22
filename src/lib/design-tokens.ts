@@ -221,8 +221,79 @@ export const zIndex = {
 } as const;
 
 // ============================================================================
-// 辅助函数
+// 语义场景色 - 用于学习场景（答对/错题/阅读等）
 // ============================================================================
+
+export const sceneColors = {
+  // 答对/庆祝场景
+  celebration: {
+    light: '#4ade80',
+    dark: '#86efac',
+  },
+  // 错题/警告场景
+  warning: {
+    light: '#fb923c',
+    dark: '#fdba74',
+  },
+  // 阅读页背景（护眼暖色）
+  calm: {
+    light: '#fef3e2',
+    dark: '#1a1a2e',
+  },
+  // 学习专注（深色背景 + 柔和光晕）
+  focus: {
+    light: '#f0f9ff',
+    dark: '#0f172a',
+  },
+} as const;
+
+// ============================================================================
+// 学科主题色 - 每科一套微渐变
+// ============================================================================
+
+export const subjectThemes = {
+  chinese: {
+    label: '语文',
+    gradient: 'from-rose-100 via-pink-50 to-rose-100',
+    gradientDark: 'from-rose-900 via-pink-950 to-rose-900',
+    accent: '#ff6fa5',
+    emoji: '📖',
+  },
+  math: {
+    label: '数学',
+    gradient: 'from-sky-100 via-blue-50 to-sky-100',
+    gradientDark: 'from-sky-900 via-blue-950 to-sky-900',
+    accent: '#38bdf8',
+    emoji: '🔢',
+  },
+  english: {
+    label: '英语',
+    gradient: 'from-amber-100 via-yellow-50 to-amber-100',
+    gradientDark: 'from-amber-900 via-yellow-950 to-amber-900',
+    accent: '#fcd34d',
+    emoji: '🔤',
+  },
+} as const;
+
+// ============================================================================
+// 儿童专属规格 - 一年级适龄设计
+// ============================================================================
+
+export const childSpecs = {
+  // 最小可点击区域（儿童手指）
+  minTouchTarget: 48, // px
+  // 主文字最小字号（一年级）
+  minFontSize: 16, // px
+  // 卡片/按钮圆角（大圆角更易点击）
+  cardRadius: 24, // px (1.5rem / xl)
+  buttonRadius: 16, // px (1rem / lg)
+  // 按钮内边距
+  buttonPadding: { x: 24, y: 12 }, // px
+  // 模块卡片间距
+  moduleGap: 12, // px
+  // 标题字号
+  titleSize: { sm: 18, md: 24, lg: 30 }, // px
+} as const;
 
 /** 获取主题色值 */
 export function getColor(path: string, theme: 'light' | 'dark' = 'light'): string {
