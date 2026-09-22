@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { getModuleProgressAll } from '@/lib/progress-store';
 import { STUDY_MODULES, SUBJECT_META, type StudySubject, type StudyModuleMeta } from '@/lib/study-modules';
+import { subjectThemes } from '@/lib/design-tokens';
 import { ModuleCover } from '@/components/study/ModuleCover';
 import { ModuleStars } from '@/components/study/ModuleStars';
 import { MokoHelper } from '@/components/MokoHelper';
@@ -39,8 +40,10 @@ export async function SubjectStudyPage({
   const allProgress = childId ? await getModuleProgressAll(childId) : [];
   const starsMap = new Map(allProgress.filter((p) => p.subject === subject).map((p) => [p.moduleKey, p.stars]));
 
+  const theme = subjectThemes[subject] ?? subjectThemes.chinese;
+
   return (
-    <div className="max-w-4xl mx-auto pb-28 fade-up">
+    <div className={`max-w-4xl mx-auto pb-28 fade-up bg-gradient-to-b ${theme.gradient} dark:${theme.gradientDark}`}>
       <div className="flex items-center gap-3 mb-4">
         <Link href="/study" className="text-moko-violet font-bold hover:underline">‹ 学习首页</Link>
       </div>
