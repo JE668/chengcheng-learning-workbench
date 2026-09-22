@@ -331,6 +331,13 @@ body { padding-top: env(safe-area-inset-top); }
 }
 .rainbow-ring { animation: rainbowShift 3s linear infinite; }
 
+/* 彩虹渐变背景（用于 7 天连续打卡） */
+.rainbow-gradient {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 16%, #eab308 33%, #22c55e 50%, #3b82f6 66%, #8b5cf6 83%, #ec4899 100%);
+  background-size: 200% 200%;
+  animation: rainbowShift 3s linear infinite;
+}
+
 .crown-glow { box-shadow: 0 0 15px rgba(234,179,8,.5), 0 0 30px rgba(234,179,8,.3); }
 
 @keyframes mokoWalk {

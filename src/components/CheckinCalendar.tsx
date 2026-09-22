@@ -80,7 +80,31 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
   }
 
   const weekday = ['一', '二', '三', '四', '五', '六', '日'];
-  const dayColor = (count: number) => {
+  // 彩虹渐变：连续打卡天数越多，颜色越鲜艳
+  const RAINBOW_COLORS = [
+    'bg-gray-100 text-gray-400',      // 0 天
+    'bg-orange-100 text-orange-600',  // 1 天
+    'bg-yellow-100 text-yellow-700',  // 2 天
+    'bg-green-100 text-green-700',    // 3 天
+    'bg-cyan-100 text-cyan-700',      // 4 天
+    'bg-blue-100 text-blue-700',      // 5 天
+    'bg-purple-100 text-purple-700',  // 6 天
+    'rainbow-gradient text-white',    // 7+ 天
+  ];
+
+  // 计算从该天开始的连续打卡天数
+  const getStreak = (index: number): number => {
+    let streak = 0;
+    for (let i = index; i >= 0; i--) {
+      const d = days[i];
+      if (d && d.count >= 3) streak++;
+      else break;
+    }
+    return streak;
+  };
+
+  const dayColor = (count: number, streak?: number) => {
+    if (streak && streak >= 7) return 'rainbow-gradient text-white';
     if (count >= 3) return 'bg-green-500 text-white';
     if (count === 2) return 'bg-green-300 text-white';
     if (count === 1) return 'bg-green-100 text-green-700';
@@ -144,8 +168,11 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
       </div>
       {weeks.map((week, wi) => (
         <div key={wi} className="grid grid-cols-7 gap-1 mb-1">
-          {week.map((c, ci) =>
-            c.day === '' ? (
+          {week.map((c, ci) => {
+            // 计算该天在 days 数组中的索引，用于计算连续打卡天数
+            const dayIdx = days.findIndex((d) => d.day === c.day);
+            const streak = dayIdx >= 0 ? getStreak(dayIdx) : 0;
+            return c.day === '' ? (
               <div key={ci} className="h-10 rounded-xl bg-transparent" />
             ) : isBrokenDay(c) ? (
               <div
@@ -154,7 +181,7 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
                 onClick={() => setConfirmDay(c.day)}
                 className={
                   'h-10 rounded-xl flex flex-col items-center justify-center relative text-xs font-bold transition cursor-pointer border-2 border-dashed border-moko-violet/40 hover:border-moko-violet hover:scale-105 ' +
-                  dayColor(c.count)
+                  dayColor(c.count, streak)
                 }
               >
                 <span>{new Date(c.day + 'T00:00:00').getDate()}</span>
@@ -163,10 +190,10 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
             ) : (
               <div
                 key={ci}
-                title={`${c.day} · 打卡 ${c.count}/3 科${c.hasTrouble ? ' · 有捣蛋萌可' : ''}`}
+                title={`${c.day} · 打卡 ${c.count}/3 科 · 连续 ${streak} 天${c.hasTrouble ? ' · 有捣蛋萌可' : ''}`}
                 className={
                   'h-10 rounded-xl flex flex-col items-center justify-center relative text-xs font-bold transition ' +
-                  dayColor(c.count)
+                  dayColor(c.count, streak)
                 }
               >
                 {new Date(c.day + 'T00:00:00').getDate()}
@@ -174,8 +201,8 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
                   <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border border-white" />
                 )}
               </div>
-            ),
-          )}
+            );
+          })}
         </div>
       ))}
       <div className="flex items-center gap-3 mt-3 text-[11px] text-gray-500">
@@ -196,6 +223,9 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
         </span>
         <span className="flex items-center gap-1">
           <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" /> 捣蛋萌可
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded rainbow-gradient inline-block" /> 7 天彩虹 🌈
         </span>
       </div>
       {modalContent}
