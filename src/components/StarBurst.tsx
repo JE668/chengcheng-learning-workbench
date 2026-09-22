@@ -21,10 +21,17 @@ const COLORS = ['#fcd34d', '#f472b6', '#38bdf8', '#4ade80', '#a78bfa', '#fb923c'
  * 1 星：简单闪烁
  */
 export function StarBurst({ stars, auto = true, onClose }: StarBurstProps) {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(auto && stars > 0);
 
   useEffect(() => {
-    if (auto && stars > 0) setShow(true);
+    if (auto) {
+      setShow(stars > 0);
+    }
+    // 当 auto=false 时，由父组件控制 show（通过条件渲染）
+    // 组件被渲染时就显示
+    else if (stars > 0) {
+      setShow(true);
+    }
   }, [auto, stars]);
 
   const handleClose = useCallback(() => {

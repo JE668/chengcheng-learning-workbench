@@ -8,6 +8,7 @@ import { ModuleCover } from '@/components/study/ModuleCover';
 import { ModuleStars } from '@/components/study/ModuleStars';
 import { ModuleErrorBoundary } from '@/components/study/ModuleErrorBoundary';
 import { NextStepGuide } from '@/components/study/NextStepGuide';
+import { StarBurstProvider } from '@/components/study/StarBurstProvider';
 
 export default async function StudyModulePage({ params }: { params: { subject: string; module: string } }) {
   const subject = params.subject as StudySubject;
@@ -41,9 +42,11 @@ export default async function StudyModulePage({ params }: { params: { subject: s
       </div>
       <p className="text-gray-600 mb-6">{mod.desc}</p>
       <StudyModuleProvider subject={subject} moduleKey={params.module} initialProgress={initialProgress}>
-        <ModuleErrorBoundary subject={subject} moduleKey={params.module}>
-          <C />
-        </ModuleErrorBoundary>
+        <StarBurstProvider>
+          <ModuleErrorBoundary subject={subject} moduleKey={params.module}>
+            <C />
+          </ModuleErrorBoundary>
+        </StarBurstProvider>
       </StudyModuleProvider>
       <NextStepGuide subject={subject} moduleKey={params.module} />
     </div>
