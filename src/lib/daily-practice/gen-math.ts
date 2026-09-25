@@ -132,8 +132,13 @@ export function genMultiStepWordProblemQ(): PracticeQuestion {
 /* 序数题 */
 export function genOrdinalQ(): PracticeQuestion {
   const o = ORDINALS[Math.floor(Math.random() * ORDINALS.length)];
-  const allOpts = ['第1', '第2', '第3', '第4', '第5'].filter((x) => x !== o.answer);
-  const shuffled = shuffle([o.answer, ...shuffle(allOpts).slice(0, 3)]);
+  // 根据实际行数生成选项（1~row.length）
+  const rowNum = o.row.length;
+  const allOpts = Array.from({ length: rowNum }, (_, i) => `第${i + 1}`);
+  const distractors = allOpts.filter((x) => x !== o.answer);
+  // 最多 3 个干扰项，保证选项总数 ≤ 4
+  const numDistractors = Math.min(3, distractors.length);
+  const shuffled = shuffle([o.answer, ...shuffle(distractors).slice(0, numDistractors)]);
   const answer = shuffled.indexOf(o.answer);
   return {
     id: `od-${o.ask}`,
