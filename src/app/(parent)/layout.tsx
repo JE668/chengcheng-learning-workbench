@@ -12,7 +12,7 @@ export default async function ParentLayout({ children }: { children: React.React
   return (
     <div className="flex min-h-screen">
       <Nav user={user} />
-      <main className="flex-1 p-4 md:p-8 pb-28 md:pb-8 safe-bottom">
+      <main className="flex-1 p-4 md:p-8 pb-28 md:pb-8 safe-bottom pr-28 md:pr-36">
         <div className="flex justify-end mb-4">
           <ThemeToggle />
         </div>
