@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import type { AlgorithmTopic } from '@/lib/algorithm/types';
 import { MokoGroupBg } from '@/components/moko-bg';
 import { MantraCard } from '@/components/algorithm/MantraCard';
 import { PrincipleCard } from '@/components/algorithm/PrincipleCard';
+import { FadeIn, FloatY } from '@/components/algorithm/LazyMotion';
 
 export interface PracticeSetSummary {
   id: string;
@@ -33,16 +33,16 @@ export function AlgorithmTopicClient({
         <span className="text-gray-700 font-black">{topic.name}</span>
       </div>
 
-      {/* 主题卡片 */}
+      {/* 主题卡片（萌可教练角色 + 口诀） */}
       <div className={`card-moko mb-6 bg-gradient-to-r ${topic.moko.color} text-white p-6`}>
         <div className="flex items-start gap-4">
-          <motion.img
-            src={topic.moko.img}
-            alt={topic.moko.name}
-            className="w-20 h-20 rounded-2xl border-4 border-white shadow-lg object-cover"
-            animate={{ rotate: [0, -3, 3, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          />
+          <FloatY duration={3} amplitude={3}>
+            <img
+              src={topic.moko.img}
+              alt={topic.moko.name}
+              className="w-20 h-20 rounded-2xl border-4 border-white shadow-lg object-cover"
+            />
+          </FloatY>
           <div>
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-3xl font-black">{topic.name}</h1>
@@ -56,7 +56,7 @@ export function AlgorithmTopicClient({
         </div>
       </div>
 
-      {/* • 知识点+原理 */}
+      {/* 知识点 + 原理 */}
       <div className="space-y-4 mb-6">
         <PrincipleCard
           title={`${topic.name} 的原理`}
@@ -74,31 +74,30 @@ export function AlgorithmTopicClient({
       </div>
 
       {/* 示例题目展示 */}
-      <div className="bg-white rounded-3xl p-6 shadow-lg border-2 border-moko-purple/20 mb-6">
-        <h3 className="text-lg font-black text-moko-violet mb-4 flex items-center gap-2">
-          <span>📖</span>
-          <span>典型例题</span>
-        </h3>
-        <div className="text-center mb-4">
-          <div className="text-3xl font-black text-moko-purple mb-2">{topic.example.problem}</div>
+      <FadeIn duration={0.3}>
+        <div className="bg-white rounded-3xl p-6 shadow-lg border-2 border-moko-purple/20 mb-6">
+          <h3 className="text-lg font-black text-moko-violet mb-4 flex items-center gap-2">
+            <span>📖</span>
+            <span>典型例题</span>
+          </h3>
+          <div className="text-center mb-4">
+            <div className="text-3xl font-black text-moko-purple mb-2">{topic.example.problem}</div>
+          </div>
+          <div className="space-y-2">
+            {topic.example.solution.map((step, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 bg-moko-purple/5 rounded-2xl p-3 border-2 border-moko-purple/10"
+              >
+                <span className="w-7 h-7 rounded-full bg-moko-purple text-white flex items-center justify-center text-sm font-black flex-shrink-0">
+                  {i + 1}
+                </span>
+                <span className="font-bold text-gray-700">{step}</span>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="space-y-2">
-          {topic.example.solution.map((step, i) => (
-            <motion.div
-              key={i}
-              className="flex items-center gap-3 bg-moko-purple/5 rounded-2xl p-3 border-2 border-moko-purple/10"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.2 }}
-            >
-              <span className="w-7 h-7 rounded-full bg-moko-purple text-white flex items-center justify-center text-sm font-black flex-shrink-0">
-                {i + 1}
-              </span>
-              <span className="font-bold text-gray-700">{step}</span>
-            </motion.div>
-          ))}
-        </div>
-      </div>
+      </FadeIn>
 
       {/* 练习关卡列表 */}
       <h2 className="section-title mb-4">🎯 开始练习（10 个关卡）</h2>

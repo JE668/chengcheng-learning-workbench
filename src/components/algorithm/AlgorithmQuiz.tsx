@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import type { AlgorithmQuestion, StepField, StepInput } from '@/lib/algorithm/types';
 import { VerticalCalculation } from './VerticalCalculation';
 import { sfxComplete, sfxWrong } from '@/lib/sfx';
+import { FadeIn, Shake } from './LazyMotion';
 
 interface AlgorithmQuizProps {
   question: AlgorithmQuestion;
@@ -16,6 +16,7 @@ interface AlgorithmQuizProps {
 /**
  * 算法题目分步填写组件
  * 展示：题目 → 原理 → 一步一步填写 → 最终答案
+ * 使用 CSS 动画替代 framer-motion 以减小 bundle
  */
 export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = true }: AlgorithmQuizProps) {
   // 当前步骤索引
@@ -26,10 +27,10 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
   const [stepCorrect, setStepCorrect] = useState<Record<string, boolean>>({});
   // 是否全部完成
   const [completed, setCompleted] = useState(false);
-  // 正确答案（最终结果）
-  const [isAllCorrect, setIsAllCorrect] = useState(false);
   // 开启的提示
   const [hintShown, setHintShown] = useState<Set<string>>(new Set());
+  // 答错的输入框（用于 shake 动画）
+  const [errorInputs, setErrorInputs] = useState<Set<string>>(new Set());
 
   const currentStep: StepField = question.stepFields[stepIdx];
   const isLastStep = stepIdx === question.stepFields.length - 1;
@@ -40,14 +41,22 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
     setStepCorrect({});
     setStepIdx(0);
     setCompleted(false);
-    setIsAllCorrect(false);
     setHintShown(new Set());
+    setErrorInputs(new Set());
   }, [question.id]);
 
   /** 填写输入框 */
   const handleInput = useCallback((inputId: string, value: string) => {
     const num = value === '' ? '' : parseInt(value, 10);
     setAnswers((prev) => ({ ...prev, [inputId]: num }));
+    // 清除错误状态
+    if (errorInputs.has(inputId)) {
+      setErrorInputs((prev) => {
+        const next = new Set(prev);
+        next.delete(inputId);
+        return next;
+      });
+    }
     // 清除 hint
     if (hintShown.has(inputId)) {
       setHintShown((prev) => {
@@ -56,41 +65,42 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
         return next;
       });
     }
-  }, [hintShown]);
+  }, [errorInputs, hintShown]);
 
   /** 提交当前步骤 */
   const handleSubmitStep = useCallback(() => {
     if (!currentStep) return;
 
-    // 判断本步骤所有输入是否正确
     let allCorrect = true;
     const newStepCorrect: Record<string, boolean> = { ...stepCorrect };
+    const newErrors = new Set<string>();
 
     currentStep.inputs.forEach((input) => {
       const userValue = answers[input.id];
       const isCorrect = userValue === input.expectedValue;
       newStepCorrect[input.id] = isCorrect;
-      if (!isCorrect) allCorrect = false;
-
-      // 错误时显示提示
-      if (!isCorrect && userValue !== '') {
+      if (!isCorrect) {
+        allCorrect = false;
+        if (userValue !== '') {
+          newErrors.add(input.id);
+        }
         setHintShown((prev) => new Set(prev).add(input.id));
-        sfxWrong();
       }
     });
 
     setStepCorrect(newStepCorrect);
+    setErrorInputs(newErrors);
 
     if (allCorrect) {
       sfxComplete();
-      // 进入下一步或完成
       if (isLastStep) {
         setCompleted(true);
-        setIsAllCorrect(true);
         onComplete(true);
       } else {
         setStepIdx(stepIdx + 1);
       }
+    } else if (newErrors.size > 0) {
+      sfxWrong();
     }
   }, [currentStep, stepIdx, answers, stepCorrect, isLastStep, onComplete]);
 
@@ -102,43 +112,37 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
     setHintShown((prev) => new Set(prev).add(inputId));
   };
 
+  if (!currentStep) return null;
+
   return (
     <div className="space-y-4">
       {/* 题目区 */}
-      <motion.div
-        className="bg-white rounded-3xl p-6 shadow-lg border-2 border-moko-purple/20"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <div className="flex items-center justify-center gap-4 mb-4">
-          {/* 竖式显示 */}
-          <VerticalCalculation
-            a={question.digits[0]}
-            b={question.digits[1]}
-            operator={question.operator}
-            answer={completed ? question.answer : null}
-            showCarry
-          />
-        </div>
+      <FadeIn duration={0.3}>
+        <div className="bg-white rounded-3xl p-6 shadow-lg border-2 border-moko-purple/20">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            {/* 竖式显示 */}
+            <VerticalCalculation
+              a={question.digits[0]}
+              b={question.digits[1]}
+              operator={question.operator}
+              answer={completed ? question.answer : null}
+              showCarry
+            />
+          </div>
 
-        {/* 大题目提示 */}
-        <div className="text-center">
-          <div className="text-4xl sm:text-5xl font-black text-moko-violet mb-2">
-            {question.prompt}
+          {/* 大题目提示 */}
+          <div className="text-center">
+            <div className="text-4xl sm:text-5xl font-black text-moko-violet mb-2">
+              {question.prompt}
+            </div>
           </div>
         </div>
-      </motion.div>
+      </FadeIn>
 
-      <AnimatePresence mode="wait">
-        {/* 当前步骤卡片 */}
-        {!completed && currentStep && (
-          <motion.div
-            key={currentStep.id}
-            className="bg-gradient-to-br from-moko-blue/10 to-moko-cyan/10 rounded-3xl p-5 border-2 border-moko-blue/25 shadow-lg"
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 30 }}
-          >
+      {/* 当前步骤卡片（分步填写） */}
+      {!completed && (
+        <FadeIn key={currentStep.id} duration={0.3}>
+          <div className="bg-gradient-to-br from-moko-blue/10 to-moko-cyan/10 rounded-3xl p-5 border-2 border-moko-blue/25 shadow-lg">
             {/* 步骤标题 */}
             <div className="flex items-center gap-2 mb-3">
               <span className="w-8 h-8 rounded-full bg-moko-blue text-white flex items-center justify-center font-black text-sm">
@@ -165,84 +169,72 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
                   const isCorrect = stepCorrect[input.id];
                   const showHintForThis = hintShown.has(input.id);
                   const hasValue = userValue !== '' && userValue !== undefined;
+                  const hasError = errorInputs.has(input.id);
 
                   return (
-                    <motion.div
+                    <FadeIn
                       key={input.id}
-                      className="flex items-center justify-center gap-2 flex-wrap"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1 }}
+                      delay={idx * 0.1}
+                      duration={0.2}
                     >
-                      {/* 前缀 */}
-                      {input.prefix && (
-                        <span className="text-2xl font-black text-gray-700">{input.prefix}</span>
-                      )}
+                      <div className="flex items-center justify-center gap-2 flex-wrap">
+                        {/* 前缀 */}
+                        {input.prefix && (
+                          <span className="text-2xl font-black text-gray-700">{input.prefix}</span>
+                        )}
 
-                      {/* 输入框 */}
-                      <div className="relative">
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          value={userValue === '' ? '' : userValue}
-                          onChange={(e) => handleInput(input.id, e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSubmitStep();
-                          }}
-                          placeholder={input.placeholder ?? '?'}
-                          className={`w-20 h-16 text-3xl text-center font-black rounded-2xl border-4 transition-all outline-none ${
-                            isCorrect
-                              ? 'bg-green-50 border-green-400 text-green-700'
-                              : hasValue
-                                ? showHintForThis
-                                  ? 'bg-red-50 border-red-400 text-red-700 animate-shake'
-                                  : 'border-moko-blue/40 text-gray-700'
-                                : 'border-moko-purple/30 text-gray-700 bg-white'
-                          }`}
-                          disabled={isCorrect}
-                          autoFocus={idx === 0 && stepIdx === 0}
-                        />
+                        {/* 输入框 */}
+                        <div className="relative">
+                          {hasError && !isCorrect ? (
+                            <Shake>
+                              <StepInputBox
+                                input={input}
+                                value={userValue}
+                                isCorrect={isCorrect}
+                                hasValue={hasValue}
+                                onChange={(v) => handleInput(input.id, v)}
+                                onEnter={handleSubmitStep}
+                                disabled={isCorrect}
+                                autoFocus={idx === 0}
+                              />
+                            </Shake>
+                          ) : (
+                            <StepInputBox
+                              input={input}
+                              value={userValue}
+                              isCorrect={isCorrect}
+                              hasValue={hasValue}
+                              onChange={(v) => handleInput(input.id, v)}
+                              onEnter={handleSubmitStep}
+                              disabled={isCorrect}
+                              autoFocus={idx === 0}
+                            />
+                          )}
 
-                        {/* 正确答案指示（已答对时显示） */}
-                        {isCorrect && (
-                          <motion.span
-                            className="absolute -top-2 -right-2 text-2xl"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
+                          {/* 正确答案指示（已答对时显示） */}
+                          {isCorrect && (
+                            <span className="absolute -top-2 -right-2 text-2xl">✅</span>
+                          )}
+                        </div>
+
+                        {/* 提示按钮（答错时显示） */}
+                        {showHintForThis && !isCorrect && (
+                          <button
+                            onClick={() => showHint(input.id)}
+                            className="text-sm bg-red-100 text-red-600 px-3 py-1 rounded-full font-bold hover:bg-red-200 transition"
                           >
-                            ✅
-                          </motion.span>
+                            看提示 💡
+                          </button>
+                        )}
+
+                        {/* 提示文字 */}
+                        {showHintForThis && !isCorrect && (
+                          <div className="w-full text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">
+                            💡 {currentStep.hint}
+                          </div>
                         )}
                       </div>
-
-                      {/* 后缀 */}
-                      {input.suffix && (
-                        <span className="text-2xl font-black text-gray-700">{input.suffix}</span>
-                      )}
-
-                      {/* 提示按钮（答错时显示） */}
-                      {showHintForThis && !isCorrect && (
-                        <motion.button
-                          onClick={() => showHint(input.id)}
-                          className="text-sm bg-red-100 text-red-600 px-3 py-1 rounded-full font-bold hover:bg-red-200 transition"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
-                          看提示 💡
-                        </motion.button>
-                      )}
-
-                      {/* 提示文字 */}
-                      {showHintForThis && !isCorrect && (
-                        <motion.div
-                          className="w-full text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2"
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                        >
-                          💡 {currentStep.hint}
-                        </motion.div>
-                      )}
-                    </motion.div>
+                    </FadeIn>
                   );
                 })}
               </div>
@@ -250,47 +242,33 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
 
             {/* 无需输入的步骤：直接点击进入下一步 */}
             {currentStep.inputs.length === 0 && (
-              <motion.button
+              <button
                 onClick={handleSubmitStep}
                 className="w-full mt-4 py-3 rounded-full bg-moko-blue text-white font-black text-lg shadow-lg hover:scale-105 active:scale-95 transition"
-                whileTap={{ scale: 0.95 }}
               >
                 我懂了，下一步 →
-              </motion.button>
+              </button>
             )}
-          </motion.div>
-        )}
+          </div>
+        </FadeIn>
+      )}
 
-        {/* 中按钮（如果需要输入才能继续） */}
-        {!completed && currentStep && currentStep.inputs.length > 0 && canGoNext && !isLastStep && (
-          <motion.button
-            onClick={handleSubmitStep}
-            className="w-full py-3 rounded-full bg-gradient-to-r from-moko-blue to-moko-cyan text-white font-black text-lg shadow-lg"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            提交答案 ✓
-          </motion.button>
-        )}
+      {/* 提交按钮（如果需要输入才能继续） */}
+      {!completed && currentStep.inputs.length > 0 && canGoNext && !isLastStep && (
+        <button
+          onClick={handleSubmitStep}
+          className="w-full py-3 rounded-full bg-gradient-to-r from-moko-blue to-moko-cyan text-white font-black text-lg shadow-lg hover:scale-102 active:scale-98 transition"
+        >
+          提交答案 ✓
+        </button>
+      )}
 
-        {/* 完成卡片 */}
-        {completed && (
-          <motion.div
-            className="bg-gradient-to-br from-green-400 to-emerald-500 rounded-3xl p-8 text-white shadow-2xl"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-          >
+      {/* 完成卡片 */}
+      {completed && (
+        <FadeIn duration={0.4}>
+          <div className="bg-gradient-to-br from-green-400 to-emerald-500 rounded-3xl p-8 text-white shadow-2xl">
             <div className="text-center space-y-3">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              >
-                <div className="text-7xl">🎉</div>
-              </motion.div>
+              <div className="text-7xl">🎉</div>
               <h2 className="text-3xl font-black">全部完成！</h2>
               <div className="text-xl font-bold space-y-1">
                 <p>最终答案：</p>
@@ -301,18 +279,59 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
               <p className="text-sm opacity-90 font-bold">{question.explain}</p>
 
               {/* 下一题按钮 */}
-              <motion.button
+              <button
                 onClick={onNext}
                 className="mt-4 px-8 py-3 rounded-full bg-white text-moko-purple font-black text-lg shadow-lg hover:scale-105 active:scale-95 transition"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
               >
                 下一题 →
-              </motion.button>
+              </button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </FadeIn>
+      )}
     </div>
+  );
+}
+
+/** 独立输入框组件（避免重复代码） */
+function StepInputBox({
+  input,
+  value,
+  isCorrect,
+  hasValue,
+  onChange,
+  onEnter,
+  disabled,
+  autoFocus,
+}: {
+  input: StepInput;
+  value: number | '' | undefined;
+  isCorrect: boolean;
+  hasValue: boolean;
+  onChange: (v: string) => void;
+  onEnter: () => void;
+  disabled: boolean;
+  autoFocus?: boolean;
+}) {
+  return (
+    <input
+      type="number"
+      inputMode="numeric"
+      value={value === '' ? '' : value}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') onEnter();
+      }}
+      placeholder={input.placeholder ?? '?'}
+      className={`w-20 h-16 text-3xl text-center font-black rounded-2xl border-4 transition-all outline-none ${
+        isCorrect
+          ? 'bg-green-50 border-green-400 text-green-700'
+          : hasValue
+            ? 'bg-red-50 border-red-400 text-red-700'
+            : 'border-moko-purple/30 text-gray-700 bg-white'
+      }`}
+      disabled={disabled || isCorrect}
+      autoFocus={autoFocus}
+    />
   );
 }

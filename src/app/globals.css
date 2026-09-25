@@ -457,3 +457,10 @@ body { padding-top: env(safe-area-inset-top); }
   100% { transform: scale(1) rotate(360deg); opacity: 0.8; }
 }
 .star-burst { animation: starBurst 1s ease-out both; }
+
+/* 萌可算法板块 - 慢速弹跳（用于萌可角色） */
+@keyframes bounceSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.animate-bounce-slow { animation: bounceSlow 2s ease-in-out infinite; }

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ALGORITHM_TOPICS } from '@/lib/algorithm/topics';
 import { MokoGroupBg } from '@/components/moko-bg';
-import { motion } from 'framer-motion';
+import { FadeIn } from '@/components/algorithm/LazyMotion';
 
 export function AlgorithmHomeClient() {
   return (
@@ -17,13 +17,13 @@ export function AlgorithmHomeClient() {
 
       {/* 萌可总教练 */}
       <div className="card-moko flex items-center gap-5 mb-6 bg-gradient-to-r from-moko-violet to-moko-purple text-white p-6">
-        <motion.img
-          src="/moko/lemei.jpg"
-          alt="乐美萌可"
-          className="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover"
-          animate={{ y: [0, -8, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        />
+        <div className="animate-bounce-slow">
+          <img
+            src="/moko/lemei.jpg"
+            alt="乐美萌可"
+            className="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover"
+          />
+        </div>
         <div>
           <h1 className="text-3xl font-black">🧮 萌可算法学院</h1>
           <p className="text-lg opacity-90 mt-1">不只是算得快！更要想得清楚、做得巧妙～</p>
@@ -48,11 +48,10 @@ export function AlgorithmHomeClient() {
       <h2 className="section-title mb-4">✨ 学习这十大魔法技巧</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {ALGORITHM_TOPICS.map((topic, idx) => (
-          <motion.div
+          <FadeIn
             key={topic.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.08 }}
+            delay={idx * 0.08}
+            duration={0.3}
           >
             <Link
               href={`/algorithm/${topic.id}`}
@@ -80,7 +79,7 @@ export function AlgorithmHomeClient() {
                 </div>
               </div>
             </Link>
-          </motion.div>
+          </FadeIn>
         ))}
       </div>
     </div>
