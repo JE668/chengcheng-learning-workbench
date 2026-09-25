@@ -380,18 +380,13 @@ export default function DailyPracticePage() {
           {q.kind === 'math' && (
             <>
               {q.clockHour !== undefined && <ClockFace hour={q.clockHour} half={q.clockHalf ?? false} />}
-              {/* 序数题：显示带序号标签的 emoji 卡片 */}
+              {/* 序数题：显示 emoji 行（不加序号，让孩子自己数） */}
               {q.emojiRow && (
-                <div className="flex flex-wrap items-end justify-center gap-2 mb-4">
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
                   {q.emojiRow.map((e, i) => (
-                    <div key={i} className="flex flex-col items-center">
-                      <span className="w-12 h-12 flex items-center justify-center rounded-xl bg-white/20 text-2xl shadow-sm">
-                        {e}
-                      </span>
-                      <span className="mt-1 text-xs font-black text-white bg-black/30 px-2 py-0.5 rounded-full">
-                        第{i + 1}
-                      </span>
-                    </div>
+                    <span key={i} className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white/20 text-3xl shadow-sm">
+                      {e}
+                    </span>
                   ))}
                 </div>
               )}
