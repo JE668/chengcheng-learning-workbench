@@ -33,6 +33,15 @@ const nextConfig = {
     if (!dev && !isServer) {
       config.optimization.splitChunks.cacheGroups = {
         ...config.optimization.splitChunks.cacheGroups,
+        // 把被多个 chunk 引用的 node_modules 大库（crypto-js、pdfjs-dist 等）提取为公共 chunk
+        vendors: {
+          name: 'vendors',
+          test: /[\\/]node_modules[\\/]/,
+          minChunks: 2,
+          priority: 5,
+          reuseExistingChunk: true,
+        },
+        // 学习模块全部 next/dynamic 懒加载后，共享的 src/lib、src/components 工具代码
         shared: {
           name: 'shared',
           test: /[\\/]src[\\/](lib|components)[\\/]/,
