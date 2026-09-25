@@ -49,6 +49,14 @@ const nextConfig = {
           priority: 10,
           reuseExistingChunk: true,
         },
+        // 萌可算法板块独立 chunk，不将代码分发给其他 chunk
+        algorithm: {
+          name: 'algorithm',
+          test: /[\\/]src[\\/]lib[\\/]algorithm[\\/]/,
+          minChunks: 1,
+          priority: 20,
+          reuseExistingChunk: true,
+        },
       };
     }
 
