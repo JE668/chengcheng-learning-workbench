@@ -50,15 +50,22 @@ export function OrdinalModule() {
     const ordinals = Array.from({ length: o.row.length }, (_, i) => `第${i + 1}`);
     return {
       prompt: (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="space-y-4">
+          {/* emoji 卡片 + 序号标签 */}
+          <div className="flex flex-wrap items-end justify-center gap-2">
             {o.row.map((e, i) => (
-              <span key={i} className="w-14 h-14 flex items-center justify-center rounded-2xl bg-moko-blue/10 text-3xl">
-                {e}
-              </span>
+              <div key={i} className="flex flex-col items-center">
+                <span className="w-14 h-14 flex items-center justify-center rounded-2xl bg-moko-blue/10 text-3xl shadow-sm">
+                  {e}
+                </span>
+                {/* 序号标签 - 让孩子看到每个位置是第几 */}
+                <span className="mt-1 text-xs font-black text-moko-blue bg-white px-2 py-0.5 rounded-full shadow-sm">
+                  第{i + 1}
+                </span>
+              </div>
             ))}
           </div>
-          <div className="font-black text-moko-blue">
+          <div className="font-black text-lg text-moko-blue text-center">
             {o.question}
           </div>
         </div>

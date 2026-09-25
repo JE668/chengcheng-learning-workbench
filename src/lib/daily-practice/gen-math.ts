@@ -145,6 +145,7 @@ export function genOrdinalQ(): PracticeQuestion {
     kind: 'math',
     subject: '数学',
     prompt: o.question,
+    emojiRow: o.row,  // 新增：一排 emoji，用于渲染带序号的卡片
     options: shuffled,
     answer,
     explain: o.answer,
