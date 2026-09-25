@@ -87,7 +87,9 @@ export function genChineseQuizQ(): PracticeQuestion {
 /* 反义词题 */
 export function genAntonymQ(): PracticeQuestion {
   const a = ANTONYMS[Math.floor(Math.random() * ANTONYMS.length)];
-  const distractors = shuffle(ANTONYMS.filter((x) => x.b !== a.b).map((x) => x.b)).slice(0, 3);
+  // 🔧 修复：干扰项从所有词中抽取，而非仅限其他反义词对
+  const allWords = Array.from(new Set(ANTONYMS.flatMap((x) => [x.a, x.b])));
+  const distractors = shuffle(allWords.filter((w) => w !== a.b)).slice(0, 3);
   const options = shuffle([a.b, ...distractors]);
   const answer = options.indexOf(a.b);
   return {
@@ -124,10 +126,10 @@ export function genProverbQ(): PracticeQuestion {
 export function genRiddleQ(): PracticeQuestion {
   const r = RIDDLES[Math.floor(Math.random() * RIDDLES.length)];
   let options = shuffle([...r.options]);
-  // 确保至少有 4 个选项
+  // 确保至少有 4 个选项，使用通用干扰项而非「选项X」填充
   while (options.length < 4) {
-    const extra = `选项${options.length + 1}`;
-    if (!options.includes(extra)) options.push(extra);
+    const filler = `都不对`;
+    if (!options.includes(filler)) options.push(filler);
   }
   const answer = options.indexOf(r.answer);
   return {
@@ -146,7 +148,9 @@ export function genRiddleQ(): PracticeQuestion {
 export function genPoemQ(): PracticeQuestion {
   const p = POEMS[Math.floor(Math.random() * POEMS.length)];
   const line = p.lines[Math.floor(Math.random() * p.lines.length)];
-  const distractors = shuffle(POEMS.filter((x) => x.title !== p.title)).slice(0, 3).map((x) => x.title);
+  // 🔧 修复：干扰项从所有诗句标题中抽取，避免过于集中
+  const allTitles = Array.from(new Set(POEMS.map((x) => x.title)));
+  const distractors = shuffle(allTitles.filter((t) => t !== p.title)).slice(0, 3);
   const options = shuffle([p.title, ...distractors]);
   const answer = options.indexOf(p.title);
   return {

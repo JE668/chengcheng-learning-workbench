@@ -116,6 +116,16 @@ export default async function HomePage() {
       line: `城堡繁荣度 ${castle.prosperity}%，一起建设吧！`,
     });
   }
+  // 推荐 5：如果已完成今日一练，推荐试试算法学院
+  if (practiceDone) {
+    const moko = MOKO_NAV_ENTRIES.find((e) => e.href === '/algorithm')!;
+    islandItems.push({
+      href: '/algorithm',
+      label: '萌可算法',
+      moko: moko.moko,
+      line: '想学「速算魔法」吗？让萌可教你巧算技巧！',
+    });
+  }
 
   return (
     <div className="relative max-w-4xl mx-auto min-h-screen fade-up">

@@ -1,6 +1,6 @@
 /**
  * 萌可陪伴式导航映射
- * 将孩子端 13 个入口与萌可图鉴角色绑定，形成「角色陪伴感」
+ * 将孩子端 14 个入口与萌可图鉴角色绑定，形成「角色陪伴感」
  * 数据来源：moko-collection 自动生成，img 路径指向 public/moko/collection/
  */
 
@@ -54,6 +54,18 @@ export const MOKO_NAV_ENTRIES: MokoNavEntry[] = [
       emoji: '📘',
       color: 'from-moko-purple to-moko-violet',
       line: '知识是魔法的钥匙，跟我一起学吧！',
+    },
+  },
+  {
+    href: '/algorithm',
+    label: '萌可算法',
+    icon: '🧮',
+    moko: {
+      name: '智慧萌可',
+      img: '/moko/collection/02_魔方萌可/变身萌可_render.webp',
+      emoji: '🧮',
+      color: 'from-indigo-400 to-purple-500',
+      line: '掌握方法，计算是魔法！',
     },
   },
   {

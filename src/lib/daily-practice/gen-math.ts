@@ -53,9 +53,12 @@ export function genMathQ(hard = false): PracticeQuestion {
 export function genWordProblemQ(): PracticeQuestion {
   const p = WORD_PROBLEMS[Math.floor(Math.random() * WORD_PROBLEMS.length)];
   const baseOptions = shuffle([...p.options]);
+  const answerNum = Number(p.answer);
   while (baseOptions.length < 4) {
-    const num = Number(p.answer) + Math.floor(Math.random() * 5) - 2;
-    if (num >= 0 && !baseOptions.includes(String(num))) {
+    // 🔧 修复：干扰项控制在 ±2 以内，避免出现明显不合理的选项
+    const offset = Math.floor(Math.random() * 5) - 2; // -2 ~ 2
+    const num = answerNum + offset;
+    if (num >= 0 && num !== answerNum && !baseOptions.includes(String(num))) {
       baseOptions.push(String(num));
     }
   }
@@ -97,6 +100,11 @@ export function genMultiStepWordProblemQ(): PracticeQuestion {
       emoji: '🚗',
     },
     {
+      text: '停车场有 18 辆车，开走 6 辆，又进来 9 辆，现在有几辆？',
+      answer: '21',
+      emoji: '🚗',
+    },
+    {
       text: '程程做了 25 道题，对了 18 道，错了几道？',
       answer: '7',
       emoji: '📝',
@@ -110,10 +118,23 @@ export function genMultiStepWordProblemQ(): PracticeQuestion {
   
   const p = templates[Math.floor(Math.random() * templates.length)];
   const ans = Number(p.answer);
+  
+  // 🔧 修复：当答案为 0 或 1 时，特殊处理干扰项，避免重复
   const set = new Set<number>([ans]);
-  while (set.size < 4) {
-    const d = ans + randInt(-5, 5);
-    if (d >= 0) set.add(d);
+  if (ans === 0) {
+    set.add(1);
+    set.add(2);
+    set.add(3);
+  } else if (ans === 1) {
+    set.add(2);
+    set.add(3);
+    set.add(4);
+  } else {
+    while (set.size < 4) {
+      const offset = Math.floor(Math.random() * 5) - 2; // -2 ~ 2
+      const num = ans + offset;
+      if (num >= 0 && num !== ans) set.add(num);
+    }
   }
   const options = shuffle(Array.from(set).slice(0, 4));
   const answer = options.indexOf(ans);
@@ -408,8 +429,11 @@ export function genAngleQ(): PracticeQuestion {
 /* 钟表题（整时） */
 export function genClockQ(): PracticeQuestion {
   const c = CLOCKS[Math.floor(Math.random() * CLOCKS.length)];
-  const opts = CLOCKS.filter((x) => x.hour !== c.hour).map((x) => x.label);
-  const shuffled = shuffle([c.label, ...shuffle(opts).slice(0, 3)]);
+  // 🔧 修复：干扰选项来自相邻时间点，而非完全随机（更贴近实际学习场景）
+  const allHours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const adjacent = allHours.filter((h) => h !== c.hour);
+  const opts = adjacent.map((h) => `${h}点`).slice(0, 3);
+  const shuffled = shuffle([c.label, ...opts.slice(0, 3)]);
   const answer = shuffled.indexOf(c.label);
   return {
     id: `clock-${c.hour}`,
