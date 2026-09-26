@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { mokoChars } from '@/lib/moko';
 import { sfxComplete, sfxClick, sfxStar } from '@/lib/sfx';
 import { getGameLevel, setGameLevel, recordGameResult, getGameBest } from '@/lib/game-difficulty';
@@ -58,7 +59,7 @@ export default function GameShell({
     <div className="max-w-3xl mx-auto">
       <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
         <div className="flex items-center gap-4">
-          <img src={moko.img} alt={moko.name} className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-moko-pink shadow object-cover" />
+          <Image src={moko.img || '/moko/lemei.jpg'} alt={moko.name} width={112} height={112} className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-moko-pink shadow object-cover" />
           <div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-moko-violet">{title}</h1>
             <p className="text-gray-600 font-medium">{moko.name}：{moko.line}</p>

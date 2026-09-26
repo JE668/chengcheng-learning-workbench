@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { MokoCategoryKey } from '@/lib/types';
 
 interface MokoAvatarProps {
@@ -38,11 +39,12 @@ export function MokoAvatar({ img, emoji, name, size = 80, owned = true, classNam
   if (img) {
     return (
       <div className="relative inline-block" style={{ width: size, height: size }}>
-        <img
+        <Image
           src={img}
           alt={name}
+          width={size}
+          height={size}
           loading="lazy"
-          decoding="async"
           className={`${base} ${owned ? '' : 'grayscale'}`}
           style={{ width: size, height: size }}
         />

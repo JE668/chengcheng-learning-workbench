@@ -7,10 +7,24 @@ import type { Subject } from './types';
 import {
   type MokoStage,
   type CastleStateView,
+  type ResidentMoko,
   type BadgeItem,
   STAGE_ORDER,
   STAGE_LABEL,
 } from './castle-types';
+
+/** moko_owned 表行（libsql Row 的字段子集，显式声明以替代 any） */
+interface MokoOwnedRow {
+  moko_key?: unknown;
+  status?: unknown;
+  stage?: unknown;
+  mood?: unknown;
+  stage_at?: unknown;
+  last_harvest_day?: unknown;
+}
+
+/** troublemakers 表行（仅取 moko_key / day 两列） */
+interface TroubleRow { moko_key?: unknown; day?: unknown; }
 import {
   getRow,
   ensureCastle,
@@ -141,7 +155,7 @@ export async function buy(childId: number, itemKey: string) {
       if (Number(res.rowsAffected ?? 0) === 0) return { ok: false, message: '阳光能量不足' };
       return { ok: true, message: '护盾已兑换并自动装备到城堡！' };
     }
-    const starItem = (await import('./moko')).starShop.find((s: any) => s.key === itemKey);
+    const starItem = (await import('./moko')).starShop.find((s) => s.key === itemKey);
     if (!starItem) return { ok: false, message: '未知商品' };
     const starRes = await db.execute({ sql: 'UPDATE castle_state SET star_coins = star_coins - ? WHERE child_id = ? AND star_coins >= ?', args: [starItem.cost, childId, starItem.cost] });
     if (Number(starRes.rowsAffected ?? 0) === 0) return { ok: false, message: '星星币不足' };
@@ -354,7 +368,7 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
     db.execute({ sql: "SELECT day, subject, status FROM daily_checkins WHERE child_id = ? AND day < ? ORDER BY day DESC", args: [childId, today] }),
     db.execute({ sql: 'SELECT DISTINCT day FROM troublemakers WHERE child_id = ? AND resolved = 0', args: [childId] }),
     db.execute({ sql: "SELECT title, desc FROM growth_events WHERE child_id = ? AND type = 'penalty' AND day = ? ORDER BY id DESC LIMIT 1", args: [childId, today] }),
-    db.execute({ sql: "SELECT qty FROM inventory WHERE child_id = ? AND item_key = 'freeze'", args: [childId] }).catch(() => ({ rows: [] as any[] })),
+    db.execute({ sql: "SELECT qty FROM inventory WHERE child_id = ? AND item_key = 'freeze'", args: [childId] }).catch(() => ({ rows: [] as { qty: unknown }[] })),
   ]);
 
   const sunlight = Number(row?.sunlight ?? 0);
@@ -368,11 +382,11 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
   const checkins: Record<Subject, 'pending' | 'child_done' | 'confirmed'> = { 语文: 'pending', 数学: 'pending', 英语: 'pending' };
   for (const r of checkRows.rows) {
     const s = r.subject as Subject;
-    if (s in checkins) checkins[s] = (r.status as any) || 'pending';
+    if (s in checkins) checkins[s] = (r.status as 'pending' | 'child_done' | 'confirmed') || 'pending';
   }
 
   const now = Date.now();
-  const residents: any[] = owned.rows.filter((r: any) => r.status === 'resident').map((r: any) => {
+  const residents: ResidentMoko[] = (owned.rows as MokoOwnedRow[]).filter((r) => r.status === 'resident').map((r) => {
     const key = String(r.moko_key);
     const mc = mokoChars[key];
     const stage = r.stage as MokoStage;
@@ -385,11 +399,11 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
       nextStage = STAGE_ORDER[STAGE_ORDER.indexOf(stage) + 1];
     }
     return { key, name: mc?.name ?? key, img: mc?.img ?? '', emoji: mc?.emoji ?? '✨', color: mc?.color ?? 'text-slate-500', stage, mood: Number(r.mood), status: 'resident' as const, progress, nextStage };
-  }).sort((a: any, b: any) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage));
+  }).sort((a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage));
 
-  const collectedNames = new Set(owned.rows.map((r: any) => mokoChars[String(r.moko_key)]?.name).filter((n: any): n is string => !!n));
+  const collectedNames = new Set((owned.rows as MokoOwnedRow[]).map((r) => mokoChars[String(r.moko_key)]?.name).filter((n): n is string => !!n));
   const seenName = new Set<string>();
-  const gallery: any[] = [];
+  const gallery: CastleStateView['gallery'] = [];
   for (const m of mokoCollection) {
     if (m.category === 'trouble') continue;
     if (seenName.has(m.name)) continue;
@@ -397,7 +411,7 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
     gallery.push({ key: m.key, name: m.name, img: m.img ?? '', emoji: m.emoji, color: m.color, category: m.category, subject: m.subject, owned: collectedNames.has(m.name) });
   }
 
-  const troublemakers = trouble.rows.map((r: any) => {
+  const troublemakers = (trouble.rows as TroubleRow[]).map((r) => {
     const mc = mokoChars[String(r.moko_key)];
     return { key: String(r.moko_key), name: mc?.name ?? '捣蛋萌可', img: mc?.img ?? '' };
   });
@@ -413,12 +427,12 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
     if (r.status === 'confirmed') e.confirmed++;
     else e.missed.push(r.subject as Subject);
   }
-  const troubleDaySet = new Set(troubleDays.rows.map((r: any) => String(r.day)));
+  const troubleDaySet = new Set((troubleDays.rows as TroubleRow[]).map((r) => String(r.day)));
   const missedDays = Array.from(byDay.entries()).filter(([, v]) => v.confirmed < 3).map(([day, v]) => ({ day, missed: v.missed, hasTrouble: troubleDaySet.has(day) })).slice(0, 14);
 
-  const friendRows = owned.rows.filter((r: any) => r.status === 'resident' && r.stage === 'friend');
+  const friendRows = (owned.rows as MokoOwnedRow[]).filter((r) => r.status === 'resident' && r.stage === 'friend');
   const friendTotal = friendRows.length;
-  const friendHarvestedToday = friendRows.filter((r: any) => String(r.last_harvest_day) === today).length;
+  const friendHarvestedToday = friendRows.filter((r) => String(r.last_harvest_day) === today).length;
   const harvestableStars = (friendTotal - friendHarvestedToday) * STAR_PER_FRIEND;
 
   let penaltyAlert = '';

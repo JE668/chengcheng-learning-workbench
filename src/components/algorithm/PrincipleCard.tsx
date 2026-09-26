@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { FadeIn } from './LazyMotion';
 
 interface PrincipleCardProps {
@@ -23,9 +24,11 @@ export function PrincipleCard({ title, principle, keyPoints, mokoName, mokoImg }
       <div className="bg-white rounded-3xl p-5 shadow-lg border-2 border-moko-blue/20">
         <div className="flex items-start gap-4">
           <div className="flex-shrink-0">
-            <img
-              src={mokoImg}
+            <Image
+              src={mokoImg || '/moko/lemei.jpg'}
               alt={mokoName}
+              width={56}
+              height={56}
               className="w-14 h-14 rounded-2xl border-4 border-moko-blue/30 shadow object-cover"
             />
           </div>

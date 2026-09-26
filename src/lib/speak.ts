@@ -187,10 +187,10 @@ function hasStrictVoice(lang: 'zh' | 'en'): boolean {
   return pickVoiceStrict(lang === 'zh' ? 'zh-CN' : 'en-US') !== undefined;
 }
 
-/** Web Speech 语速(0~2) → 服务端百分比字符串。 */
-function toEdgeRate(wsRate: number): string {
+/** Web Speech 语速(0~2) → 服务端百分比字符串（edge-tts 要求带显式 +/- 号）。 */
+export function toEdgeRate(wsRate: number): string {
   const pct = Math.round((wsRate - 1) * 100);
-  return pct === 0 ? '+0%' : `${pct}%`;
+  return pct === 0 ? '+0%' : `${pct > 0 ? '+' : ''}${pct}%`;
 }
 
 export async function playTts(
@@ -253,7 +253,10 @@ function tryServer(
       return;
     }
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
+    // 超时时长按文本长度动态计算：整段长文一次合成需要数秒，
+    // 旧的固定 5s 对故事长段会误杀 → 静默失败。语音播放本身不在此计时内。
+    const timeoutMs = Math.min(20000, Math.max(6000, text.length * 120));
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     fetch('/api/tts', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -298,72 +301,160 @@ export function playTtsEnd(
 // ─── Web Speech 朗读核心 ────────────────────────────────────────
 
 /**
- * 严格模式朗读（第 1 层）：onstart 触发才算成功。
- * iPad Safari 首句常不触发 onstart（静音）→ 1.5s 内未触发即判定失败。
+ * 把长文本切成适合朗读的短句。
+ *
+ * Android Chrome/Edge（含小米平板）的 speechSynthesis 对长 utterance 经常
+ * 卡死不触发 onstart/onend（已知平台 bug，约 15s 无输入后停摆）。
+ * 按标点切成 ≤30 字的短句、逐句 speak，是绕过该 bug 的最稳做法；
+ * 同时每句都能可靠拿到 onend，段落连读的节拍也更准确。
  */
-function speakEnd(text: string, lang: string, rate: number, pitch: number, pauseMs = 0): Promise<boolean> {
+function splitSpeechText(text: string, maxLen = 30): string[] {
+  const sentences = text.match(/[^。！？!?；;…\n]+[。！？!?；;…]*|\n+|[^。！？!?；;…\n]+$/g) ?? [text];
+  const out: string[] = [];
+  for (const raw of sentences) {
+    const t = raw.replace(/\n+/g, '，').trim();
+    if (!t || /^[，,、]+$/.test(t)) continue;
+    if (t.length <= maxLen) { out.push(t); continue; }
+    // 超长句再按逗号/顿号粗切
+    let buf = '';
+    for (const seg of t.split(/(?<=[，,、 ])/)) {
+      if ((buf + seg).length > maxLen && buf) { out.push(buf); buf = ''; }
+      buf += seg;
+    }
+    if (buf) out.push(buf);
+  }
+  return out.length ? out : [text];
+}
+
+/**
+ * 共用朗读核心：逐句播放 + Chrome 长语音 keep-alive。
+ *
+ * - 仅第一句 800ms 未 onstart 判失败（交给下一层降级）；开始出声后，
+ *   中途出错/超时也按「已播放」resolve，避免整个段落降级重读一遍。
+ * - keep-alive：Android Chrome 长 utterance ~15s 后可能静默停摆，
+ *   每 8s 检测 speaking 状态并 pause()/resume() 踢醒引擎。
+ * - 总时长兜底按字数缩放（旧代码固定 20s，长段会读一半被误判完成）。
+ */
+function speakChunks(
+  text: string,
+  lang: string,
+  rate: number,
+  pitch: number,
+  pauseMs: number,
+  pickVoice: (l: string) => SpeechSynthesisVoice | undefined,
+  /** 宽松层 true：只收到 onend 也算已播放（部分平台不触发 onstart） */
+  acceptEndWithoutStart = false,
+): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
       resolve(false);
       return;
     }
     ensureVoices();
-    const v = pickVoiceStrict(lang);
+    const v = pickVoice(lang);
     if (!v) { resolve(false); return; }
 
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = lang;
-    u.rate = calibrateRate(rate);
-    u.pitch = pitch;
-    u.voice = v;
+    const chunks = splitSpeechText(text);
+    let idx = 0;
     let done = false;
     let started = false;
+    let keepAlive: ReturnType<typeof setInterval> | null = null;
+
+    const cleanup = () => {
+      if (keepAlive) { clearInterval(keepAlive); keepAlive = null; }
+    };
     const finish = (ok: boolean) => {
       if (done) return;
       done = true;
-      clearTimeout(startTimer);
+      cleanup();
       resolve(ok);
     };
-    u.onstart = () => { started = true; clearTimeout(startTimer); };
-    u.onend = () => {
-      // pauseMs 暂停：播放结束后延迟 resolve，用于顺序连读时的段落间隔
-      if (pauseMs > 0) {
-        setTimeout(() => finish(started), pauseMs);
-      } else {
-        finish(started);
+    const startKeepAlive = () => {
+      if (keepAlive) return;
+      keepAlive = setInterval(() => {
+        try {
+          if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+          }
+        } catch { /* 引擎异常交给 utterance onerror/兜底计时处理 */ }
+      }, 8000);
+    };
+
+    // 总兜底：按字数估算（慢速童声约 300ms/字），封顶 3 分钟
+    setTimeout(() => finish(started), Math.min(180000, Math.max(20000, text.length * 350)));
+
+    const speakNext = () => {
+      if (done) return;
+      if (idx >= chunks.length) {
+        // pauseMs 暂停：全部播完后延迟 resolve，用于顺序连读时的段落间隔
+        if (pauseMs > 0) setTimeout(() => finish(started), pauseMs);
+        else finish(started);
+        return;
+      }
+      const u = new SpeechSynthesisUtterance(chunks[idx]);
+      idx++;
+      u.lang = lang;
+      u.rate = calibrateRate(rate);
+      u.pitch = pitch;
+      u.voice = v;
+      let chunkStarted = false;
+      const startTimer = setTimeout(() => {
+        if (!chunkStarted) {
+          // 只有第一句启动失败才算「朗读失败」让上层降级；
+          // resize 后的句子失败按放弃处理（resolve started，见文件头注释）
+          finish(started && idx > 1);
+        }
+      }, idx === 1 ? 800 : 2000);
+      u.onstart = () => { chunkStarted = true; started = true; clearTimeout(startTimer); startKeepAlive(); };
+      u.onend = () => {
+        clearTimeout(startTimer);
+        if (acceptEndWithoutStart) started = true; // onend 到达说明确实出声了
+        setTimeout(speakNext, 60);
+      };
+      u.onerror = (e) => {
+        clearTimeout(startTimer);
+        // 用户/代码主动 cancel 视为正常结束；started 后出错不降级重读
+        if (e.error === 'interrupted' || e.error === 'canceled') { finish(true); return; }
+        finish(started && idx > 1);
+      };
+      try {
+        window.speechSynthesis.speak(u);
+      } catch {
+        finish(false);
       }
     };
-    u.onerror = () => finish(started);
+
     const fire = () => {
       try {
         window.speechSynthesis.cancel();
         // cancel() 后等待队列清空再 speak，避免 onstart 不触发。
-        // 轮询从 20 次降为 5 次（50ms），绝大多数情况首次即命中。
         let retries = 5;
         const trySpeak = () => {
-          if (retries <= 0) {
-            window.speechSynthesis.speak(u);
+          if (retries <= 0 || (!window.speechSynthesis.speaking && !window.speechSynthesis.pending)) {
+            speakNext();
             return;
           }
-          if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
-            window.speechSynthesis.speak(u);
-          } else {
-            retries--;
-            setTimeout(trySpeak, 10);
-          }
+          retries--;
+          setTimeout(trySpeak, 10);
         };
         trySpeak();
       } catch {
         finish(false);
       }
     };
-    // onstart 超时从 1500ms 降为 800ms：iPad Safari 首句不触发 onstart 的场景
-    // 800ms 内未触发即可判定失败，不必多等 700ms。
-    const startTimer = setTimeout(() => { if (!started) finish(false); }, 800);
+
     if (window.speechSynthesis.getVoices().length > 0) fire();
     else window.speechSynthesis.addEventListener('voiceschanged', fire, { once: true });
-    setTimeout(() => finish(started), 20000);
   });
+}
+
+/**
+ * 严格模式朗读（第 1 层）：onstart 触发才算成功。
+ * iPad Safari 首句常不触发 onstart（静音）→ 800ms 内未触发即判定失败。
+ */
+function speakEnd(text: string, lang: string, rate: number, pitch: number, pauseMs = 0): Promise<boolean> {
+  return speakChunks(text, lang, rate, pitch, pauseMs, pickVoiceStrict);
 }
 
 /**
@@ -371,59 +462,7 @@ function speakEnd(text: string, lang: string, rate: number, pitch: number, pause
  * 只要 onstart 触发就视为成功，不再严格检查嗓音匹配。
  */
 function speakEndLoose(text: string, lang: string, rate: number, pitch: number, pauseMs = 0): Promise<boolean> {
-  return new Promise<boolean>((resolve) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
-      resolve(false);
-      return;
-    }
-    ensureVoices();
-    const v = pickVoiceLoose(lang);
-    if (!v) { resolve(false); return; }
-
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = lang;
-    u.rate = calibrateRate(rate);
-    u.pitch = pitch;
-    u.voice = v;
-    let done = false;
-    let started = false;
-    const finish = (ok: boolean) => {
-      if (done) return;
-      done = true;
-      clearTimeout(startTimer);
-      resolve(ok);
-    };
-    u.onstart = () => { started = true; clearTimeout(startTimer); };
-    u.onend = () => {
-      if (pauseMs > 0) {
-        setTimeout(() => finish(true), pauseMs);
-      } else {
-        finish(true);
-      }
-    };
-    u.onerror = () => finish(started);
-    try {
-      window.speechSynthesis.cancel();
-      let retries = 5;
-      const trySpeak = () => {
-        if (retries <= 0) {
-          window.speechSynthesis.speak(u);
-          return;
-        }
-        if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
-          window.speechSynthesis.speak(u);
-        } else {
-          retries--;
-          setTimeout(trySpeak, 10);
-        }
-      };
-      trySpeak();
-    } catch {
-      finish(false);
-    }
-    const startTimer = setTimeout(() => { if (!started) finish(false); }, 800);
-    setTimeout(() => finish(started), 15000);
-  });
+  return speakChunks(text, lang, rate, pitch, pauseMs, pickVoiceLoose, true);
 }
 
 // ─── 拼音朗读 ──────────────────────────────────────────────────

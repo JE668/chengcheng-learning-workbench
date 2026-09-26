@@ -3,6 +3,7 @@ import { getDb, getChildPoints } from '@/lib/db';
 import { getCastleState } from '@/lib/castle';
 import { getTodayPractice } from '@/lib/daily-practice';
 import { getModuleProgressAll } from '@/lib/progress-store';
+import Image from 'next/image';
 import Link from 'next/link';
 import { dateStr, LOCAL_DAY_COL } from '@/lib/date';
 import { CheckinPanel, HarvestBtn } from '@/components/castle-client';
@@ -132,7 +133,7 @@ export default async function HomePage() {
       <MokoGroupBg />
       {/* 顶部问候 */}
       <div className="card-moko flex items-center gap-5 mb-6 bg-gradient-to-r from-moko-pink to-moko-rose text-white">
-        <img src="/moko/lemei.jpg" alt="乐美" className="w-24 h-24 rounded-full border-4 border-white shadow object-cover" />
+        <Image src="/moko/lemei.jpg" alt="乐美" width={96} height={96} className="w-24 h-24 rounded-full border-4 border-white shadow object-cover" />
         <div>
           <h1 className="text-3xl font-black">你好呀，{user.displayName}！</h1>
           <p className="text-lg opacity-90">今天也要和萌可们一起加油学习哦～</p>

@@ -56,11 +56,11 @@ export default function LoginPage() {
     >
       {/* 浮动萌可装饰 */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <img src="/moko/heartping.jpg" alt="" className="absolute w-20 h-20 rounded-full opacity-10 float-moko" style={{ top: '8%', left: '6%', animationDelay: '0s' }} />
-        <img src="/moko/courageping.jpg" alt="" className="absolute w-16 h-16 rounded-full opacity-10 float-moko" style={{ top: '12%', right: '8%', animationDelay: '1.5s' }} />
-        <img src="/moko/singping.jpg" alt="" className="absolute w-18 h-18 rounded-full opacity-10 float-moko" style={{ bottom: '20%', left: '4%', animationDelay: '0.8s' }} />
-        <img src="/moko/gemsping.jpg" alt="" className="absolute w-14 h-14 rounded-full opacity-10 float-moko" style={{ bottom: '10%', right: '6%', animationDelay: '2.2s' }} />
-        <img src="/moko/lemei.jpg" alt="" className="absolute w-24 h-24 rounded-full opacity-10 float-moko" style={{ top: '40%', left: '2%', animationDelay: '1s' }} />
+        <Image src="/moko/heartping.jpg" alt="爱心萌可装饰图" width={80} height={80} className="absolute w-20 h-20 rounded-full opacity-10 float-moko" style={{ top: '8%', left: '6%', animationDelay: '0s' }} />
+        <Image src="/moko/courageping.jpg" alt="正正萌可装饰图" width={64} height={64} className="absolute w-16 h-16 rounded-full opacity-10 float-moko" style={{ top: '12%', right: '8%', animationDelay: '1.5s' }} />
+        <Image src="/moko/singping.jpg" alt="唱唱萌可装饰图" width={72} height={72} className="absolute w-18 h-18 rounded-full opacity-10 float-moko" style={{ bottom: '20%', left: '4%', animationDelay: '0.8s' }} />
+        <Image src="/moko/gemsping.jpg" alt="宝石萌可装饰图" width={56} height={56} className="absolute w-14 h-14 rounded-full opacity-10 float-moko" style={{ bottom: '10%', right: '6%', animationDelay: '2.2s' }} />
+        <Image src="/moko/lemei.jpg" alt="乐美装饰图" width={96} height={96} className="absolute w-24 h-24 rounded-full opacity-10 float-moko" style={{ top: '40%', left: '2%', animationDelay: '1s' }} />
         {/* 装饰性星星 */}
         {[...Array(12)].map((_, i) => (
           <span

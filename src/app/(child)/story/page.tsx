@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { storyChapters } from '@/lib/story';
 import { STUDY_MODULES, type StudySubject } from '@/lib/study-modules';
 import { mokoImgByName } from '@/lib/moko-imgs';
 import { mokoCollectionByName } from '@/lib/moko-collection';
-import { playTtsEnd, prefetchTts } from '@/lib/speak';
+import { playTtsEnd, prefetchTts, toEdgeRate } from '@/lib/speak';
 import { CaptureMoment, type CapturePayload } from '@/components/CaptureMoment';
 
 interface Progress {
@@ -115,7 +116,7 @@ export default function StoryPage() {
       setReadPara(k);
       // 预取下一段 TTS blob 到客户端缓存，趁当前段朗读时让服务端提前缓存
       if (k + 1 < c.paragraphs.length) {
-        prefetchTts(c.paragraphs[k + 1], 'zh', '+0%');
+        prefetchTts(c.paragraphs[k + 1], 'zh', toEdgeRate(0.7));
       }
       await playTtsEnd(c.paragraphs[k], 'zh', { wsRate: 0.7, pauseMs: 80 });
     }
@@ -128,8 +129,8 @@ export default function StoryPage() {
     const nextIdx = storyChapters.findIndex((ch) => ch.id === c.id) + 1;
     if (nextIdx < storyChapters.length) {
       const nextCh = storyChapters[nextIdx];
-      if (nextCh.paragraphs.length > 0) prefetchTts(nextCh.paragraphs[0], 'zh', '+0%');
-      if (nextCh.paragraphs.length > 1) prefetchTts(nextCh.paragraphs[1], 'zh', '+0%');
+      if (nextCh.paragraphs.length > 0) prefetchTts(nextCh.paragraphs[0], 'zh', toEdgeRate(0.7));
+      if (nextCh.paragraphs.length > 1) prefetchTts(nextCh.paragraphs[1], 'zh', toEdgeRate(0.7));
     }
     if (abortRef.current) { setNarrating(null); setReadPara(-1); return; }
     setNarrating(null);
@@ -184,8 +185,8 @@ export default function StoryPage() {
     } else {
       setActive(c.id);
       // 打开章节时预取所有段落 TTS blob，用户读文字时服务端已在合成
-      for (const p of c.paragraphs) prefetchTts(p, 'zh', '+0%');
-      if (c.tip) prefetchTts(c.tip, 'zh', '+0%');
+      for (const p of c.paragraphs) prefetchTts(p, 'zh', toEdgeRate(0.7));
+      if (c.tip) prefetchTts(c.tip, 'zh', toEdgeRate(0.7));
       // 还没读过这集 → 打开就自动朗读（满足「打开阅读故事 + 自动语音」）
       if (!readSet.has(c.id)) startNarration(c);
     }
@@ -356,7 +357,7 @@ export default function StoryPage() {
             <div key={c.id} className={`rounded-3xl p-5 shadow-xl border-2 bg-gradient-to-br ${c.gradient} text-white`}>
               <div className="flex items-center gap-4">
                 {img ? (
-                  <img src={img} alt={c.mokoName} className="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow" />
+                  <Image src={img} alt={c.mokoName} width={64} height={64} className="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow" />
                 ) : (
                   <div className="w-16 h-16 rounded-2xl bg-white/30 flex items-center justify-center text-3xl">{c.emoji}</div>
                 )}

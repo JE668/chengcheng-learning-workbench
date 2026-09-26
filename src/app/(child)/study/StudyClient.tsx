@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { MokoHelper } from '@/components/MokoHelper';
 import ReviewBadge from '@/components/ReviewBadge';
@@ -143,9 +144,11 @@ export function StudyClient({ rec }: StudyClientProps) {
                 href={`/study/${s.key}`}
                 className={`rounded-3xl p-5 shadow-xl border-2 ${s.border} ${s.color} text-white hover:scale-105 transition block`}
               >
-                <img
+                <Image
                   src={s.img}
                   alt={s.label}
+                  width={96}
+                  height={96}
                   className="w-24 h-24 rounded-full border-4 border-white shadow mx-auto object-cover"
                 />
                 <h2 className={`text-2xl font-black ${s.color.replace('bg-', 'text-')} mb-2`}>{s.label}</h2>

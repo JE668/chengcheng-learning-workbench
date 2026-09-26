@@ -27,7 +27,7 @@ export function RazVocabModule() {
     if (streak >= 3) record(1);
     if (streak >= 6) record(2);
     if (streak >= 10) record(3);
-  }, [streak]);
+  }, [streak, record]);
 
   useEffect(() => {
     if (learned.size === prevLearned.current) return;

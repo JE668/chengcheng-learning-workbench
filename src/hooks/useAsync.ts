@@ -37,11 +37,11 @@ export interface UseAsyncOptions<T> {
 /**
  * 通用异步请求 Hook
  */
-export function useAsync<T>(
-  asyncFn: (...args: any[]) => Promise<T>,
+export function useAsync<T, TArgs extends unknown[] = []>(
+  asyncFn: (...args: TArgs) => Promise<T>,
   options: UseAsyncOptions<T> = {}
 ): RequestResult<T> & {
-  execute: (...args: any[]) => Promise<T | null>;
+  execute: (...args: TArgs) => Promise<T | null>;
   reset: () => void;
 } {
   const {
@@ -71,7 +71,7 @@ export function useAsync<T>(
     return () => { mountedRef.current = false; };
   }, []);
 
-  const execute = useCallback(async (...args: any[]): Promise<T | null> => {
+  const execute = useCallback(async (...args: TArgs): Promise<T | null> => {
     if (!mountedRef.current) return null;
 
     setStatus('loading');
@@ -87,7 +87,7 @@ export function useAsync<T>(
       onSettled?.(result, null);
       retryCountRef.current = 0;
       return result;
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (!mountedRef.current) return null;
 
       const error = err instanceof Error ? err : new Error(String(err));
@@ -183,7 +183,7 @@ export function usePagination<T>(options: UsePaginationOptions<T>): UsePaginatio
       setTotal(result.total);
       setHasMore(result.hasMore);
       setPage(page + 1);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoadingMore(false);
@@ -203,7 +203,7 @@ export function usePagination<T>(options: UsePaginationOptions<T>): UsePaginatio
       setTotal(result.total);
       setHasMore(result.hasMore);
       setPage(2);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);
@@ -242,16 +242,16 @@ export function usePagination<T>(options: UsePaginationOptions<T>): UsePaginatio
 /**
  * 乐观更新 Hook
  */
-export function useOptimisticUpdate<T>(
+export function useOptimisticUpdate<T, TArgs extends unknown[] = []>(
   initialData: T,
-  updateFn: (data: T, ...args: any[]) => T,
-  commitFn: (...args: any[]) => Promise<void>
+  updateFn: (data: T, ...args: TArgs) => T,
+  commitFn: (...args: TArgs) => Promise<void>
 ) {
   const [data, setData] = useState<T>(initialData);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const mutate = useCallback(async (...args: any[]) => {
+  const mutate = useCallback(async (...args: TArgs) => {
     setPending(true);
     setError(null);
 
@@ -261,7 +261,7 @@ export function useOptimisticUpdate<T>(
 
     try {
       await commitFn(...args);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // 回滚
       setData(previousData);
       setError(err instanceof Error ? err : new Error(String(err)));
@@ -308,7 +308,7 @@ export function useSWR<T>(
         setError(null);
         lastFetchedRef.current[k] = Date.now();
         return result;
-      } catch (err: any) {
+      } catch (err: unknown) {
         setError(err instanceof Error ? err : new Error(String(err)));
         throw err;
       } finally {

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { FadeIn, FloatY } from '@/components/algorithm/LazyMotion';
 
 interface MantraCardProps {
@@ -22,9 +23,11 @@ export function MantraCard({ emoji, mantra, mokoName, mokoImg, showLabel = true 
           {/* 萌可角色（悬浮动画） */}
           <div className="flex-shrink-0">
             <FloatY duration={4} amplitude={3}>
-              <img
-                src={mokoImg}
+              <Image
+                src={mokoImg || '/moko/lemei.jpg'}
                 alt={mokoName}
+                width={64}
+                height={64}
                 className="w-16 h-16 rounded-2xl border-4 border-white shadow-lg object-cover"
               />
             </FloatY>

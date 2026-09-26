@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { storyChapters } from '@/lib/story';
 import { mokoCollection } from '@/lib/moko-collection';
@@ -96,7 +97,7 @@ export default function MokoHousePage() {
                 className={`flex flex-col items-center bg-white/70 rounded-2xl p-2 shadow hover:scale-105 transition ${bouncing === m.key ? 'animate-bounce' : ''}`}
               >
                 {m.img ? (
-                  <img src={m.img} alt={m.name} className="w-14 h-14 rounded-full object-cover" />
+                  <Image src={m.img} alt={m.name} width={56} height={56} className="w-14 h-14 rounded-full object-cover" />
                 ) : (
                   <span className="w-14 h-14 flex items-center justify-center text-4xl">{m.emoji}</span>
                 )}

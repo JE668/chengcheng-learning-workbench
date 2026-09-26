@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 const FRIENDS = [
   { src: '/moko/heartping.jpg', alt: '爱心萌可', size: 120, top: '6%', left: '4%', delay: '0s' },
@@ -17,14 +18,13 @@ export function MokoGroupBg() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden dashboard-bg">
       {FRIENDS.map((f, i) => (
-          <img
+          <Image
           key={i}
           src={f.src}
           alt={f.alt}
           width={f.size}
           height={f.size}
           loading="lazy"
-          decoding="async"
           className="absolute rounded-full object-cover opacity-[0.12] grayscale-[0.1] blur-[0.5px] float-moko"
           style={{
             width: f.size,

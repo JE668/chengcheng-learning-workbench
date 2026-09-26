@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn, radius, shadows, transitionBase, activeScale, minTouchTarget } from './utils';
 
@@ -141,9 +142,11 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
           {...props}
         >
           {src && !imageError ? (
-            <img
+            <Image
               src={src}
               alt={alt || displayName}
+              fill
+              sizes="128px"
               className="h-full w-full object-cover"
               onError={() => setImageError(true)}
             />

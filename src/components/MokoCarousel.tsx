@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 interface CarouselItem {
   img: string;
@@ -39,9 +40,11 @@ export function MokoCarousel({ items }: { items: CarouselItem[] }) {
             style={{ animationDelay: `${i * 0.15}s` }}
           >
             <div className="relative mx-auto w-20 h-20 md:w-24 md:h-24 rounded-2xl shadow-lg overflow-hidden border-2 border-white/80 bg-gradient-to-br from-moko-pink/10 to-moko-purple/10">
-              <img
-                src={item.img}
+              <Image
+                src={item.img || '/moko/lemei.jpg'}
                 alt={item.name}
+                fill
+                sizes="96px"
                 className="w-full h-full object-cover"
                 loading="lazy"
               />

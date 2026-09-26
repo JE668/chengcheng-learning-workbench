@@ -1,6 +1,7 @@
 'use client';
 
-import Link from 'next/link';
+import Image from 'next/image';
+import Link from 'next/link';;
 import type { AlgorithmTopic } from '@/lib/algorithm/types';
 import { MokoGroupBg } from '@/components/moko-bg';
 import { MantraCard } from '@/components/algorithm/MantraCard';
@@ -37,9 +38,11 @@ export function AlgorithmTopicClient({
       <div className={`card-moko mb-6 bg-gradient-to-r ${topic.moko.color} text-white p-6`}>
         <div className="flex items-start gap-4">
           <FloatY duration={3} amplitude={3}>
-            <img
-              src={topic.moko.img}
+            <Image
+              src={topic.moko.img || '/moko/lemei.jpg'}
               alt={topic.moko.name}
+              width={80}
+              height={80}
               className="w-20 h-20 rounded-2xl border-4 border-white shadow-lg object-cover"
             />
           </FloatY>

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { ALGORITHM_TOPICS } from '@/lib/algorithm/topics';
 import { MokoGroupBg } from '@/components/moko-bg';
@@ -18,9 +19,11 @@ export function AlgorithmHomeClient() {
       {/* 萌可总教练 */}
       <div className="card-moko flex items-center gap-5 mb-6 bg-gradient-to-r from-moko-violet to-moko-purple text-white p-6">
         <div className="animate-bounce-slow">
-          <img
+          <Image
             src="/moko/lemei.jpg"
             alt="乐美萌可"
+            width={80}
+            height={80}
             className="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover"
           />
         </div>
@@ -66,9 +69,11 @@ export function AlgorithmHomeClient() {
                       <p className="text-sm opacity-90 mt-0.5">{topic.description.slice(0, 20)}...</p>
                     </div>
                   </div>
-                  <img
-                    src={topic.moko.img}
+                  <Image
+                    src={topic.moko.img || '/moko/lemei.jpg'}
                     alt={topic.moko.name}
+                    width={64}
+                    height={64}
                     className="w-16 h-16 rounded-2xl border-4 border-white shadow-lg object-cover"
                   />
                 </div>

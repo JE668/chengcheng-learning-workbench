@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { magicShop, starShop, MokoCategories } from '@/lib/moko';
 import { MokoAvatar } from '@/components/MokoAvatar';
@@ -248,7 +249,7 @@ export default function CastlePage() {
             {state.troublemakers.length > 0 && (
               <div className="absolute inset-0 pointer-events-none">
                 {state.troublemakers.map((t, i) => (
-                  <img key={i} src={t.img} alt={t.name} className="trouble-fly absolute w-16 h-16 rounded-full border-2 border-red-400 shadow-lg" style={{ top: `${10 + i * 18}%`, left: `${20 + i * 25}%`, animationDelay: `${i * 0.4}s` }} />
+                  <Image key={i} src={t.img || '/moko/lemei.jpg'} alt={t.name} width={64} height={64} className="trouble-fly absolute w-16 h-16 rounded-full border-2 border-red-400 shadow-lg" style={{ top: `${10 + i * 18}%`, left: `${20 + i * 25}%`, animationDelay: `${i * 0.4}s` }} />
                 ))}
               </div>
             )}

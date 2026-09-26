@@ -390,6 +390,27 @@ export const mokoCollection_${digits}: MokoChar[] = ${JSON.stringify(list, null,
   partSpreads.push(`...mokoCollection_${digits}`);
 }
 
+// by-name / collectible-names 进一步拆为独立文件：
+// byName 对象占原 index.ts 约 85% 行数（~1650 行），拆出后 index.ts 只剩缝合同季数据的入口。
+fs.writeFileSync(
+  path.join(OUT_DIR, 'by-name.ts'),
+  `// 自动生成（by-name 子集）：由 scripts/gen-moko-collection.cjs 生成，请勿手改。
+import type { MokoChar } from '../types';
+
+/** 同名首图（用于把核心萌可的 img 重映射到真实图片） */
+export const mokoCollectionByName: Record<string, MokoChar> = ${JSON.stringify(byName, null, 2)};
+`,
+);
+
+fs.writeFileSync(
+  path.join(OUT_DIR, 'collectible-names.ts'),
+  `// 自动生成（可收集名单）：由 scripts/gen-moko-collection.cjs 生成，请勿手改。
+
+/** 图鉴可收集角色总数（去重后的唯一角色名，排除捣蛋萌可） */
+export const COLLECTIBLE_MOKO_NAMES: string[] = ${JSON.stringify(Array.from(new Set(entries.filter((m) => m.category !== 'trouble').map((m) => m.name))), null, 2)};
+`,
+);
+
 const index = `// 自动生成：由 scripts 按「季/文件夹」拆分扫描 public/moko/collection/ 生成，请勿手改。
 // 重新生成：node scripts/gen-moko-collection.cjs
 import type { MokoChar, MokoCategoryKey } from '../types';
@@ -412,13 +433,12 @@ export const mokoCollection: MokoChar[] = [
   ${partSpreads.join(',\n  ')}
 ];
 
-/** 同名首图（用于把核心萌可的 img 重映射到真实图片） */
-export const mokoCollectionByName: Record<string, MokoChar> = ${JSON.stringify(byName, null, 2)};
-
-/** 图鉴可收集角色总数（去重后的唯一角色名，排除捣蛋萌可） */
-export const COLLECTIBLE_MOKO_NAMES: string[] = ${JSON.stringify(Array.from(new Set(entries.filter((m) => m.category !== 'trouble').map((m) => m.name))), null, 2)};
+// 大数据表拆至独立文件，这里做再导出以保持原有导入路径不变（barrel）。
+export { mokoCollectionByName } from './by-name';
+export { COLLECTIBLE_MOKO_NAMES } from './collectible-names';
 `;
 
 fs.writeFileSync(path.join(OUT_DIR, 'index.ts'), index);
+console.log('index.ts 行数: ' + index.split('\n').length);
 console.log(`写入目录 ${OUT_DIR}（按季拆分 ${folders.length} 个文件）`);
 console.log(`总图片: ${entries.length}，分类数: ${Object.keys(FOLDER_CAT).length}，同名去重后: ${Object.keys(byName).length}`);
