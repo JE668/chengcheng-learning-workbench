@@ -3,9 +3,9 @@
 import type { Operator } from '@/lib/algorithm/types';
 
 interface VerticalCalculationProps {
-  /** 被加数/被减数 */
+  /** 第一个数（被加数/被减数） */
   a: number;
-  /** 加数/减数 */
+  /** 第二个数（加数/减数） */
   b: number;
   /** 运算符 */
   operator: Operator;
@@ -23,10 +23,18 @@ interface VerticalCalculationProps {
 
 /**
  * 竖式计算组件 - 萌可风格
- * 展示两位数加减法竖式，支持进位/退位高亮动画
  *
- * 用法：
- * <VerticalCalculation a={9} b={5} operator="+" showCarry />
+ * 标准竖式版式（数位严格对齐，最多三位）：
+ *      ¹        ← 进位小 1 标在十位上方
+ *    [百][十][个]
+ *  +       [b十][b个]
+ *  ─────────────
+ *    [百][十][个]  ← 答案
+ *
+ * 进位：十位上方显示黄色小「1」；
+ * 退位：被减数十位划线改成「少 1」，个位右上角标小红点（借 1 当 10）。
+ *
+ * 用法：<VerticalCalculation a={9} b={5} operator="+" showCarry />
  */
 export function VerticalCalculation({
   a,
@@ -38,73 +46,119 @@ export function VerticalCalculation({
   intermediateValue,
   compact = false,
 }: VerticalCalculationProps) {
-  const aTens = Math.floor(a / 10);
+  const aTens = Math.floor(a / 10) % 10;
   const aOnes = a % 10;
-  const bTens = Math.floor(b / 10);
+  const aHundreds = Math.floor(a / 100);
+  const bTens = Math.floor(b / 10) % 10;
   const bOnes = b % 10;
+  const bHundreds = Math.floor(b / 100);
 
-  // 计算进位/退位
-  const onesSum = aOnes + (operator === '+' ? bOnes : -bOnes);
-  const carryIn = operator === '+' && onesSum >= 10 ? 1 : 0;
-  const borrow = operator === '-' && aOnes < bOnes ? 1 : 0;
+  // 进位/退位
+  const carryIn = operator === '+' && aOnes + bOnes >= 10 ? 1 : 0;
+  const borrow = operator === '-' && aOnes < bOnes;
 
-  const sizeClass = compact ? 'text-2xl' : 'text-3xl sm:text-4xl';
+  // 是否需要百位列：任何操作数或答案达到三位数
+  const needHundreds = aHundreds > 0 || bHundreds > 0 || (answer !== null && answer >= 100);
+  const ansHundreds = answer !== null ? Math.floor(answer / 100) : null;
+  const ansTens = answer !== null ? Math.floor((answer % 100) / 10) : null;
+  const ansOnes = answer !== null ? answer % 10 : null;
+
+  const digitCls = compact ? 'text-2xl' : 'text-3xl sm:text-4xl';
+  const cell = `${digitCls} font-black w-9 sm:w-10 text-center`;
+  const opCls = compact ? 'text-xl' : 'text-2xl sm:text-3xl';
 
   return (
     <div className="inline-block font-mono bg-white/90 rounded-3xl px-6 py-4 shadow-lg border-2 border-moko-purple/20">
-      {/* 进位标记（进位用） */}
-      {showCarry && carryIn > 0 && (
-        <div className="flex justify-end mb-1 pr-12">
-          <span className="text-sm font-black text-orange-500 bg-orange-100 rounded-full px-2 py-0.5">
-            + 1 借位
+      {/* 进位/退位标记行（与下方数位严格同网格） */}
+      {showCarry && (carryIn > 0 || borrow) && (
+        <div className="flex justify-end items-end h-6 mb-0.5">
+          {/* 占位：运算符列 */}
+          <span className="w-7 sm:w-8" />
+          {needHundreds && <span className="w-9 sm:w-10" />}
+          {/* 十位上方：进位小 1 / 退位后的新十位 */}
+          <span className={`${digitCls} font-black w-9 sm:w-10 text-center relative`}>
+            {carryIn > 0 && (
+              <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-sm text-orange-500 bg-orange-100 rounded-full w-5 h-5 flex items-center justify-center border border-orange-300">
+                1
+              </span>
+            )}
           </span>
+          <span className="w-9 sm:w-10" />
         </div>
       )}
 
       {/* 被加数/被减数 */}
-      <div className="flex justify-end gap-2">
-        <span
-          className={`${sizeClass} font-black text-gray-700 w-10 text-center relative`}
-          aria-label={`${aTens}个十`}
-        >
-          {aTens > 0 ? aTens : ''}
+      <div className="flex justify-end items-center">
+        <span className={`${opCls} font-black w-7 sm:w-8 text-center text-transparent select-none`} aria-hidden>
+          +
+        </span>
+        {needHundreds && (
+          <span className={`${cell} text-gray-700`}>{aHundreds > 0 ? aHundreds : ''}</span>
+        )}
+        <span className={`${cell} text-gray-700 relative`} aria-label={`${aTens}个十`}>
+          {borrow && showCarry ? (
+            <>
+              {/* 退位：原十位划掉，右上角写新的十位值 */}
+              <span className="relative inline-block">
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <span className="block w-full h-0.5 bg-red-400 rotate-[-12deg] rounded" />
+                </span>
+                <span className="text-gray-300">{aTens > 0 ? aTens : '0'}</span>
+              </span>
+              <span className="absolute -top-3 -right-1 text-xs text-red-500 font-black bg-red-50 rounded px-0.5 leading-4 border border-red-200">
+                {aTens - 1 < 0 ? 9 : aTens - 1}
+              </span>
+            </>
+          ) : (
+            aTens > 0 ? aTens : ''
+          )}
         </span>
         <span
-          className={`${sizeClass} font-black text-gray-700 w-10 text-center ${
-            operator === '-' && aOnes < bOnes ? 'text-red-400 bg-red-50 rounded-lg' : ''
-          }`}
+          className={`${cell} relative ${borrow && showCarry ? 'text-red-500' : 'text-gray-700'}`}
+          aria-label={`${aOnes}个一`}
         >
           {aOnes}
-          {operator === '-' && aOnes < bOnes && (
-            <span className="absolute -top-1 -right-1 text-xs bg-red-200 text-red-600 rounded-full w-5 h-5 flex items-center justify-center font-black">
-              借
+          {borrow && showCarry && (
+            <span className="absolute -top-3 -right-1 text-xs text-red-500 font-black bg-red-50 rounded-full w-4 h-4 flex items-center justify-center border border-red-200" title="向十位借 1 当 10">
+              10
             </span>
           )}
         </span>
       </div>
 
-      {/* 加数/减数 */}
-      <div className="flex justify-end gap-2 mt-1">
-        <span className={`${sizeClass} font-black text-moko-purple w-10 text-center mr-2`}>
-          {operator}
-        </span>
-        <span className={`${sizeClass} font-black text-gray-700 w-10 text-center`}>
-          {bTens > 0 ? bTens : ''}
-        </span>
-        <span className={`${sizeClass} font-black text-gray-700 w-10 text-center`}>{bOnes}</span>
+      {/* 加数/减数（带运算符列） */}
+      <div className="flex justify-end items-center mt-1">
+        <span className={`${opCls} font-black w-7 sm:w-8 text-center text-moko-purple`}>{operator}</span>
+        {needHundreds && (
+          <span className={`${cell} text-gray-700`}>{bHundreds > 0 ? bHundreds : ''}</span>
+        )}
+        <span className={`${cell} text-gray-700`}>{bTens > 0 ? bTens : ''}</span>
+        <span className={`${cell} text-gray-700`}>{bOnes}</span>
       </div>
 
       {/* 横线 */}
-      <div className="border-t-2 border-moko-purple/40 my-2" />
+      <div className="border-t-[3px] border-moko-purple/50 my-2 rounded" />
 
-      {/* 答案 */}
+      {/* 答案：逐位列出，个位必显示，十位/百位按需 */}
       {answer !== null && (
-        <div className="flex justify-end gap-2">
-          <span className={`${sizeClass} font-black text-moko-rose w-10 text-center`}>
-            {Math.floor(answer / 10)}
+        <div className="flex justify-end items-center">
+          <span className={`${opCls} font-black w-7 sm:w-8 text-center text-transparent select-none`} aria-hidden>
+            =
           </span>
-          <span className={`${sizeClass} font-black text-moko-rose w-10 text-center`}>
-            {answer % 10}
+          {needHundreds && (
+            <span className={`${cell} text-moko-rose`}>{ansHundreds! > 0 ? ansHundreds : ''}</span>
+          )}
+          {/* 十位：答案 >=10 或需要补位时显示 */}
+          <span className={`${cell} text-moko-rose`}>
+            {(answer ?? 0) >= 10 || carryIn === 1 ? ansTens : ''}
+          </span>
+          <span className={`${cell} text-moko-rose relative`}>
+            {ansOnes}
+            {carryIn > 0 && showCarry && (
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] text-orange-400 font-black whitespace-nowrap">
+                ▲ 进位后写的
+              </span>
+            )}
           </span>
         </div>
       )}

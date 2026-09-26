@@ -5,6 +5,7 @@ import Link from 'next/link';;
 import type { AlgorithmTopic } from '@/lib/algorithm/types';
 import { MokoGroupBg } from '@/components/moko-bg';
 import { MantraCard } from '@/components/algorithm/MantraCard';
+import { ExampleDemo } from '@/components/algorithm/ExampleDemo';
 import { PrincipleCard } from '@/components/algorithm/PrincipleCard';
 import { FadeIn, FloatY } from '@/components/algorithm/LazyMotion';
 
@@ -83,22 +84,7 @@ export function AlgorithmTopicClient({
             <span>📖</span>
             <span>典型例题</span>
           </h3>
-          <div className="text-center mb-4">
-            <div className="text-3xl font-black text-moko-purple mb-2">{topic.example.problem}</div>
-          </div>
-          <div className="space-y-2">
-            {topic.example.solution.map((step, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 bg-moko-purple/5 rounded-2xl p-3 border-2 border-moko-purple/10"
-              >
-                <span className="w-7 h-7 rounded-full bg-moko-purple text-white flex items-center justify-center text-sm font-black flex-shrink-0">
-                  {i + 1}
-                </span>
-                <span className="font-bold text-gray-700">{step}</span>
-              </div>
-            ))}
-          </div>
+          <ExampleDemo problem={topic.example.problem} solution={topic.example.solution} />
         </div>
       </FadeIn>
 

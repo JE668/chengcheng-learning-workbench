@@ -16,7 +16,7 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
     mantraEmoji: '✋',
     moko: {
       name: '拆数萌可',
-      img: '/moko/collection/02_魔方萌可/变身萌可_render.webp',
+      img: '/moko/collection/02_魔方萌可_第一二季/变身萌可_render.webp',
       emoji: '✂️',
       color: 'from-pink-400 to-rose-500',
       line: '看到 9，想到 1，把数拆开凑成 10！',
@@ -83,7 +83,7 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
     mantraEmoji: '⚔️',
     moko: {
       name: '平十将军',
-      img: '/moko/collection/02_魔方萌可/勇气萌可_render.webp',
+      img: '/moko/collection/01_皇室萌可/正正萌可_render.webp',
       emoji: '🛡️',
       color: 'from-amber-400 to-orange-500',
       line: '一步步减，先减到 10 最厉害！',
@@ -116,7 +116,7 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
     mantraEmoji: '🔄',
     moko: {
       name: '交换萌可',
-      img: '/moko/collection/02_魔方萌可/仿仿萌可_render.webp',
+      img: '/moko/collection/02_魔方萌可_第一二季/仿仿萌可_render.webp',
       emoji: '🔀',
       color: 'from-purple-400 to-violet-500',
       line: '交换位置，答案不变！但我们可以选「好算的那边」',
@@ -149,7 +149,7 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
     mantraEmoji: '🤝',
     moko: {
       name: '结合萌可',
-      img: '/moko/collection/02_魔方萌可/赞赞萌可_render.webp',
+      img: '/moko/collection/01_皇室萌可/赞赞萌可_render.webp',
       emoji: '🫂',
       color: 'from-emerald-400 to-teal-500',
       line: '先把好朋友数拉到一起，凑成整十！',
@@ -182,7 +182,7 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
     mantraEmoji: '⚡',
     moko: {
       name: '去括号萌可',
-      img: '/moko/collection/03_钥匙萌可/沉默萌可_render.webp',
+      img: '/moko/collection/03_宝石萌可_第三季/躲躲萌可_render.webp',
       emoji: '🔓',
       color: 'from-red-400 to-rose-500',
       line: '括号前面是减号？里面的符号要翻转！',
@@ -215,7 +215,7 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
     mantraEmoji: '✨',
     moko: {
       name: '加法萌可',
-      img: '/moko/collection/01_皇室萌可/闪亮萌可_render.webp',
+      img: '/moko/collection/01_皇室萌可/闪闪萌可_render.webp',
       emoji: '➕',
       color: 'from-yellow-400 to-amber-500',
       line: '括号前面是加号？直接拆掉就行啦！',
@@ -248,7 +248,7 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
     mantraEmoji: '🎀',
     moko: {
       name: '添括号萌可',
-      img: '/moko/collection/02_魔方萌可/害羞萌可_render.webp',
+      img: '/moko/collection/02_魔方萌可_第一二季/害羞萌可_render.webp',
       emoji: '🎁',
       color: 'from-cyan-400 to-blue-500',
       line: '想把谁先算，就用括号圈起来！',
@@ -315,7 +315,7 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
     mantraEmoji: '📦',
     moko: {
       name: '搬家萌可',
-      img: '/moko/collection/02_魔方萌可/热情萌可_render.webp',
+      img: '/moko/collection/01_皇室萌可/热情萌可_render.webp',
       emoji: '🚛',
       color: 'from-indigo-400 to-blue-500',
       line: '把 -18 和 +24 换个位置，好算多了！',
