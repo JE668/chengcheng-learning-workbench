@@ -397,16 +397,12 @@ export default function CastlePage() {
 /** 时光沙漏使用卡：选日期，补整天打卡 */
 function TimeGlassCard({ count, busy, onUse }: { count: number; busy: boolean; onUse: (day: string) => void }) {
   const [expanded, setExpanded] = useState(false);
-  const [day, setDay] = useState('');
-
-  // 默认选昨天
-  useEffect(() => {
-    if (!day) {
-      const d = new Date();
-      d.setDate(d.getDate() - 1);
-      setDay(d.toISOString().slice(0, 10));
-    }
-  }, []);
+  // 默认选昨天（惰性初始化，代替 useEffect 里的 setState）
+  const [day, setDay] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().slice(0, 10);
+  });
 
   return (
     <div className="rounded-3xl p-4 shadow-lg border-2 border-moko-violet/20 bg-moko-violet/5">

@@ -60,7 +60,7 @@ export default function DailyPracticePage() {
   // 但已完成时不要朗读（避免在"已完成"弹窗后面偷偷播放语音）
   useEffect(() => {
     if (q && !data?.completed && !result) autoPlay(q);
-  }, [q]);
+  }, [q, data?.completed, result]);
 
   // 拉取是否拥有时光沙漏（控制已完成态下「再做一次」按钮显隐）
   useEffect(() => {
@@ -84,7 +84,8 @@ export default function DailyPracticePage() {
         return next;
       });
     },
-    [q, selected, idx],
+    // selected 走函数式更新，无需列入依赖
+    [q, idx],
   );
 
   const retry = useCallback(() => {
