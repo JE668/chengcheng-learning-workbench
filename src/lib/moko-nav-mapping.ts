@@ -62,7 +62,7 @@ export const MOKO_NAV_ENTRIES: MokoNavEntry[] = [
     icon: '🧮',
     moko: {
       name: '智慧萌可',
-      img: '/moko/collection/02_魔方萌可/变身萌可_render.webp',
+      img: '/moko/collection/02_魔方萌可_第一二季/变身萌可_render.webp',
       emoji: '🧮',
       color: 'from-indigo-400 to-purple-500',
       line: '掌握方法，计算是魔法！',
