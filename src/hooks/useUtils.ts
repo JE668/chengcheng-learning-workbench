@@ -291,7 +291,7 @@ export function useMutex() {
     }
   }, []);
 
-  const tryLock = useCallback(<T,>(fn: () => Promise<T>): Promise<T | null> => {
+  const tryLock = useCallback(async <T,>(fn: () => Promise<T>): Promise<T | null> => {
     if (lockedRef.current) return Promise.resolve(null);
     lockedRef.current = true;
     try {

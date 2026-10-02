@@ -30,9 +30,29 @@ export const viewport = {
   viewportFit: 'cover',
 };
 
+/**
+ * 进程内记忆化：根布局是 force-dynamic，每个请求都会渲染，而 ensureSchema() 虽然
+ * 幂等但成本不低（2 个 PRAGMA + 建表写事务批次 + 迁移检查）。并发访问时这些写操作
+ * 会在 NAS 上互相争锁。
+ *
+ * 放在调用点记忆化，既做到「一个进程只初始化一次」，又不改变 ensureSchema() 自身的
+ * 语义（测试需要它能被反复调用并每次都真的执行迁移）。
+ */
+let schemaReady: Promise<void> | null = null;
+
+function ensureSchemaOncePerProcess(): Promise<void> {
+  if (!schemaReady) {
+    schemaReady = ensureSchema().catch((error) => {
+      schemaReady = null; // 失败时允许下一个请求重试
+      throw error;
+    });
+  }
+  return schemaReady;
+}
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   try {
-    await ensureSchema();
+    await ensureSchemaOncePerProcess();
   } catch (error) {
     console.error('Database initialization failed:', error);
     // Serialize error for Client Component (must be plain object, no functions)

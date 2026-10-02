@@ -114,10 +114,12 @@ export function useAsync<T, TArgs extends unknown[] = []>(
     retryCountRef.current = 0;
   }, []);
 
-  // 依赖变化时自动执行
+  // 依赖变化时自动执行。
+  // 注意：immediate 自动执行只在「无参 asyncFn」语义下成立；TArgs 是可变泛型，
+  // 所以这里显式断言为无参调用（需要传参的场景请自行调用 execute(...)）。
   useEffect(() => {
     if (immediate) {
-      execute();
+      void (execute as () => Promise<T | null>)();
     }
   }, [...deps, immediate]); // eslint-disable-line react-hooks/exhaustive-deps
 

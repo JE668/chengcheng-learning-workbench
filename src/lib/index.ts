@@ -50,3 +50,9 @@ export * from './moko-imgs';
 export * from './moko-collection/index';
 export * from './raz-books';
 export * from './game-difficulty';
+
+// —— 显式消歧 ——
+// 下面两个名字被多个模块 star-export 重复导出，会产生 TS2308 歧义错误。
+// 显式命名导出的优先级高于 star export，指定唯一出口即可。
+export { addDaysToDate } from './sm2'; // 与 ./mistakes 同名（签名一致）
+export type { Subject } from './types'; // 与 ./study-data 同名（定义一致）

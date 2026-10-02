@@ -38,12 +38,6 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "src/hooks/**",
-    "src/lib/tts/**",
-    "src/lib/stores/index.ts",
-    "src/lib/index.ts",
-    "src/env.mjs",
-    "src/components/atomic/**"
+    "node_modules"
   ]
 }

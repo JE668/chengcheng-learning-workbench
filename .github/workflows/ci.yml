@@ -4,8 +4,10 @@ name: CI
 # typescript.ignoreBuildErrors / eslint.ignoreDuringBuilds，
 # 因此构建不会因类型错误而失败——改由 CI 显式校验，避免「能构建但不能跑」的回归。
 on:
-  push:
-    branches: [main]
+  # 注意：这里**故意不监听** push: main。
+  # build.yml 的 precheck 已经 `uses:` 复用了本 workflow，push 到 main 时
+  # 会执行同一套检查；若这里也监听 push，每次 push 会完整跑两遍（白花约 4 分钟）。
+  # 保留 pull_request 是为了将来走 PR 流程时仍有独立 CI 信号。
   pull_request:
   # 供 build.yml 通过 `uses:` 复用调用；缺此项时 GitHub 会拒绝实例化
   # precheck job，导致整个 build run 0 jobs 直接失败。

@@ -77,12 +77,21 @@ export default function PwaRegister() {
     }
 
     try {
+      // 公钥由服务端下发（不再硬编码：仓库是 public，任何密钥都不该进源码；
+      // 服务端未配置 VAPID 时会返回 enabled:false，此时直接跳过订阅）。
+      const keyRes = await fetch('/api/push/subscribe');
+      const keyData = (await keyRes.json().catch(() => null)) as
+        | { enabled?: boolean; publicKey?: string }
+        | null;
+      if (!keyRes.ok || !keyData?.enabled || !keyData.publicKey) {
+        console.info('Web Push 未配置，跳过订阅');
+        return;
+      }
+
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(
-          'BHU9tTbTawhmhx2UimosgY5OzQu5dw_X6K2YFrg1yemiNPb6LJ2NJEJi4u8FFoAlXtpPlboFOA9bMSTEIGWvKEM'
-        ),
+        applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
       });
 
       // 发送订阅到服务器

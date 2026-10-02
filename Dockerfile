@@ -26,16 +26,19 @@ FROM node:22-bookworm-slim AS runner
 
 # 安装运行依赖（Python + edge-tts），ffmpeg 未使用故不安装
 RUN apt-get update && apt-get install -y --no-install-recommends --no-install-suggests \
-    python3 python3-pip \
+    python3 python3-pip tzdata \
     && rm -rf /var/lib/apt/lists/* /tmp/* \
     && pip3 install --no-cache-dir --break-system-packages edge-tts==7.2.8 \
     && pip3 cache purge \
     && rm -rf /root/.cache
 
+# 兜底时区：即使 compose 忘了传 TZ，容器内也按北京时间算「今天」。
+# 依赖上一阶段安装的 tzdata（debian slim 默认不含；缺了它 TZ 会静默退回 UTC）。
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
+    TZ=Asia/Shanghai \
     TURSO_URL=file:/data/local.db \
     NODE_OPTIONS=--max-old-space-size=2048
 

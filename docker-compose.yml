@@ -12,6 +12,9 @@ services:
       - HOSTNAME=0.0.0.0
       - TZ=Asia/Shanghai
       - CRON_SECRET=${CRON_SECRET}
+      # Web Push（可选）：不配则推送功能自动禁用（见 .env.example）。
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
       - TURSO_URL=file:/data/local.db
     volumes:
       # 数据库持久化：账号 / 城堡 / 打卡 / 错题 全部存在这里，重建容器不丢

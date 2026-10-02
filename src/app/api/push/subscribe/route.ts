@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { getDb } from '@/lib/db-core';
-import { getVapidPublicKey, sendPushNotification } from '@/lib/push-notifications';
+import { getVapidPublicKey, isPushConfigured, sendPushNotification } from '@/lib/push-notifications';
 
 export async function GET() {
   try {
+    const publicKey = getVapidPublicKey();
     return NextResponse.json({
-      publicKey: getVapidPublicKey(),
+      // enabled=false 时前端不要调用 pushManager.subscribe（公钥为空会直接抛错）
+      enabled: isPushConfigured,
+      publicKey,
     });
   } catch (error) {
     console.error('Failed to get VAPID public key:', error);
@@ -16,6 +19,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!isPushConfigured) {
+      return NextResponse.json({ error: '服务端未配置 Web Push（VAPID 密钥缺失）' }, { status: 503 });
+    }
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
@@ -27,7 +33,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { subscription } = await req.json();
-    if (!subscription || !subscription.endpoint) {
+    const keys = subscription?.keys;
+    if (!subscription || typeof subscription.endpoint !== 'string' || !keys?.p256dh || !keys?.auth) {
       return NextResponse.json({ error: '无效的订阅信息' }, { status: 400 });
     }
 
@@ -41,7 +48,7 @@ export async function POST(req: NextRequest) {
               p256dh = excluded.p256dh,
               auth = excluded.auth,
               updated_at = CURRENT_TIMESTAMP`,
-      args: [childId, subscription.endpoint, subscription.keys.p256dh, subscription.keys.auth],
+      args: [childId, subscription.endpoint, keys.p256dh, keys.auth],
     });
 
     // 发送欢迎通知

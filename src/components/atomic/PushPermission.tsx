@@ -61,12 +61,20 @@ export function usePushPermission() {
     }
 
     try {
+      // 公钥从服务端获取，源码里不再保留任何 VAPID 密钥。
+      const keyRes = await fetch('/api/push/subscribe');
+      const keyData = (await keyRes.json().catch(() => null)) as
+        | { enabled?: boolean; publicKey?: string }
+        | null;
+      if (!keyRes.ok || !keyData?.enabled || !keyData.publicKey) {
+        console.info('Web Push 未配置，跳过订阅');
+        return false;
+      }
+
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(
-          'BHU9tTbTawhmhx2UimosgY5OzQu5dw_X6K2YFrg1yemiNPb6LJ2NJEJi4u8FFoAlXtpPlboFOA9bMSTEIGWvKEM'
-        ),
+        applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
       });
 
       // 发送订阅到服务器

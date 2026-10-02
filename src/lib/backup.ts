@@ -16,7 +16,10 @@ import path from 'node:path';
 
 const FILE_PREFIX = 'file:';
 function dbPath(): string | null {
-  const url = process.env.TURSO_URL || '';
+  // 默认值必须与 db-core.ts 的 `process.env.TURSO_URL || 'file:local.db'` 一致。
+  // 否则本地（非 Docker）不设该变量时这里拿到空串 → 永远判定「仅支持本地文件库」
+  // → 备份静默永不执行（Docker 里 Dockerfile 设了该 ENV，所以线上没暴露）。
+  const url = process.env.TURSO_URL || 'file:local.db';
   if (!url.startsWith(FILE_PREFIX)) return null;
   return url.slice(FILE_PREFIX.length);
 }

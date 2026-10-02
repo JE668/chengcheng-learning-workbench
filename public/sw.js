@@ -5,7 +5,9 @@
 // 3. 离线页面兜底
 // 4. 缓存版本管理
 
-const CACHE_VERSION = 'ccwb-v3';
+// v4：修复 install 失败（/offline 不存在）、不再缓存 /api、实现 CLEAR_CACHES。
+// 版本号变化会让 activate 阶段的 cleanupOldCaches 清掉所有旧缓存。
+const CACHE_VERSION = 'ccwb-v4';
 const CACHE_NAME = `ccwb-${CACHE_VERSION}`;
 const OFFLINE_CACHE = `ccwb-offline-${CACHE_VERSION}`;
 const API_CACHE = `ccwb-api-${CACHE_VERSION}`;
@@ -15,7 +17,10 @@ const PRECACHE_URLS = [
   '/',
   '/home',
   '/login',
-  '/offline',
+  // ⚠️ 必须是 /offline.html：仓库里只有 public/offline.html，没有 /offline 路由。
+  // 之前写成 '/offline' 会让它返回 404，从而 cache.addAll() 整体 reject、
+  // install 抛错，**Service Worker 永远装不上**（离线与 Web Push 全部失效）。
+  '/offline.html',
   '/manifest.webmanifest',
 ];
 
@@ -52,7 +57,11 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      await cache.addAll(PRECACHE_URLS);
+      // 逐条 add：addAll 是「全成功才算成功」，任意一个 URL 404/超时都会让
+      // 整个 install 失败。这里改成每条约独立容错，保证 SW 一定能装上。
+      const settled = await Promise.allSettled(PRECACHE_URLS.map((u) => cache.add(u)));
+      const failed = settled.filter((r) => r.status === 'rejected').length;
+      if (failed > 0) console.warn(`[sw] 预缓存有 ${failed}/${PRECACHE_URLS.length} 条失败（不影响安装）`);
       await self.skipWaiting();
     })()
   );
@@ -83,15 +92,17 @@ self.addEventListener('fetch', (event) => {
   // 只处理同源 GET 请求
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
 
-  // API 请求：Network First + 缓存（用于离线重试）
+  // API 请求：**完全交给网络，不做 SW 缓存**。
+  // 这些接口返回的是按孩子隔离的个人数据（任务/城堡/错题/进度…），缓存后会在
+  // 登出或切换用户时被离线回放，导致「家长登出后仍能看到上一个孩子的数据」。
+  // 离线写入由客户端 lib/offline-sync 的队列负责，不依赖 SW 缓存。
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirstThenCache(req, API_CACHE));
     return;
   }
 
   // 页面导航：Network First，失败显示离线页面
   if (req.mode === 'navigate') {
-    event.respondWith(navigateWithOfflineFallback(req));
+    event.respondWith(navigateWithOfflineFallback(req, event));
     return;
   }
 
@@ -101,24 +112,25 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/moko/') ||
     /\.(?:png|jpg|jpeg|svg|webp|gif|ico|woff2?|css|js|map)$/.test(url.pathname);
   if (isStatic) {
-    event.respondWith(cacheFirstThenNetwork(req, CACHE_NAME));
+    event.respondWith(cacheFirstThenNetwork(req, CACHE_NAME, event));
     return;
   }
 
   // 其他请求：Network First，失败回退缓存
-  event.respondWith(networkFirstThenCache(req, CACHE_NAME));
+  event.respondWith(networkFirstThenCache(req, CACHE_NAME, event));
 });
 
 // ===== 核心策略函数 =====
 
 // 页面导航：网络优先，失败显示离线页面
-async function navigateWithOfflineFallback(request) {
+async function navigateWithOfflineFallback(request, event) {
   try {
     const response = await fetch(request);
-    // 缓存成功的页面
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
+    // 缓存成功的页面。放进 event.waitUntil：否则 SW 被回收时写入会被丢弃。
+    if (response.ok && event) {
+      event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()))
+      );
     }
     return response;
   } catch {
@@ -126,8 +138,8 @@ async function navigateWithOfflineFallback(request) {
     const cached = await caches.match(request);
     if (cached) return cached;
 
-    // 无缓存：返回离线页面
-    const offlinePage = await caches.match('/offline');
+    // 无缓存：返回离线页面（public/offline.html）
+    const offlinePage = await caches.match('/offline.html');
     if (offlinePage) return offlinePage;
 
     // 兜底：返回首页
@@ -136,16 +148,19 @@ async function navigateWithOfflineFallback(request) {
 }
 
 // 缓存优先，网络回退（用于静态资源）
-async function cacheFirstThenNetwork(request, cacheName) {
+async function cacheFirstThenNetwork(request, cacheName, event) {
   const cached = await caches.match(request);
   if (cached) {
-    // 后台更新缓存
-    fetch(request).then(async (res) => {
-      if (res.ok) {
-        const cache = await caches.open(cacheName);
-        cache.put(request, res.clone());
-      }
-    }).catch(() => {});
+    // 后台更新缓存（纳入 waitUntil，避免 SW 回收导致更新丢失）
+    const refresh = fetch(request)
+      .then(async (res) => {
+        if (res.ok) {
+          const cache = await caches.open(cacheName);
+          await cache.put(request, res.clone());
+        }
+      })
+      .catch(() => {});
+    if (event) event.waitUntil(refresh);
     return cached;
   }
 
@@ -200,6 +215,17 @@ self.addEventListener('message', (event) => {
   }
   if (event.data?.type === 'SYNC_NOW') {
     syncOfflineActions();
+  }
+  if (event.data?.type === 'CLEAR_CACHES') {
+    // 登出时由页面 postMessage 触发（见 components/Nav.tsx）。
+    // 页面侧的 caches.delete 没有 await，会和「表单登出导航」竞争而常常来不及；
+    // 之前这里又没实现该分支，两者叠加导致登出后缓存长期残留。
+    event.waitUntil(
+      (async () => {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter((k) => k.startsWith('ccwb-')).map((k) => caches.delete(k)));
+      })()
+    );
   }
 });
 

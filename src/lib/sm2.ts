@@ -65,7 +65,7 @@ export function calculateSM2Next(
       easinessFactor: Math.max(1.3, easinessFactor - 0.2),
       repetitions: 0,
       interval: 1,
-      nextReview: addDays(new Date(), 1).toISOString().split('T')[0],
+      nextReview: formatDate(addDays(new Date(), 1)),
       isMature: false,
     };
   }
@@ -82,7 +82,9 @@ export function calculateSM2Next(
     newInterval = Math.round(state.interval * state.easinessFactor);
   }
 
-  // Cap interval at 365 days
+  // Cap interval at 365 days。
+  // ⚠️ 这个上限必须真正作用到 interval 与 nextReview：原实现算完 cappedInterval
+  // 却从未使用，间隔会无限增长超过一年。
   const cappedInterval = Math.min(newInterval, 365);
 
   // Adjust easiness factor based on quality
@@ -90,14 +92,16 @@ export function calculateSM2Next(
   const q = quality;
   const newEasinessFactor = Math.max(1.3, easinessFactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)));
 
-  // Next review date
-  const nextReviewDate = addDays(new Date(), newInterval);
+  // Next review date。
+  // ⚠️ 用 formatDate()（本地日）而不是 toISOString()（UTC 日）：东八区早上 8 点前
+  // 复习时 UTC 还停在前一天，会把复习排早一天。
+  const nextReviewDate = addDays(new Date(), cappedInterval);
 
   return {
     easinessFactor: newEasinessFactor,
     repetitions: newRepetitions,
-    interval: Math.round(state.interval === 0 ? 1 : newInterval), // First interval is 1 day
-    nextReview: nextReviewDate.toISOString().split('T')[0],
+    interval: Math.round(state.interval === 0 ? 1 : cappedInterval), // First interval is 1 day
+    nextReview: formatDate(nextReviewDate),
     isMature: newRepetitions >= 4,
   };
 }

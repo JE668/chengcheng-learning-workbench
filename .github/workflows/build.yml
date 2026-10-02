@@ -60,7 +60,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          # NAS（飞牛 FnOS）实测是 x86_64。arm64 在 GitHub 上要靠 QEMU 模拟，
+          # 是单次构建 20+ 分钟里最大的一块；去掉后构建时间大幅下降。
+          # 将来若换 ARM 设备，改回 linux/amd64,linux/arm64 即可。
+          platforms: linux/amd64
           push: true
           tags: |
             ${{ env.IMAGE_IO }}:latest

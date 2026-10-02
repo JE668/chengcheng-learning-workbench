@@ -60,7 +60,9 @@ async function loadRecommend(): Promise<{
   if (!childId) return null;
 
   // 继续学习：最近一次玩过的模块
-  const prog = await getModuleProgressAll(0);
+  // ⚠️ 必须传上面解析出的 childId。之前写死 0，而 child_id=0 永远没有数据，
+  // 导致「继续学习」按钮和「该复习单元」标签永远不会出现（功能静默失效）。
+  const prog = await getModuleProgressAll(childId);
   const recent = prog
     .filter((p) => p.lastPlayed > 0)
     .sort((a, b) => b.lastPlayed - a.lastPlayed)[0];
@@ -73,7 +75,7 @@ async function loadRecommend(): Promise<{
   const resumeHref = `/study/${recent.subject}/${recent.moduleKey}`;
 
   // 该复习单元：语文课本读到的下一章对应哪个单元
-  const tb = await getTextbookProgress(0);
+  const tb = await getTextbookProgress(childId);
   const readIdx = tb['chinese'] ?? 0;
   const nextUnit = GRADE1_CHAR_UNITS.find((u) => u.chapter === readIdx);
   const nextLabel = nextUnit ? `第 ${nextUnit.chapter} 单元 · ${nextUnit.unit}` : '';

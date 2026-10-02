@@ -1,22 +1,36 @@
 import webPush from 'web-push';
 
 /**
- * Web Push 配置
- * 在生产环境中，这些密钥应该存储在环境变量中
+ * Web Push 配置。
+ *
+ * ⚠️ 密钥只能来自环境变量，**绝不允许在源码里写默认值**：
+ * 本仓库是 public，硬编码私钥 == 公开泄露（历史上确实泄露过一对，已废弃）。
+ *
+ * 未配置时整体降级为「推送不可用」，而不是让模块在 import 期抛错——
+ * 否则任何 import 到本文件的路由都会 500。
  */
-const vapidKeys = {
-  publicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BHU9tTbTawhmhx2UimosgY5OzQu5dw_X6K2YFrg1yemiNPb6LJ2NJEJi4u8FFoAlXtpPlboFOA9bMSTEIGWvKEM',
-  privateKey: process.env.VAPID_PRIVATE_KEY || 'H2GuPhVD8DDKdc9iAvcU1ZAI9qfqzN8sZ-IwrxixUOY',
-};
+const publicKey = process.env.VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+const privateKey = process.env.VAPID_PRIVATE_KEY || '';
+const subject = process.env.VAPID_SUBJECT || 'mailto:admin@example.com';
 
-webPush.setVapidDetails(
-  'mailto:admin@chengcheng-learning.com',
-  vapidKeys.publicKey,
-  vapidKeys.privateKey
-);
+/** 是否已正确配置 VAPID 密钥（前端据此决定要不要申请订阅）。 */
+export const isPushConfigured = Boolean(publicKey && privateKey);
+
+if (isPushConfigured) {
+  try {
+    webPush.setVapidDetails(subject, publicKey, privateKey);
+  } catch (error) {
+    console.error('[push] VAPID 配置无效，Web Push 已禁用:', error instanceof Error ? error.message : error);
+  }
+} else {
+  console.warn(
+    '[push] 未配置 VAPID 密钥（VAPID_PRIVATE_KEY / VAPID_PUBLIC_KEY），Web Push 已禁用。' +
+      '生成方式：npx web-push generate-vapid-keys'
+  );
+}
 
 export function getVapidPublicKey(): string {
-  return vapidKeys.publicKey;
+  return publicKey;
 }
 
 export interface PushSubscription {
@@ -39,6 +53,8 @@ export async function sendPushNotification(
     actions?: Array<{ action: string; title: string; icon?: string }>;
   }
 ): Promise<boolean> {
+  // 未配置 VAPID 时 webPush 会因未 setVapidDetails 而抛错，这里直接短路。
+  if (!isPushConfigured) return false;
   try {
     await webPush.sendNotification(
       subscription,

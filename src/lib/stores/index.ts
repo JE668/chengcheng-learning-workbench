@@ -103,7 +103,9 @@ interface TTSState {
 
   enqueue: (item: Omit<TTSQueueItem, 'id'>) => string;
   dequeue: () => TTSQueueItem | undefined;
-  setPlaying: (playing: boolean, item?: TTSQueueItem) => void;
+  // item 允许显式传 null（调用方用 setPlaying(false, null) 表示当前没有在播放），
+  // 实现里也只是 item ?? null，类型此前定义窄了。
+  setPlaying: (playing: boolean, item?: TTSQueueItem | null) => void;
   clear: () => void;
   interrupt: () => void;
 }

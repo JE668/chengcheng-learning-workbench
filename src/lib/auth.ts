@@ -8,7 +8,14 @@ const COOKIE_NAME = 'session';
 
 // 环境变量配置（带默认值，保持向后兼容）
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS) || 7;
-const SECURE_COOKIE = process.env.SECURE_COOKIE === 'true';
+/**
+ * 显式配置（三态）：
+ *   undefined → 走下面的自动判断（反代 x-forwarded-proto / 默认 false）
+ *   'true' / 'false' → 强制
+ * ⚠️ 不能在这里就写成 `=== 'true'` 得到 boolean，否则 shouldSecureCookie() 里的
+ * 自动判断分支会永远进不去（历史上有这个 bug：反代 HTTPS 下 cookie 不带 Secure）。
+ */
+const SECURE_COOKIE_RAW = process.env.SECURE_COOKIE;
 
 export function hashPassword(password: string): string {
   return bcrypt.hashSync(password, 10);
@@ -62,7 +69,7 @@ export async function cleanupExpiredSessions(): Promise<void> {
  */
 function shouldSecureCookie(): boolean {
   // 显式配置优先（SECURE_COOKIE=true 强制 secure，false 强制不 secure）
-  if (SECURE_COOKIE !== undefined) return SECURE_COOKIE;
+  if (SECURE_COOKIE_RAW !== undefined) return SECURE_COOKIE_RAW === 'true';
 
   try {
     const proto = headers().get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase();
@@ -97,10 +104,13 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!token) return null;
   const db = getDb();
   const res = await db.execute({
+    // 必须校验会话年龄：清理只在登录/cron 时发生，若不在这里判断，
+    // 被盗 token 会在 cookie 过期后依然长期有效。
     sql: `SELECT u.id, u.username, u.role, u.display_name
           FROM sessions s JOIN users u ON s.user_id = u.id
-          WHERE s.token = ?`,
-    args: [token],
+          WHERE s.token = ?
+            AND s.created_at > datetime('now', '-' || ? || ' days')`,
+    args: [token, SESSION_TTL_DAYS],
   });
   if (!res.rows.length) return null;
   const r = res.rows[0];

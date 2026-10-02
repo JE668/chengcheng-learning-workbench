@@ -139,7 +139,20 @@ export async function POST(request: NextRequest) {
     const textWithPause = text.trim();
 
     const buffer = await edgeTTS(textWithPause, voice, rateStr);
-    const body = buffer.buffer as ArrayBuffer;
+    // ⚠️ 只能发送 buffer 的有效区间。
+    // edgeTTS 内部用 Buffer.concat 组装音频，小数据量时会从 Node 的共享内存池分配：
+    // 此时 buffer.buffer 是**整个 64KB 池**且 byteOffset 不为 0。直接发 .buffer 会
+    // 把上一个请求残留的内存当作音频发出去（音频损坏 + 进程内存泄露），
+    // 且与下面声明的 Content-Length 不一致。
+    // 用 Uint8Array 视图：尊重 byteOffset/byteLength，且不复制数据（零拷贝）。
+    // 这里的 as unknown as BodyInit 只是绕开 TS DOM 类型对
+    // Uint8Array<ArrayBufferLike>（含 SharedArrayBuffer 可能）的联合收窄——
+    // 运行时 Uint8Array 本身就是合法的 BodyInit。
+    const body = new Uint8Array(
+      buffer.buffer,
+      buffer.byteOffset,
+      buffer.byteLength
+    ) as unknown as BodyInit;
 
     return new NextResponse(body, {
       headers: {

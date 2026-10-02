@@ -12,6 +12,12 @@ import { runMigrations } from './migrations';
  * 所有「增量表 / 增量列 / 历史数据回填」一律走 migrations.ts 的版本化迁移，
  * 不要在此文件里堆内联 ALTER。
  */
+/**
+ * 初始化 schema（幂等，且必须可被反复调用——测试依赖它每次都真的执行迁移跑道）。
+ *
+ * 「一个进程只跑一次」的记忆化放在调用点（src/app/layout.tsx 的
+ * ensureSchemaOncePerProcess），而不是这里，以免改变本函数的语义。
+ */
 export async function ensureSchema() {
   const db = getDb();
   // NAS 自托管保护：开启 WAL 预写日志，避免断电/容器强杀导致 SQLite 损坏
