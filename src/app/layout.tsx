@@ -21,6 +21,9 @@ export const metadata = {
     apple: '/apple-touch-icon.png',
   },
   appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: '程程学习' },
+  // 现代标准写法；缺失时 Chrome 会在控制台报
+  // "apple-mobile-web-app-capable is deprecated. Please include mobile-web-app-capable"
+  other: { 'mobile-web-app-capable': 'yes' },
 };
 
 export const viewport = {

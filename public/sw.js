@@ -6,8 +6,10 @@
 // 4. 缓存版本管理
 
 // v4：修复 install 失败（/offline 不存在）、不再缓存 /api、实现 CLEAR_CACHES。
+// v5：修复页面导航缓存里的 Response.clone() 时序错误（clone 必须在 return 之前同步完成，
+//     否则抛 "Response body is already used" 并导致页面缓存静默失效）。
 // 版本号变化会让 activate 阶段的 cleanupOldCaches 清掉所有旧缓存。
-const CACHE_VERSION = 'ccwb-v4';
+const CACHE_VERSION = 'ccwb-v5';
 const CACHE_NAME = `ccwb-${CACHE_VERSION}`;
 const OFFLINE_CACHE = `ccwb-offline-${CACHE_VERSION}`;
 const API_CACHE = `ccwb-api-${CACHE_VERSION}`;
@@ -126,11 +128,16 @@ self.addEventListener('fetch', (event) => {
 async function navigateWithOfflineFallback(request, event) {
   try {
     const response = await fetch(request);
-    // 缓存成功的页面。放进 event.waitUntil：否则 SW 被回收时写入会被丢弃。
-    if (response.ok && event) {
-      event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()))
-      );
+    if (response.ok) {
+      // ⚠️ clone 必须**同步**完成，且必须在 return response 之前：
+      // 一旦把 response 交给浏览器，它的 body 就被消费，之后再 clone 会抛
+      // "Failed to execute 'clone' on 'Response': Response body is already used"
+      // （曾把 clone 放进 .then() 里导致页面缓存静默失效）。
+      const toCache = response.clone();
+      const write = caches.open(CACHE_NAME).then((cache) => cache.put(request, toCache));
+      // 交给 waitUntil，避免 SW 被回收时写入被丢弃
+      if (event) event.waitUntil(write);
+      else await write;
     }
     return response;
   } catch {
