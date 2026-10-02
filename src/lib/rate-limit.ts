@@ -20,6 +20,26 @@ interface Bucket {
 
 const store = new Map<string, Bucket>();
 
+/**
+ * 两个 Map 的条目上限。key 可能来自请求（IP / 用户名），不设上限就会被
+ * 「大量不同 key」的请求撑爆内存——尤其是按用户名统计的 failStore。
+ */
+const MAX_RATE_ENTRIES = 5000;
+const MAX_FAIL_ENTRIES = 2000;
+
+/** 达到上限时先清过期项，仍满则淘汰最早的条目（Map 保持插入顺序）。 */
+function evictIfFull<T extends { resetAt: number }>(map: Map<string, T>, now: number, max: number) {
+  if (map.size < max) return;
+  for (const [k, v] of map) {
+    if (v.resetAt <= now) map.delete(k);
+  }
+  while (map.size >= max) {
+    const oldest = map.keys().next().value;
+    if (oldest === undefined) break;
+    map.delete(oldest);
+  }
+}
+
 function nowSec() {
   return Math.floor(Date.now() / 1000);
 }
@@ -47,6 +67,7 @@ export function rateLimit(
   const now = nowSec();
   const bucket = store.get(key);
   if (!bucket || bucket.resetAt <= now) {
+    evictIfFull(store, now, MAX_RATE_ENTRIES);
     store.set(key, { count: 1, resetAt: now + rule.windowSeconds });
     return { ok: true, remaining: rule.maxRequests - 1 };
   }
@@ -57,11 +78,25 @@ export function rateLimit(
   return { ok: true, remaining: rule.maxRequests - bucket.count };
 }
 
+/**
+ * 取客户端 IP（用作限流 key）。
+ *
+ * ⚠️ 取 X-Forwarded-For 的**最后一跳**，不是第一个。
+ * 反代（Nginx / Caddy / Cloudflare Tunnel）会把真实客户端 IP 追加到列表末尾，
+ * 而请求方自己伪造的值只会出现在前面。原来取第一个值等于把限流 key 交给攻击者：
+ * 每个请求换一个假 IP 就能绕过全部限流（登录爆破、TTS 滥用）。
+ *
+ * 注意：若部署时前面**没有**反代，XFF 完全由客户端控制，届时应在反代层
+ * 用 proxy_set_header 覆盖该头，或只信任 x-real-ip。
+ */
 export function getClientIp(req: Request): string {
   const xff = req.headers.get('x-forwarded-for');
-  if (xff) return xff.split(',')[0].trim();
+  if (xff) {
+    const parts = xff.split(',').map((s) => s.trim()).filter(Boolean);
+    if (parts.length > 0) return parts[parts.length - 1];
+  }
   const realIp = req.headers.get('x-real-ip');
-  if (realIp) return realIp;
+  if (realIp) return realIp.trim();
   return 'unknown';
 }
 
@@ -93,6 +128,8 @@ export function recordLoginFailure(username: string): void {
   const now = nowSec();
   const b = failStore.get(username);
   if (!b || b.resetAt <= now) {
+    // 用户名可被任意伪造，先做容量控制再写入，避免内存无界增长。
+    evictIfFull(failStore, now, MAX_FAIL_ENTRIES);
     failStore.set(username, { count: 1, resetAt: now + LOGIN_LOCK_SECONDS });
     return;
   }

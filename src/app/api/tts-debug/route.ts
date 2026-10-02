@@ -10,7 +10,19 @@ export const dynamic = 'force-dynamic';
 // 诊断端点会对外发起多次探测，成本更高，限流更严。
 const TTS_DEBUG_LIMIT = { windowSeconds: 60, maxRequests: 5 };
 
+/**
+ * 该端点会主动对外发起探测（含一次硬等 6 秒的 WebSocket 尝试），并把上游
+ * 响应体与错误原文回传，属于「开发诊断工具」，不应在公网可达的部署里开放。
+ *
+ * 默认关闭；需要排查 TTS 时在 NAS 的 .env 里临时设 ENABLE_TTS_DEBUG=true 并重建容器。
+ */
+const DEBUG_ENABLED = process.env.ENABLE_TTS_DEBUG === 'true';
+
 export async function GET(req: NextRequest) {
+  if (!DEBUG_ENABLED) {
+    // 对外表现得像路由不存在，避免暴露诊断面的存在
+    return NextResponse.json({ error: 'Not Found' }, { status: 404 });
+  }
   const ip = getClientIp(req);
   const limit = rateLimit('tts-debug:' + ip, TTS_DEBUG_LIMIT);
   if (!limit.ok) {

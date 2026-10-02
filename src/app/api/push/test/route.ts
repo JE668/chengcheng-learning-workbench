@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { getDb } from '@/lib/db-core';
-import { sendPushNotification } from '@/lib/push-notifications';
+import { sendPushNotification, isPushConfigured } from '@/lib/push-notifications';
+import { getClientIp, rateLimit } from '@/lib/rate-limit';
+
+// 这是「让服务器主动向订阅地址发请求」的动作，必须限流，避免被当作探测工具刷。
+const TEST_PUSH_LIMIT = { windowSeconds: 60, maxRequests: 3 };
 
 export async function POST(req: NextRequest) {
   try {
+    const limit = rateLimit('push-test:' + getClientIp(req), TEST_PUSH_LIMIT);
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: '请求太频繁，请 ' + limit.retryAfter + ' 秒后再试' },
+        { status: 429 }
+      );
+    }
+
+    if (!isPushConfigured) {
+      return NextResponse.json({ error: '服务端未配置 Web Push（VAPID 密钥缺失）' }, { status: 503 });
+    }
+
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
