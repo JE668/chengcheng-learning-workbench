@@ -2,35 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { getDb } from '@/lib/db-core';
 import { getVapidPublicKey, isPushConfigured, sendPushNotification } from '@/lib/push-notifications';
-
-/**
- * 校验推送订阅的 endpoint：必须是公网 https 域名。
- *
- * 背景：这个值会被存库，之后由 web-push 主动向它发起 POST。若不做校验，
- * 任何登录用户（包括孩子的账号）都能把它填成家庭内网地址（如
- * https://192.168.1.1/...），把服务器变成一个内网探测器（SSRF）。
- *
- * 这里不做严格的服务商白名单（各家浏览器用的推送网关不同，白名单容易误伤），
- * 而是要求 https + 域名，并显式排除 IP 字面量与内网后缀——足以切断 SSRF。
- */
-function isSafePushEndpoint(endpoint: string): boolean {
-  let url: URL;
-  try {
-    url = new URL(endpoint);
-  } catch {
-    return false;
-  }
-  if (url.protocol !== 'https:') return false;
-  const host = url.hostname.toLowerCase();
-  if (!host || !host.includes('.')) return false; // 必须是带点的域名，排除 localhost
-  // 排除 IP 字面量：IPv4 点分十进制，或任何含冒号的 IPv6
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(':')) return false;
-  // 排除内网/本地后缀
-  if (host.endsWith('.local') || host.endsWith('.internal') || host.endsWith('.localhost')) {
-    return false;
-  }
-  return true;
-}
+import { isSafePushEndpoint } from '@/lib/push-endpoint';
 
 export async function GET() {
   try {
