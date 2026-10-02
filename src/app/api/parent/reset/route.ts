@@ -1,14 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, verifyPassword } from '@/lib/auth';
-import { getDb } from '@/lib/db';
+import { getDb, withWriteLock } from '@/lib/db';
 import { getChildrenOfParent } from '@/lib/users';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+/** 密码校验限流：防止拿家长账号在线猜密码（每家长 5 次/分钟）。 */
+const RESET_LIMIT = { windowSeconds: 60, maxRequests: 5 };
+
 /**
  * 还原出厂设置：清空「当前家长名下所有孩子」的学习数据，保留账号。
  * 用于正式给孩子使用前清掉测试数据。需输入家长密码确认。
+ *
+ * ⚠️ 维护约定：**新增任何带 child_id 的表，都必须同步加进这个清单**，
+ * 否则「还原出厂设置」会静默漏清。判断方法：在 schema.ts + migrations.ts 里
+ * 搜所有含 child_id 的建表语句，与本清单逐一对照。
+ *
+ * 历史教训：本清单曾漏掉 learning_streak / speech_scores / algorithm_progress /
+ * algorithm_mistakes —— 结果是「还原出厂设置」之后孩子的**连续学习天数**与
+ * 语音评分、算法进度仍然残留。
  */
 const CHILD_TABLES = [
   'story_read',
@@ -30,6 +42,11 @@ const CHILD_TABLES = [
   'capture_tickets',
   'daily_practice',
   'castle_state',
+  // —— 以下 4 张是后来补上的（此前漏清）——
+  'learning_streak',
+  'speech_scores',
+  'algorithm_progress',
+  'algorithm_mistakes',
 ];
 
 export async function POST(req: NextRequest) {
@@ -37,6 +54,14 @@ export async function POST(req: NextRequest) {
     const user = await getCurrentUser();
     if (!user || user.role !== 'parent') {
       return NextResponse.json({ error: '未授权' }, { status: 401 });
+    }
+
+    const limit = rateLimit('parent-reset:' + user.id, RESET_LIMIT);
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: '尝试过于频繁，请 ' + limit.retryAfter + ' 秒后再试' },
+        { status: 429 }
+      );
     }
 
     const body = await req.json().catch(() => ({ password: '' }));
@@ -55,29 +80,40 @@ export async function POST(req: NextRequest) {
     const children = await getChildrenOfParent(user.id);
     const childIds = children.map((c) => c.id);
     if (childIds.length) {
-      // 逐张表、逐个孩子清空；单表异常（如旧库缺列）不阻断其余清空，
-      // 并打日志便于排查，避免整批失败导致前端只收到笼统的「请重试」。
-      for (const id of childIds) {
-        for (const t of CHILD_TABLES) {
-          try {
-            await db.execute({ sql: `DELETE FROM ${t} WHERE child_id = ?`, args: [id] });
-          } catch (e) {
-            console.error(`[reset] 清空 ${t} 失败:`, e instanceof Error ? e.message : e);
-          }
-        }
+      // 整批放进**一个事务**：要么全部清空，要么什么都不动。
+      // 原先是逐条 try/catch 吞掉异常，中途失败会留下「清了一半」的残缺状态。
+      // 仍然容忍「表不存在」——旧库缺表属正常情况，跳过即可（本来也没数据要删）；
+      // 其它错误一律上抛并 ROLLBACK。
+      await withWriteLock(async () => {
+        await db.execute({ sql: 'BEGIN IMMEDIATE', args: [] });
         try {
-          await db.execute({ sql: 'UPDATE users SET cert_pref = NULL WHERE id = ?', args: [id] });
+          for (const id of childIds) {
+            for (const t of CHILD_TABLES) {
+              try {
+                await db.execute({
+                  sql: 'DELETE FROM ' + t + ' WHERE child_id = ?',
+                  args: [id],
+                });
+              } catch (e) {
+                const m = e instanceof Error ? e.message : String(e);
+                if (!/no such table/i.test(m)) throw e;
+                console.warn('[reset] 跳过不存在的表：' + t);
+              }
+            }
+            await db.execute({ sql: 'UPDATE users SET cert_pref = NULL WHERE id = ?', args: [id] });
+          }
+          await db.execute({ sql: 'COMMIT', args: [] });
         } catch (e) {
-          console.error(`[reset] 清空 cert_pref 失败:`, e instanceof Error ? e.message : e);
+          await db.execute({ sql: 'ROLLBACK', args: [] }).catch(() => {});
+          throw e;
         }
-      }
+      });
     }
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error('[reset] 还原出厂设置异常:', msg);
-    // 返回 JSON 而非 HTML，确保前端能显示具体错误而不是笼统的「请重试」
-    return NextResponse.json({ error: '还原失败：' + msg }, { status: 500 });
+    // 细节只写日志：原先把原始异常字符串回传客户端，会泄露内部表名/驱动信息
+    console.error('[reset] 还原出厂设置异常:', e instanceof Error ? e.message : e);
+    return NextResponse.json({ error: '还原失败，请稍后重试或查看容器日志' }, { status: 500 });
   }
 }

@@ -3,11 +3,12 @@ import { getDb } from '@/lib/db';
 import { settleCastle } from '@/lib/castle-penalty';
 import { dateStr } from '@/lib/date';
 import { cleanupExpiredSessions } from '@/lib/auth';
+import { isCronAuthorized } from '@/lib/cron-auth';
 
 // Vercel Cron 调用：对城堡做一次结算（捣蛋萌可捣乱/成长刷新）。多娃下遍历所有孩子。
 export async function POST(req: Request) {
-  const secret = req.headers.get('authorization') || new URL(req.url).searchParams.get('secret');
-  if (secret !== process.env.CRON_SECRET) {
+  // 只认 Authorization 头，恒定时间比较（见 lib/cron-auth）
+  if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: 'forbidden' }, { status: 401 });
   }
   // 每日兜底清理过期会话（与 cookie 7 天 maxAge 对齐）

@@ -18,12 +18,15 @@ if [ -z "$CRON_SECRET" ]; then
   exit 2
 fi
 
+# ⚠️ 只走 Authorization 头，绝不把密钥拼进 URL：
+# URL 会进反向代理/访问日志，也会通过 Referer 外泄。
+# 服务端（lib/cron-auth）也只认这个头，并做恒定时间比较。
 HTTP_CODE=$(curl -s -o /tmp/settle_resp.$$ -w '%{http_code}' \
   -X POST \
   -H "Authorization: ${CRON_SECRET}" \
   -H "Content-Type: application/json" \
   --max-time 60 \
-  "$SETTLE_URL?secret=$CRON_SECRET" 2>/dev/null) || HTTP_CODE=000
+  "$SETTLE_URL" 2>/dev/null) || HTTP_CODE=000
 
 RESP_BODY=$(cat /tmp/settle_resp.$$ 2>/dev/null); rm -f /tmp/settle_resp.$$
 
