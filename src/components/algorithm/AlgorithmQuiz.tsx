@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { AlgorithmQuestion, StepField, StepInput } from '@/lib/algorithm/types';
 import { VerticalCalculation } from './VerticalCalculation';
+import { MiniVisualAid } from './MiniVisualAid';
 import { sfxComplete, sfxWrong } from '@/lib/sfx';
 import { FadeIn, Shake } from './LazyMotion';
 
@@ -11,6 +12,8 @@ interface AlgorithmQuizProps {
   onComplete: (correct: boolean) => void;
   onNext: () => void;
   showPrinciple?: boolean;
+  topicId?: string;
+  level?: number;
 }
 
 /**
@@ -18,7 +21,7 @@ interface AlgorithmQuizProps {
  * 展示：题目 → 原理 → 一步一步填写 → 最终答案
  * 使用 CSS 动画替代 framer-motion 以减小 bundle
  */
-export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = true }: AlgorithmQuizProps) {
+export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = true, topicId, level = 1 }: AlgorithmQuizProps) {
   // 当前步骤索引
   const [stepIdx, setStepIdx] = useState(0);
   // 每个输入框的答案
@@ -31,6 +34,8 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
   const [hintShown, setHintShown] = useState<Set<string>>(new Set());
   // 答错的输入框（用于 shake 动画）
   const [errorInputs, setErrorInputs] = useState<Set<string>>(new Set());
+  // 是否显示迷你思维图（前3关默认显示，4-7关可切换，8-10关默认隐藏）
+  const [showAid, setShowAid] = useState(level <= 3);
 
   const currentStep: StepField = question.stepFields[stepIdx];
   const isLastStep = stepIdx === question.stepFields.length - 1;
@@ -43,7 +48,8 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
     setCompleted(false);
     setHintShown(new Set());
     setErrorInputs(new Set());
-  }, [question.id]);
+    setShowAid(level <= 3);
+  }, [question.id, level]);
 
   /** 填写输入框 */
   const handleInput = useCallback((inputId: string, value: string) => {
@@ -116,6 +122,21 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
 
   return (
     <div className="space-y-4">
+      {/* 迷你思维图切换按钮 */}
+      {topicId && !completed && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowAid(!showAid)}
+            className="text-xs font-bold text-moko-violet bg-moko-purple/10 px-3 py-1.5 rounded-full hover:bg-moko-purple/20 transition"
+          >
+            {showAid ? '🙈 隐藏思维图' : '👀 显示思维图'}
+          </button>
+        </div>
+      )}
+
+      {/* 迷你思维图 */}
+      <MiniVisualAid topicId={topicId ?? ''} visible={showAid && !completed} />
+
       {/* 题目区 */}
       <FadeIn duration={0.3}>
         <div className="bg-white rounded-3xl p-6 shadow-lg border-2 border-moko-purple/20">

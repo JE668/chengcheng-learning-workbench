@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { FadeIn, FloatY } from '@/components/algorithm/LazyMotion';
+import { TtsButton } from './TtsButton';
 
 interface MantraCardProps {
   emoji: string;
@@ -38,6 +39,8 @@ export function MantraCard({ emoji, mantra, mokoName, mokoImg, showLabel = true 
             <div className="flex items-center gap-2 mb-2">
               <span className="text-3xl">{emoji}</span>
               <h3 className="text-lg font-black text-moko-violet">速算口诀</h3>
+              <span className="flex-1" />
+              <TtsButton text={`速算口诀，${mantra}`} />
             </div>
             <p className="text-sm font-bold text-gray-700 leading-relaxed whitespace-pre-line">{mantra}</p>
             <p className="text-xs text-moko-purple/60 font-bold mt-2">—— {mokoName}</p>

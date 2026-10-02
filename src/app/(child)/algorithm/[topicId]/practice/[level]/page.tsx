@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { genPracticeSet } from '@/lib/algorithm/generators';
@@ -9,6 +9,23 @@ import { AlgorithmQuiz } from '@/components/algorithm/AlgorithmQuiz';
 import { sfxComplete } from '@/lib/sfx';
 import { MokoGroupBg } from '@/components/moko-bg';
 
+/** 计算星级：3⭐ ≥90% | 2⭐ ≥70% | 1⭐ ≥50% | 0 <50% */
+function calcStars(correct: number, total: number): number {
+  const ratio = correct / total;
+  return ratio >= 0.9 ? 3 : ratio >= 0.7 ? 2 : ratio >= 0.5 ? 1 : 0;
+}
+
+/** 渲染星星 */
+function StarDisplay({ count, total }: { count: number; total: number }) {
+  const stars = calcStars(count, total);
+  return (
+    <div className="text-4xl font-black bg-white/20 rounded-2xl py-4 px-6 inline-block mb-4">
+      {Array.from({ length: 3 }, (_, i) => (
+        <span key={i} className={i < stars ? 'opacity-100' : 'opacity-30'}>⭐</span>
+      ))}
+    </div>
+  );
+}
 
 export default function PracticeLevelPage({
   params,
@@ -26,42 +43,82 @@ export default function PracticeLevelPage({
 
   const [idx, setIdx] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
+  const [mistakes, setMistakes] = useState<string[]>([]);
   const [allDone, setAllDone] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [stars, setStars] = useState(0);
 
   const currentQuestion = questions[idx];
 
-  const handleNext = () => {
+  const handleComplete = useCallback((correct: boolean) => {
+    if (correct) {
+      setCorrectCount((c) => c + 1);
+    } else {
+      // 记录错题 ID
+      setMistakes((prev) => [...prev, currentQuestion.id]);
+    }
+  }, [currentQuestion.id]);
+
+  const handleNext = useCallback(() => {
     if (idx < totalQuestions - 1) {
       setIdx(idx + 1);
     } else {
+      // 关卡完成
       setAllDone(true);
       sfxComplete();
     }
-  };
+  }, [idx, totalQuestions]);
 
-  const handleComplete = (correct: boolean) => {
-    if (correct) setCorrectCount((c) => c + 1);
-  };
+  // 保存进度到 API
+  const saveProgress = useCallback(async () => {
+    if (saved) return;
+    setSaved(true);
+    try {
+      const res = await fetch('/api/algorithm-progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topicId: params.topicId,
+          level,
+          correctCount,
+          totalCount: totalQuestions,
+          mistakes,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStars(data.stars);
+      }
+    } catch (e) {
+      console.error('Failed to save progress', e);
+    }
+  }, [saved, params.topicId, level, correctCount, totalQuestions, mistakes]);
+
+  // 当 allDone 变为 true 时保存进度。
+  // 必须用 useEffect：saveProgress 内部会 setSaved(true)，放在 useMemo 里等于在
+  // 渲染期间更新 state，StrictMode 下会重复提交并产生警告。
+  useEffect(() => {
+    if (allDone && !saved) {
+      void saveProgress();
+    }
+  }, [allDone, saved, saveProgress]);
 
   if (allDone) {
+    const finalStars = calcStars(correctCount, totalQuestions);
     return (
       <div className="relative max-w-2xl mx-auto min-h-screen pb-28 fade-up flex items-center justify-center p-6">
         <div
           className="bg-gradient-to-br from-green-400 to-emerald-500 rounded-3xl p-8 text-center text-white shadow-2xl"
-         
-         
-         
         >
           <div className="text-7xl mb-4">🏆</div>
           <h2 className="text-3xl font-black mb-2">练习完成！</h2>
           <p className="text-lg mb-4">你答对了 {correctCount} / {totalQuestions} 道题</p>
-          <div
-            className="text-4xl font-black bg-white/20 rounded-2xl py-4 px-6 inline-block mb-4"
-           
-           
-          >
-            ⭐ ⭐ ⭐
-          </div>
+          <StarDisplay count={correctCount} total={totalQuestions} />
+          {mistakes.length > 0 && (
+            <p className="text-sm mb-4 opacity-90">
+              有 {mistakes.length} 道题需要复习
+            </p>
+          )}
           <div className="flex gap-3 justify-center">
             <Link
               href={`/algorithm/${params.topicId}`}
@@ -110,6 +167,8 @@ export default function PracticeLevelPage({
         onComplete={handleComplete}
         onNext={handleNext}
         showPrinciple
+        topicId={params.topicId}
+        level={level}
       />
     </div>
   );

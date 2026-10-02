@@ -47,6 +47,21 @@ export function AlgorithmHomeClient() {
         </div>
       </div>
 
+      {/* 错题本入口 */}
+      <Link
+        href="/algorithm/mistakes"
+        className="block mb-6 bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-4 shadow border-2 border-orange-200 hover:border-orange-300 hover:scale-[1.01] transition"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">📕</span>
+          <div className="flex-1">
+            <div className="font-black text-gray-800">错题本</div>
+            <div className="text-xs text-gray-500">回顾做错的题，巩固薄弱环节</div>
+          </div>
+          <span className="text-moko-violet font-black text-lg">→</span>
+        </div>
+      </Link>
+
       {/* 十大技巧卡片 */}
       <h2 className="section-title mb-4">✨ 学习这十大魔法技巧</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

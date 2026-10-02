@@ -72,6 +72,10 @@ import {
   genMistakeQ,
 } from './gen-mistake';
 
+import { genAlgorithmQ } from './gen-algorithm';
+import { ALGORITHM_GENERATORS } from '../algorithm/generators';
+import { ALGORITHM_TOPICS } from '../algorithm/topics';
+
 // 类型导出
 export type {
   PracticeQuestion,
@@ -130,7 +134,7 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
   const diffLevel = Math.min(4, Math.floor(streak / 7)); // 0~4：每7天升一级
   const useHard = (idx: number) => idx < diffLevel; // 前 diffLevel 道用难题
 
-  // 数学 10 题：基础口算+应用题+乘法表+三位数加减等，每天随机（数字题天然不重复，无需去重）。
+  // 数学 10 题：基础口算+应用题+乘法表+三位数加减+算法题等，每天随机（数字题天然不重复，无需去重）。
   // 刻意排除除法：一年级尚未学除法，避免超纲。
   const mathPool: (() => PracticeQuestion)[] = [
     () => genMathQ(useHard(0)), () => genMathQ(useHard(1)), () => genMathQ(useHard(2)), () => genMathQ(useHard(3)),
@@ -144,6 +148,12 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
     () => genCompareQ(),                                      // 比大小（老文件题型保留）
     () => genOrdinalQ(),                                      // 序数（老文件题型保留）
     () => genClockQ(),                                        // 钟表（老文件题型保留）
+    // 算法题：每天随机抽 2 道，从已掌握的算法主题中出题
+    ...ALGORITHM_TOPICS.map((topic) => () => {
+      const gen = ALGORITHM_GENERATORS[topic.id];
+      const algoQ = gen(1); // 使用第 1 关难度
+      return genAlgorithmQ(algoQ);
+    }),
   ];
   const mathPick = shuffle(mathPool).slice(0, 10);
   for (const fn of mathPick) qs.push(fn());

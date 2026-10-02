@@ -294,6 +294,70 @@ export const MIGRATIONS: Migration[] = [
       try { await db.execute({ sql: 'ALTER TABLE users ADD COLUMN cert_pref TEXT', args: [] }); } catch { /* 已存在 */ }
     },
   },
+  {
+    version: 14,
+    name: 'add_algorithm_progress_table',
+    description: '新增 algorithm_progress 表：记录算法练习进度与星级',
+    up: async (db) => {
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS algorithm_progress (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          child_id INTEGER NOT NULL,
+          topic_id TEXT NOT NULL,
+          level INTEGER NOT NULL,
+          correct_count INTEGER NOT NULL DEFAULT 0,
+          total_count INTEGER NOT NULL DEFAULT 10,
+          best_stars INTEGER NOT NULL DEFAULT 0,
+          completed_at DATETIME,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(child_id, topic_id, level),
+          FOREIGN KEY(child_id) REFERENCES users(id)
+        )`,
+        args: [],
+      });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_algorithm_progress_child_topic ON algorithm_progress(child_id, topic_id)',
+        args: [],
+      });
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'DROP TABLE IF EXISTS algorithm_progress', args: [] });
+    },
+  },
+  {
+    version: 15,
+    name: 'add_algorithm_mistakes_table',
+    description: '新增 algorithm_mistakes 表：记录算法错题',
+    up: async (db) => {
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS algorithm_mistakes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          child_id INTEGER NOT NULL,
+          topic_id TEXT NOT NULL,
+          level INTEGER NOT NULL,
+          question_id TEXT NOT NULL,
+          wrong_count INTEGER NOT NULL DEFAULT 0,
+          last_wrong_at DATETIME,
+          is_mastered INTEGER NOT NULL DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(child_id, topic_id, level, question_id),
+          FOREIGN KEY(child_id) REFERENCES users(id)
+        )`,
+        args: [],
+      });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_algorithm_mistakes_child ON algorithm_mistakes(child_id)',
+        args: [],
+      });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_algorithm_mistakes_topic ON algorithm_mistakes(topic_id)',
+        args: [],
+      });
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'DROP TABLE IF EXISTS algorithm_mistakes', args: [] });
+    },
+  },
 ];
 
 export async function ensureMigrationTable(db: Client): Promise<void> {
@@ -330,7 +394,11 @@ export async function runMigrations(db: Client): Promise<void> {
   for (const m of MIGRATIONS) {
     if (m.version <= max) continue;
     await m.up(db);
-    await db.execute({ sql: 'INSERT INTO schema_migrations (version, name, description, applied_at, status) VALUES (?, ?, ?, CURRENT_TIMESTAMP, \'applied\')', args: [m.version, m.name, m.description ?? ''] });
+    // INSERT OR IGNORE：version 是主键。并发冷启动时两个请求可能同时判定
+    // 「该迁移未应用」并各自 up() + INSERT，用普通 INSERT 会让其中一个直接抛
+    // 主键冲突（进而让用户看到「数据库初始化失败」页）。up() 本身要求幂等，
+    // 所以这里忽略重复写入即可。
+    await db.execute({ sql: 'INSERT OR IGNORE INTO schema_migrations (version, name, description, applied_at, status) VALUES (?, ?, ?, CURRENT_TIMESTAMP, \'applied\')', args: [m.version, m.name, m.description ?? ''] });
   }
 }
 
