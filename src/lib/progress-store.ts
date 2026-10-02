@@ -76,17 +76,22 @@ export async function upsertModuleProgress(
   stars: number,
 ): Promise<ModuleProgressRow> {
   const db = getDb();
-  const existing = await getModuleProgress(childId, subject, moduleKey);
-  const newStars = Math.max(existing?.stars ?? 0, stars);
-  const newRounds = (existing?.rounds ?? 0) + 1;
+  // 原子写法：把「取历史最佳」和「轮次 +1」交给 SQL 完成。
+  // 原来是 SELECT → JS 计算 → UPSERT：两次并发提交会各自基于同一份旧值计算，
+  // 后写的把先写的覆盖掉（丢星级或丢轮次）。
   await db.execute({
     sql: `INSERT INTO module_progress (child_id, subject, module_key, stars, rounds, last_played)
-          VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
           ON CONFLICT(child_id, subject, module_key)
-          DO UPDATE SET stars = excluded.stars, rounds = excluded.rounds, last_played = CURRENT_TIMESTAMP`,
-    args: [childId, subject, moduleKey, newStars, newRounds],
+          DO UPDATE SET
+            stars = MAX(module_progress.stars, excluded.stars),
+            rounds = module_progress.rounds + 1,
+            last_played = CURRENT_TIMESTAMP`,
+    args: [childId, subject, moduleKey, stars],
   });
-  return { subject, moduleKey, stars: newStars, best: newStars, rounds: newRounds, lastPlayed: Date.now() };
+  // 回读最新值作为返回（写入本身已是原子的）
+  const row = await getModuleProgress(childId, subject, moduleKey);
+  return row ?? { subject, moduleKey, stars, best: stars, rounds: 1, lastPlayed: Date.now() };
 }
 
 /** 取某个孩子的全部小任务完成标记（key -> true）。 */

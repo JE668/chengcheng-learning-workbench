@@ -358,6 +358,27 @@ export const MIGRATIONS: Migration[] = [
       await db.execute({ sql: 'DROP TABLE IF EXISTS algorithm_mistakes', args: [] });
     },
   },
+  {
+    version: 16,
+    name: 'add_hot_query_indexes_2',
+    description: '补热查询索引：错题到期查询、成长事件时间线、捣蛋萌可、奖状申请、语音评分',
+    up: async (db) => {
+      // 错题「到期未掌握」是本项目最常见的按孩子过滤查询之一
+      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_mistakes_child_due ON mistakes(child_id, resolved, next_review)', args: [] });
+      // 成长日记按时间倒序取最近 N 条
+      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_growth_events_child_created ON growth_events(child_id, created_at)', args: [] });
+      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_troublemakers_child ON troublemakers(child_id)', args: [] });
+      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_cert_requests_child ON cert_requests(child_id)', args: [] });
+      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_speech_scores_child ON speech_scores(child_id)', args: [] });
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'DROP INDEX IF EXISTS idx_mistakes_child_due', args: [] });
+      await db.execute({ sql: 'DROP INDEX IF EXISTS idx_growth_events_child_created', args: [] });
+      await db.execute({ sql: 'DROP INDEX IF EXISTS idx_troublemakers_child', args: [] });
+      await db.execute({ sql: 'DROP INDEX IF EXISTS idx_cert_requests_child', args: [] });
+      await db.execute({ sql: 'DROP INDEX IF EXISTS idx_speech_scores_child', args: [] });
+    },
+  },
 ];
 
 export async function ensureMigrationTable(db: Client): Promise<void> {

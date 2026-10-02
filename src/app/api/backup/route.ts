@@ -16,6 +16,55 @@ const EXPORT_TABLES = [
 const allowed = new Set(EXPORT_TABLES);
 
 /**
+ * **不恢复 sessions 表**。
+ * sessions 里放的是登录 token：如果允许从备份文件写入，就等于允许往库里塞一个
+ * 「自己知道的 token」从而长期免密登录（比新增一个家长账号更干净的持久化后门）。
+ * 恢复数据后重新登录一次即可，没有必须恢复会话的理由。
+ */
+const IMPORT_TABLES = EXPORT_TABLES.filter((t) => t !== 'sessions');
+
+/** 导入请求体上限：备份 JSON 可以很大，但不能让单个请求把容器内存吃光。 */
+const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
+/** 单表行数上限：防止构造超大数组撑爆 batch。 */
+const MAX_ROWS_PER_TABLE = 20000;
+
+type LimitedBody = { ok: true; value: unknown } | { ok: false; status: number; reason: string };
+
+/**
+ * 带大小上限的 JSON 解析。
+ * 直接用 req.json() 会先把整个请求体读进内存、没有任何上限 —— 一个超大 POST
+ * 就能把容器内存打满。这里按流读取，超限立即中断。
+ */
+async function readJsonLimited(req: NextRequest, maxBytes: number): Promise<LimitedBody> {
+  const declared = Number(req.headers.get('content-length') || '0');
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    return { ok: false, status: 413, reason: '请求体过大' };
+  }
+  const reader = req.body?.getReader();
+  if (!reader) return { ok: false, status: 400, reason: '无效请求体' };
+
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    received += value.byteLength;
+    if (received > maxBytes) {
+      await reader.cancel().catch(() => {});
+      return { ok: false, status: 413, reason: '请求体过大' };
+    }
+    chunks.push(value);
+  }
+  try {
+    const text = Buffer.concat(chunks.map((c) => Buffer.from(c))).toString('utf8');
+    return { ok: true, value: JSON.parse(text) };
+  } catch {
+    return { ok: false, status: 400, reason: '无效请求体' };
+  }
+}
+
+/**
  * GET /api/backup/export — 导出全部数据为 JSON 文件（家长身份）
  */
 export async function GET() {
@@ -52,15 +101,25 @@ export async function POST(req: NextRequest) {
   if (!user || user.role !== 'parent') {
     return NextResponse.json({ error: '无权限' }, { status: 403 });
   }
-  let body: { data?: Record<string, unknown[]>; password?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: '无效请求体' }, { status: 400 });
+  const parsed = await readJsonLimited(req, MAX_IMPORT_BYTES);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.reason }, { status: parsed.status });
   }
-  const data = body.data;
+  const body = parsed.value as { data?: Record<string, unknown[]>; password?: string };
+  const data = body?.data;
   if (!data || typeof data !== 'object' || !Array.isArray(data.users)) {
     return NextResponse.json({ error: '备份文件格式不正确（缺少 users 表）' }, { status: 400 });
+  }
+
+  // 预检行数：在进入事务前拦截，避免写到一半才发现超限
+  for (const t of IMPORT_TABLES) {
+    const rows = data[t];
+    if (Array.isArray(rows) && rows.length > MAX_ROWS_PER_TABLE) {
+      return NextResponse.json(
+        { error: '备份文件中 ' + t + ' 的行数超过上限 ' + MAX_ROWS_PER_TABLE },
+        { status: 413 }
+      );
+    }
   }
 
   const db = getDb();
@@ -78,8 +137,8 @@ export async function POST(req: NextRequest) {
     await db.execute('PRAGMA foreign_keys = OFF');
     await db.execute('BEGIN');
     try {
-      // 先清空所有表（按外键依赖顺序）
-      for (const t of EXPORT_TABLES) {
+      // 先清空所有表（按外键依赖顺序）；sessions 不在 IMPORT_TABLES 里
+      for (const t of IMPORT_TABLES) {
         if (!allowed.has(t)) continue;
         if (!Array.isArray(data[t])) continue;
         try {
@@ -87,7 +146,7 @@ export async function POST(req: NextRequest) {
         } catch { /* 表不存在跳过 */ }
       }
       // 逐表恢复数据
-      for (const t of EXPORT_TABLES) {
+      for (const t of IMPORT_TABLES) {
         if (!allowed.has(t)) continue;
         const rows = data[t];
         if (!Array.isArray(rows) || rows.length === 0) continue;
@@ -117,11 +176,13 @@ export async function POST(req: NextRequest) {
       }
       await db.execute('COMMIT');
       await db.execute('PRAGMA foreign_keys = ON').catch(() => {});
-      return NextResponse.json({ ok: true, message: '数据已恢复（' + EXPORT_TABLES.length + ' 张表）✅' });
+      return NextResponse.json({ ok: true, message: '数据已恢复（' + IMPORT_TABLES.length + ' 张表，登录会话需重新登录）✅' });
     } catch (e) {
-      await db.execute('ROLLBACK');
+      await db.execute('ROLLBACK').catch(() => {});
       await db.execute('PRAGMA foreign_keys = ON').catch(() => {});
-      return NextResponse.json({ error: '恢复失败：' + String((e as Error).message) }, { status: 500 });
+      // 细节只写日志：原先把原始异常回传客户端，会泄露表名/驱动信息
+      console.error('[backup] 导入失败:', e instanceof Error ? e.message : e);
+      return NextResponse.json({ error: '恢复失败，请稍后重试或查看容器日志' }, { status: 500 });
     }
   });
 }

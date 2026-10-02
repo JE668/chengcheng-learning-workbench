@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { setSessionCookie, verifyPassword } from '@/lib/auth';
 import { getClientIp, rateLimit, loginLockout, recordLoginFailure, clearLoginFailure } from '@/lib/rate-limit';
+import bcrypt from 'bcryptjs';
+
+/**
+ * 供「用户不存在」分支使用的假哈希：模块加载时生成一次，保证是**合法**的 bcrypt 串，
+ * 从而让该分支与「密码错误」分支耗时相当。
+ */
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync('ccwb-login-timing-dummy', 10);
 
 // 登录限流配置（可通过环境变量覆盖）
 const LOGIN_LIMIT = {
@@ -37,7 +44,11 @@ export async function POST(req: NextRequest) {
   const db = getDb();
   const res = await db.execute({ sql: 'SELECT * FROM users WHERE username = ?', args: [uname] });
   const row = res.rows[0];
-  if (!row || !verifyPassword(password, String(row.password_hash))) {
+  // 用户不存在时也要跑一次 bcrypt：原先的 `!row || ...` 会短路掉哈希计算，
+  // 响应时间可区分「用户存在 / 不存在」→ 可被用来枚举用户名。
+  const hash = row ? String(row.password_hash) : DUMMY_PASSWORD_HASH;
+  const passwordOk = verifyPassword(password, hash);
+  if (!row || !passwordOk) {
     recordLoginFailure(uname);
     return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 });
   }
