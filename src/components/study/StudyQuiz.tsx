@@ -80,12 +80,14 @@ export function StudyQuiz({
   const initialRounds = ctx?.initialProgress?.rounds ?? hookProgress.rounds ?? 0;
   const initialLastPlayed = ctx?.initialProgress?.lastPlayed ?? hookProgress.lastPlayed ?? 0;
 
-  const order = useMemo(
-    () => (randomOrder ? shuffle(items.map((_, i) => i)) : items.map((_, i) => i)),
+  // 首帧用确定性顺序（SSR 与客户端一致），挂载后再按 randomOrder 打乱。
+  // 原先用 useMemo(shuffle, []) 在**渲染期**求值：服务端与客户端结果不同 → hydration 不一致。
+  const [order, setOrder] = useState<number[]>(() => items.map((_, i) => i));
+  useEffect(() => {
+    if (randomOrder) setOrder(shuffle(items.map((_, i) => i)));
     // 仅在挂载时生成一次题目顺序
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
+  }, []);
   const [pos, setPos] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const [feedbackLine, setFeedbackLine] = useState(''); // 当前答对/答错时萌可说的一句话（语音与显示共用）

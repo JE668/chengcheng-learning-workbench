@@ -453,31 +453,41 @@ interface CharQ {
   answer: string;
 }
 
-function buildQuestion(level: DiffLevel): CharQ {
+/**
+ * 构造一道题。
+ *
+ * @param opts.shuffle 传 false 时走**确定性**路径（取池中第一个、不打乱选项）——
+ *   专供组件首帧使用：客户端组件会被 SSR，首帧若就随机，服务端 HTML 与客户端必然不一致
+ *   （React 会报 hydration 错误并丢弃子树重渲染）。挂载后再用默认的随机路径换题。
+ */
+function buildQuestion(level: DiffLevel, opts: { shuffle?: boolean } = {}): CharQ {
+  const random = opts.shuffle !== false;
+  const pick = <T,>(arr: T[]): T => (random ? arr[Math.floor(Math.random() * arr.length)] : arr[0]);
+  const arrange = <T,>(arr: T[]): T[] => (random ? shuffle(arr) : arr);
+
   const pool = LEVEL_POOL[level];
-  const target = pool[Math.floor(Math.random() * pool.length)];
+  const target = pick(pool);
   if (level === 'hard') {
     // mean2char: 题干显示释义，选项是字。如果释义包含目标字（如「子」→「孩子」），答案泄露，跳过
     const safePool = pool.filter((c) => !c.meaning.includes(c.char));
-    const safeTarget = safePool.length > 0
-      ? safePool[Math.floor(Math.random() * safePool.length)]
-      : target;
-    const distractors = shuffle(pool.filter((c) => c.char !== safeTarget.char))
+    const safeTarget = safePool.length > 0 ? pick(safePool) : target;
+    const distractors = arrange(pool.filter((c) => c.char !== safeTarget.char))
       .slice(0, 3)
       .map((c) => c.char);
-    return { mode: 'mean2char', target: safeTarget, options: shuffle([safeTarget.char, ...distractors]), answer: safeTarget.char };
+    return { mode: 'mean2char', target: safeTarget, options: arrange([safeTarget.char, ...distractors]), answer: safeTarget.char };
   }
   // 释义可能撞车（比如两个字都写「小孩」），撞车的选项会让孩子答对被判错，先过滤掉
-  const distractors = shuffle(pool.filter((c) => c.meaning !== target.meaning))
+  const distractors = arrange(pool.filter((c) => c.meaning !== target.meaning))
     .slice(0, 3)
     .map((c) => c.meaning);
-  return { mode: 'char2mean', target, options: shuffle([target.meaning, ...distractors]), answer: target.meaning };
+  return { mode: 'char2mean', target, options: arrange([target.meaning, ...distractors]), answer: target.meaning };
 }
 
 export function CharacterQuizModule() {
   const { record } = useModuleProgress('chinese', 'quiz');
   const [level, setLevel] = useState<DiffLevel>('easy');
-  const [q, setQ] = useState<CharQ>(() => buildQuestion('easy'));
+  // 首帧用确定性题目（SSR 一致），挂载后再随机换题（见下面的 mount effect）
+  const [q, setQ] = useState<CharQ>(() => buildQuestion('easy', { shuffle: false }));
   const [picked, setPicked] = useState<string | null>(null);
   const [streak, setStreak] = useState({ right: 0, wrong: 0 });
   const [totalCorrect, setTotalCorrect] = useState(0);
@@ -489,6 +499,9 @@ export function CharacterQuizModule() {
     if (saved && LEVEL_ORDER.includes(saved)) {
       setLevel(saved);
       setQ(buildQuestion(saved));
+    } else {
+      // 没有存档时也要把首帧的确定性题目换成随机的，否则会一直停在第一题
+      setQ(buildQuestion('easy'));
     }
   }, []);
 

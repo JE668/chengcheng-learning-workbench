@@ -182,11 +182,20 @@ const TPR = [
 ];
 
 export function EnTprModule() {
-  const [idx, setIdx] = useState(() => Math.floor(Math.random() * TPR.length));
+  // 首帧用确定的 0（SSR 与客户端必须一致，否则 hydration 不一致），挂载后再随机抽一条。
+  const [idx, setIdx] = useState(0);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    setIdx(Math.floor(Math.random() * TPR.length));
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    // 等挂载后的随机结果就绪再朗读：否则会「先读第 0 条、紧接着再读随机条」（双读）
+    if (!ready) return;
     speakEn(TPR[idx].en, 0.7);
-  }, [idx]);
+  }, [idx, ready]);
 
   function next() {
     // 避免连续抽到同一条指令
