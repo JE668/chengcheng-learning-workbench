@@ -15,11 +15,13 @@ RUN HUSKY=0 pnpm install --frozen-lockfile --ignore-scripts && pnpm store prune
 
 # 复制源码并构建
 COPY . .
+# 注意：不再执行 pnpm prune --prod —— 运行阶段已改为只使用 standalone 自带的
+# 依赖追踪产物（.next/standalone/node_modules，实测约 47MB，含 libSQL 原生绑定、
+# bcryptjs、web-push、ws 等全部服务端依赖），不再把整包 node_modules 拷进镜像。
+# 「是否真的够用」不再靠人肉验证，由 build.yml 里的镜像冒烟测试在每次构建时自动检验。
 RUN pnpm lint && npx tsc --noEmit --skipLibCheck && \
     pnpm build && \
-    rm -rf .next/cache tsconfig.tsbuildinfo && \
-    pnpm prune --prod && \
-    pnpm store prune
+    rm -rf .next/cache tsconfig.tsbuildinfo
 
 # ============ 运行阶段 ============
 FROM node:22-bookworm-slim AS runner
@@ -45,9 +47,12 @@ ENV NODE_ENV=production \
 WORKDIR /app
 
 # 合并 COPY 层（Docker 会自动缓存每一层，合并减少层数）
+# ⚠️ 此前这里还有一行 COPY --from=builder /app/node_modules ./node_modules，
+#    它会用整包生产依赖**覆盖** standalone 自带的 47MB 精简依赖 —— 删掉后镜像
+#    缩小数百 MB。运行时够不够用由 build.yml 的冒烟测试把关（登录路径会真实
+#    触发 libSQL 原生模块 + bcryptjs + 建库建表）。
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/scripts/tts-server.py ./scripts/tts-server.py
 COPY --from=builder /app/package.json ./package.json

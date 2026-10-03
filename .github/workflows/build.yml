@@ -55,8 +55,9 @@ jobs:
       - name: Lowercase image name
         run: echo "IMAGE_IO=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
-      # 主推送：ghcr.io（用内置 GITHUB_TOKEN，零额外配置，必成功）
-      - name: Build and push to ghcr.io
+      # 先构建到本地 daemon（不直接推），跑完冒烟测试确认镜像「能跑」，再手动推送。
+      # 这样坏镜像永远不会到达 GHCR —— NAS 拉到的 latest 一定是验证过的。
+      - name: Build image (load，暂不推送)
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -64,11 +65,68 @@ jobs:
           # 是单次构建 20+ 分钟里最大的一块；去掉后构建时间大幅下降。
           # 将来若换 ARM 设备，改回 linux/amd64,linux/arm64 即可。
           platforms: linux/amd64
-          push: true
-          tags: |
-            ${{ env.IMAGE_IO }}:latest
-            ${{ env.IMAGE_IO }}:${{ github.sha }}
+          push: false
+          load: true
+          tags: ccwb-smoke:ci
           provenance: false
-          outputs: type=image,name=target,compression=zstd,compression-level=3
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # 运行时冒烟测试：证明镜像不仅「能构建」，而且「能跑」。三个检查点：
+      #   1) GET /login 200 —— Next 启动、页面经根布局渲染（触发 ensureSchema 建库建表）
+      #   2) POST /api/auth/login 401 —— libSQL 原生模块 + 查库 + bcryptjs 假哈希比较真实跑通
+      #   3) GET /api/tts/health {"ok":true} —— python3 与 scripts/tts-server.py 就位
+      - name: Smoke test（boot + DB + 登录路径 + TTS 健康检查）
+        run: |
+          docker run -d --name ccwb-smoke -p 3199:3000 ccwb-smoke:ci
+          code=000
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1:3199/ || true)
+            [ "$code" != "000" ] && break
+            sleep 2
+          done
+          echo "GET / -> $code"
+          if [ "$code" = "000" ]; then
+            echo "❌ 容器 60 秒内没有响应任何 HTTP 请求"
+            docker logs ccwb-smoke | tail -30
+            exit 1
+          fi
+
+          login_page=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 http://127.0.0.1:3199/login)
+          echo "GET /login -> $login_page（期望 200，且已触发 ensureSchema 建库）"
+          if [ "$login_page" != "200" ]; then
+            echo "❌ /login 未返回 200"
+            docker logs ccwb-smoke | tail -30
+            exit 1
+          fi
+
+          login_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
+            -X POST -H 'Content-Type: application/json' \
+            -d '{"username":"__no_such_user__","password":"__wrong__"}' \
+            http://127.0.0.1:3199/api/auth/login)
+          echo "POST /api/auth/login -> $login_code（期望 401 = libSQL+bcrypt 真实跑通）"
+          if [ "$login_code" != "401" ]; then
+            echo "❌ 登录路径未按预期返回 401（libSQL 原生模块 / bcryptjs 可能没跑通）"
+            docker logs ccwb-smoke | tail -30
+            exit 1
+          fi
+
+          health=$(curl -s --max-time 30 http://127.0.0.1:3199/api/tts/health || echo '{}')
+          echo "GET /api/tts/health -> $health"
+          if ! printf '%s' "$health" | grep -q '"ok":true'; then
+            echo "❌ TTS 健康检查未通过（python3 / scripts/tts-server.py 可能缺失）"
+            docker logs ccwb-smoke | tail -30
+            exit 1
+          fi
+
+          echo "✅ 冒烟测试全部通过"
+          docker logs ccwb-smoke | tail -5
+          docker rm -f ccwb-smoke > /dev/null 2>&1 || true
+
+      # 冒烟通过后才推送：latest + commit sha 双标签
+      - name: Push to ghcr.io
+        run: |
+          docker tag ccwb-smoke:ci "${IMAGE_IO}:latest"
+          docker tag ccwb-smoke:ci "${IMAGE_IO}:${{ github.sha }}"
+          docker push "${IMAGE_IO}:latest"
+          docker push "${IMAGE_IO}:${{ github.sha }}"
