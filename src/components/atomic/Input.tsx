@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import * as React from 'react';
@@ -21,25 +20,14 @@ export const inputVariants = cva(
   {
     variants: {
       variant: {
-        default: [
-          'focus-visible:border-primary',
-        ],
-        error: [
-          'border-danger',
-          'focus-visible:border-danger',
-          'focus-visible:ring-danger/20',
-        ],
+        default: ['focus-visible:border-primary'],
+        error: ['border-danger', 'focus-visible:border-danger', 'focus-visible:ring-danger/20'],
         success: [
           'border-success',
           'focus-visible:border-success',
           'focus-visible:ring-success/20',
         ],
-        search: [
-          'pl-10 pr-4',
-          'bg-gray-50',
-          'border-gray-100',
-          'focus-visible:bg-white',
-        ],
+        search: ['pl-10 pr-4', 'bg-gray-50', 'border-gray-100', 'focus-visible:bg-white'],
       },
       size: {
         sm: 'h-8 px-3 text-sm',
@@ -60,7 +48,8 @@ export const inputVariants = cva(
 );
 
 export interface InputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
+  extends
+    Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
     VariantProps<typeof inputVariants> {
   /** 标签文本 */
   label?: string;
@@ -100,6 +89,16 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ) => {
     // useId 必须无条件调用，放在组件顶层
     const generatedId = React.useId();
+
+    // forwardRef 的 ref 参数是「回调函数 | RefObject | null」的联合类型：
+    // 直接在上面取 .current 会报错（回调形式没有 current，且本身可能为 null）。
+    // 用回调 ref 同时写「内部」和「外部」两边，内部就能安全地 inputRef.current?.focus()。
+    const inputRef = React.useRef<HTMLInputElement | null>(null);
+    const setInputRef = (node: HTMLInputElement | null) => {
+      inputRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) ref.current = node;
+    };
     const inputId = id || `input-${generatedId}`;
     const errorId = `${inputId}-error`;
     const hintId = `${inputId}-hint`;
@@ -115,19 +114,22 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const handleClear = (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       onChange?.({ target: { value: '', name: props.name } } as any);
-      onBlur?.(e);
-      ref.current?.focus();
+      // 传入的是鼠标事件而 onBlur 期望 FocusEvent —— 运行时的校验逻辑只读
+      // target/value，这里保持原有行为、做一次显式转换让类型对上（不改语义）。
+      onBlur?.(e as unknown as React.FocusEvent<HTMLInputElement>);
+      inputRef.current?.focus();
     };
 
     return (
       <div className={cn('w-full', fullWidth && 'w-full')}>
         {label && (
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-semibold text-gray-700 mb-1.5"
-          >
+          <label htmlFor={inputId} className="block text-sm font-semibold text-gray-700 mb-1.5">
             {label}
-            {required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
+            {required && (
+              <span className="text-red-500 ml-1" aria-hidden="true">
+                *
+              </span>
+            )}
           </label>
         )}
         <div className="relative">
@@ -137,7 +139,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
           <input
-            ref={ref}
+            ref={setInputRef}
             id={inputId}
             className={cn(
               inputVariants({ variant: error ? 'error' : variant, size, fullWidth }),
@@ -167,16 +169,40 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="清除内容"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           )}
         </div>
         {error && (
-          <p id={errorId} className="mt-1.5 text-sm text-red-600 flex items-center gap-1" role="alert">
-            <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          <p
+            id={errorId}
+            className="mt-1.5 text-sm text-red-600 flex items-center gap-1"
+            role="alert"
+          >
+            <svg
+              className="w-4 h-4 flex-shrink-0"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
             </svg>
             {error}
           </p>
@@ -193,5 +219,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
 Input.displayName = 'Input';
 
+// InputProps 已在文件中部以 `export interface` 导出过，
+// 这里再 export type 一次会造成「重复导出」冲突（原先被 @ts-nocheck 掩盖）。
 export { Input };
-export type { InputProps };

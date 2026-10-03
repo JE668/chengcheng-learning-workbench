@@ -1,10 +1,19 @@
-// @ts-nocheck
 'use client';
 
 import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn, focusRing, disabledStyles, transitionBase, activeScale, minTouchTarget, shadows, textSizes, fontWeights } from './utils';
+import {
+  cn,
+  focusRing,
+  disabledStyles,
+  transitionBase,
+  activeScale,
+  minTouchTarget,
+  shadows,
+  textSizes,
+  fontWeights,
+} from './utils';
 
 export const buttonVariants = cva(
   [
@@ -19,11 +28,7 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: [
-          'bg-primary text-primary-foreground',
-          'hover:bg-primary/90',
-          shadows.card,
-        ],
+        default: ['bg-primary text-primary-foreground', 'hover:bg-primary/90', shadows.card],
         destructive: [
           'bg-destructive text-destructive-foreground',
           'hover:bg-destructive/90',
@@ -38,10 +43,7 @@ export const buttonVariants = cva(
           'hover:bg-secondary/80',
           shadows.card,
         ],
-        ghost: [
-          'bg-transparent',
-          'hover:bg-accent hover:text-accent-foreground',
-        ],
+        ghost: ['bg-transparent', 'hover:bg-accent hover:text-accent-foreground'],
         link: [
           'text-primary underline-offset-4',
           'hover:underline',
@@ -96,8 +98,7 @@ export const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   /** 是否显示加载状态 */
   loading?: boolean;
   /** 子元素作为图标 */
@@ -125,7 +126,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const Comp = asChild ? Slot : 'button';
-    const isLoading = loading || props.disabled;
+    // disabled 已在最上方从 props 中解构出来，剩余的 props 里不再有这个键
+    const isLoading = loading || disabled;
 
     return (
       <Comp
@@ -163,9 +165,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           </>
         ) : (
           <>
-            {leftIcon && <span className="flex-shrink-0" aria-hidden="true">{leftIcon}</span>}
+            {leftIcon && (
+              <span className="flex-shrink-0" aria-hidden="true">
+                {leftIcon}
+              </span>
+            )}
             {children}
-            {rightIcon && <span className="flex-shrink-0" aria-hidden="true">{rightIcon}</span>}
+            {rightIcon && (
+              <span className="flex-shrink-0" aria-hidden="true">
+                {rightIcon}
+              </span>
+            )}
           </>
         )}
       </Comp>
@@ -175,5 +185,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button';
 
+// ButtonProps 已在文件中部以 `export interface` 导出过，
+// 这里再 export type 一次会造成「重复导出」冲突（原先被 @ts-nocheck 掩盖）。
 export { Button };
-export type { ButtonProps };
