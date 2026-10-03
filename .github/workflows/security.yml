@@ -14,8 +14,8 @@ concurrency:
 
 permissions:
   contents: read
-  security-events: write  # for codeql upload
-  actions: read  # for checking workflow runs
+  security-events: write # for codeql upload
+  actions: read # for checking workflow runs
 
 jobs:
   # npm audit - fast, built-in
@@ -100,7 +100,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [javascript, typescript]
+        # CodeQL 的 javascript 分析器**已经覆盖 TypeScript**。再列一个 typescript
+        # 会用同一个代码库跑第二遍：白白多花一倍时间，且两次结果会互相覆盖。
+        # 只保留 javascript。
+        language: [javascript]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -115,7 +118,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
         with:
-          category: "/language:${{matrix.language}}"
+          category: '/language:${{matrix.language}}'
 
   # Snyk (optional - requires SNYK_TOKEN secret)
   snyk:

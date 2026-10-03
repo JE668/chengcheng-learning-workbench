@@ -14,12 +14,17 @@ docker compose build
 echo ">>> [3/4] 用新镜像重启容器"
 docker compose up -d
 
-echo ">>> [4/4] 校验：正在跑的镜像里是否已是新代码（应显示 castle.ts 的 643 行）"
-if docker compose exec chengcheng grep -n "mokoCollection" /app/src/lib/castle.ts; then
-  echo "✅ 已是最新镜像。刷新浏览器（Ctrl/Cmd+Shift+R）即可看到最新内容。"
-else
-  echo "⚠️ 容器内未找到新代码，可能仍是旧镜像。请检查上面 build 步骤是否报错。"
-fi
+echo ">>> [4/4] 校验：容器状态与所用镜像"
+# ⚠️ 原先这里是 `docker compose exec chengcheng grep -n ... /app/src/lib/castle.ts`，
+#    但运行镜像里**只有编译产物**（.next/standalone、node_modules、public、scripts），
+#    根本没有 src/ 目录 —— 这个自检**必然失败**，于是永远打印「可能仍是旧镜像」，
+#    属于误导性提示。改为展示真正能反映「是否刚更新」的信息。
+docker compose ps
+docker inspect chengcheng --format '容器所用镜像: {{.Config.Image}}'
+docker inspect chengcheng --format '容器启动时间: {{.State.StartedAt}}'
+echo "（判断是否更新成功：对比上面 build 完成时间与镜像创建时间）"
+docker images --format '{{.Repository}}:{{.Tag}}  {{.CreatedAt}}' | head -5
+echo "✅ 若容器状态为 Up/healthy，且镜像创建时间与本次 build 时间一致，即为最新。"
 
 echo ">>> 当前容器状态："
 docker compose ps

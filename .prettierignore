@@ -1,0 +1,24 @@
+# prettier 不要碰这些文件 —— 它们各有自己的「规范写手」
+
+# ⚠️ 锁文件由 pnpm 自己生成与格式化。交给 prettier 重排会产生几千行的伪 diff
+# （本项目实测：一次提交被 prettier 重排了 6136 行），且会与 pnpm 的写回互相打架。
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# 构建产物 / 报告 / 本地数据
+.next
+out
+coverage
+playwright-report
+test-results
+node_modules
+
+# 由生成器产出，规范由生成器决定
+public/hanzi
+src/lib/moko-collection
+
+# 本地数据库
+local.db
+local.db-shm
+local.db-wal

@@ -1,2 +1,15 @@
-# 本地轻量检查（CI 在 GitHub Actions 完整跑）
-npx tsc --noEmit --skipLibCheck 2>&1 | head -20
+#!/usr/bin/env sh
+# 本地提交前检查（CI 里会用同一套命令完整再跑一遍）
+#
+# ⚠️ 千万不要写成 `npx tsc ... | head -20`：
+#    管道的退出码取的是 `head` 的（永远是 0），于是**类型错误根本拦不住提交**。
+#    本仓库历史上这个钩子就是这样形同虚设的。
+# 另外：husky 的 runner 本身带 `sh -e`，任一命令失败即中断；这里再显式 set -e 更清楚。
+set -e
+
+# 1) 只对「暂存的文件」跑 ESLint --fix + Prettier（规则见 .lintstagedrc）
+npx lint-staged
+
+# 2) 全量类型检查。必须走完整 tsconfig —— 所以不能用 lint-staged 那种「把文件名交给
+#    tsc」的方式（传了文件名 tsc 会忽略 tsconfig，paths/jsx 等设置全部失效）。
+npx tsc --noEmit --skipLibCheck
