@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { speakZh } from '@/lib/speak';
 import { trackActivity } from '@/lib/activity';
@@ -33,6 +33,31 @@ export default function TalkPage() {
   const chunksRef = useRef<Blob[]>([]);
 
   const scene = SCENES[idx];
+
+  // 卸载清理：原先离开页面时 MediaStream 轨道不会停止（**麦克风指示灯会一直亮**），
+  // 录音中途切页还会留下未停止的 MediaRecorder。
+  useEffect(() => {
+    return () => {
+      const mr = mrRef.current;
+      if (!mr) return;
+      mr.onstop = null; // 卸载后不要再产生新的 blob URL
+      if (mr.state !== 'inactive') {
+        try {
+          mr.stop();
+        } catch {
+          /* 已在停止中 */
+        }
+      }
+      mr.stream.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
+
+  // blob URL 回收：audioUrl 被替换（换场景）或组件卸载时必须 revoke，
+  // 否则那段音频会一直留在内存里。
+  useEffect(() => {
+    if (!audioUrl) return;
+    return () => URL.revokeObjectURL(audioUrl);
+  }, [audioUrl]);
 
   const next = () => {
     setIdx((i) => (i + 1) % SCENES.length);

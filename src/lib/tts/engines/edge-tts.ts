@@ -125,41 +125,71 @@ export class EdgeTTSEngine implements TTSEngine {
   }
 
   private async playAudio(arrayBuffer: ArrayBuffer, pauseMs?: number): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        audioContext.decodeAudioData(arrayBuffer.slice(0), (buffer) => {
-          const source = audioContext.createBufferSource();
-          source.buffer = buffer;
-          source.connect(audioContext.destination);
-          source.onended = () => {
-            if (pauseMs && pauseMs > 0) {
-              setTimeout(resolve, pauseMs);
-            } else {
-              resolve();
-            }
-          };
+    // 先试 Web Audio，失败（解码错误或同步异常）再降级到 <audio> 元素。
+    // ⚠️ 原实现把 decodeAudioData 的失败回调直接接到 reject —— 那样解码失败时
+    // **不会走降级分支**（catch 只兜同步异常），有声音的场景会静默播不出来。
+    try {
+      await this.playWithWebAudio(arrayBuffer, pauseMs);
+      return;
+    } catch {
+      /* 落到下面的 <audio> 降级 */
+    }
+    await this.playWithAudioElement(arrayBuffer, pauseMs);
+  }
+
+  /**
+   * 用 Web Audio 播放。
+   * ⚠️ AudioContext 必须用 close() 释放：浏览器对同时存在的 AudioContext 数量有上限
+   * （约 6 个），而这里每次朗读都会新建一个 —— 不关闭的话，连续朗读几次之后就再也播不出声。
+   */
+  private async playWithWebAudio(arrayBuffer: ArrayBuffer, pauseMs?: number): Promise<void> {
+    const Ctor =
+      window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctor) throw new Error('Web Audio 不可用');
+
+    const audioContext: AudioContext = new Ctor();
+    try {
+      // 传副本：decodeAudioData 可能「拿走」传入的 buffer，而调用方后面还要用它做降级
+      const buffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+      await new Promise<void>((resolve, reject) => {
+        const source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.onended = () => resolve();
+        try {
           source.start(0);
-        }, reject);
-      } catch {
-        // 降级到 Audio 元素
-        const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audio.onended = () => {
-          URL.revokeObjectURL(url);
-          if (pauseMs && pauseMs > 0) {
-            setTimeout(resolve, pauseMs);
-          } else {
-            resolve();
-          }
-        };
-        audio.onerror = () => {
-          URL.revokeObjectURL(url);
-          reject(new Error('Audio playback failed'));
-        };
-        audio.play().catch(reject);
-      }
+        } catch (err) {
+          reject(err instanceof Error ? err : new Error(String(err)));
+        }
+      });
+      if (pauseMs && pauseMs > 0) await new Promise((r) => setTimeout(r, pauseMs));
+    } finally {
+      // 无论成功失败都关闭，避免耗尽 AudioContext 配额
+      await audioContext.close().catch(() => {});
+    }
+  }
+
+  /** 降级路径：用 <audio> 元素播放，并确保 objectURL 一定被回收。 */
+  private playWithAudioElement(arrayBuffer: ArrayBuffer, pauseMs?: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      const revoke = () => URL.revokeObjectURL(url);
+
+      audio.onended = () => {
+        revoke();
+        if (pauseMs && pauseMs > 0) setTimeout(resolve, pauseMs);
+        else resolve();
+      };
+      audio.onerror = () => {
+        revoke();
+        reject(new Error('Audio playback failed'));
+      };
+      audio.play().catch((err) => {
+        revoke();
+        reject(err instanceof Error ? err : new Error(String(err)));
+      });
     });
   }
 
