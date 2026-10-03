@@ -45,6 +45,8 @@ class PdfErrorBoundary extends Component<{ url: string; children: ReactNode }, {
 /** 真正的 canvas 渲染逻辑；异步任何失败都置 failed，由本组件渲染 iframe 降级 */
 function PdfCanvas({ url, className = '' }: { url: string; className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  /** 当前 pdf.js 文档句柄：卸载/换文件时必须 destroy，否则 worker 与页面资源不释放 */
+  const pdfRef = useRef<{ destroy?: () => Promise<void> } | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [failed, setFailed] = useState(false);
 
@@ -75,8 +77,10 @@ function PdfCanvas({ url, className = '' }: { url: string; className?: string })
         pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
         const pdf = await pdfjs.getDocument({ url }).promise;
+        pdfRef.current = pdf as unknown as { destroy?: () => Promise<void> };
         if (cancelled) {
-          (pdf as any).destroy?.();
+          await pdfRef.current?.destroy?.().catch(() => {});
+          pdfRef.current = null;
           return;
         }
 
@@ -84,6 +88,8 @@ function PdfCanvas({ url, className = '' }: { url: string; className?: string })
         const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
 
         for (let i = 1; i <= pdf.numPages; i++) {
+          // 每页开始前就检查：原先只在每页渲染完之后检查，卸载后仍会多渲染一页
+          if (cancelled) break;
           const page = await pdf.getPage(i);
           const base = page.getViewport({ scale: 1 });
           if (!base.width || !base.height) continue;
@@ -112,6 +118,11 @@ function PdfCanvas({ url, className = '' }: { url: string; className?: string })
 
     return () => {
       cancelled = true;
+      // 卸载或换文件时销毁文档：原先只在「getDocument 之后立刻取消」这一条路径上
+      // destroy，正常卸载时 pdfjs 的 worker 与已解析页面会一直留在内存里。
+      pdfRef.current?.destroy?.().catch(() => {});
+      pdfRef.current = null;
+      if (container) container.innerHTML = '';
     };
   }, [url]);
 
