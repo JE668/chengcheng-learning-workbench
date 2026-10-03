@@ -1,6 +1,6 @@
-// @ts-nocheck
+import '@testing-library/jest-dom';
 import React from 'react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import axe from 'axe-core';
 import { Button } from '@/components/atomic/Button';
@@ -10,7 +10,7 @@ async function checkA11y(container: HTMLElement) {
   const results = await axe.run(container, {
     rules: {
       'color-contrast': { enabled: true },
-      'label': { enabled: true },
+      label: { enabled: true },
       'button-name': { enabled: true },
       'link-name': { enabled: true },
       'image-alt': { enabled: true },
@@ -68,7 +68,7 @@ describe('Accessibility Tests with axe-core', () => {
       render(<Input label="密码" error="密码不能为空" />, { container });
       const results = await checkA11y(container);
       expect(results.violations).toHaveLength(0);
-      
+
       const errorMsg = screen.getByRole('alert');
       expect(errorMsg).toHaveTextContent(/密码不能为空/);
     });
