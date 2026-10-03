@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import { getDb, getChildPoints } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
-export async function POST(_req: Request, { params }: { params: { id: string } }) {
+export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await getCurrentUser();
-  if (!user || user.role !== 'child') return NextResponse.json({ error: '无权限' }, { status: 403 });
+  if (!user || user.role !== 'child')
+    return NextResponse.json({ error: '无权限' }, { status: 403 });
   const db = getDb();
-  const taskId = Number(params.id);
+  const taskId = Number(id);
   const task = await db.execute({ sql: 'SELECT * FROM tasks WHERE id = ?', args: [taskId] });
   if (!task.rows.length) return NextResponse.json({ error: '任务不存在' }, { status: 404 });
 
@@ -22,5 +24,10 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: '已经领取过该任务积分' }, { status: 409 });
   }
   const balance = await getChildPoints(user.id);
-  return NextResponse.json({ ok: true, gained: points, balance, message: `完成「${task.rows[0].title}」，获得 ${points} 积分！` });
+  return NextResponse.json({
+    ok: true,
+    gained: points,
+    balance,
+    message: `完成「${task.rows[0].title}」，获得 ${points} 积分！`,
+  });
 }

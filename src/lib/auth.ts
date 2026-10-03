@@ -67,12 +67,13 @@ export async function cleanupExpiredSessions(): Promise<void> {
  * 优先信任反向代理透传的协议头（取第一个值，防伪造头注入），
  * 无该头时回退到 NODE_ENV === 'production'。
  */
-function shouldSecureCookie(): boolean {
+async function shouldSecureCookie(): Promise<boolean> {
   // 显式配置优先（SECURE_COOKIE=true 强制 secure，false 强制不 secure）
   if (SECURE_COOKIE_RAW !== undefined) return SECURE_COOKIE_RAW === 'true';
 
   try {
-    const proto = headers().get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase();
+    // Next 15：headers() 返回 Promise，必须 await
+    const proto = (await headers()).get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase();
     if (proto === 'https' || proto === 'http') return proto === 'https';
   } catch {
     // headers() 在非请求上下文（如 build 期）可能抛错，忽略并回退。
@@ -84,9 +85,10 @@ function shouldSecureCookie(): boolean {
 
 export async function setSessionCookie(userId: number) {
   const token = await createSession(userId);
-  cookies().set(COOKIE_NAME, token, {
+  // Next 15：cookies() 返回 Promise，必须 await 后才能 set/get
+  (await cookies()).set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: shouldSecureCookie(),
+    secure: await shouldSecureCookie(),
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 24 * SESSION_TTL_DAYS,
@@ -94,13 +96,19 @@ export async function setSessionCookie(userId: number) {
 }
 
 export async function clearSessionCookie() {
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (token) await deleteSession(token);
-  cookies().set(COOKIE_NAME, '', { httpOnly: true, secure: shouldSecureCookie(), sameSite: 'lax', path: '/', maxAge: 0 });
+  (await cookies()).set(COOKIE_NAME, '', {
+    httpOnly: true,
+    secure: await shouldSecureCookie(),
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  });
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
   const db = getDb();
   const res = await db.execute({
@@ -114,7 +122,12 @@ export async function getCurrentUser(): Promise<User | null> {
   });
   if (!res.rows.length) return null;
   const r = res.rows[0];
-  return { id: Number(r.id), username: String(r.username), role: r.role as 'parent' | 'child', displayName: String(r.display_name) };
+  return {
+    id: Number(r.id),
+    username: String(r.username),
+    role: r.role as 'parent' | 'child',
+    displayName: String(r.display_name),
+  };
 }
 
 /**

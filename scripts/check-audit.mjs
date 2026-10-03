@@ -21,13 +21,11 @@ import { readFileSync } from 'node:fs';
 /**
  * 「有补丁但不适用于当前分支」的豁免。**只放这一种情况**，且必须写明重新评估时机。
  * 无补丁的包不需要写在这里（见判定规则 1）。
+ *
+ * 目前为空：next 已升级到 15.5.24，其全部 high/critical advisory 随版本修复，
+ * 无需再豁免。将来若再出现「有补丁但我们暂时升不了」的情况，加上并写清楚何时重新评估。
  */
-const ACCEPTED = new Map([
-  [
-    'next',
-    'next 14.x 的 advisory 有补丁，但补丁只在 15.5.x+ 发布；升级需同步 React 18→19，属独立任务。重新评估：升级 Next 15 后。',
-  ],
-]);
+const ACCEPTED = new Map();
 
 /** pnpm/npm 用 patched_versions 表示补丁范围；"<0.0.0" 表示「没有可用补丁」。 */
 function hasFix(advisory) {

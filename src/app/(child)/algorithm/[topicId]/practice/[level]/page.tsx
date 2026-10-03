@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { genPracticeSet } from '@/lib/algorithm/generators';
 import { getTopic } from '@/lib/algorithm/topics';
 import { AlgorithmQuiz } from '@/components/algorithm/AlgorithmQuiz';
@@ -21,17 +21,17 @@ function StarDisplay({ count, total }: { count: number; total: number }) {
   return (
     <div className="text-4xl font-black bg-white/20 rounded-2xl py-4 px-6 inline-block mb-4">
       {Array.from({ length: 3 }, (_, i) => (
-        <span key={i} className={i < stars ? 'opacity-100' : 'opacity-30'}>⭐</span>
+        <span key={i} className={i < stars ? 'opacity-100' : 'opacity-30'}>
+          ⭐
+        </span>
       ))}
     </div>
   );
 }
 
-export default function PracticeLevelPage({
-  params,
-}: {
-  params: { topicId: string; level: string };
-}) {
+export default function PracticeLevelPage() {
+  // Next 15：页面级 params 变成 Promise，客户端组件改用 useParams() hook 同步读取（React 18 兼容）
+  const params = useParams<{ topicId: string; level: string }>();
   const level = parseInt(params.level, 10);
   const topic = getTopic(params.topicId);
 
@@ -50,14 +50,17 @@ export default function PracticeLevelPage({
 
   const currentQuestion = questions[idx];
 
-  const handleComplete = useCallback((correct: boolean) => {
-    if (correct) {
-      setCorrectCount((c) => c + 1);
-    } else {
-      // 记录错题 ID
-      setMistakes((prev) => [...prev, currentQuestion.id]);
-    }
-  }, [currentQuestion.id]);
+  const handleComplete = useCallback(
+    (correct: boolean) => {
+      if (correct) {
+        setCorrectCount((c) => c + 1);
+      } else {
+        // 记录错题 ID
+        setMistakes((prev) => [...prev, currentQuestion.id]);
+      }
+    },
+    [currentQuestion.id]
+  );
 
   const handleNext = useCallback(() => {
     if (idx < totalQuestions - 1) {
@@ -107,17 +110,15 @@ export default function PracticeLevelPage({
     const finalStars = calcStars(correctCount, totalQuestions);
     return (
       <div className="relative max-w-2xl mx-auto min-h-screen pb-28 fade-up flex items-center justify-center p-6">
-        <div
-          className="bg-gradient-to-br from-green-400 to-emerald-500 rounded-3xl p-8 text-center text-white shadow-2xl"
-        >
+        <div className="bg-gradient-to-br from-green-400 to-emerald-500 rounded-3xl p-8 text-center text-white shadow-2xl">
           <div className="text-7xl mb-4">🏆</div>
           <h2 className="text-3xl font-black mb-2">练习完成！</h2>
-          <p className="text-lg mb-4">你答对了 {correctCount} / {totalQuestions} 道题</p>
+          <p className="text-lg mb-4">
+            你答对了 {correctCount} / {totalQuestions} 道题
+          </p>
           <StarDisplay count={correctCount} total={totalQuestions} />
           {mistakes.length > 0 && (
-            <p className="text-sm mb-4 opacity-90">
-              有 {mistakes.length} 道题需要复习
-            </p>
+            <p className="text-sm mb-4 opacity-90">有 {mistakes.length} 道题需要复习</p>
           )}
           <div className="flex gap-3 justify-center">
             <Link
@@ -144,7 +145,10 @@ export default function PracticeLevelPage({
 
       {/* 进度指示 */}
       <div className="flex items-center justify-between mb-6">
-        <Link href={`/algorithm/${params.topicId}`} className="text-moko-violet font-bold hover:underline text-sm">
+        <Link
+          href={`/algorithm/${params.topicId}`}
+          className="text-moko-violet font-bold hover:underline text-sm"
+        >
           ‹ 返回{topic.name}
         </Link>
         <div className="text-sm font-bold text-moko-violet bg-white/80 px-3 py-1 rounded-full">

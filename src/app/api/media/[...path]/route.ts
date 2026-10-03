@@ -14,7 +14,8 @@ export const dynamic = 'force-dynamic';
  *   故本路由自行完成登录软闸，无双重鉴权。
  * - 直接裸取 /raz/*、/textbooks/* 静态路径仍由 middleware 兜底拦截（需登录）。
  */
-export async function GET(req: NextRequest, { params }: { params: { path: string[] } }) {
-  const rel = (params.path ?? []).join('/');
+export async function GET(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  const { path } = await params;
+  const rel = (path ?? []).join('/');
   return serveMedia(req, rel);
 }
