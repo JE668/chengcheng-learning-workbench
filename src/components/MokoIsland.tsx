@@ -2,8 +2,6 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
-
 export interface MokoIslandItem {
   href: string;
   label: string;
@@ -31,17 +29,16 @@ export function MokoIsland({ items }: { items: MokoIslandItem[] }) {
             }}
           >
             <div className="flex items-center gap-3 p-3">
-              {/* 萌可头像 */}
-              <motion.div
-                className="relative w-16 h-16 flex-shrink-0 rounded-full overflow-hidden border-4 border-white shadow-lg"
-                initial={{ scale: 0.8, opacity: 0 }}
-                whileInView={{ scale: 1, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ type: 'spring', stiffness: 300, delay: i * 0.1 }}
-                whileHover={{ rotate: [0, -5, 5, 0] }}
+              {/* 萌可头像：原用 framer-motion 的 whileInView 入场 + whileHover 摇摆，
+                  改为纯 CSS —— 外层负责错峰入场，内层负责悬停摇摆（两个 animation 不能同元素） */}
+              <div
+                className="reveal-up relative w-16 h-16 flex-shrink-0"
+                style={{ animationDelay: i * 100 + 'ms' }}
               >
-                <Image src={item.moko.img} alt={item.moko.name} fill className="object-cover" sizes="64px" />
-              </motion.div>
+                <div className="moko-wobble w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg">
+                  <Image src={item.moko.img} alt={item.moko.name} fill className="object-cover" sizes="64px" />
+                </div>
+              </div>
               {/* 对话框 */}
               <div className="relative flex-1 min-w-0">
                 <div className="bg-white/90 backdrop-blur rounded-2xl rounded-bl-none px-3 py-2 shadow-sm relative">

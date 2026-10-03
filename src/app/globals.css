@@ -464,3 +464,93 @@ body { padding-top: env(safe-area-inset-top); }
   50% { transform: translateY(-8px); }
 }
 .animate-bounce-slow { animation: bounceSlow 2s ease-in-out infinite; }
+/* ============================================================
+   纯 CSS 动效（替代 framer-motion）
+   背景：framer-motion 会被 webpack 提进 vendors 公共块，而根布局依赖该块 ——
+   等于每条路由首屏都背着约 197KB（约 64KB gzip）。这些动效原本都是简单的
+   补间/关键帧，用 CSS 完全可以表达，且不增加任何 JS。
+   全部在 prefers-reduced-motion: reduce 下关闭。
+   ============================================================ */
+
+/* 页面进入（替代 PageTransition 的 enter 变体） */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(12px) scale(0.995); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.page-enter { animation: pageEnter 0.28s ease-out both; }
+
+/* 页面切换时的萌可飞行装饰（替代 PageTransition 的 motion.img 关键帧） */
+@keyframes mokoFly {
+  0%   { opacity: 0; transform: translate(-20vw, 30vh) scale(0) rotate(0deg); }
+  20%  { opacity: 1; transform: translate(10vw, 26vh) scale(1) rotate(180deg); }
+  80%  { opacity: 1; transform: translate(80vw, 34vh) scale(0.9) rotate(600deg); }
+  100% { opacity: 0; transform: translate(120vw, 40vh) scale(0.8) rotate(720deg); }
+}
+.moko-fly { animation: mokoFly 1.2s ease-out both; }
+
+/* 逐个浮现（替代 whileInView 的入场；配合内联 animation-delay 做错峰） */
+.reveal-up { animation: fadeUp 0.45s ease-out both; }
+
+/* 悬停摇摆（替代 whileHover 的 rotate 摆动） */
+@keyframes mokoWobble {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-5deg); }
+  75%      { transform: rotate(5deg); }
+}
+.moko-wobble:hover { animation: mokoWobble 0.5s ease-in-out; }
+
+/* 礼花/星光迸发（替代 StarBurst 的逐粒子 tween） */
+@keyframes burstOut {
+  0%   { opacity: 1; transform: translate(0, 0) scale(0.4); }
+  70%  { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(var(--bx, 0), var(--by, 0)) scale(1.1); }
+}
+.burst-piece { animation: burstOut var(--bdur, 900ms) cubic-bezier(0.2, 0.6, 0.3, 1) both; }
+
+/* 通用进出场（替代 Toast 的 AnimatePresence 进出） */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.toast-in { animation: toastIn 0.22s ease-out both; }
+
+/* 底部导航萌可头像：悬停放大 + 摇摆（替代 whileHover 的 scale+rotate 数组） */
+@keyframes navWobble {
+  0%, 100% { transform: scale(1.15) rotate(0deg); }
+  25%      { transform: scale(1.15) rotate(-8deg); }
+  75%      { transform: scale(1.15) rotate(8deg); }
+}
+.nav-avatar { transition: transform 0.3s ease; }
+.group:hover .nav-avatar { animation: navWobble 0.45s ease-in-out; }
+
+/* 通用「弹出」（替代 initial={{scale:0}} → animate={{scale:1}}） */
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.pop-in { animation: popIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* 星星结算的彩带下落（名字与既有 confettiFall 区分开，避免互相覆盖） */
+@keyframes starConfetti {
+  0%   { transform: translateY(-50px) rotate(var(--cr, 0deg)); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(120vh) rotate(calc(var(--cr, 0deg) + 720deg)); opacity: 0; }
+}
+.confetti-piece { animation: starConfetti 3s linear both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .moko-fly,
+  .reveal-up,
+  .moko-wobble:hover,
+  .burst-piece,
+  .toast-in,
+  .nav-avatar,
+  .group:hover .nav-avatar,
+  .pop-in,
+  .confetti-piece {
+    animation: none !important;
+    transition: none !important;
+  }
+}

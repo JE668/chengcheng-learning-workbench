@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
 import type { MokoNavEntry } from '@/lib/moko-nav-mapping';
 
 /**
@@ -28,14 +27,14 @@ export function MokoNavBtn({
         active ? 'bg-white/90 text-moko-rose shadow-lg scale-105' : 'text-white/90 hover:bg-white/15'
       }`}
     >
-      {/* 萌可头像圆 */}
-      <motion.div
-        className="relative w-9 h-9 md:w-10 md:h-10 rounded-full overflow-hidden shadow border-2 mb-0.5"
+      {/* 萌可头像圆：悬停放大+摇摆原本由 framer-motion 的 whileHover 驱动，
+          现改为纯 CSS —— 见 globals.css 的 .group:hover .nav-avatar + navWobble 关键帧。
+          注意外层 Link 已经带了 Tailwind 的 group 类。 */}
+      <div
+        className="nav-avatar relative w-9 h-9 md:w-10 md:h-10 rounded-full overflow-hidden shadow border-2 mb-0.5"
         style={{
           borderColor: active ? '#fff' : 'rgba(255,255,255,0.3)',
         }}
-        whileHover={{ scale: 1.15, rotate: [0, -8, 8, 0] }}
-        transition={{ duration: 0.4 }}
       >
         <Image
           src={entry.moko.img}
@@ -45,19 +44,12 @@ export function MokoNavBtn({
           sizes="40px"
           priority
         />
-      </motion.div>
+      </div>
       <span className={`text-[10px] leading-tight mt-0.5 font-bold truncate max-w-full ${active ? 'text-moko-rose' : ''}`}>
         {entry.label}
       </span>
-      {/* 活跃指示器 */}
-      {active && (
-        <motion.div
-          className="absolute -bottom-1 w-1 h-1 rounded-full bg-moko-rose"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 500 }}
-        />
-      )}
+      {/* 活跃指示器（.pop-in = 原 initial/animate 的 scale 0→1） */}
+      {active && <div className="pop-in absolute -bottom-1 w-1 h-1 rounded-full bg-moko-rose" />}
     </Link>
   );
 }
