@@ -56,7 +56,7 @@ export default function Clock() {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="fixed top-3 right-3 z-40 w-8 h-8 rounded-full bg-white/85 backdrop-blur shadow-lg border border-moko-purple/20 flex items-center justify-center text-sm hover:scale-110 transition select-none"
+        className="w-8 h-8 rounded-full bg-white/85 backdrop-blur shadow-lg border border-moko-purple/20 flex items-center justify-center text-sm hover:scale-110 transition select-none"
         aria-label="显示时钟"
         title="点击显示时钟"
       >
@@ -67,7 +67,7 @@ export default function Clock() {
 
   return (
     <div
-      className="fixed top-3 right-3 z-40 text-right bg-white/85 backdrop-blur rounded-2xl px-3 py-1.5 shadow-lg border border-moko-purple/20 leading-tight select-none"
+      className="text-right bg-white/85 backdrop-blur rounded-2xl px-3 py-1.5 shadow-lg border border-moko-purple/20 leading-tight select-none"
       aria-label="当前时间"
     >
       <div className="flex items-center justify-end gap-2">

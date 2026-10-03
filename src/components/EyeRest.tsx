@@ -69,7 +69,7 @@ export default function EyeRest() {
       {!showModal && (
         <button
           onClick={() => setShowSettings(true)}
-          className="fixed top-3 right-3 z-40 flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur shadow-lg px-3 py-1.5 text-sm font-bold text-moko-violet border border-moko-pink/40 hover:scale-105 transition"
+          className="flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur shadow-lg px-3 py-1.5 text-sm font-bold text-moko-violet border border-moko-pink/40 hover:scale-105 transition"
           title="护眼休息提醒设置"
         >
           <span>👀</span>

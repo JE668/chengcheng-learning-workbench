@@ -6,7 +6,7 @@ import OfflineSync from '@/components/OfflineSync';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import DatabaseErrorFallback from '@/components/DatabaseErrorFallback';
 import * as Sentry from '@sentry/nextjs';
-import { reportWebVitals } from '@/lib/web-vitals';
+import WebVitalsReporter from '@/components/WebVitalsReporter';
 import { PageTransition } from '@/components/PageTransition';
 
 export const dynamic = 'force-dynamic';
@@ -95,12 +95,3 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   );
 }
 
-function WebVitalsReporter() {
-  if (typeof window !== 'undefined') {
-    // Use setTimeout to ensure Sentry is initialized
-    setTimeout(() => {
-      reportWebVitals();
-    }, 0);
-  }
-  return null;
-}
