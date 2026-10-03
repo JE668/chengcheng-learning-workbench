@@ -70,17 +70,13 @@ jobs:
 
           # Next.js 14.x 已知豁免：14.x 有 8 个 high advisory，补丁仅在 15.5.15~15.5.21
           # 发布，14.x 无任何可用修复版本。评估结论与豁免理由见 ci.yml 同名步骤。
-          ACCEPTED_NEXT=$(cat audit-report.json | jq '[.advisories[] | select(.severity=="high" or .severity=="critical") | select(.module_name=="next")] | length')
-          ACTIONABLE=$(cat audit-report.json | jq '[.advisories[] | select(.severity=="high" or .severity=="critical") | select(.module_name!="next")] | length')
-          echo "high/critical 漏洞：待修复 $ACTIONABLE 个，next 已知豁免 $ACCEPTED_NEXT 个"
-
-          if [ "$ACTIONABLE" -gt 0 ]; then
-            echo "❌ Found $ACTIONABLE high/critical vulnerabilities (excl. accepted next advisories)"
-            cat audit-report.json | jq '.advisories[] | select(.severity=="high" or .severity=="critical") | select(.module_name!="next") | {title: .title, severity: .severity, module: .module_name, url: .url}'
-            exit 1
-          else
-            echo "✅ No actionable high/critical vulnerabilities"
-          fi
+          # 判定逻辑集中在 scripts/check-audit.mjs（Node 实现，不再依赖 runner 上的 jq）：
+          #   · fail-closed —— 报告缺失/解析失败/结构变化一律判失败（原 jq 版是 fail-open）
+          #   · 已知豁免集中管理，且每条附「为什么没有修复版本」与「何时重新评估」
+          # 本地复现（与 CI 完全相同）：
+          #   pnpm audit --json --registry=https://registry.npmjs.org > /tmp/a.json
+          #   node scripts/check-audit.mjs /tmp/a.json
+          node scripts/check-audit.mjs audit-report.json
 
       - name: Upload audit report
         if: always()

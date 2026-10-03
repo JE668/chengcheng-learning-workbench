@@ -162,17 +162,13 @@ jobs:
           # 影响面评估：SSRF 类需攻击者控制 Host 头，项目以 `next start` 部署
           # （Host 由 next 自身固定）实际不可达；DoS 类需构造 RSC 序列化请求。
           # 升级到 Next.js 15 需同步 React 18→19，属独立任务另行评估。
-          ACCEPTED_NEXT=$(cat audit-report.json | jq '[.advisories[] | select(.severity=="high" or .severity=="critical") | select(.module_name=="next")] | length')
-          ACTIONABLE=$(cat audit-report.json | jq '[.advisories[] | select(.severity=="high" or .severity=="critical") | select(.module_name!="next")] | length')
-          echo "high/critical 漏洞：待修复 $ACTIONABLE 个，next 已知豁免 $ACCEPTED_NEXT 个"
-
-          if [ "$ACTIONABLE" -gt 0 ]; then
-            echo "❌ Found $ACTIONABLE high/critical vulnerabilities (excl. accepted next advisories)"
-            cat audit-report.json | jq '.advisories[] | select(.severity=="high" or .severity=="critical") | select(.module_name!="next") | {title: .title, severity: .severity, module: .module_name, url: .url}'
-            exit 1
-          else
-            echo "✅ No actionable high/critical vulnerabilities"
-          fi
+          # 判定逻辑集中在 scripts/check-audit.mjs（Node 实现，不再依赖 runner 上的 jq）：
+          #   · fail-closed —— 报告缺失/解析失败/结构变化一律判失败（原 jq 版是 fail-open）
+          #   · 已知豁免集中管理，且每条附「为什么没有修复版本」与「何时重新评估」
+          # 本地复现（与 CI 完全相同）：
+          #   pnpm audit --json --registry=https://registry.npmjs.org > /tmp/a.json
+          #   node scripts/check-audit.mjs /tmp/a.json
+          node scripts/check-audit.mjs audit-report.json
 
       - name: 上传安全扫描报告
         if: always()
