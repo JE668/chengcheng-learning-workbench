@@ -23,7 +23,11 @@ const TIME: Record<number, number> = { 1: 90, 2: 75, 3: 60 };
 export default function CharacterMatch({ onFinish, level = 1 }: { onFinish: (score: number) => void; level?: number }) {
   const lv = Math.min(3, Math.max(1, level));
   const count = COUNT[lv];
-  const [order] = useState(() => [...ROUNDS].sort(() => 0.5 - Math.random()).slice(0, count));
+  // 同 WordMatch：首帧用确定性顺序（SSR 一致），挂载后再打乱
+  const [order, setOrder] = useState(() => ROUNDS.slice(0, count));
+  useEffect(() => {
+    setOrder([...ROUNDS].sort(() => 0.5 - Math.random()).slice(0, count));
+  }, [count]);
   const [index, setIndex] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [time, setTime] = useState(TIME[lv]);

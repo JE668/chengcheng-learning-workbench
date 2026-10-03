@@ -16,7 +16,13 @@ const TIME: Record<number, number> = { 1: 100, 2: 90, 3: 80 };
 export default function WordMatch({ onFinish, level = 1 }: { onFinish: (score: number) => void; level?: number }) {
   const lv = Math.min(3, Math.max(1, level));
   const pairCount = COUNT[lv];
-  const [pairs] = useState(() => [...WORDS].sort(() => 0.5 - Math.random()).slice(0, pairCount));
+  // ⚠️ 初始值必须**确定性**：这是会被 SSR 的客户端组件，若在首帧就用 Math.random()
+  // 选词，服务端 HTML 与客户端首帧会不一致 → React 报 hydration 错误并整棵子树重渲染。
+  // 因此先用固定切片，挂载后再打乱（下面的 effect 会据此重建牌面）。
+  const [pairs, setPairs] = useState(() => WORDS.slice(0, pairCount));
+  useEffect(() => {
+    setPairs([...WORDS].sort(() => 0.5 - Math.random()).slice(0, pairCount));
+  }, [pairCount]);
   const [cards, setCards] = useState<{ id: number; text: string; kind: 'en' | 'zh'; flipped: boolean; matched: boolean }[]>([]);
   const [flipped, setFlipped] = useState<number[]>([]);
   const [time, setTime] = useState(TIME[lv]);

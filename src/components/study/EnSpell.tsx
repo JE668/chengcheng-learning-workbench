@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ALL_EN_WORDS, type WordItem } from '@/lib/study-data';
 import { speakEn, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
@@ -22,7 +22,11 @@ export function EnSpellModule() {
   const { record } = useModuleProgress('english', 'en-spell');
   const logM = useMistakeLogger();
   const [done, setDone] = useState(0);
-  const [order] = useState(() => shuffle(SPELLABLE.map((_, i) => i)));
+  // 首帧用确定性顺序（SSR 与客户端一致），挂载后再打乱，避免 hydration 不一致
+  const [order, setOrder] = useState(() => SPELLABLE.map((_, i) => i));
+  useEffect(() => {
+    setOrder(shuffle(SPELLABLE.map((_, i) => i)));
+  }, []);
   const [pos, setPos] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const [correct, setCorrect] = useState(0);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { PINYIN_TONES } from '@/lib/study-data';
 import { speakPinyin, speakZh } from '@/lib/speak';
@@ -63,7 +63,11 @@ type Mode = 'blend' | 'pick';
 
 export default function PinyinBlendPage() {
   const [mode, setMode] = useState<Mode>('blend');
-  const [cur, setCur] = useState(() => rand(BLEND_POOL));
+  // 首帧确定性（SSR 一致），挂载后再随机抽一个，避免 hydration 不一致
+  const [cur, setCur] = useState(() => BLEND_POOL[0]);
+  useEffect(() => {
+    setCur(rand(BLEND_POOL));
+  }, []);
   const [picked, setPicked] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
   // 难度自适应：连对 3 次升一档，连错 2 次降一档（1 易 ~ 3 难）
