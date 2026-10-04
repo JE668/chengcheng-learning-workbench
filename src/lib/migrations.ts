@@ -12,6 +12,38 @@ import type { Client } from '@libsql/client';
  * 不要再往 ensureSchema 里堆内联 ALTER —— 那是历史包袱，已在此轮重构中收口。
  */
 
+/**
+ * 幂等地新增一列：**只容忍「列已存在」这一种失败**。
+ *
+ * 为什么不能直接 `try { ALTER ... } catch {}`：
+ * 那样会把「库被锁、表不存在、磁盘满、SQL 写错」等**真正的失败**一起吞掉，而
+ * `runMigrations()` 仍会把该版本记为 applied —— 结果是列永久缺失，却没有任何人
+ * 或日志知道，下次冷启动也不会重试（版本号已经跳过）。
+ *
+ * 真实失败必须**上抛**：`runMigrations()` 只在 up() 成功后才写版本记录，
+ * 上抛后版本不被记录，下次启动会重新尝试，坏掉的库因此始终可见、可恢复。
+ *
+ * @param db libsql 客户端
+ * @param table 表名
+ * @param columnWithType 完整列定义，例如 `status TEXT NOT NULL DEFAULT 'pending'`
+ */
+export async function addColumnIfMissing(
+  db: Client,
+  table: string,
+  columnWithType: string
+): Promise<void> {
+  const column = columnWithType.split(/\s+/)[0];
+  try {
+    await db.execute({ sql: `ALTER TABLE ${table} ADD COLUMN ${columnWithType}`, args: [] });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    // 只有「这一列已经存在」才是幂等场景，可安全忽略。
+    if (/duplicate column name/i.test(msg)) return;
+    // 其余一律上抛（表不存在 / 库被锁 / 磁盘错误 / SQL 写错…）
+    throw new Error(`迁移失败：ALTER TABLE ${table} ADD COLUMN ${column} —— ${msg}`);
+  }
+}
+
 export interface Migration {
   version: number;
   name: string;
@@ -34,9 +66,18 @@ export const MIGRATIONS: Migration[] = [
     name: 'idx_hot_query_columns',
     description: '给热门查询补索引：daily_checkins、completions、daily_practice',
     up: async (db) => {
-      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_daily_checkins_child_day ON daily_checkins(child_id, day)', args: [] });
-      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_completions_child_created ON completions(child_id, created_at)', args: [] });
-      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_daily_practice_child_day ON daily_practice(child_id, day)', args: [] });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_daily_checkins_child_day ON daily_checkins(child_id, day)',
+        args: [],
+      });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_completions_child_created ON completions(child_id, created_at)',
+        args: [],
+      });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_daily_practice_child_day ON daily_practice(child_id, day)',
+        args: [],
+      });
     },
     down: async (db) => {
       await db.execute({ sql: 'DROP INDEX IF EXISTS idx_daily_checkins_child_day', args: [] });
@@ -95,13 +136,8 @@ export const MIGRATIONS: Migration[] = [
     name: 'add_moko_owned_rarity_column',
     description: '给 moko_owned 增加 rarity 稀有度列',
     up: async (db) => {
-      // 幂等：列已存在时 ALTER 抛 "duplicate column"，直接忽略
-      try {
-        await db.execute({
-          sql: `ALTER TABLE moko_owned ADD COLUMN rarity TEXT DEFAULT 'common'`,
-          args: [],
-        });
-      } catch { /* 列已存在时忽略 */ }
+      // 幂等：列已存在时忽略（仅限 duplicate column，其余错误上抛）
+      await addColumnIfMissing(db, 'moko_owned', "rarity TEXT DEFAULT 'common'");
     },
     down: async (db) => {
       // SQLite 不支持 DROP COLUMN，需要重建表
@@ -118,7 +154,8 @@ export const MIGRATIONS: Migration[] = [
     // 原 ensureSchema 中「每次启动都跑」的 CREATE IF NOT EXISTS，收敛到此（跑一次即可，天然幂等）。
     version: 6,
     name: 'create_incremental_tables',
-    description: 'create story_read / story_quiz / cert_requests / module_progress / child_tasks / textbook_progress',
+    description:
+      'create story_read / story_quiz / cert_requests / module_progress / child_tasks / textbook_progress',
     up: async (db) => {
       await db.execute({
         sql: `CREATE TABLE IF NOT EXISTS story_read (
@@ -239,8 +276,8 @@ export const MIGRATIONS: Migration[] = [
     name: 'add_mistakes_source_columns',
     description: 'mistakes 增加 source_module / chapter 列',
     up: async (db) => {
-      try { await db.execute({ sql: 'ALTER TABLE mistakes ADD COLUMN source_module TEXT', args: [] }); } catch { /* 已存在 */ }
-      try { await db.execute({ sql: 'ALTER TABLE mistakes ADD COLUMN chapter TEXT', args: [] }); } catch { /* 已存在 */ }
+      await addColumnIfMissing(db, 'mistakes', 'source_module TEXT');
+      await addColumnIfMissing(db, 'mistakes', 'chapter TEXT');
     },
   },
   {
@@ -248,8 +285,8 @@ export const MIGRATIONS: Migration[] = [
     name: 'add_users_parentage',
     description: 'users 增加 parent_id / selected_child_id 列（多娃扩展）',
     up: async (db) => {
-      try { await db.execute({ sql: 'ALTER TABLE users ADD COLUMN parent_id INTEGER', args: [] }); } catch { /* 已存在 */ }
-      try { await db.execute({ sql: 'ALTER TABLE users ADD COLUMN selected_child_id INTEGER', args: [] }); } catch { /* 已存在 */ }
+      await addColumnIfMissing(db, 'users', 'parent_id INTEGER');
+      await addColumnIfMissing(db, 'users', 'selected_child_id INTEGER');
     },
   },
   {
@@ -265,11 +302,22 @@ export const MIGRATIONS: Migration[] = [
       });
       if (linkCheck.rows.length) {
         const childId = Number(linkCheck.rows[0].id);
-        const pRow = (await db.execute({ sql: "SELECT id FROM users WHERE username = 'parent' LIMIT 1", args: [] })).rows;
+        const pRow = (
+          await db.execute({
+            sql: "SELECT id FROM users WHERE username = 'parent' LIMIT 1",
+            args: [],
+          })
+        ).rows;
         if (pRow.length) {
           const parentId = Number(pRow[0].id);
-          await db.execute({ sql: 'UPDATE users SET parent_id = ? WHERE id = ?', args: [parentId, childId] });
-          await db.execute({ sql: 'UPDATE users SET selected_child_id = ? WHERE id = ?', args: [childId, parentId] });
+          await db.execute({
+            sql: 'UPDATE users SET parent_id = ? WHERE id = ?',
+            args: [parentId, childId],
+          });
+          await db.execute({
+            sql: 'UPDATE users SET selected_child_id = ? WHERE id = ?',
+            args: [childId, parentId],
+          });
         }
       }
     },
@@ -279,10 +327,10 @@ export const MIGRATIONS: Migration[] = [
     name: 'add_status_columns',
     description: 'redemptions / wishes / moko_owned / daily_checkins 补 status 列',
     up: async (db) => {
-      try { await db.execute({ sql: `ALTER TABLE redemptions ADD COLUMN status TEXT DEFAULT 'pending'`, args: [] }); } catch { /* 已存在 */ }
-      try { await db.execute({ sql: `ALTER TABLE wishes ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`, args: [] }); } catch { /* 已存在 */ }
-      try { await db.execute({ sql: `ALTER TABLE moko_owned ADD COLUMN status TEXT NOT NULL DEFAULT 'resident'`, args: [] }); } catch { /* 已存在 */ }
-      try { await db.execute({ sql: `ALTER TABLE daily_checkins ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`, args: [] }); } catch { /* 已存在 */ }
+      await addColumnIfMissing(db, 'redemptions', "status TEXT DEFAULT 'pending'");
+      await addColumnIfMissing(db, 'wishes', "status TEXT NOT NULL DEFAULT 'pending'");
+      await addColumnIfMissing(db, 'moko_owned', "status TEXT NOT NULL DEFAULT 'resident'");
+      await addColumnIfMissing(db, 'daily_checkins', "status TEXT NOT NULL DEFAULT 'pending'");
     },
   },
   {
@@ -290,8 +338,8 @@ export const MIGRATIONS: Migration[] = [
     name: 'add_castle_and_user_extras',
     description: 'castle_state 补 skin 列、users 补 cert_pref 列',
     up: async (db) => {
-      try { await db.execute({ sql: "ALTER TABLE castle_state ADD COLUMN skin TEXT NOT NULL DEFAULT 'default'", args: [] }); } catch { /* 已存在 */ }
-      try { await db.execute({ sql: 'ALTER TABLE users ADD COLUMN cert_pref TEXT', args: [] }); } catch { /* 已存在 */ }
+      await addColumnIfMissing(db, 'castle_state', "skin TEXT NOT NULL DEFAULT 'default'");
+      await addColumnIfMissing(db, 'users', 'cert_pref TEXT');
     },
   },
   {
@@ -364,12 +412,27 @@ export const MIGRATIONS: Migration[] = [
     description: '补热查询索引：错题到期查询、成长事件时间线、捣蛋萌可、奖状申请、语音评分',
     up: async (db) => {
       // 错题「到期未掌握」是本项目最常见的按孩子过滤查询之一
-      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_mistakes_child_due ON mistakes(child_id, resolved, next_review)', args: [] });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_mistakes_child_due ON mistakes(child_id, resolved, next_review)',
+        args: [],
+      });
       // 成长日记按时间倒序取最近 N 条
-      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_growth_events_child_created ON growth_events(child_id, created_at)', args: [] });
-      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_troublemakers_child ON troublemakers(child_id)', args: [] });
-      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_cert_requests_child ON cert_requests(child_id)', args: [] });
-      await db.execute({ sql: 'CREATE INDEX IF NOT EXISTS idx_speech_scores_child ON speech_scores(child_id)', args: [] });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_growth_events_child_created ON growth_events(child_id, created_at)',
+        args: [],
+      });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_troublemakers_child ON troublemakers(child_id)',
+        args: [],
+      });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_cert_requests_child ON cert_requests(child_id)',
+        args: [],
+      });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_speech_scores_child ON speech_scores(child_id)',
+        args: [],
+      });
     },
     down: async (db) => {
       await db.execute({ sql: 'DROP INDEX IF EXISTS idx_mistakes_child_due', args: [] });
@@ -394,23 +457,24 @@ export async function ensureMigrationTable(db: Client): Promise<void> {
     )`,
     args: [],
   });
-  // 迁移：旧版 schema_migrations 表可能缺少多列，逐个补齐（幂等 try-catch）
+  // 迁移：旧版 schema_migrations 表可能缺少多列，逐个补齐（幂等，仅容忍 duplicate column）
   for (const col of [
     'description TEXT',
-    'status TEXT DEFAULT \'applied\'',
+    "status TEXT DEFAULT 'applied'",
     'error TEXT',
     'duration_ms INTEGER DEFAULT 0',
   ]) {
-    try {
-      await db.execute({ sql: `ALTER TABLE schema_migrations ADD COLUMN ${col}`, args: [] });
-    } catch { /* 列已存在时忽略 */ }
+    await addColumnIfMissing(db, 'schema_migrations', col);
   }
 }
 
 /** 执行尚未应用的迁移，并在 schema_migrations 中记录。幂等：已记录的版本不会重跑。 */
 export async function runMigrations(db: Client): Promise<void> {
   await ensureMigrationTable(db);
-  const res = await db.execute({ sql: 'SELECT MAX(version) AS v FROM schema_migrations WHERE status = \'applied\'', args: [] });
+  const res = await db.execute({
+    sql: "SELECT MAX(version) AS v FROM schema_migrations WHERE status = 'applied'",
+    args: [],
+  });
   const max = Number(res.rows[0]?.v ?? 0);
   for (const m of MIGRATIONS) {
     if (m.version <= max) continue;
@@ -419,32 +483,40 @@ export async function runMigrations(db: Client): Promise<void> {
     // 「该迁移未应用」并各自 up() + INSERT，用普通 INSERT 会让其中一个直接抛
     // 主键冲突（进而让用户看到「数据库初始化失败」页）。up() 本身要求幂等，
     // 所以这里忽略重复写入即可。
-    await db.execute({ sql: 'INSERT OR IGNORE INTO schema_migrations (version, name, description, applied_at, status) VALUES (?, ?, ?, CURRENT_TIMESTAMP, \'applied\')', args: [m.version, m.name, m.description ?? ''] });
+    await db.execute({
+      sql: "INSERT OR IGNORE INTO schema_migrations (version, name, description, applied_at, status) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 'applied')",
+      args: [m.version, m.name, m.description ?? ''],
+    });
   }
 }
 
 /** 获取当前已应用的最大版本 */
 export async function getCurrentVersion(db: Client): Promise<number> {
   await ensureMigrationTable(db);
-  const res = await db.execute({ sql: 'SELECT MAX(version) AS v FROM schema_migrations WHERE status = \'applied\'', args: [] });
+  const res = await db.execute({
+    sql: "SELECT MAX(version) AS v FROM schema_migrations WHERE status = 'applied'",
+    args: [],
+  });
   return Number(res.rows[0]?.v ?? 0);
 }
 
 /** 获取所有迁移记录 */
-export async function getMigrationHistory(db: Client): Promise<Array<{
-  version: number;
-  name: string;
-  appliedAt: string;
-  status: string;
-  error?: string;
-  durationMs: number;
-}>> {
+export async function getMigrationHistory(db: Client): Promise<
+  Array<{
+    version: number;
+    name: string;
+    appliedAt: string;
+    status: string;
+    error?: string;
+    durationMs: number;
+  }>
+> {
   await ensureMigrationTable(db);
-  const res = await db.execute({ 
-    sql: 'SELECT version, name, applied_at, status, error, duration_ms FROM schema_migrations ORDER BY version', 
-    args: [] 
+  const res = await db.execute({
+    sql: 'SELECT version, name, applied_at, status, error, duration_ms FROM schema_migrations ORDER BY version',
+    args: [],
   });
-  return res.rows.map(r => ({
+  return res.rows.map((r) => ({
     version: Number(r.version),
     name: String(r.name),
     appliedAt: String(r.applied_at),
@@ -457,16 +529,22 @@ export async function getMigrationHistory(db: Client): Promise<Array<{
 /** 回滚最后一次迁移 */
 export async function rollbackLast(db: Client): Promise<void> {
   await ensureMigrationTable(db);
-  const res = await db.execute({ sql: 'SELECT MAX(version) AS v FROM schema_migrations WHERE status = \'applied\'', args: [] });
+  const res = await db.execute({
+    sql: "SELECT MAX(version) AS v FROM schema_migrations WHERE status = 'applied'",
+    args: [],
+  });
   const currentVersion = Number(res.rows[0]?.v ?? 0);
   if (currentVersion <= 1) {
     throw new Error('Cannot rollback baseline migration');
   }
   // Find the migration to rollback
-  const migration = MIGRATIONS.find(m => m.version === currentVersion);
+  const migration = MIGRATIONS.find((m) => m.version === currentVersion);
   if (!migration || !migration.down) {
     throw new Error('Migration has no down function, cannot rollback');
   }
   await migration.down(db);
-  await db.execute({ sql: 'DELETE FROM schema_migrations WHERE version = ?', args: [currentVersion] });
+  await db.execute({
+    sql: 'DELETE FROM schema_migrations WHERE version = ?',
+    args: [currentVersion],
+  });
 }

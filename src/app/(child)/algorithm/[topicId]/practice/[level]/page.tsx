@@ -35,9 +35,11 @@ export default function PracticeLevelPage() {
   const level = parseInt(params.level, 10);
   const topic = getTopic(params.topicId);
 
-  if (!topic || isNaN(level)) notFound();
-
-  // 生成当前关卡的 10 道题
+  // 注意：notFound() 必须放在**所有 Hook 之后**调用。
+  // 若在 Hook 之前抛错，非法 URL 的渲染只执行了 1 个 Hook（useParams），
+  // 而合法 URL 会执行 7 个 —— 同一组件的 Hook 数量不一致，React 会直接报
+  //「Rendered fewer hooks than expected」把页面打到错误边界。
+  // genPracticeSet 对无效 topicId 返回空数组（不抛错），所以这里提前算题是安全的。
   const questions = useMemo(() => genPracticeSet(params.topicId, level), [params.topicId, level]);
   const totalQuestions = questions.length;
 
@@ -105,6 +107,9 @@ export default function PracticeLevelPage() {
       void saveProgress();
     }
   }, [allDone, saved, saveProgress]);
+
+  // 全部 Hook 调用完毕后再校验非法参数（见上方注释：不能提前抛）
+  if (!topic || isNaN(level)) notFound();
 
   if (allDone) {
     const finalStars = calcStars(correctCount, totalQuestions);
