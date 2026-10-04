@@ -10,7 +10,12 @@ const TOOLS = [
   { href: '/study/talk', emoji: '🗣️', title: '看图说话', sub: '看场景说 3 句话，录下自己的声音' },
   { href: '/study/picto', emoji: '🌟', title: '象形字变变变', sub: '汉字怎么从「画」变成「字」' },
   { href: '/study/trace', emoji: '✍️', title: '描红跟写', sub: '米字格描红范字，听读音记字形' },
-  { href: '/study/poem-fill', emoji: '📜', title: '古诗填空背诵', sub: '从字卡补全古诗，填对听萌可念' },
+  {
+    href: '/study/poem-fill',
+    emoji: '📜',
+    title: '古诗填空背诵',
+    sub: '从字卡补全古诗，填对听萌可念',
+  },
   { href: '/study/eye', emoji: '💆', title: '护眼小操', sub: '四节眼保健操，看书久了做一遍' },
 ];
 
@@ -52,7 +57,7 @@ function ReviewBadgeClient() {
   }, []);
 
   return (
-    <a
+    <Link
       href="/study/review"
       className="block rounded-2xl p-4 bg-gradient-to-r from-moko-purple to-moko-violet text-white shadow-lg hover:scale-[1.02] transition"
     >
@@ -69,7 +74,7 @@ function ReviewBadgeClient() {
         </div>
         <div className="text-3xl">➡️</div>
       </div>
-    </a>
+    </Link>
   );
 }
 
@@ -83,7 +88,11 @@ function MokoHelperClient({ subject, tips }: { subject: string; tips: string[] }
   );
 }
 
-function StudyRecommendClient({ rec }: { rec: { resumeHref: string; resumeLabel: string; nextHref: string; nextLabel: string } | null }) {
+function StudyRecommendClient({
+  rec,
+}: {
+  rec: { resumeHref: string; resumeLabel: string; nextHref: string; nextLabel: string } | null;
+}) {
   if (!rec) return null;
 
   return (
@@ -127,9 +136,9 @@ export function StudyClient({ rec }: StudyClientProps) {
             '遇到难题按「换一句」，萌可随时给你打气，别怕！',
           ]}
         />
-        
+
         <StudyRecommendClient rec={rec} />
-        
+
         <div className="mb-6">
           <ReviewBadgeClient />
         </div>
@@ -151,7 +160,9 @@ export function StudyClient({ rec }: StudyClientProps) {
                   height={96}
                   className="w-24 h-24 rounded-full border-4 border-white shadow mx-auto object-cover"
                 />
-                <h2 className={`text-2xl font-black ${s.color.replace('bg-', 'text-')} mb-2`}>{s.label}</h2>
+                <h2 className={`text-2xl font-black ${s.color.replace('bg-', 'text-')} mb-2`}>
+                  {s.label}
+                </h2>
                 <p className="text-white/80">{s.sub}</p>
               </a>
             );
