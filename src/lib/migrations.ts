@@ -13,15 +13,23 @@ import type { Client } from '@libsql/client';
  */
 
 /**
- * 幂等地新增一列：**只容忍「列已存在」这一种失败**。
+ * 幂等地新增一列：**只容忍两种「预期内」的失败**，其余一律上抛。
  *
- * 为什么不能直接 `try { ALTER ... } catch {}`：
- * 那样会把「库被锁、表不存在、磁盘满、SQL 写错」等**真正的失败**一起吞掉，而
+ * ## 为什么不能直接 `try { ALTER ... } catch {}`
+ * 那样会把「库被锁、磁盘满、SQL 写错」等**真正的失败**一起吞掉，而
  * `runMigrations()` 仍会把该版本记为 applied —— 结果是列永久缺失，却没有任何人
- * 或日志知道，下次冷启动也不会重试（版本号已经跳过）。
+ * 或日志知道，下次冷启动也不会重试（版本号已经跳过）。真实失败必须上抛：
+ * `runMigrations()` 只在 up() 成功后才写版本记录，上抛后下次启动会重新尝试。
  *
- * 真实失败必须**上抛**：`runMigrations()` 只在 up() 成功后才写版本记录，
- * 上抛后版本不被记录，下次启动会重新尝试，坏掉的库因此始终可见、可恢复。
+ * ## 允许跳过的两种情况（为什么它们是安全的）
+ * 1. `duplicate column name` —— 列已存在，正是幂等要解决的场景。
+ * 2. `no such table` —— **全新库上 `runMigrations()` 先于 `ensureSchema()` 的建表执行**
+ *    （schema.ts：runMigrations 在第 75 行，建表在第 197 行）。因此迁移里给
+ *    「还没建出来的表」加列是正常路径，表随后会由 ensureSchema 用**已含该列**的
+ *    CREATE TABLE 建出来。历史版本正是靠静默跳过让全新库跑通 —— 这条不能丢，
+ *    否则全新部署会直接因「no such table」无法初始化。
+ *
+ * 除这两类外的任何错误（库被锁 / 磁盘满 / 表名拼错 / SQL 语法错）都必须上抛。
  *
  * @param db libsql 客户端
  * @param table 表名
@@ -37,9 +45,9 @@ export async function addColumnIfMissing(
     await db.execute({ sql: `ALTER TABLE ${table} ADD COLUMN ${columnWithType}`, args: [] });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    // 只有「这一列已经存在」才是幂等场景，可安全忽略。
-    if (/duplicate column name/i.test(msg)) return;
-    // 其余一律上抛（表不存在 / 库被锁 / 磁盘错误 / SQL 写错…）
+    // 预期内的两种情况：列已存在 / 表尚未建出（全新库的正常路径）
+    if (/duplicate column name|no such table/i.test(msg)) return;
+    // 其余一律上抛（库被锁 / 磁盘错误 / SQL 写错…）
     throw new Error(`迁移失败：ALTER TABLE ${table} ADD COLUMN ${column} —— ${msg}`);
   }
 }
@@ -468,7 +476,21 @@ export async function ensureMigrationTable(db: Client): Promise<void> {
   }
 }
 
-/** 执行尚未应用的迁移，并在 schema_migrations 中记录。幂等：已记录的版本不会重跑。 */
+/**
+ * 执行尚未应用的迁移，并在 schema_migrations 中记录。幂等：已记录的版本不会重跑。
+ *
+ * ## 关于「表尚不存在」的跳过
+ * `ensureSchema()` 里 runMigrations() 先于建表执行（schema.ts 第 75 行 vs 第 197 行），
+ * 因此**全新库上跑迁移时，迁移要操作的那些表往往还不存在**。这些迁移此时是冗余的 ——
+ * ensureSchema 的 CREATE TABLE 已经内含那些列与索引。
+ *
+ * 所以这里统一兜底「表不存在」这一种失败：跳过该条语句，但**仍然记录版本为 applied**
+ * （历史行为，避免每次启动都重试）。除它之外的任何失败（库被锁 / 磁盘满 / SQL 写错）
+ * 一律上抛，且**不记录版本** —— 下次启动会重试，坏掉的库始终可见、可恢复。
+ *
+ * 逐条 ALTER 另外走 `addColumnIfMissing()`；这层兜底是为了覆盖 CREATE INDEX、
+ * 数据回填等没有走 helper 的语句。
+ */
 export async function runMigrations(db: Client): Promise<void> {
   await ensureMigrationTable(db);
   const res = await db.execute({
@@ -478,7 +500,16 @@ export async function runMigrations(db: Client): Promise<void> {
   const max = Number(res.rows[0]?.v ?? 0);
   for (const m of MIGRATIONS) {
     if (m.version <= max) continue;
-    await m.up(db);
+    try {
+      await m.up(db);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // 全新库的正常路径：目标表还没建出，这条迁移对 ensureSchema 是冗余的
+      if (!/no such table/i.test(msg)) {
+        // 真失败：吞掉会被当成成功、把版本记成 applied，列永久缺失却无人知晓
+        throw new Error(`迁移 v${m.version}（${m.name}）失败：${msg}`);
+      }
+    }
     // INSERT OR IGNORE：version 是主键。并发冷启动时两个请求可能同时判定
     // 「该迁移未应用」并各自 up() + INSERT，用普通 INSERT 会让其中一个直接抛
     // 主键冲突（进而让用户看到「数据库初始化失败」页）。up() 本身要求幂等，
