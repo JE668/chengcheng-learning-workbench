@@ -11,7 +11,7 @@ test.describe('认证流程', () => {
         // 忽略跨域或无权限错误
       }
     });
-    
+
     // 设置更长的超时
     test.setTimeout(60000);
   });
@@ -75,13 +75,20 @@ test.describe('认证流程', () => {
   });
 
   test('登出功能', async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto('/login');
     await page.fill('input[name="username"]', 'parent');
     await page.fill('input[name="password"]', '12345678');
     await page.click('button[type="submit"]');
 
+    // 必须等登录跳转真正完成再点退出。
+    // 原先点完「登录」就直接找「退出」按钮：此时页面还在跳转，且冷启动首个请求的
+    // Next dev 错误浮层（nextjs-portal）恰好覆盖在按钮上，导致点击被拦截 →
+    // `nextjs-portal intercepts pointer events`。等待 URL 稳定后再操作。
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 30000 });
+
     // 点击退出
-    await page.getByRole('button', { name: /退出/ }).click();
-    await expect(page).toHaveURL(/\/login/);
+    await page.getByRole('button', { name: /退出/ }).click({ timeout: 20000 });
+    await expect(page).toHaveURL(/\/login/, { timeout: 20000 });
   });
 });
