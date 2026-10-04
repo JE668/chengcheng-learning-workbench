@@ -11,6 +11,11 @@ const nextConfig = {
     // （注意：unoptimized 时 formats/remotePatterns 均为死配置，已删除避免误导）
     unoptimized: true,
   },
+  // 关闭开发浮层（Next 15 默认注入 nextjs-portal）。
+  // 它是 fixed 全屏节点，会盖住页面右下角的按钮，Playwright 点击时报
+  // `nextjs-portal intercepts pointer events`（e2e 的「登出功能」就长期因此失败）。
+  // 该浮层只提供 HMR/路由调试信息，本项目用不上，关掉对开发体验无损。
+  devIndicators: false,
   // 容器内生产构建时跳过 ESLint（lint 属开发期检查，避免阻塞构建）
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
