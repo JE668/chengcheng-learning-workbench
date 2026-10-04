@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { setSessionCookie, verifyPassword } from '@/lib/auth';
-import { getClientIp, rateLimit, loginLockout, recordLoginFailure, clearLoginFailure } from '@/lib/rate-limit';
+import {
+  getClientIp,
+  rateLimit,
+  loginLockout,
+  recordLoginFailure,
+  clearLoginFailure,
+} from '@/lib/rate-limit';
+import { ensureDbReady } from '@/lib/schema-init';
 import bcrypt from 'bcryptjs';
 
 /**
@@ -20,7 +27,10 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
   const limit = rateLimit(`login:${ip}`, LOGIN_LIMIT);
   if (!limit.ok) {
-    return NextResponse.json({ error: `登录太频繁，请 ${limit.retryAfter} 秒后再试` }, { status: 429 });
+    return NextResponse.json(
+      { error: `登录太频繁，请 ${limit.retryAfter} 秒后再试` },
+      { status: 429 }
+    );
   }
 
   let username: unknown;
@@ -32,14 +42,26 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: '请求格式错误' }, { status: 400 });
   }
-  if (typeof username !== 'string' || typeof password !== 'string' || !username.trim() || !password) {
+  if (
+    typeof username !== 'string' ||
+    typeof password !== 'string' ||
+    !username.trim() ||
+    !password
+  ) {
     return NextResponse.json({ error: '请输入用户名和密码' }, { status: 400 });
   }
+  // 本路由不经过根布局，全新库冷启动时表可能还没建好 —— 先确保 schema 就绪。
+  // 与根布局共用同一份记忆化（见 lib/schema-init.ts），不会重复建表。
+  await ensureDbReady();
+
   const uname = username.trim();
   // 账号级防爆破：该用户名连续失败过多则临时锁定（挡住轮换 IP 定向试密）
   const lock = loginLockout(uname);
   if (!lock.ok) {
-    return NextResponse.json({ error: `该账号已被临时锁定，请 ${lock.retryAfter} 秒后再试` }, { status: 429 });
+    return NextResponse.json(
+      { error: `该账号已被临时锁定，请 ${lock.retryAfter} 秒后再试` },
+      { status: 429 }
+    );
   }
   const db = getDb();
   const res = await db.execute({ sql: 'SELECT * FROM users WHERE username = ?', args: [uname] });
