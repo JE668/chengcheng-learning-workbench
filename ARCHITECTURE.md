@@ -36,11 +36,13 @@ src/
 ## 数据层（单一通路：裸 SQL）
 
 ### 连接与访问
+
 - **唯一入口 `getDb()`**（`db-core.ts`）：基于 `@libsql/client` 的单例，包装 `execute` 自动补 `args`。
 - 所有数据访问走**手写 SQL**（`db.execute`），不再使用 ORM——对自托管单机 + libSQL 足够，且避免「两条腿」心智负担。
 - `withWriteLock()`：进程内写事务互斥队列，保证单实例下 `BEGIN…COMMIT` 整段原子执行（多实例部署需另上锁，本项目暂无此场景）。
 
 ### Schema 与迁移（单一真源）
+
 - `schema.ts` 的 `ensureSchema()` 只做三件事：
   1. 开启 WAL / `synchronous=NORMAL`（NAS 断电保护）；
   2. 主批次 `CREATE TABLE IF NOT EXISTS` 建核心表；
@@ -49,11 +51,12 @@ src/
 - **约定：改 schema 只加一条迁移，不要在 `ensureSchema` 里堆内联 `ALTER`。**
 
 ### 关键实现决策
-| 决策 | 结论 | 理由 |
-|------|------|------|
-| ORM | 不用（裸 SQL） | 单机 libSQL 足够；曾引入 Kysely 但未铺开，已移除 |
-| 迁移 | 版本化 + 幂等 | 单一入口，避免历史 schema 漂移 |
-| 并发写 | 进程内互斥队列 | 单实例部署足够，明确标注多实例需换方案 |
+
+| 决策   | 结论           | 理由                                             |
+| ------ | -------------- | ------------------------------------------------ |
+| ORM    | 不用（裸 SQL） | 单机 libSQL 足够；曾引入 Kysely 但未铺开，已移除 |
+| 迁移   | 版本化 + 幂等  | 单一入口，避免历史 schema 漂移                   |
+| 并发写 | 进程内互斥队列 | 单实例部署足够，明确标注多实例需换方案           |
 
 ---
 
@@ -71,13 +74,13 @@ src/
 
 `lib/stores/index.ts`：
 
-| Store | 用途 | 持久化 |
-|-------|------|--------|
-| `useAuthStore` | 认证状态 | ✅ |
-| `useChildPreferencesStore` | 学习偏好/设置 | ✅ |
-| `useTTSStore` | TTS 播放队列 | ❌ |
-| `useCaptureStore` | 萌可捕捉动画 | ❌ |
-| `useUIStore` | 全局 Loading/Toast/Modal | ❌ |
+| Store                      | 用途                     | 持久化 |
+| -------------------------- | ------------------------ | ------ |
+| `useAuthStore`             | 认证状态                 | ✅     |
+| `useChildPreferencesStore` | 学习偏好/设置            | ✅     |
+| `useTTSStore`              | TTS 播放队列             | ❌     |
+| `useCaptureStore`          | 萌可捕捉动画             | ❌     |
+| `useUIStore`               | 全局 Loading/Toast/Modal | ❌     |
 
 > 说明：`useOfflineStore`（离线同步队列）当前仅定义了结构、尚未接入业务，属于「路线图」项，见文末。
 
@@ -86,11 +89,13 @@ src/
 ## UI 组件
 
 ### 设计系统（`components/atomic/`）
-唯一设计系统，基于 class-variance-authority + Tailwind，含 Button/Input/Card/Badge/Avatar/Modal/ConfirmDialog/Select/Tabs/Tooltip/DropdownMenu/Popover/Toast/Motion（动画）等，附带 `utils.ts`（cn helper）与 `a11y.test.tsx`。
 
-> 现状提醒：原子组件尚未全量推广进页面——多数页面仍用顶层业务组件 + 页面内自建样式。将设计系统逐步铺开是独立的后续工程（见「路线图」）。
+唯一设计系统，基于 class-variance-authority + Tailwind，当前仅有 Button / Input 两个组件，附带 `utils.ts`（cn helper）与 `a11y.test.tsx`。
+
+> 现状提醒：原子组件**尚未推广**——只有 `Button` 与 `Input` 各被登录页引用 1 次，全站点 99% 的页面仍用顶层业务组件 + 页面内自建样式。历史上的 Card/Badge/Avatar/Modal/ConfirmDialog/Select/Tabs/Tooltip/DropdownMenu/Popover/Toast/Motion 等 12 个组件已因零引用被删除（见交接文档 3.19/3.20）。将设计系统铺开是独立的后续工程（见「路线图」）。
 
 ### 业务组件
+
 `components/*.tsx` 顶层组件承载业务视图（MokoCarousel、GrowthTree、Castle、games/ 等），按需 `next/dynamic` 懒加载游戏等重组件。
 
 ---
@@ -107,11 +112,11 @@ src/
 
 ## 测试策略
 
-| 层级 | 工具 | 说明 |
-|------|------|------|
-| 单元/集成 | Vitest（298 用例） | 领域逻辑、算法、Store、迁移（`file::memory:` 隔离，不碰真实 DB） |
-| E2E | Playwright | 关键用户流程（tests/e2e/） |
-| 可访问性 | axe-core | `atomic/a11y.test.tsx` + `test-axe.mjs` |
+| 层级      | 工具                              | 说明                                                             |
+| --------- | --------------------------------- | ---------------------------------------------------------------- |
+| 单元/集成 | Vitest（315 用例，29 个测试文件） | 领域逻辑、算法、Store、迁移（`file::memory:` 隔离，不碰真实 DB） |
+| E2E       | Playwright                        | 关键用户流程（tests/e2e/）                                       |
+| 可访问性  | axe-core                          | `atomic/a11y.test.tsx` + `test-axe.mjs`                          |
 
 命令：`pnpm test` / `pnpm test:coverage` / `pnpm e2e`。
 
