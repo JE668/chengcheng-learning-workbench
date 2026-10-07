@@ -31,10 +31,24 @@ const nextConfig = {
       '@': path.resolve(process.cwd(), 'src'),
     };
 
-    // 学习模块全部 next/dynamic 懒加载后，共享的 src/lib、src/components 工具代码
-    // 会被复制进每个懒加载 chunk（"爱心萌可" 这类字符串曾出现在 15 个 chunk 里）。
-    // 加一个保守的共享组：被 ≥3 个 chunk 引用的 src 模块提取为公共 chunk，
     // 仅在生产、客户端构建生效；不覆盖 Next 默认的 framework/vendors 分组。
+    //
+    // ⚠️ 这里**曾经**有个 `shared` 分组（把被 ≥3 个 chunk 引用的 src/lib、src/components
+    // 模块提取成公共 chunk，理由是"爱心萌可"这类字符串曾出现在 15 个 chunk 里）。
+    // 它已被删除，因为那个理由站不住：本项目把 70+ 学习模块注册在 study-modules.ts
+    // 的同一个注册表里，于是**每个**模块文件都被 3+ 个 chunk 引用、被这个分组重新提回
+    // 一个 eager 公共 chunk —— 等于把 next/dynamic 的懒加载整个抵消掉了。
+    // 实测（改动前）：
+    //   · react-loadable-manifest.json 里 41 个 dynamic() 边界有 37 个指向该公共 chunk
+    //     （指向首屏载荷的"懒加载"不叫懒加载）
+    //   · 该 chunk 488 KB（gzip 127 KB），被 42/105 条路由首屏加载，含 /layout
+    //   · /layout 的 eager JS 906 KB
+    // 删除后实测：公共 chunk 不再生成，37 个边界全部指回各自的懒加载 chunk，
+    // /layout 的 eager JS 降到 419 KB，全站 105 条路由 eager 总计 -27.3%。
+    //
+    // **代码重复要治源头，不能靠分块**。若某段代码真的在多个 chunk 里重复出现，
+    // 正确做法是客户端改导入具体子模块（`@/lib/study-data/xxx`）而不是 barrel，
+    // 减少依赖面 —— 而不是让 webpack 把它合进首屏。
     if (!dev && !isServer) {
       config.optimization.splitChunks.cacheGroups = {
         ...config.optimization.splitChunks.cacheGroups,
@@ -44,14 +58,6 @@ const nextConfig = {
           test: /[\\/]node_modules[\\/]/,
           minChunks: 2,
           priority: 5,
-          reuseExistingChunk: true,
-        },
-        // 学习模块全部 next/dynamic 懒加载后，共享的 src/lib、src/components 工具代码
-        shared: {
-          name: 'shared',
-          test: /[\\/]src[\\/](lib|components)[\\/]/,
-          minChunks: 3,
-          priority: 10,
           reuseExistingChunk: true,
         },
         // 萌可算法板块独立 chunk，不将代码分发给其他 chunk
