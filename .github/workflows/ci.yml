@@ -207,9 +207,14 @@ jobs:
   # ⚠️ 原先这里带 `continue-on-error: true` 且只点名 3 个 spec，
   # 导致 learning.spec.ts / parent.spec.ts（11 个用例）永不执行，
   # 且 E2E 全红也照样推镜像到 GHCR —— 等于没有门禁。现已去掉并跑全部 spec。
+  #
+  # ⚠️ timeout 从 45 提到 75 分钟：实测 45 分钟会在「安装 Playwright 浏览器」
+  # 那一步就超时（17:50 开始、18:35 被 cancel，一个用例都没跑），
+  # 而浏览器下载速度受 CI 网络影响很大。上面的 Playwright 浏览器缓存能显著缓解，
+  # 但仍需为慢速网络留余量 —— 45 分钟把「下载慢」误判成了「测试失败」。
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v7
 
@@ -269,8 +274,17 @@ jobs:
       - name: 初始化测试数据库（seed 默认账号，local.db 被 gitignore 未入库）
         run: pnpm seed
 
-      - name: 安装 Playwright 浏览器（全部）
+      - name: 安装 Playwright 浏览器（chromium）
+        # 单独设 timeout：浏览器下载受 CI 网络影响很大，曾把整个 job 拖到超时
+        # （2026-10-07 那次 45 分钟里全耗在这一步，一个用例都没跑）。
+        # 这里给 20 分钟独立预算：超时了就明确报「浏览器装不上」而不是
+        # 让 job 被外层 timeout 静默 cancel，那样看不出到底卡在哪。
+        timeout-minutes: 20
         run: pnpm exec playwright install --with-deps chromium
+
+      - name: 校验 chromium 可用
+        run: |
+          node -e "const {chromium}=require('@playwright/test');chromium.launch().then(async b=>{await b.close();console.log('✅ chromium 启动正常')}).catch(e=>{console.error('❌ chromium 无法启动:',e.message);process.exit(1)})"
 
       - name: 启动开发服务器
         env:
