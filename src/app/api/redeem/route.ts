@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb, getChildPoints, getChildId, withWriteLock } from '@/lib/db';
 import { safeJson } from '@/lib/safe-json';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -29,6 +30,14 @@ export async function POST(req: NextRequest) {
   if (user.role !== 'child' && user.role !== 'parent')
     return NextResponse.json({ error: '无权限' }, { status: 403 });
 
+  // 兑换会真实扣积分（余额由下方 withWriteLock 内的检查保证不透支），
+  // 但**没有次数上限**。剧本可高频兑换，撑爆家长端的兑换记录列表，
+  // 也会让「积分流水」变成噪声。与 castle/grant 同一档位。
+  const limit = rateLimit(`redeem:${user.id}`, { windowSeconds: 60, maxRequests: 10 });
+  if (!limit.ok) {
+    return NextResponse.json({ error: '操作太频繁，请稍后再试' }, { status: 429 });
+  }
+
   let rewardName: unknown;
   let cost: unknown;
   try {
@@ -52,15 +61,29 @@ export async function POST(req: NextRequest) {
   if (!childId) return NextResponse.json({ error: '没有孩子账号' }, { status: 404 });
 
   // 读余额 + 写入兑换必须在同一把写锁内，否则两个并发兑换都能通过余额检查导致透支。
+  //
+  // ⚠️ 写锁只解决**并发**，不解决**崩溃**：此前这里只有锁、没有事务，
+  // 若进程在「读余额」与「写兑换记录」之间被杀/重启，余额检查与落库就不一致。
+  // 这里补 BEGIN IMMEDIATE/COMMIT（与 castle.confirm / castle.buy 同一套做法）。
   return withWriteLock(async () => {
-    const points = await getChildPoints(childId);
-    if (points < numCost) return NextResponse.json({ error: '积分不够' }, { status: 400 });
+    await db.execute('BEGIN IMMEDIATE');
+    try {
+      const points = await getChildPoints(childId);
+      if (points < numCost) {
+        await db.execute('ROLLBACK');
+        return NextResponse.json({ error: '积分不够' }, { status: 400 });
+      }
 
-    await db.execute({
-      sql: 'INSERT INTO redemptions (child_id, reward_name, cost, created_by) VALUES (?, ?, ?, ?)',
-      args: [childId, rewardName.trim(), numCost, user.id],
-    });
-    return NextResponse.json({ ok: true });
+      await db.execute({
+        sql: 'INSERT INTO redemptions (child_id, reward_name, cost, created_by) VALUES (?, ?, ?, ?)',
+        args: [childId, rewardName.trim(), numCost, user.id],
+      });
+      await db.execute('COMMIT');
+      return NextResponse.json({ ok: true });
+    } catch (e) {
+      await db.execute('ROLLBACK');
+      throw e;
+    }
   });
 }
 
