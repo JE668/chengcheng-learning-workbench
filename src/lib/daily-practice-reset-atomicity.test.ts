@@ -39,6 +39,7 @@ vi.mock('@/lib/daily-practice', () => ({
 }));
 
 import { getDb, ensureSchema } from '@/lib/db';
+import { dateStr } from '@/lib/date';
 import { POST } from '@/app/api/daily-practice/reset/route';
 
 const CHILD = 7701;
@@ -56,7 +57,11 @@ async function seed(qty: number, completed: number) {
     args: [CHILD, 'timeglass', qty],
   });
   await getDb().execute({ sql: 'DELETE FROM daily_practice WHERE child_id = ?', args: [CHILD] });
-  const today = new Date().toISOString().slice(0, 10);
+  // ⚠️ 必须用 dateStr()（本地日），不能用 `new Date().toISOString().slice(0,10)`（UTC 日）。
+  // 路由内部用 dateStr() 取「今天」，两者在东八区 UTC 16:00 之后就会差一天，
+  // 于是种下的行路由根本查不到 → 400，用例在**每天 UTC 16:00 起**神秘变红。
+  // 本仓已有 date.ts 作为全仓唯一的「本地日」出口（见其文件头注释）。
+  const today = dateStr();
   await getDb().execute({
     sql: `INSERT INTO daily_practice (child_id, day, completed, correct, total, questions)
           VALUES (?, ?, ?, 3, 3, '[{"q":1}]')`,

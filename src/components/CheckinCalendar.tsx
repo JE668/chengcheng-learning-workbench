@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { dateStr } from '@/lib/date';
 
 interface CalendarDay {
   day: string;
@@ -31,12 +32,18 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
   const [confirmDay, setConfirmDay] = useState<string | null>(null);
   const mounted = useRef(false);
 
-  const today = new Date().toISOString().slice(0, 10);
+  // ⚠️ 必须用 dateStr()（本地日），不能用 toISOString().slice(0,10)（UTC 日）。
+  // 下面 isBrokenDay 用它判断「这天已经过去、却没打满卡」→ 会标红提示补打卡。
+  // 东八区每天 UTC 16:00 之后，UTC 日比本地日快一天，于是「今天」会被当成
+  // 已经过去的日子而误标为漏打卡。全仓统一走 src/lib/date.ts 的 dateStr()。
+  const today = dateStr();
 
   // 弹窗挂载到 body
   useEffect(() => {
     mounted.current = true;
-    return () => { mounted.current = false; };
+    return () => {
+      mounted.current = false;
+    };
   }, []);
 
   // 把 days 按 ISO 周（周一开始）分组
@@ -50,7 +57,7 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
   }
   for (const c of days) {
     cur.push(c);
-    if (c.day && ((new Date(c.day + 'T00:00:00').getDay() + 6) % 7) === 6) {
+    if (c.day && (new Date(c.day + 'T00:00:00').getDay() + 6) % 7 === 6) {
       weeks.push(cur);
       cur = [];
     }
@@ -82,14 +89,14 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
   const weekday = ['一', '二', '三', '四', '五', '六', '日'];
   // 彩虹渐变：连续打卡天数越多，颜色越鲜艳
   const RAINBOW_COLORS = [
-    'bg-gray-100 text-gray-400',      // 0 天
-    'bg-orange-100 text-orange-600',  // 1 天
-    'bg-yellow-100 text-yellow-700',  // 2 天
-    'bg-green-100 text-green-700',    // 3 天
-    'bg-cyan-100 text-cyan-700',      // 4 天
-    'bg-blue-100 text-blue-700',      // 5 天
-    'bg-purple-100 text-purple-700',  // 6 天
-    'rainbow-gradient text-white',    // 7+ 天
+    'bg-gray-100 text-gray-400', // 0 天
+    'bg-orange-100 text-orange-600', // 1 天
+    'bg-yellow-100 text-yellow-700', // 2 天
+    'bg-green-100 text-green-700', // 3 天
+    'bg-cyan-100 text-cyan-700', // 4 天
+    'bg-blue-100 text-blue-700', // 5 天
+    'bg-purple-100 text-purple-700', // 6 天
+    'rainbow-gradient text-white', // 7+ 天
   ];
 
   // 计算从该天开始的连续打卡天数
@@ -112,50 +119,52 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
   };
 
   // 确认弹窗（通过 Portal 渲染到 body，避免被 transform 包含块裁剪）
-  const modalContent = confirmDay && mounted.current && typeof document !== 'undefined'
-    ? createPortal(
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40"
-          onClick={() => setConfirmDay(null)}
-        >
+  const modalContent =
+    confirmDay && mounted.current && typeof document !== 'undefined'
+      ? createPortal(
           <div
-            className="bg-white rounded-3xl p-6 shadow-2xl max-w-xs w-full"
-            style={{ animation: 'fadeUp 0.3s ease-out both' }}
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40"
+            onClick={() => setConfirmDay(null)}
           >
-            <div className="text-center mb-4">
-              <span className="text-4xl">⏳</span>
-              <div className="font-black text-lg text-moko-violet mt-2">补打卡？</div>
-              <div className="text-sm text-gray-600 mt-1">
-                {confirmDay.slice(5).replace('-', '月')}月{confirmDay.slice(8)}日 只打了 {days.find((d) => d.day === confirmDay)?.count}/3 科
+            <div
+              className="bg-white rounded-3xl p-6 shadow-2xl max-w-xs w-full"
+              style={{ animation: 'fadeUp 0.3s ease-out both' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-center mb-4">
+                <span className="text-4xl">⏳</span>
+                <div className="font-black text-lg text-moko-violet mt-2">补打卡？</div>
+                <div className="text-sm text-gray-600 mt-1">
+                  {confirmDay.slice(5).replace('-', '月')}月{confirmDay.slice(8)}日 只打了{' '}
+                  {days.find((d) => d.day === confirmDay)?.count}/3 科
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  向爸爸妈妈申请时光沙漏补打卡，审批后自动恢复连续天数
+                </div>
               </div>
-              <div className="text-xs text-gray-500 mt-1">
-                向爸爸妈妈申请时光沙漏补打卡，审批后自动恢复连续天数
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmDay(null)}
+                  className="flex-1 py-2.5 rounded-full bg-gray-100 text-gray-600 font-bold text-sm active:scale-95 transition"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => handleRequest(confirmDay)}
+                  disabled={busy}
+                  className="flex-1 py-2.5 rounded-full bg-gradient-to-r from-moko-violet to-moko-purple text-white font-black text-sm active:scale-95 transition disabled:opacity-50"
+                >
+                  {busy ? '申请中…' : '⏳ 申请'}
+                </button>
               </div>
+              {msg && (
+                <div className="text-xs text-center text-moko-rose font-bold mt-3">{msg}</div>
+              )}
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmDay(null)}
-                className="flex-1 py-2.5 rounded-full bg-gray-100 text-gray-600 font-bold text-sm active:scale-95 transition"
-              >
-                取消
-              </button>
-              <button
-                onClick={() => handleRequest(confirmDay)}
-                disabled={busy}
-                className="flex-1 py-2.5 rounded-full bg-gradient-to-r from-moko-violet to-moko-purple text-white font-black text-sm active:scale-95 transition disabled:opacity-50"
-              >
-                {busy ? '申请中…' : '⏳ 申请'}
-              </button>
-            </div>
-            {msg && (
-              <div className="text-xs text-center text-moko-rose font-bold mt-3">{msg}</div>
-            )}
-          </div>
-        </div>,
-        document.body,
-      )
-    : null;
+          </div>,
+          document.body
+        )
+      : null;
 
   return (
     <div>
@@ -219,7 +228,8 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
           <span className="w-3 h-3 rounded bg-gray-100 inline-block" /> 未打卡
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-gray-100 border-2 border-dashed border-moko-violet/40 inline-block" /> 中断（可点补打卡）
+          <span className="w-3 h-3 rounded bg-gray-100 border-2 border-dashed border-moko-violet/40 inline-block" />{' '}
+          中断（可点补打卡）
         </span>
         <span className="flex items-center gap-1">
           <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" /> 捣蛋萌可
