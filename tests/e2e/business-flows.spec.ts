@@ -184,8 +184,10 @@ test.describe('核心业务流程', () => {
       // 提交表单（表单内的"发布任务"按钮）
       await page.locator('form button:has-text("发布任务")').click();
 
-      // 验证任务发布成功
-      await expect(page.locator('text=E2E测试任务：朗读课文')).toBeVisible({ timeout: 10000 });
+      // 验证任务发布成功。
+      // ⚠️ e2e 共用同一个 local.db，重复运行会累积多条同名任务，
+      // `text=` 严格模式因此命中多个元素而报错 —— 取第一条即可。
+      await expect(page.getByText('E2E测试任务：朗读课文').first()).toBeVisible({ timeout: 10000 });
 
       // 2. 切换到孩子账号完成任务
       await page.goto('/login');
