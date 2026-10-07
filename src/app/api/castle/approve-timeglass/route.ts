@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import { restoreDay } from '@/lib/castle';
+import { parseBackfillDateFromWish, validateBackfillDay } from '@/lib/backfill-date';
 
 /**
  * 家长审批时光沙漏申请。
@@ -40,10 +41,18 @@ export async function POST(req: Request) {
 
   const wishText = String(wish.rows[0].text);
   // 提取补打卡日期：格式 "⏳ 申请时光沙漏（补 08月18日）"
-  const dayMatch = wishText.match(/补\s*(\d{2})月(\d{2})日/);
-  const day = dayMatch
-    ? `${new Date().getFullYear()}-${dayMatch[1]}-${dayMatch[2]}`
-    : null;
+  //
+  // ⚠️ 必须解析后立刻校验，不能直接拿去 restoreDay。
+  // 这段文案是**孩子自己填的**（castle/request-timeglass），原来这里连校验都没有：
+  // 任何月日都会被盖上「今年」直接补打卡，可补未来日期、任意久远的日期，
+  // 拿积分/阳光/萌可，还会把 castle_state.last_settled_day 游标回拨。
+  // 与 castle/confirm、castle/use-item 现在共用同一套校验（见 backfill-date.ts）。
+  const rawDay = parseBackfillDateFromWish(wishText);
+  const dayCheck = rawDay ? validateBackfillDay(rawDay, { allowToday: true }) : null;
+  if (dayCheck && !dayCheck.ok) {
+    return NextResponse.json({ ok: false, message: dayCheck.reason }, { status: 400 });
+  }
+  const day = dayCheck?.day ?? null;
 
   if (action === 'approve') {
     if (day) {
@@ -53,7 +62,8 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: false, message: result.message }, { status: 400 });
       }
       const dayLabel = day.slice(5).replace('-', '月') + '月' + day.slice(8) + '日';
-      const subjectMsg = result.restored.length > 0 ? `，${dayLabel} ${result.restored.join('、')} 已补打卡` : '';
+      const subjectMsg =
+        result.restored.length > 0 ? `，${dayLabel} ${result.restored.join('、')} 已补打卡` : '';
       const coinMsg = result.coinsReturned > 0 ? `，找回被藏星星币 ${result.coinsReturned} 颗` : '';
       await db.execute({
         sql: "UPDATE wishes SET status = 'fulfilled' WHERE id = ?",
