@@ -22,48 +22,81 @@ export default async function DashboardPage() {
           const cid = ch.id;
           const pts = await getChildPoints(cid);
           let streak = 0;
-          try { const p = await getTodayPractice(cid, false); streak = p.practiceStreak ?? 0; } catch {}
+          try {
+            const p = await getTodayPractice(cid, false);
+            streak = p.practiceStreak ?? 0;
+          } catch {}
           let mokos = 0;
-          try { const owned = await db.execute({ sql: 'SELECT COUNT(*) as n FROM moko_owned WHERE child_id = ?', args: [cid] }); mokos = Number(owned.rows[0]?.n || 0); } catch {}
+          try {
+            const owned = await db.execute({
+              sql: 'SELECT COUNT(*) as n FROM moko_owned WHERE child_id = ?',
+              args: [cid],
+            });
+            mokos = Number(owned.rows[0]?.n || 0);
+          } catch {}
           return { name: ch.displayName, points: pts, streak, mokoCount: mokos };
         })
       );
       allChildren = results;
     }
-  } catch { /* 忽略 */ }
+  } catch {
+    /* 忽略 */
+  }
 
-  const childRows = await db.execute({ sql: 'SELECT * FROM users WHERE id = ?', args: [childId ?? -1] });
+  // 这三个统计与 childId 无关，先行发起，与后面的多娃数据并行。
+  const tasksP = db.execute({ sql: 'SELECT COUNT(*) as n FROM tasks', args: [] });
+  const pendingP = db.execute({
+    sql: 'SELECT COUNT(*) as n FROM redemptions WHERE status = ?',
+    args: ['pending'],
+  });
+
+  const childRows = await db.execute({
+    sql: 'SELECT * FROM users WHERE id = ?',
+    args: [childId ?? -1],
+  });
   const c = childRows.rows[0];
   const cId = c ? Number(c.id) : null;
-  const points = cId ? await getChildPoints(cId) : 0;
-  const tasks = await db.execute({ sql: 'SELECT COUNT(*) as n FROM tasks', args: [] });
-  const comps = await db.execute({ sql: 'SELECT COUNT(*) as n FROM completions WHERE child_id = ?', args: [cId ?? -1] });
-  const pending = await db.execute({ sql: 'SELECT COUNT(*) as n FROM redemptions WHERE status = ?', args: ['pending'] });
+  // 以下四组只依赖 cId，彼此无先后关系，并行取回。
+  // 原先逐个 await 会把 4~5 次串行往返叠在首屏上（家长看板是常刷页面）。
+  const [pointsP, compsP, practiceP, checkinsP] = await Promise.all([
+    cId ? getChildPoints(cId) : Promise.resolve(0),
+    db.execute({
+      sql: 'SELECT COUNT(*) as n FROM completions WHERE child_id = ?',
+      args: [cId ?? -1],
+    }),
+    cId ? getTodayPractice(cId, false).catch(() => null) : Promise.resolve(null),
+    db
+      .execute({
+        sql: "SELECT subject FROM daily_checkins WHERE child_id = ? AND day = date('now','localtime') AND status = ?",
+        args: [cId ?? -1, 'confirmed'],
+      })
+      .catch(() => null),
+  ]);
+  const points = pointsP;
+  const comps = compsP;
+  const [tasks, pending] = await Promise.all([tasksP, pendingP]);
 
-  // 今日完成情况
+  // 今日完成情况（数据已在上面的 Promise.all 里取回）
   let todayDone = false;
   let todaySubj = { 语文: false, 数学: false, 英语: false };
-  try {
-    if (cId) {
-      const practice = await getTodayPractice(cId, false);
-      todayDone = practice.completed;
-      const checkins = await db.execute({
-        sql: "SELECT subject FROM daily_checkins WHERE child_id = ? AND day = date('now','localtime') AND status = ?",
-        args: [cId, 'confirmed'],
-      });
-      for (const r of checkins.rows) todaySubj[String(r.subject) as keyof typeof todaySubj] = true;
-    }
-  } catch { /* 建表前或查询失败不影响看板 */ }
+  if (cId && practiceP) {
+    todayDone = practiceP.completed;
+    for (const r of checkinsP?.rows ?? [])
+      todaySubj[String(r.subject) as keyof typeof todaySubj] = true;
+  }
 
   // 萌可收集进度
-  let ownedCount = 0, totalMoko = 0;
+  let ownedCount = 0,
+    totalMoko = 0;
   try {
     if (cId) {
       const castle = await getCastleState(cId);
       ownedCount = castle.gallery.filter((g) => g.owned).length;
       totalMoko = castle.gallery.length;
     }
-  } catch { /* 同上 */ }
+  } catch {
+    /* 同上 */
+  }
 
   // 待审批时光沙漏申请
   let timeglassRequests: { id: number; text: string; createdAt: string }[] = [];
@@ -79,7 +112,9 @@ export default async function DashboardPage() {
         createdAt: String(r.created_at ?? ''),
       }));
     }
-  } catch { /* 忽略 */ }
+  } catch {
+    /* 忽略 */
+  }
 
   // 本周积分趋势（最近 7 天每日积分）
   let weeklyPoints: { day: string; points: number }[] = [];
@@ -105,7 +140,9 @@ export default async function DashboardPage() {
         weeklyPoints.push({ day: key, points: dayMap.get(key) ?? 0 });
       }
     }
-  } catch { /* 忽略 */ }
+  } catch {
+    /* 忽略 */
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -120,7 +157,10 @@ export default async function DashboardPage() {
           { label: '完成次数', value: Number(comps.rows[0]?.n || 0), color: 'bg-moko-yellow' },
           { label: '待审核兑换', value: Number(pending.rows[0]?.n || 0), color: 'bg-moko-purple' },
         ].map((s) => (
-          <div key={s.label} className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}>
+          <div
+            key={s.label}
+            className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}
+          >
             <div className="text-4xl font-black">{s.value}</div>
             <div className="text-sm opacity-90">{s.label}</div>
           </div>
@@ -133,73 +173,94 @@ export default async function DashboardPage() {
           <h2 className="text-xl font-black text-moko-violet mb-3">👨‍👩‍👧 多娃对比</h2>
           <div className="space-y-3">
             {(() => {
-              const maxPts = Math.max(...allChildren.map(c => c.points), 1);
-              const maxMokos = Math.max(...allChildren.map(c => c.mokoCount), 1);
-              return allChildren.sort((a, b) => b.points - a.points).map((ch, i) => {
-                const isCurrent = ch.name === (c?.display_name ?? '');
-                return (
-                  <div key={ch.name} className={`${isCurrent ? 'bg-moko-purple/10 border-moko-purple/30' : 'bg-gray-50 border-gray-100'} rounded-2xl p-3 border-2`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-moko-violet">
-                        {i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'} {ch.name}
-                        {isCurrent && <span className="text-xs text-moko-purple ml-1">（当前查看）</span>}
-                      </span>
-                      <span className="text-xs text-gray-500">🔥 {ch.streak} 天</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <div className="flex justify-between text-[11px] text-gray-500 mb-0.5">
-                          <span>积分</span><span className="font-bold">{ch.points}</span>
+              const maxPts = Math.max(...allChildren.map((c) => c.points), 1);
+              const maxMokos = Math.max(...allChildren.map((c) => c.mokoCount), 1);
+              return allChildren
+                .sort((a, b) => b.points - a.points)
+                .map((ch, i) => {
+                  const isCurrent = ch.name === (c?.display_name ?? '');
+                  return (
+                    <div
+                      key={ch.name}
+                      className={`${isCurrent ? 'bg-moko-purple/10 border-moko-purple/30' : 'bg-gray-50 border-gray-100'} rounded-2xl p-3 border-2`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-moko-violet">
+                          {i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'} {ch.name}
+                          {isCurrent && (
+                            <span className="text-xs text-moko-purple ml-1">（当前查看）</span>
+                          )}
+                        </span>
+                        <span className="text-xs text-gray-500">🔥 {ch.streak} 天</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <div className="flex justify-between text-[11px] text-gray-500 mb-0.5">
+                            <span>积分</span>
+                            <span className="font-bold">{ch.points}</span>
+                          </div>
+                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-moko-rose rounded-full"
+                              style={{ width: `${(ch.points / maxPts) * 100}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-moko-rose rounded-full" style={{ width: `${(ch.points / maxPts) * 100}%` }} />
+                        <div>
+                          <div className="flex justify-between text-[11px] text-gray-500 mb-0.5">
+                            <span>萌可</span>
+                            <span className="font-bold">{ch.mokoCount}</span>
+                          </div>
+                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-moko-gold rounded-full"
+                              style={{ width: `${(ch.mokoCount / maxMokos) * 100}%` }}
+                            />
+                          </div>
                         </div>
                       </div>
-                      <div>
-                        <div className="flex justify-between text-[11px] text-gray-500 mb-0.5">
-                          <span>萌可</span><span className="font-bold">{ch.mokoCount}</span>
-                        </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-moko-gold rounded-full" style={{ width: `${(ch.mokoCount / maxMokos) * 100}%` }} />
-                        </div>
-                      </div>
                     </div>
-                  </div>
-                );
-              });
+                  );
+                });
             })()}
           </div>
         </div>
       )}
 
       {/* 今日学情摘要 */}
-      {cId && (() => {
-        const subjects = [
-          { name: '语文', done: todaySubj.语文, icon: '📕', color: 'bg-moko-rose' },
-          { name: '数学', done: todaySubj.数学, icon: '🔢', color: 'bg-moko-blue' },
-          { name: '英语', done: todaySubj.英语, icon: '🔤', color: 'bg-moko-yellow' },
-        ];
-        const doneCount = subjects.filter((s) => s.done).length;
-        return (
-          <div className="rounded-3xl p-5 bg-white shadow-lg border-2 border-moko-purple/20 mb-4 mt-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-bold text-moko-violet">📋 今日学情</span>
-              <span className={`text-sm font-bold px-3 py-1 rounded-full ${todayDone ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                {todayDone ? '今日已完成 🎉' : `${doneCount}/3 科已打卡`}
-              </span>
+      {cId &&
+        (() => {
+          const subjects = [
+            { name: '语文', done: todaySubj.语文, icon: '📕', color: 'bg-moko-rose' },
+            { name: '数学', done: todaySubj.数学, icon: '🔢', color: 'bg-moko-blue' },
+            { name: '英语', done: todaySubj.英语, icon: '🔤', color: 'bg-moko-yellow' },
+          ];
+          const doneCount = subjects.filter((s) => s.done).length;
+          return (
+            <div className="rounded-3xl p-5 bg-white shadow-lg border-2 border-moko-purple/20 mb-4 mt-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-bold text-moko-violet">📋 今日学情</span>
+                <span
+                  className={`text-sm font-bold px-3 py-1 rounded-full ${todayDone ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
+                >
+                  {todayDone ? '今日已完成 🎉' : `${doneCount}/3 科已打卡`}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {subjects.map((s) => (
+                  <div
+                    key={s.name}
+                    className={`rounded-2xl p-3 text-center ${s.done ? s.color + ' text-white' : 'bg-gray-50 text-gray-400'}`}
+                  >
+                    <div className="text-2xl mb-1">{s.done ? '✅' : s.icon}</div>
+                    <div className="font-bold text-sm">{s.name}</div>
+                    <div className="text-xs">{s.done ? '已打卡' : '未完成'}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              {subjects.map((s) => (
-                <div key={s.name} className={`rounded-2xl p-3 text-center ${s.done ? s.color + ' text-white' : 'bg-gray-50 text-gray-400'}`}>
-                  <div className="text-2xl mb-1">{s.done ? '✅' : s.icon}</div>
-                  <div className="font-bold text-sm">{s.name}</div>
-                  <div className="text-xs">{s.done ? '已打卡' : '未完成'}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
 
       <h2 className="section-title mb-3">🏰 萌可城堡（学习联动）</h2>
       <ParentCastlePanel />
@@ -208,7 +269,9 @@ export default async function DashboardPage() {
         <div className="rounded-3xl p-4 bg-white shadow-lg border-2 border-moko-yellow/30 mt-4">
           <div className="flex items-center justify-between mb-2">
             <span className="font-bold text-moko-violet">🧸 萌可收集进度</span>
-            <span className="text-sm font-bold text-gray-500">{ownedCount} / {totalMoko}</span>
+            <span className="text-sm font-bold text-gray-500">
+              {ownedCount} / {totalMoko}
+            </span>
           </div>
           <div className="h-3 rounded-full bg-gray-200 overflow-hidden">
             <div
@@ -221,12 +284,19 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
         {[
-          { label: '今日完成', value: todayDone ? '✅ 已完成' : '⬜ 未完成', color: todayDone ? 'bg-green-500' : 'bg-gray-400' },
+          {
+            label: '今日完成',
+            value: todayDone ? '✅ 已完成' : '⬜ 未完成',
+            color: todayDone ? 'bg-green-500' : 'bg-gray-400',
+          },
           { label: '语文', value: todaySubj.语文 ? '✅' : '⬜', color: 'bg-moko-rose' },
           { label: '数学', value: todaySubj.数学 ? '✅' : '⬜', color: 'bg-moko-blue' },
           { label: '英语', value: todaySubj.英语 ? '✅' : '⬜', color: 'bg-moko-yellow' },
         ].map((s) => (
-          <div key={s.label} className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}>
+          <div
+            key={s.label}
+            className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}
+          >
             <div className="text-2xl font-black">{s.value}</div>
             <div className="text-sm opacity-90">{s.label}</div>
           </div>
@@ -251,44 +321,81 @@ export default async function DashboardPage() {
             <svg viewBox="0 0 700 120" className="w-full h-full" preserveAspectRatio="none">
               {/* 网格线 */}
               {[0, 1, 2, 3].map((i) => (
-                <line key={i} x1="0" y1={30 + i * 20} x2="700" y2={30 + i * 20} stroke="#f0e6ff" strokeWidth="1" />
+                <line
+                  key={i}
+                  x1="0"
+                  y1={30 + i * 20}
+                  x2="700"
+                  y2={30 + i * 20}
+                  stroke="#f0e6ff"
+                  strokeWidth="1"
+                />
               ))}
               {/* 面积图 */}
               <path
                 d={
-                  'M' + weeklyPoints.map((p, i) => {
-                    const x = 50 + (i * 600 / 6);
-                    const maxPts = Math.max(...weeklyPoints.map((w) => w.points), 1);
-                    const y = 110 - (p.points / maxPts) * 80;
-                    return `${x},${y}`;
-                  }).join(' L') + ' L' + (50 + 600) + ',110 L50,110 Z'
+                  'M' +
+                  weeklyPoints
+                    .map((p, i) => {
+                      const x = 50 + (i * 600) / 6;
+                      const maxPts = Math.max(...weeklyPoints.map((w) => w.points), 1);
+                      const y = 110 - (p.points / maxPts) * 80;
+                      return `${x},${y}`;
+                    })
+                    .join(' L') +
+                  ' L' +
+                  (50 + 600) +
+                  ',110 L50,110 Z'
                 }
-                fill="url(#gradient)" opacity="0.3"
+                fill="url(#gradient)"
+                opacity="0.3"
               />
               {/* 折线 */}
               <path
                 d={
-                  'M' + weeklyPoints.map((p, i) => {
-                    const x = 50 + (i * 600 / 6);
-                    const maxPts = Math.max(...weeklyPoints.map((w) => w.points), 1);
-                    const y = 110 - (p.points / maxPts) * 80;
-                    return `${x},${y}`;
-                  }).join(' L')
+                  'M' +
+                  weeklyPoints
+                    .map((p, i) => {
+                      const x = 50 + (i * 600) / 6;
+                      const maxPts = Math.max(...weeklyPoints.map((w) => w.points), 1);
+                      const y = 110 - (p.points / maxPts) * 80;
+                      return `${x},${y}`;
+                    })
+                    .join(' L')
                 }
-                fill="none" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                fill="none"
+                stroke="#8B5CF6"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               {/* 数据点 */}
               {weeklyPoints.map((p, i) => {
-                const x = 50 + (i * 600 / 6);
+                const x = 50 + (i * 600) / 6;
                 const maxPts = Math.max(...weeklyPoints.map((w) => w.points), 1);
                 const y = 110 - (p.points / maxPts) * 80;
                 return (
                   <g key={i}>
                     <circle cx={x} cy={y} r="5" fill="#8B5CF6" stroke="white" strokeWidth="2" />
-                    <text x={x} y={125} textAnchor="middle" className="text-[10px]" fill="#9CA3AF" fontSize="10">
+                    <text
+                      x={x}
+                      y={125}
+                      textAnchor="middle"
+                      className="text-[10px]"
+                      fill="#9CA3AF"
+                      fontSize="10"
+                    >
                       {p.day.slice(5)}
                     </text>
-                    <text x={x} y={y - 10} textAnchor="middle" className="text-[10px]" fill="#8B5CF6" fontSize="10" fontWeight="bold">
+                    <text
+                      x={x}
+                      y={y - 10}
+                      textAnchor="middle"
+                      className="text-[10px]"
+                      fill="#8B5CF6"
+                      fontSize="10"
+                      fontWeight="bold"
+                    >
                       {p.points}
                     </text>
                   </g>

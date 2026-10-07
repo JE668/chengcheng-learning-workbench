@@ -6,63 +6,70 @@ import Link from 'next/link';
 import GrowthTree from '@/components/GrowthTree';
 import CheckinCalendar from '@/components/CheckinCalendar';
 import { EmptyState } from '@/components/EmptyState';
-
-// 本地日期工具（与 castle/date 一致）
-function dateStrForPg(d: Date = new Date()): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+import { dateStr } from '@/lib/date';
 
 export default async function RecordPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== 'child') return null;
   const db = getDb();
-  const points = await getChildPoints(user.id);
-  const comps = await db.execute({
-    sql: `SELECT c.*, t.title as task_title FROM completions c LEFT JOIN tasks t ON c.task_id = t.id
-          WHERE c.child_id = ? ORDER BY c.created_at DESC LIMIT 30`,
-    args: [user.id],
-  });
-  const redeems = await db.execute({ sql: 'SELECT * FROM redemptions WHERE child_id = ? ORDER BY created_at DESC LIMIT 10', args: [user.id] });
-  const diary = await getGrowthDiary(user.id, 20);
 
-  // RSC 直查库：获取当前孩子的所有模块进度，传给 GrowthTree 避免客户端请求 API
-  const childId = await resolveChildId(user);
-  const moduleProgress = childId ? await getModuleProgressAll(childId) : [];
-
-  // 近 7 天积分趋势
+  // 以下 7 组查询彼此无依赖（都只依赖 user.id / childId），一次性并行发起。
+  // 原先是逐个 await：RSC 首屏要把这些往返**串行叠满**，而成长记录是孩子常刷页面。
+  // 依赖关系已逐一核对：
+  //   · resolveChildId 只读 users，不依赖任何一条查询
+  //   · getGrowthDiary / getModuleProgressAll / 三条统计 SQL 都只按 child_id 取数
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 6);
-  const weekStart = weekAgo.toISOString().split('T')[0];
-  const weeklyPts = await db.execute({
-    sql: `SELECT DATE(created_at, 'localtime') as day, COALESCE(SUM(points), 0) as pts
-          FROM completions WHERE child_id = ? AND created_at >= ? GROUP BY day ORDER BY day`,
-    args: [user.id, weekStart],
-  });
+  const calStartDate = new Date();
+  calStartDate.setDate(calStartDate.getDate() - 34);
+
+  // ⚠️ 日期一律用 dateStr()（本地日），不能用 toISOString().split('T')[0]（UTC 日）：
+  // 下面的 SQL 用的是 DATE(created_at, 'localtime')，拿 UTC 日去比会在东八区
+  // 每天 16:00 之后错开一天（周趋势/日历会整体偏移）。src/lib/date.ts 是全仓
+  // 唯一的「本地日」出口。
+  const weekStart = dateStr(weekAgo);
+  const calStart = dateStr(calStartDate);
+
+  const [points, comps, redeems, diary, childId, weeklyPts, calCheckins, calTrouble] =
+    await Promise.all([
+      getChildPoints(user.id),
+      db.execute({
+        sql: `SELECT c.*, t.title as task_title FROM completions c LEFT JOIN tasks t ON c.task_id = t.id
+            WHERE c.child_id = ? ORDER BY c.created_at DESC LIMIT 30`,
+        args: [user.id],
+      }),
+      db.execute({
+        sql: 'SELECT * FROM redemptions WHERE child_id = ? ORDER BY created_at DESC LIMIT 10',
+        args: [user.id],
+      }),
+      getGrowthDiary(user.id, 20),
+      resolveChildId(user),
+      db.execute({
+        sql: `SELECT DATE(created_at, 'localtime') as day, COALESCE(SUM(points), 0) as pts
+            FROM completions WHERE child_id = ? AND created_at >= ? GROUP BY day ORDER BY day`,
+        args: [user.id, weekStart],
+      }),
+      db.execute({
+        sql: "SELECT day, subject FROM daily_checkins WHERE child_id = ? AND day >= ? AND status = 'confirmed'",
+        args: [user.id, calStart],
+      }),
+      db.execute({
+        sql: 'SELECT DISTINCT day FROM troublemakers WHERE child_id = ? AND day >= ? AND resolved = 0',
+        args: [user.id, calStart],
+      }),
+    ]);
+
+  // RSC 直查库：获取当前孩子的所有模块进度，传给 GrowthTree 避免客户端请求 API
+  const moduleProgress = childId ? await getModuleProgressAll(childId) : [];
+
   const ptsByDay = new Map<string, number>();
   for (const r of weeklyPts.rows) ptsByDay.set(String(r.day), Number(r.pts));
   const weeklyTrend: { day: string; pts: number }[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const key = d.toISOString().split('T')[0];
-    weeklyTrend.push({ day: key, pts: ptsByDay.get(key) ?? 0 });
+    weeklyTrend.push({ day: dateStr(d), pts: ptsByDay.get(dateStr(d)) ?? 0 });
   }
-
-  // 打卡日历：近 35 天每日打卡科目数 + 是否有捣蛋萌可
-  const calStartDate = new Date();
-  calStartDate.setDate(calStartDate.getDate() - 34);
-  const calStart = calStartDate.toISOString().split('T')[0];
-  const calCheckins = await db.execute({
-    sql: "SELECT day, subject FROM daily_checkins WHERE child_id = ? AND day >= ? AND status = 'confirmed'",
-    args: [user.id, calStart],
-  });
-  const calTrouble = await db.execute({
-    sql: "SELECT DISTINCT day FROM troublemakers WHERE child_id = ? AND day >= ? AND resolved = 0",
-    args: [user.id, calStart],
-  });
   const calTroubleSet = new Set(calTrouble.rows.map((r) => String(r.day)));
   const calByDay = new Map<string, Set<string>>();
   for (const r of calCheckins.rows) {
@@ -71,11 +78,11 @@ export default async function RecordPage() {
     calByDay.get(d)!.add(String(r.subject));
   }
   const calDays: { day: string; count: number; hasTrouble: boolean }[] = [];
-  const todayKey = dateStrForPg();
+  const todayKey = dateStr();
   for (let i = 34; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const key = dateStrForPg(d);
+    const key = dateStr(d);
     const subs = calByDay.get(key) ?? new Set<string>();
     calDays.push({ day: key, count: subs.size, hasTrouble: calTroubleSet.has(key) });
   }
@@ -83,7 +90,10 @@ export default async function RecordPage() {
   return (
     <div className="max-w-3xl mx-auto fade-up">
       <h1 className="page-title mb-4">学习记录 🏆</h1>
-      <Link href="/cert" className="block mb-6 rounded-2xl p-4 bg-gradient-to-r from-moko-gold to-moko-rose text-white shadow-lg hover:scale-[1.01] transition">
+      <Link
+        href="/cert"
+        className="block mb-6 rounded-2xl p-4 bg-gradient-to-r from-moko-gold to-moko-rose text-white shadow-lg hover:scale-[1.01] transition"
+      >
         <div className="flex items-center justify-between">
           <div>
             <div className="text-lg font-black">🎖️ 我的奖状</div>
@@ -109,34 +119,71 @@ export default async function RecordPage() {
           <h2 className="text-xl font-bold text-moko-violet mb-3">📈 近 7 天积分趋势</h2>
           <div className="relative h-28">
             <svg viewBox="0 0 700 140" className="w-full h-full" preserveAspectRatio="none">
-              {[0,1,2,3].map((i) => (
-                <line key={i} x1="0" y1={30 + i * 25} x2="700" y2={30 + i * 25} stroke="#f0e6ff" strokeWidth="1" />
+              {[0, 1, 2, 3].map((i) => (
+                <line
+                  key={i}
+                  x1="0"
+                  y1={30 + i * 25}
+                  x2="700"
+                  y2={30 + i * 25}
+                  stroke="#f0e6ff"
+                  strokeWidth="1"
+                />
               ))}
               <path
-                d={'M' + weeklyTrend.map((p, i) => {
-                  const x = 50 + (i * 600 / 6);
-                  const maxPts = Math.max(...weeklyTrend.map(w => w.pts), 1);
-                  return x + ',' + (130 - (p.pts / maxPts) * 90);
-                }).join(' L') + ' L' + (50 + 600) + ',130 L50,130 Z'}
-                fill="url(#gradient)" opacity="0.25"
+                d={
+                  'M' +
+                  weeklyTrend
+                    .map((p, i) => {
+                      const x = 50 + (i * 600) / 6;
+                      const maxPts = Math.max(...weeklyTrend.map((w) => w.pts), 1);
+                      return x + ',' + (130 - (p.pts / maxPts) * 90);
+                    })
+                    .join(' L') +
+                  ' L' +
+                  (50 + 600) +
+                  ',130 L50,130 Z'
+                }
+                fill="url(#gradient)"
+                opacity="0.25"
               />
               <path
-                d={'M' + weeklyTrend.map((p, i) => {
-                  const x = 50 + (i * 600 / 6);
-                  const maxPts = Math.max(...weeklyTrend.map(w => w.pts), 1);
-                  return x + ',' + (130 - (p.pts / maxPts) * 90);
-                }).join(' L')}
-                fill="none" stroke="#FF5DA0" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                d={
+                  'M' +
+                  weeklyTrend
+                    .map((p, i) => {
+                      const x = 50 + (i * 600) / 6;
+                      const maxPts = Math.max(...weeklyTrend.map((w) => w.pts), 1);
+                      return x + ',' + (130 - (p.pts / maxPts) * 90);
+                    })
+                    .join(' L')
+                }
+                fill="none"
+                stroke="#FF5DA0"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               {weeklyTrend.map((p, i) => {
-                const x = 50 + (i * 600 / 6);
-                const maxPts = Math.max(...weeklyTrend.map(w => w.pts), 1);
+                const x = 50 + (i * 600) / 6;
+                const maxPts = Math.max(...weeklyTrend.map((w) => w.pts), 1);
                 const y = 130 - (p.pts / maxPts) * 90;
                 return (
                   <g key={i}>
                     <circle cx={x} cy={y} r="5" fill="#FF5DA0" stroke="white" strokeWidth="2" />
-                    <text x={x} y={145} textAnchor="middle" fill="#9CA3AF" fontSize="10">{p.day.slice(5)}</text>
-                    <text x={x} y={y - 10} textAnchor="middle" fill="#FF5DA0" fontSize="10" fontWeight="bold">{p.pts}</text>
+                    <text x={x} y={145} textAnchor="middle" fill="#9CA3AF" fontSize="10">
+                      {p.day.slice(5)}
+                    </text>
+                    <text
+                      x={x}
+                      y={y - 10}
+                      textAnchor="middle"
+                      fill="#FF5DA0"
+                      fontSize="10"
+                      fontWeight="bold"
+                    >
+                      {p.pts}
+                    </text>
                   </g>
                 );
               })}
@@ -167,15 +214,23 @@ export default async function RecordPage() {
       <h2 className="text-2xl font-black text-moko-violet mb-3">📔 萌可成长日记</h2>
       <div className="card-moko mb-8">
         {diary.length === 0 ? (
-          <EmptyState emoji="📔" title="还没有日记" desc="快去完成打卡，和萌可们一起写成长故事吧！" />
+          <EmptyState
+            emoji="📔"
+            title="还没有日记"
+            desc="快去完成打卡，和萌可们一起写成长故事吧！"
+          />
         ) : (
           <ol className="relative border-l-4 border-moko-pink/40 ml-3 space-y-4">
             {diary.map((e) => (
               <li key={e.id} className="ml-5">
-                <span className="absolute -left-[14px] flex items-center justify-center w-7 h-7 bg-white rounded-full border-2 border-moko-pink shadow text-lg">{e.emoji}</span>
+                <span className="absolute -left-[14px] flex items-center justify-center w-7 h-7 bg-white rounded-full border-2 border-moko-pink shadow text-lg">
+                  {e.emoji}
+                </span>
                 <div className="font-bold text-moko-violet">{e.title}</div>
                 {e.desc && <div className="text-sm text-gray-500">{e.desc}</div>}
-                <div className="text-xs text-gray-400 mt-0.5">{e.created_at?.slice(0, 16)?.replace('T', ' ')}</div>
+                <div className="text-xs text-gray-400 mt-0.5">
+                  {e.created_at?.slice(0, 16)?.replace('T', ' ')}
+                </div>
               </li>
             ))}
           </ol>
@@ -190,9 +245,15 @@ export default async function RecordPage() {
             label = `任务：${String(c.task_title)}`;
           } else if (c.source) {
             const src = String(c.source);
-            if (src.startsWith('checkin:')) label = `每日一练 · ${src.replace('checkin:', '')} 打卡`;
+            if (src.startsWith('checkin:'))
+              label = `每日一练 · ${src.replace('checkin:', '')} 打卡`;
             else if (src.startsWith('story:')) label = '捕捉萌可';
-            else if (src.startsWith('game-') || src.startsWith('lesson-') || src.startsWith('task-')) label = `游戏/课程：${src.replace(/^(game|lesson|task)-/, '').replace(/-/g, ' ')}`;
+            else if (
+              src.startsWith('game-') ||
+              src.startsWith('lesson-') ||
+              src.startsWith('task-')
+            )
+              label = `游戏/课程：${src.replace(/^(game|lesson|task)-/, '').replace(/-/g, ' ')}`;
             else label = src.replace(/-/g, ' ');
           }
           return (
@@ -202,7 +263,9 @@ export default async function RecordPage() {
             </div>
           );
         })}
-        {comps.rows.length === 0 && <div className="card-moko text-gray-500">还没有记录，快去学习吧！</div>}
+        {comps.rows.length === 0 && (
+          <div className="card-moko text-gray-500">还没有记录，快去学习吧！</div>
+        )}
       </div>
 
       <h2 className="text-2xl font-black text-moko-violet mb-3">兑换记录</h2>
@@ -210,8 +273,15 @@ export default async function RecordPage() {
         {redeems.rows.map((r) => (
           <div key={String(r.id)} className="card-moko flex justify-between">
             <span>{String(r.reward_name)}</span>
-            <span className={`font-bold ${String(r.status) === 'approved' ? 'text-moko-mint' : String(r.status) === 'rejected' ? 'text-red-400' : 'text-moko-yellow'}`}>
-              -{Number(r.cost)} {String(r.status) === 'pending' ? '审核中' : String(r.status) === 'approved' ? '已兑换' : '已拒绝'}
+            <span
+              className={`font-bold ${String(r.status) === 'approved' ? 'text-moko-mint' : String(r.status) === 'rejected' ? 'text-red-400' : 'text-moko-yellow'}`}
+            >
+              -{Number(r.cost)}{' '}
+              {String(r.status) === 'pending'
+                ? '审核中'
+                : String(r.status) === 'approved'
+                  ? '已兑换'
+                  : '已拒绝'}
             </span>
           </div>
         ))}
