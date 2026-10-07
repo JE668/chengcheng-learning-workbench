@@ -450,6 +450,39 @@ export const MIGRATIONS: Migration[] = [
       await db.execute({ sql: 'DROP INDEX IF EXISTS idx_speech_scores_child', args: [] });
     },
   },
+  {
+    // ⚠️ push_subscriptions 表此前**从未被创建**：schema.ts 与 migrations.ts 里都没有
+    // 它的建表语句，但 src/app/api/push/{subscribe,unsubscribe,test} 三个路由都在读写它，
+    // 运行时必然抛 `no such table` —— 即 Web Push 推送功能实际不可用。
+    // 字段按三个路由的 SQL 对齐（subscribe 插入这 5 列，unsubscribe 按 child_id+endpoint 删）。
+    version: 17,
+    name: 'create_push_subscriptions_table',
+    description: '补建 push_subscriptions 表（Web Push 订阅，修复推送路由 no such table）',
+    up: async (db) => {
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS push_subscriptions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          child_id INTEGER NOT NULL,
+          endpoint TEXT NOT NULL,
+          p256dh TEXT NOT NULL,
+          auth TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(child_id, endpoint),
+          FOREIGN KEY(child_id) REFERENCES users(id)
+        )`,
+        args: [],
+      });
+      // 按孩子查询/删除订阅是主要访问路径
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_push_subscriptions_child ON push_subscriptions(child_id)',
+        args: [],
+      });
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'DROP INDEX IF EXISTS idx_push_subscriptions_child', args: [] });
+      await db.execute({ sql: 'DROP TABLE IF EXISTS push_subscriptions', args: [] });
+    },
+  },
 ];
 
 export async function ensureMigrationTable(db: Client): Promise<void> {
