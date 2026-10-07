@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   POSITIONS,
   SOLID_SHAPES,
@@ -28,7 +28,12 @@ export function PositionModule() {
   const [picked, setPicked] = useState<string | null>(null);
   const item: PositionItem = POSITIONS[idx % POSITIONS.length];
   const blank = item.example.replace(item.word, '（　）');
-  const options = shuffle(POSITIONS.map((p) => p.word));
+  // ⚠️ 用 useMemo 而非在渲染函数体内 shuffle()：
+  // 原写法下 choose() 里的 setPicked(w) 触发重渲染 → 重新洗牌 →
+  // **孩子点击的瞬间选项就换位置了**（高亮项跳位到别的选项上）。
+  // 依赖数组留空：选项一次生成，之后完全稳定（同题重渲染不影响顺序）。
+  // 同时避免 SSR 与客户端首帧顺序不同导致的 hydration 不匹配。
+  const options = useMemo(() => shuffle(POSITIONS.map((p) => p.word)), []);
   const logM = useMistakeLogger();
 
   function choose(w: string) {
@@ -98,7 +103,9 @@ export function SolidShapeModule() {
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const target = SOLID_SHAPES[idx % SOLID_SHAPES.length];
-  const options = shuffle(SOLID_SHAPES.map((s) => s.name));
+  // 同 PositionModule：选项必须一次生成并保持稳定，
+  // 否则 setPicked 触发重渲染时孩子点击的选项会跳位。
+  const options = useMemo(() => shuffle(SOLID_SHAPES.map((s) => s.name)), []);
   const logM = useMistakeLogger();
 
   function choose(name: string) {
@@ -112,7 +119,13 @@ export function SolidShapeModule() {
         setIdx((i) => i + 1);
       }, 1200);
     } else {
-      logM({ subject: '数学', kind: '立体图形', prompt: '找出' + target.name, answer: target.name, wrong: name });
+      logM({
+        subject: '数学',
+        kind: '立体图形',
+        prompt: '找出' + target.name,
+        answer: target.name,
+        wrong: name,
+      });
       setTimeout(() => setPicked(null), 1500);
     }
   }
@@ -246,7 +259,13 @@ export function ClockModule() {
         setIdx((i) => i + 1);
       }, 1200);
     } else {
-      logM({ subject: '数学', kind: '认识钟表', prompt: '现在是几点？', answer: current.label, wrong: label });
+      logM({
+        subject: '数学',
+        kind: '认识钟表',
+        prompt: '现在是几点？',
+        answer: current.label,
+        wrong: label,
+      });
       setTimeout(() => setPicked(null), 1500);
     }
   }

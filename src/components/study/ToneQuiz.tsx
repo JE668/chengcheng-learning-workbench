@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { TONE_ITEMS } from '@/lib/study-data';
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
@@ -21,8 +21,19 @@ export function ToneModule() {
     if (streak >= 10) record(3);
   }, [streak]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Generate shuffled options
-  const options = [item.label, ...TONE_ITEMS.filter((t) => t.tone !== item.tone).map((t) => t.label)].sort(() => Math.random() - 0.5);
+  // 生成打乱后的选项
+  //
+  // ⚠️ 必须用 useMemo 缓存，不能在渲染函数体内直接 sort(() => Math.random())。
+  // 原写法下，`select()` 里的 setSelected(i) 会触发重渲染 → 重新洗牌 →
+  // **孩子点击的瞬间选项就换位置了**（高亮项跳位到另一个选项上）；
+  // 同时 SSR 首帧与客户端首帧顺序不同，触发 hydration 不匹配。
+  //
+  // 依赖是 item.label / item.tone（它们由 idx 派生）：换题才会重新洗牌，
+  // 同一题内的状态更新（setSelected / setStreak）不影响顺序。
+  const options = useMemo(() => {
+    const distractors = TONE_ITEMS.filter((t) => t.tone !== item.tone).map((t) => t.label);
+    return [item.label, ...distractors].sort(() => Math.random() - 0.5);
+  }, [item.label, item.tone]);
 
   function playTone() {
     speakZh(item.mark);
@@ -103,7 +114,8 @@ export function ToneModule() {
           下一题 →
         </button>
         <div className="mt-2 text-xs text-gray-400">
-          连对 <span className="font-bold text-moko-green">{streak}</span> 题 · 进度 {idx + 1}/{TONE_ITEMS.length}
+          连对 <span className="font-bold text-moko-green">{streak}</span> 题 · 进度 {idx + 1}/
+          {TONE_ITEMS.length}
         </div>
       </div>
     </div>

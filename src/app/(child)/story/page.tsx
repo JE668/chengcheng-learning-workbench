@@ -45,7 +45,9 @@ export default function StoryPage() {
       .map(async (c) => {
         const mod = c.module;
         try {
-          const r = await fetch(`/api/module-progress?subject=${encodeURIComponent(mod!.subject)}&moduleKey=${encodeURIComponent(mod!.key)}`);
+          const r = await fetch(
+            `/api/module-progress?subject=${encodeURIComponent(mod!.subject)}&moduleKey=${encodeURIComponent(mod!.key)}`
+          );
           const d = await r.json();
           return { key: mod!.key, done: (Number(d.stars) || 0) >= 1 } as const;
         } catch {
@@ -91,7 +93,10 @@ export default function StoryPage() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  // 注：原先这里还有一个 `useEffect(() => { load(); }, [])`，
+  // 与上面的 effect 重复调用了 load() —— 进入页面会并发发两次
+  // GET /api/story/progress，后到的响应覆盖先到的（竞态）。
+  // 现只保留上面那一个 effect。
 
   /** 标记某集已读完（捕捉前必须先读） */
   async function markRead(chapterId: string) {
@@ -101,7 +106,9 @@ export default function StoryPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chapterId }),
       });
-    } catch { /* 离线也先本地标记，保证体验流畅 */ }
+    } catch {
+      /* 离线也先本地标记，保证体验流畅 */
+    }
     setReadSet((s) => new Set(s).add(chapterId));
   }
 
@@ -112,7 +119,11 @@ export default function StoryPage() {
     setReadPara(0);
     abortRef.current = false;
     for (let k = 0; k < c.paragraphs.length; k++) {
-      if (abortRef.current) { setNarrating(null); setReadPara(-1); return; }
+      if (abortRef.current) {
+        setNarrating(null);
+        setReadPara(-1);
+        return;
+      }
       setReadPara(k);
       // 预取下一段 TTS blob 到客户端缓存，趁当前段朗读时让服务端提前缓存
       if (k + 1 < c.paragraphs.length) {
@@ -121,7 +132,11 @@ export default function StoryPage() {
       await playTtsEnd(c.paragraphs[k], 'zh', { wsRate: 0.7, pauseMs: 80 });
     }
     if (c.tip) {
-      if (abortRef.current) { setNarrating(null); setReadPara(-1); return; }
+      if (abortRef.current) {
+        setNarrating(null);
+        setReadPara(-1);
+        return;
+      }
       setReadPara(c.paragraphs.length);
       await playTtsEnd(c.tip, 'zh', { wsRate: 0.7, pauseMs: 80 });
     }
@@ -132,7 +147,11 @@ export default function StoryPage() {
       if (nextCh.paragraphs.length > 0) prefetchTts(nextCh.paragraphs[0], 'zh', toEdgeRate(0.7));
       if (nextCh.paragraphs.length > 1) prefetchTts(nextCh.paragraphs[1], 'zh', toEdgeRate(0.7));
     }
-    if (abortRef.current) { setNarrating(null); setReadPara(-1); return; }
+    if (abortRef.current) {
+      setNarrating(null);
+      setReadPara(-1);
+      return;
+    }
     setNarrating(null);
     setReadPara(-1);
     await markRead(c.id);
@@ -159,10 +178,16 @@ export default function StoryPage() {
     setQuizSpeaking(true);
     quizAbortRef.current = false;
     await playTtsEnd(c.quiz.q, 'zh', { wsRate: 0.7, pauseMs: 220 });
-    if (quizAbortRef.current) { setQuizSpeaking(false); return; }
+    if (quizAbortRef.current) {
+      setQuizSpeaking(false);
+      return;
+    }
     const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
     for (let k = 0; k < c.quiz.options.length; k++) {
-      if (quizAbortRef.current) { setQuizSpeaking(false); return; }
+      if (quizAbortRef.current) {
+        setQuizSpeaking(false);
+        return;
+      }
       await playTtsEnd(`${letters[k]}、${c.quiz.options[k]}`, 'zh', { wsRate: 0.8, pauseMs: 260 });
     }
     setQuizSpeaking(false);
@@ -294,26 +319,40 @@ export default function StoryPage() {
   return (
     <div className="max-w-3xl mx-auto pb-28">
       <div className="flex items-center gap-3 mb-4">
-        <Link href="/games" className="text-moko-violet font-bold hover:underline">‹ 游戏乐园</Link>
+        <Link href="/games" className="text-moko-violet font-bold hover:underline">
+          ‹ 游戏乐园
+        </Link>
       </div>
       <h1 className="page-title mb-2">📜 萌可剧情</h1>
       <p className="text-gray-600 mb-2">
         跟着乐美公主的领航故事，一集一集认识并捕捉萌可。已捕捉
-        <span className="font-black text-moko-rose"> {progress.captured.length} </span>/ {progress.total} 只。
+        <span className="font-black text-moko-rose"> {progress.captured.length} </span>/{' '}
+        {progress.total} 只。
       </p>
-      <p className="text-xs text-gray-500 mb-2">流程：听故事 → 答对小问题 → 捕捉萌可（第 2 集起还要用 1 张捕捉券）</p>
+      <p className="text-xs text-gray-500 mb-2">
+        流程：听故事 → 答对小问题 → 捕捉萌可（第 2 集起还要用 1 张捕捉券）
+      </p>
       <div className="mb-3 flex items-center gap-2 flex-wrap">
-        <span className="inline-flex items-center gap-1 rounded-full bg-moko-gold/15 text-moko-gold font-black px-3 py-1 text-sm">🎟️ 捕捉券 ×{progress.tickets}</span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-moko-gold/15 text-moko-gold font-black px-3 py-1 text-sm">
+          🎟️ 捕捉券 ×{progress.tickets}
+        </span>
         {progress.tickets === 0 && (
-          <span className="text-xs text-gray-500">做「萌可闯关」练习可攒捕捉券，用来解锁下一集</span>
+          <span className="text-xs text-gray-500">
+            做「萌可闯关」练习可攒捕捉券，用来解锁下一集
+          </span>
         )}
       </div>
       <div className="h-2 rounded-full bg-gray-200 overflow-hidden mb-6">
-        <div className="h-full bg-gradient-to-r from-moko-pink to-moko-rose transition-all" style={{ width: `${(progress.captured.length / progress.total) * 100}%` }} />
+        <div
+          className="h-full bg-gradient-to-r from-moko-pink to-moko-rose transition-all"
+          style={{ width: `${(progress.captured.length / progress.total) * 100}%` }}
+        />
       </div>
 
       {toast && (
-        <div className="mb-5 rounded-2xl p-3 text-center font-bold bg-moko-rose/10 text-moko-rose border-2 border-moko-rose/20">{toast}</div>
+        <div className="mb-5 rounded-2xl p-3 text-center font-bold bg-moko-rose/10 text-moko-rose border-2 border-moko-rose/20">
+          {toast}
+        </div>
       )}
 
       <div className="space-y-5">
@@ -331,10 +370,17 @@ export default function StoryPage() {
 
           if (isLocked || lockedByModule) {
             return (
-              <div key={c.id} className="rounded-3xl p-5 shadow-lg border-2 border-gray-200 bg-gray-100 opacity-90 flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gray-300 flex items-center justify-center text-2xl">🔒</div>
+              <div
+                key={c.id}
+                className="rounded-3xl p-5 shadow-lg border-2 border-gray-200 bg-gray-100 opacity-90 flex items-center gap-4"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-gray-300 flex items-center justify-center text-2xl">
+                  🔒
+                </div>
                 <div className="flex-1">
-                  <div className="font-black text-gray-500">第 {i + 1} 集 · {c.title}</div>
+                  <div className="font-black text-gray-500">
+                    第 {i + 1} 集 · {c.title}
+                  </div>
                   {lockedByModule && mod ? (
                     <div className="text-xs text-moko-violet mt-1">
                       先去「{mod.label}」拿一颗⭐，就能解锁这一集～
@@ -346,7 +392,9 @@ export default function StoryPage() {
                       </Link>
                     </div>
                   ) : (
-                    <div className="text-xs text-gray-400 mt-1">先捕捉上一集的萌可，就能解锁这一集～</div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      先捕捉上一集的萌可，就能解锁这一集～
+                    </div>
                   )}
                 </div>
               </div>
@@ -354,20 +402,47 @@ export default function StoryPage() {
           }
 
           return (
-            <div key={c.id} className={`rounded-3xl p-5 shadow-xl border-2 bg-gradient-to-br ${c.gradient} text-white`}>
+            <div
+              key={c.id}
+              className={`rounded-3xl p-5 shadow-xl border-2 bg-gradient-to-br ${c.gradient} text-white`}
+            >
               <div className="flex items-center gap-4">
                 {img ? (
-                  <Image src={img} alt={c.mokoName} width={64} height={64} className="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow" />
+                  <Image
+                    src={img}
+                    alt={c.mokoName}
+                    width={64}
+                    height={64}
+                    className="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow"
+                  />
                 ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-white/30 flex items-center justify-center text-3xl">{c.emoji}</div>
+                  <div className="w-16 h-16 rounded-2xl bg-white/30 flex items-center justify-center text-3xl">
+                    {c.emoji}
+                  </div>
                 )}
                 <div className="flex-1">
-                  <div className="font-black text-lg">第 {i + 1} 集 · {c.title}</div>
-                  <div className="text-sm opacity-90">{c.scene} · 主角 {c.mokoName}</div>
+                  <div className="font-black text-lg">
+                    第 {i + 1} 集 · {c.title}
+                  </div>
+                  <div className="text-sm opacity-90">
+                    {c.scene} · 主角 {c.mokoName}
+                  </div>
                 </div>
-                {isCaptured && <span className="text-sm font-bold bg-white/25 px-3 py-1 rounded-full">✅ 已捕捉</span>}
-                {!isCaptured && isQuiz && <span className="text-sm font-bold bg-white/25 px-3 py-1 rounded-full">📖 已读·已答</span>}
-                {!isCaptured && isRead && !isQuiz && <span className="text-sm font-bold bg-white/25 px-3 py-1 rounded-full">📖 已读</span>}
+                {isCaptured && (
+                  <span className="text-sm font-bold bg-white/25 px-3 py-1 rounded-full">
+                    ✅ 已捕捉
+                  </span>
+                )}
+                {!isCaptured && isQuiz && (
+                  <span className="text-sm font-bold bg-white/25 px-3 py-1 rounded-full">
+                    📖 已读·已答
+                  </span>
+                )}
+                {!isCaptured && isRead && !isQuiz && (
+                  <span className="text-sm font-bold bg-white/25 px-3 py-1 rounded-full">
+                    📖 已读
+                  </span>
+                )}
               </div>
 
               {open && (
@@ -399,7 +474,9 @@ export default function StoryPage() {
                       <div className="flex items-center gap-2 mb-2">
                         <span className="font-black text-moko-violet">❓ 小问题</span>
                         {quizSpeaking && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-moko-violet/10 text-moko-violet text-xs font-bold px-2 py-0.5">🔊 正在读题…</span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-moko-violet/10 text-moko-violet text-xs font-bold px-2 py-0.5">
+                            🔊 正在读题…
+                          </span>
                         )}
                         <button
                           onClick={() => speakQuiz(c)}
@@ -419,7 +496,10 @@ export default function StoryPage() {
                               {opt}
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); speakOne(opt); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                speakOne(opt);
+                              }}
                               className="px-3 py-2.5 rounded-xl bg-moko-violet/10 text-moko-violet font-bold hover:bg-moko-violet/20 transition"
                               aria-label="听这个选项"
                             >
@@ -429,7 +509,9 @@ export default function StoryPage() {
                         ))}
                       </div>
                       {quizWrong && (
-                        <p className="mt-3 text-sm font-bold text-moko-rose">😊 再想想看，选另一个试试吧～</p>
+                        <p className="mt-3 text-sm font-bold text-moko-rose">
+                          😊 再想想看，选另一个试试吧～
+                        </p>
                       )}
                     </div>
                   )}
@@ -472,7 +554,9 @@ export default function StoryPage() {
                 )}
                 {isNext && !isCaptured && !isRead && !isNarrating && (
                   <p className="text-xs text-white/90 w-full mt-1">
-                    {i === 0 ? '点「读这一集」，听完故事就能答题啦～' : '先读完故事，并用捕捉券解锁这一集哦～'}
+                    {i === 0
+                      ? '点「读这一集」，听完故事就能答题啦～'
+                      : '先读完故事，并用捕捉券解锁这一集哦～'}
                   </p>
                 )}
 
@@ -493,7 +577,10 @@ export default function StoryPage() {
 
                 {/* 已读已答但缺券（非首集）：去赚券 */}
                 {isNext && !isCaptured && isQuiz && i > 0 && progress.tickets === 0 && (
-                  <Link href="/daily-practice" className="px-5 py-2 rounded-full bg-white/90 text-moko-violet font-black shadow hover:scale-105 transition">
+                  <Link
+                    href="/daily-practice"
+                    className="px-5 py-2 rounded-full bg-white/90 text-moko-violet font-black shadow hover:scale-105 transition"
+                  >
                     🎯 去赚捕捉券
                   </Link>
                 )}
@@ -510,7 +597,10 @@ export default function StoryPage() {
                 )}
 
                 {isCaptured && (
-                  <Link href="/castle" className="px-5 py-2 rounded-full bg-white/25 font-bold hover:bg-white/35 transition">
+                  <Link
+                    href="/castle"
+                    className="px-5 py-2 rounded-full bg-white/25 font-bold hover:bg-white/35 transition"
+                  >
                     去城堡看看 ›
                   </Link>
                 )}
@@ -525,7 +615,12 @@ export default function StoryPage() {
           <div className="text-4xl mb-2">🏆</div>
           <div className="text-xl font-black">哇，你捕捉了全部萌可！</div>
           <div className="text-sm opacity-90 mt-1">打开图鉴，看看谁在城堡里等你回家～</div>
-          <Link href="/castle" className="inline-block mt-3 px-6 py-2 rounded-full bg-white text-moko-violet font-black shadow">🏰 进入城堡</Link>
+          <Link
+            href="/castle"
+            className="inline-block mt-3 px-6 py-2 rounded-full bg-white text-moko-violet font-black shadow"
+          >
+            🏰 进入城堡
+          </Link>
         </div>
       )}
 

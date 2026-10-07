@@ -159,7 +159,9 @@ jobs:
 
       - name: Run Snyk test
         if: ${{ steps.gate.outputs.enabled == 'true' }}
-        uses: snyk/actions/node@master
+        # ⚠️ 不要用 @master：浮动分支意味着上游任何提交都会在你 push 时被执行，
+        #    是本仓库所有 action 引用里风险最高的一处（其余均已至少用版本 tag）。
+        uses: snyk/actions/node@v1
         with:
           command: test
           args: --severity-threshold=high --json-file-output=snyk-report.json

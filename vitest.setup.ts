@@ -5,9 +5,22 @@ Object.assign(process.env, {
   NODE_ENV: 'test',
 });
 
-// Testing Library 扩展匹配器
+// Testing Library扩展匹配器
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+
+/**
+ * 全局注入 React，供 JSX 在测试环境下使用。
+ *
+ * 背景：本项目组件**从不显式 `import React`** —— Next.js 的 JSX 转换会自动
+ * 注入，因此源码本身没问题。但 vitest 直跑 esbuild 时没有这层自动注入，
+ * 于是任何 `render(<Xxx />)` 都会抛 "React is not defined"。
+ *
+ * 在此统一兜底，比给上百个组件逐个加 import 更贴近真实使用方式
+ * （源码保持与 Next 一致的写法，测试环境补齐缺失的运行时）。
+ */
+import React from 'react';
+(globalThis as unknown as { React: typeof React }).React = React;
 
 // Mock Next.js router
 vi.mock('next/navigation', () => ({

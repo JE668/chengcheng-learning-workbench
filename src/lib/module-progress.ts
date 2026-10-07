@@ -33,7 +33,9 @@ export function useModuleProgress(subject: string, moduleKey: string) {
     let active = true;
     const id = ++reqId.current;
     setLoaded(false);
-    fetch(`/api/module-progress?subject=${encodeURIComponent(subject)}&moduleKey=${encodeURIComponent(moduleKey)}`)
+    fetch(
+      `/api/module-progress?subject=${encodeURIComponent(subject)}&moduleKey=${encodeURIComponent(moduleKey)}`
+    )
       .then((r) => r.json())
       .then((row: Partial<ModuleProgress>) => {
         if (!active || id !== reqId.current) return;
@@ -63,6 +65,10 @@ export function useModuleProgress(subject: string, moduleKey: string) {
         rounds: prev.rounds + 1,
         lastPlayed: Date.now(),
       }));
+      // ⚠️ 竞态防护：与上面的 GET 用同一个 reqId 游标。
+      // 网络慢时连续 record() 两次，两个响应会乱序到达，
+      // **后到的旧响应会覆盖乐观更新**，导致星数显示回退。
+      const id = ++reqId.current;
       fetch('/api/module-progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -70,6 +76,7 @@ export function useModuleProgress(subject: string, moduleKey: string) {
       })
         .then((r) => r.json())
         .then((row: Partial<ModuleProgress>) => {
+          if (id !== reqId.current) return; // 已有更新的请求发出，丢弃本次过期响应
           if (row && typeof row.stars === 'number') {
             setData({
               stars: row.stars,
@@ -83,7 +90,7 @@ export function useModuleProgress(subject: string, moduleKey: string) {
           /* 断网静默，下次进入会拉取最新 */
         });
     },
-    [subject, moduleKey],
+    [subject, moduleKey]
   );
 
   return { ...data, record };

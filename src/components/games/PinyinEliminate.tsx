@@ -4,16 +4,84 @@ import { useEffect, useState } from 'react';
 
 const POOLS: Record<number, string[]> = {
   1: ['bā', 'mā', 'tā', 'dà', 'xiǎo', 'rén', 'kǒu', 'shǒu', 'mù', 'rì', 'yuè', 'shuǐ'],
-  2: ['bā', 'mā', 'tā', 'dà', 'xiǎo', 'rén', 'kǒu', 'shǒu', 'mù', 'rì', 'yuè', 'shuǐ', 'pā', 'fā', 'lái', 'hǎo', 'shàng', 'xià', 'shān', 'huǒ'],
-  3: ['bā', 'mā', 'tā', 'dà', 'xiǎo', 'rén', 'kǒu', 'shǒu', 'mù', 'rì', 'yuè', 'shuǐ', 'chuán', 'qiū', 'xuě', 'juān', 'zhōng', 'chē', 'shū', 'yǔ', 'fēng', 'yún', 'huā', 'niǎo', 'má', 'mǎ', 'mà', 'bá', 'bǎ', 'bà', 'dá', 'dǎ', 'tǎ', 'tà', 'lǐ', 'lí', 'nǐ', 'nì'],
+  2: [
+    'bā',
+    'mā',
+    'tā',
+    'dà',
+    'xiǎo',
+    'rén',
+    'kǒu',
+    'shǒu',
+    'mù',
+    'rì',
+    'yuè',
+    'shuǐ',
+    'pā',
+    'fā',
+    'lái',
+    'hǎo',
+    'shàng',
+    'xià',
+    'shān',
+    'huǒ',
+  ],
+  3: [
+    'bā',
+    'mā',
+    'tā',
+    'dà',
+    'xiǎo',
+    'rén',
+    'kǒu',
+    'shǒu',
+    'mù',
+    'rì',
+    'yuè',
+    'shuǐ',
+    'chuán',
+    'qiū',
+    'xuě',
+    'juān',
+    'zhōng',
+    'chē',
+    'shū',
+    'yǔ',
+    'fēng',
+    'yún',
+    'huā',
+    'niǎo',
+    'má',
+    'mǎ',
+    'mà',
+    'bá',
+    'bǎ',
+    'bà',
+    'dá',
+    'dǎ',
+    'tǎ',
+    'tà',
+    'lǐ',
+    'lí',
+    'nǐ',
+    'nì',
+  ],
 };
 const PAIRS: Record<number, number> = { 1: 6, 2: 8, 3: 10 };
 const TIME: Record<number, number> = { 1: 90, 2: 75, 3: 60 };
 
-export default function PinyinEliminate({ onFinish, level = 1 }: { onFinish: (score: number) => void; level?: number }) {
+export default function PinyinEliminate({
+  onFinish,
+  level = 1,
+}: {
+  onFinish: (score: number) => void;
+  level?: number;
+}) {
   const lv = Math.min(3, Math.max(1, level));
   const pairCount = PAIRS[lv];
-  const [cards, setCards] = useState<{ id: number; text: string; flipped: boolean; matched: boolean }[]>([]);
+  const [cards, setCards] = useState<
+    { id: number; text: string; flipped: boolean; matched: boolean }[]
+  >([]);
   const [flipped, setFlipped] = useState<number[]>([]);
   const [time, setTime] = useState(TIME[lv]);
   const [startedAt] = useState(Date.now());
@@ -52,32 +120,28 @@ export default function PinyinEliminate({ onFinish, level = 1 }: { onFinish: (sc
 
   function clickCard(idx: number) {
     if (done || cards[idx].flipped || cards[idx].matched || flipped.length >= 2) return;
-    const next = [...cards];
-    next[idx].flipped = true;
-    setCards(next);
+    // ⚠️ 与 WordMatch 同：不可变更新 + 函数式 setState，
+    // 避免 ① 就地改 state 对象 ② setTimeout 回调基于点击时的旧闭包。
+    setCards((prev) => prev.map((c, k) => (k === idx ? { ...c, flipped: true } : c)));
     const newFlipped = [...flipped, idx];
     setFlipped(newFlipped);
     if (newFlipped.length === 2) {
       const [a, b] = newFlipped;
-      if (cards[a].text === cards[b].text) {
-        setTimeout(() => {
-          const m = [...cards];
-          m[a].matched = true;
-          m[b].matched = true;
-          m[a].flipped = false;
-          m[b].flipped = false;
-          setCards(m);
-          setFlipped([]);
-        }, 500);
-      } else {
-        setTimeout(() => {
-          const m = [...cards];
-          m[a].flipped = false;
-          m[b].flipped = false;
-          setCards(m);
-          setFlipped([]);
-        }, 800);
-      }
+      const isMatch = cards[a].text === cards[b].text;
+      const reset = (markMatched: boolean) =>
+        setTimeout(
+          () => {
+            setCards((prev) =>
+              prev.map((c, k) => {
+                if (k !== a && k !== b) return c;
+                return { ...c, flipped: false, matched: markMatched ? true : c.matched };
+              })
+            );
+            setFlipped([]);
+          },
+          markMatched ? 500 : 800
+        );
+      reset(isMatch);
     }
   }
 
@@ -85,7 +149,9 @@ export default function PinyinEliminate({ onFinish, level = 1 }: { onFinish: (sc
     <div className="bg-white rounded-3xl shadow-xl p-4 md:p-6">
       <div className="flex justify-between items-center mb-4">
         <span className="text-lg font-bold text-moko-violet">⏱️ 剩余 {time} 秒</span>
-        <span className="text-lg font-bold text-moko-rose">已消除 {cards.filter((c) => c.matched).length / 2}/{pairCount}</span>
+        <span className="text-lg font-bold text-moko-rose">
+          已消除 {cards.filter((c) => c.matched).length / 2}/{pairCount}
+        </span>
       </div>
       <div className="grid grid-cols-4 gap-3 md:gap-4">
         {cards.map((c, i) => (
@@ -97,8 +163,8 @@ export default function PinyinEliminate({ onFinish, level = 1 }: { onFinish: (sc
               c.matched
                 ? 'bg-moko-mint text-white opacity-60'
                 : c.flipped
-                ? 'bg-moko-pink text-white shadow-inner'
-                : 'bg-gradient-to-br from-moko-purple to-moko-violet text-white shadow hover:scale-105'
+                  ? 'bg-moko-pink text-white shadow-inner'
+                  : 'bg-gradient-to-br from-moko-purple to-moko-violet text-white shadow hover:scale-105'
             }`}
           >
             {c.matched ? '✅' : c.flipped ? c.text : '❓'}

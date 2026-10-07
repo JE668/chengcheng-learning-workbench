@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { speakEn, praise } from '@/lib/speak';
 import { StudyQuiz, type QuizItem } from './StudyQuiz';
 
@@ -83,7 +83,11 @@ function buildListenPic(): QuizItem[] {
 }
 
 export function EnListenPicModule() {
-  const items = buildListenPic();
+  // ⚠️ 必须 useMemo 缓存：buildListenPic 会遍历全部图片，为每张图随机挑 3 个
+  // 干扰项并洗牌（60+ 次 Math.random）。原先每次渲染都重建整个题库，
+  // 导致 StudyQuiz 内部的 items 引用每次都变，其 options 的 useMemo 失效、
+  // **同一道题的选项会在孩子点击的瞬间重新排列**。
+  const items = useMemo(() => buildListenPic(), []);
   return (
     <StudyQuiz
       items={items}
@@ -101,26 +105,106 @@ export function EnListenPicModule() {
 // 每组是「同韵不同首音」的最小对立对（bat/cat/hat），首音才是唯一区分点。
 // 第三项显式写出首音，避免 sh/ch/th 这类双字母被误读成单个字母。
 const GROUPS: [string, string, string][][] = [
-  [['bat', '🦇', 'b'], ['cat', '🐱', 'c'], ['hat', '🎩', 'h']],
-  [['pen', '🖊️', 'p'], ['hen', '🐔', 'h'], ['ten', '🔟', 't']],
-  [['sun', '☀️', 's'], ['bun', '🥯', 'b'], ['run', '🏃', 'r']],
-  [['dog', '🐶', 'd'], ['log', '🪵', 'l'], ['frog', '🐸', 'fr']],
-  [['car', '🚗', 'c'], ['star', '⭐', 'st'], ['jar', '🫙', 'j']],
-  [['book', '📖', 'b'], ['cook', '👨‍🍳', 'c'], ['hook', '🪝', 'h']],
-  [['cake', '🍰', 'c'], ['lake', '🏞️', 'l'], ['snake', '🐍', 'sn']],
-  [['bed', '🛏️', 'b'], ['red', '🟥', 'r'], ['bread', '🍞', 'br']],
-  [['mouse', '🐭', 'm'], ['house', '🏠', 'h'], ['blouse', '👚', 'bl']],
-  [['ball', '⚽', 'b'], ['wall', '🧱', 'w'], ['hall', '🏛️', 'h']],
-  [['fish', '🐟', 'f'], ['dish', '🍽️', 'd'], ['wish', '🌠', 'w']],
-  [['rain', '🌧️', 'r'], ['train', '🚂', 'tr'], ['chain', '⛓️', 'ch']],
-  [['bee', '🐝', 'b'], ['tree', '🌳', 'tr'], ['three', '3️⃣', 'th']],
-  [['goat', '🐐', 'g'], ['boat', '⛵', 'b'], ['coat', '🧥', 'c']],
-  [['moon', '🌙', 'm'], ['spoon', '🥄', 'sp'], ['balloon', '🎈', 'b']],
-  [['king', '🤴', 'k'], ['ring', '💍', 'r'], ['wing', '🪽', 'w']],
-  [['box', '📦', 'b'], ['fox', '🦊', 'f'], ['rocks', '🪨', 'r']],
-  [['cap', '🧢', 'c'], ['map', '🗺️', 'm'], ['nap', '😴', 'n']],
-  [['light', '💡', 'l'], ['kite', '🪁', 'k'], ['night', '🌃', 'n']],
-  [['duck', '🦆', 'd'], ['truck', '🚚', 'tr'], ['sock', '🧦', 's']],
+  [
+    ['bat', '🦇', 'b'],
+    ['cat', '🐱', 'c'],
+    ['hat', '🎩', 'h'],
+  ],
+  [
+    ['pen', '🖊️', 'p'],
+    ['hen', '🐔', 'h'],
+    ['ten', '🔟', 't'],
+  ],
+  [
+    ['sun', '☀️', 's'],
+    ['bun', '🥯', 'b'],
+    ['run', '🏃', 'r'],
+  ],
+  [
+    ['dog', '🐶', 'd'],
+    ['log', '🪵', 'l'],
+    ['frog', '🐸', 'fr'],
+  ],
+  [
+    ['car', '🚗', 'c'],
+    ['star', '⭐', 'st'],
+    ['jar', '🫙', 'j'],
+  ],
+  [
+    ['book', '📖', 'b'],
+    ['cook', '👨‍🍳', 'c'],
+    ['hook', '🪝', 'h'],
+  ],
+  [
+    ['cake', '🍰', 'c'],
+    ['lake', '🏞️', 'l'],
+    ['snake', '🐍', 'sn'],
+  ],
+  [
+    ['bed', '🛏️', 'b'],
+    ['red', '🟥', 'r'],
+    ['bread', '🍞', 'br'],
+  ],
+  [
+    ['mouse', '🐭', 'm'],
+    ['house', '🏠', 'h'],
+    ['blouse', '👚', 'bl'],
+  ],
+  [
+    ['ball', '⚽', 'b'],
+    ['wall', '🧱', 'w'],
+    ['hall', '🏛️', 'h'],
+  ],
+  [
+    ['fish', '🐟', 'f'],
+    ['dish', '🍽️', 'd'],
+    ['wish', '🌠', 'w'],
+  ],
+  [
+    ['rain', '🌧️', 'r'],
+    ['train', '🚂', 'tr'],
+    ['chain', '⛓️', 'ch'],
+  ],
+  [
+    ['bee', '🐝', 'b'],
+    ['tree', '🌳', 'tr'],
+    ['three', '3️⃣', 'th'],
+  ],
+  [
+    ['goat', '🐐', 'g'],
+    ['boat', '⛵', 'b'],
+    ['coat', '🧥', 'c'],
+  ],
+  [
+    ['moon', '🌙', 'm'],
+    ['spoon', '🥄', 'sp'],
+    ['balloon', '🎈', 'b'],
+  ],
+  [
+    ['king', '🤴', 'k'],
+    ['ring', '💍', 'r'],
+    ['wing', '🪽', 'w'],
+  ],
+  [
+    ['box', '📦', 'b'],
+    ['fox', '🦊', 'f'],
+    ['rocks', '🪨', 'r'],
+  ],
+  [
+    ['cap', '🧢', 'c'],
+    ['map', '🗺️', 'm'],
+    ['nap', '😴', 'n'],
+  ],
+  [
+    ['light', '💡', 'l'],
+    ['kite', '🪁', 'k'],
+    ['night', '🌃', 'n'],
+  ],
+  [
+    ['duck', '🦆', 'd'],
+    ['truck', '🚚', 'tr'],
+    ['sock', '🧦', 's'],
+  ],
 ];
 
 function buildInitialSound(): QuizItem[] {
@@ -141,7 +225,8 @@ function buildInitialSound(): QuizItem[] {
 }
 
 export function EnInitialSoundModule() {
-  const items = buildInitialSound();
+  // 同上：题库一次生成后保持稳定
+  const items = useMemo(() => buildInitialSound(), []);
   return (
     <StudyQuiz
       items={items}

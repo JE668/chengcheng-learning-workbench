@@ -109,7 +109,12 @@ export default function PracticeLevelPage() {
   }, [allDone, saved, saveProgress]);
 
   // 全部 Hook 调用完毕后再校验非法参数（见上方注释：不能提前抛）
-  if (!topic || isNaN(level)) notFound();
+  // ⚠️ 除参数合法性外，还必须校验**题集非空**：
+  // genPracticeSet 对无法出题的主题/关卡会返回 []，此时 currentQuestion 为
+  // undefined，后面 `<AlgorithmQuiz question={currentQuestion}>` 会在
+  // AlgorithmQuiz 内部读 question.stepFields 时抛 TypeError 打到错误边界 ——
+  // 对用户表现为「页面崩了」而不是「404」。
+  if (!topic || isNaN(level) || totalQuestions === 0) notFound();
 
   if (allDone) {
     const finalStars = calcStars(correctCount, totalQuestions);
