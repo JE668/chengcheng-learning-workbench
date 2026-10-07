@@ -109,15 +109,15 @@
 
 ## 🏗️ 技术栈
 
-| 层面     | 技术                                                                                                                             |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| 前端     | Next.js 15.5.24 (App Router) + React 18 + TypeScript (strict) + Tailwind CSS + 自研 Atomic 组件库                                |
-| 数据库   | Turso (LibSQL) / 本地 SQLite（首次启动自动建库，WAL 模式；原生 SQL + 版本化迁移 `schema_migrations`）                            |
-| 认证     | 自定义 session cookie（bcrypt 哈希，家长/孩子双角色，7天过期）                                                                   |
-| 状态管理 | Zustand（含离线打卡：断网时排队，重连后自动同步）                                                                                |
-| TTS      | 三层策略：Web Speech → 宽松 Web Speech → Python edge-tts 持久化进程（长文按句分块播放，适配 Android 平板；播放前预取下一段音频） |
-| 测试     | Vitest（381 个用例，38 个测试文件）+ Playwright E2E + axe-core 无障碍；ESLint 0 警告，TypeScript strict 0 错误                   |
-| 部署     | GitHub Actions → Docker 多阶段构建（~550MB）→ GHCR；支持飞牛 NAS / Vercel                                                        |
+| 层面     | 技术                                                                                                                                               |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 前端     | Next.js 15.5.24 (App Router) + React 18 + TypeScript (strict) + Tailwind CSS + 自研 Atomic 组件库                                                  |
+| 数据库   | Turso (LibSQL) / 本地 SQLite（首次启动自动建库，WAL 模式；原生 SQL + 版本化迁移 `schema_migrations`）                                              |
+| 认证     | 自定义 session cookie（bcrypt 哈希，家长/孩子双角色，7天过期）                                                                                     |
+| 状态管理 | Zustand（含离线打卡：断网时排队，重连后自动同步）                                                                                                  |
+| TTS      | 三层策略：Web Speech → 宽松 Web Speech → Python edge-tts 持久化进程（长文按句分块播放，适配 Android 平板；播放前预取下一段音频）                   |
+| 测试     | Vitest（517 个用例 / 54 个单测文件）+ Playwright E2E（5 spec / 36 用例，已纳入 CI 门禁）+ axe-core 无障碍；ESLint 0 警告，TypeScript strict 0 错误 |
+| 部署     | GitHub Actions → Docker 多阶段构建（~550MB）→ GHCR；支持飞牛 NAS / Vercel                                                                          |
 
 ## ✨ 特色功能
 
@@ -183,12 +183,22 @@ docker run -d -p 3000:3000 \
 
 ## 🔧 开发命令
 
-| 命令         | 说明                                     |
-| ------------ | ---------------------------------------- |
-| `pnpm dev`   | 启动开发服务器（端口 3000）              |
-| `pnpm build` | 生产构建                                 |
-| `pnpm test`  | 运行测试套件（315 个用例，覆盖核心逻辑） |
-| `pnpm seed`  | 重置数据库并写入默认账号                 |
+| 命令                 | 说明                                                                    |
+| -------------------- | ----------------------------------------------------------------------- |
+| `pnpm dev`           | 启动开发服务器（端口 3000）                                             |
+| `pnpm build`         | 生产构建                                                                |
+| `pnpm typecheck`     | 全量类型检查（`tsc --noEmit`，不传文件名以保留 tsconfig 的 paths 配置） |
+| `pnpm lint`          | ESLint 检查                                                             |
+| `pnpm format`        | Prettier 格式化全仓                                                     |
+| `pnpm verify`        | 一键自检：`typecheck + lint + test`（新机器先跑这条确认环境正常）       |
+| `pnpm test`          | 运行单元测试（Vitest，517 个用例）                                      |
+| `pnpm test:coverage` | 运行单元测试并输出覆盖率（阈值不达标会失败）                            |
+| `pnpm e2e`           | 运行 Playwright E2E（36 个用例；macOS 13 见下方说明）                   |
+| `pnpm seed`          | **写入**默认账号（parent / 12345678、cara / 0000）并补齐缺失的表        |
+
+> ⚠️ **`pnpm seed` 不会清空或重置已有数据。** 它只做 `CREATE TABLE IF NOT EXISTS` +
+> `INSERT`（已存在就跳过），不会执行任何 `DROP` / `DELETE`。想把学习数据清空，
+> 请用家长端设置页的「还原出厂设置」，或直接删掉 `data/local.db` 后重启。
 
 ## 📁 项目结构
 

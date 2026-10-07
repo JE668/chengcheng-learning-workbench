@@ -19,8 +19,14 @@ COPY . .
 # 依赖追踪产物（.next/standalone/node_modules，实测约 47MB，含 libSQL 原生绑定、
 # bcryptjs、web-push、ws 等全部服务端依赖），不再把整包 node_modules 拷进镜像。
 # 「是否真的够用」不再靠人肉验证，由 build.yml 里的镜像冒烟测试在每次构建时自动检验。
-RUN pnpm lint && npx tsc --noEmit --skipLibCheck && \
-    pnpm build && \
+#
+# 这里**不再**跑 lint / tsc：
+#   ① next.config.mjs 已开 eslint.ignoreDuringBuilds + typescript.ignoreBuildErrors
+#      （为 NAS 自托管构建兜底），紧接着又手工补跑，等于配置自废武功；
+#   ② CI 的 check job 已经跑过两者，且 build.yml 以 `uses:` 复用了 ci.yml 作为
+#      precheck —— 也就是说镜像构建**只会在 lint/tsc 全绿时**才开始，这里是第三次重复。
+# 门禁留在 CI，镜像构建只管构建。
+RUN pnpm build && \
     rm -rf .next/cache tsconfig.tsbuildinfo
 
 # ============ 运行阶段 ============
