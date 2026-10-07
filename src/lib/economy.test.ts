@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import {
   SUN_PER_SUBJECT,
@@ -18,7 +19,15 @@ import {
  */
 describe('economy 常量护栏', () => {
   it('奖励/消耗均为正整数，且护盾比喷雾贵', () => {
-    for (const v of [SUN_PER_SUBJECT, PROSPERITY_BONUS, STAR_PER_FRIEND, SHIELD_STREAK_REQ, TICKET_PER_SUBJECT, COST_SPRAY, COST_SHIELD]) {
+    for (const v of [
+      SUN_PER_SUBJECT,
+      PROSPERITY_BONUS,
+      STAR_PER_FRIEND,
+      SHIELD_STREAK_REQ,
+      TICKET_PER_SUBJECT,
+      COST_SPRAY,
+      COST_SHIELD,
+    ]) {
       expect(Number.isInteger(v)).toBe(true);
       expect(v).toBeGreaterThan(0);
     }

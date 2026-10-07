@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { getDb } from '@/lib/db';
 import { ensureSchema } from '@/lib/db';
@@ -41,7 +42,9 @@ async function confirmSubject(cid: number, day: string, subject: string) {
   });
 }
 async function readCastle(cid: number) {
-  const r = (await getDb().execute({ sql: 'SELECT * FROM castle_state WHERE child_id = ?', args: [cid] })).rows[0];
+  const r = (
+    await getDb().execute({ sql: 'SELECT * FROM castle_state WHERE child_id = ?', args: [cid] })
+  ).rows[0];
   return {
     sunlight: Number(r?.sunlight ?? 0),
     starCoins: Number(r?.star_coins ?? 0),
@@ -49,7 +52,10 @@ async function readCastle(cid: number) {
   };
 }
 async function readTickets(cid: number): Promise<number> {
-  const r = await getDb().execute({ sql: 'SELECT total, used FROM capture_tickets WHERE child_id = ?', args: [cid] });
+  const r = await getDb().execute({
+    sql: 'SELECT total, used FROM capture_tickets WHERE child_id = ?',
+    args: [cid],
+  });
   if (!r.rows.length) return 0;
   return Number(r.rows[0].total) - Number(r.rows[0].used);
 }
@@ -61,13 +67,25 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
 
   beforeEach(async () => {
     const db = getDb();
-    for (const t of ['daily_checkins', 'castle_state', 'moko_owned', 'troublemakers', 'growth_events', 'capture_tickets', 'daily_practice', 'inventory']) {
+    for (const t of [
+      'daily_checkins',
+      'castle_state',
+      'moko_owned',
+      'troublemakers',
+      'growth_events',
+      'capture_tickets',
+      'daily_practice',
+      'inventory',
+    ]) {
       await db.execute({ sql: `DELETE FROM ${t}`, args: [] });
     }
     // confirm 会写 completions（打卡积分）、redemptions（兑换积分），先删子行再删 users（外键约束）
     await db.execute({ sql: 'DELETE FROM completions', args: [] });
     await db.execute({ sql: 'DELETE FROM redemptions', args: [] });
-    await db.execute({ sql: "UPDATE users SET selected_child_id = NULL, parent_id = NULL", args: [] });
+    await db.execute({
+      sql: 'UPDATE users SET selected_child_id = NULL, parent_id = NULL',
+      args: [],
+    });
     await db.execute({ sql: "DELETE FROM users WHERE role IN ('child','parent')", args: [] });
   });
 
@@ -114,7 +132,10 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
     expect(ok.ok).toBe(true);
     expect((await readCastle(cid)).sunlight).toBe(2);
 
-    const inv = await getDb().execute({ sql: 'SELECT qty FROM inventory WHERE child_id = ? AND item_key = ?', args: [cid, 'spray'] });
+    const inv = await getDb().execute({
+      sql: 'SELECT qty FROM inventory WHERE child_id = ? AND item_key = ?',
+      args: [cid, 'spray'],
+    });
     expect(Number(inv.rows[0]?.qty)).toBe(1);
 
     const poor = await insertCastle2(cid); // 把阳光清零
@@ -184,14 +205,25 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
 
     // 构造今日一练：每科 3 题，答案均为 0
     const questions = SUBJECTS.flatMap((subj) =>
-      Array.from({ length: 3 }, (_, i) => ({ id: `${subj}-${i}`, kind: 'math', subject: subj, prompt: '1+1=?', options: ['2'], answer: 0, explain: '' })),
+      Array.from({ length: 3 }, (_, i) => ({
+        id: `${subj}-${i}`,
+        kind: 'math',
+        subject: subj,
+        prompt: '1+1=?',
+        options: ['2'],
+        answer: 0,
+        explain: '',
+      }))
     );
     await getDb().execute({
       sql: 'INSERT INTO daily_practice (child_id, day, completed, correct, total, questions) VALUES (?, ?, ?, ?, ?, ?)',
       args: [cid, today, 0, 0, questions.length, JSON.stringify(questions)],
     });
 
-    const r1 = await submitPractice(cid, questions.map(() => 0));
+    const r1 = await submitPractice(
+      cid,
+      questions.map(() => 0)
+    );
     expect(r1.ok).toBe(true);
     expect(r1.completed).toBe(true);
     expect((await readCastle(cid)).starCoins).toBe(10); // 里程碑 +10
@@ -201,7 +233,10 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
       sql: 'UPDATE daily_practice SET completed = 0, correct = 0 WHERE child_id = ? AND day = ?',
       args: [cid, today],
     });
-    const r2 = await submitPractice(cid, questions.map(() => 0));
+    const r2 = await submitPractice(
+      cid,
+      questions.map(() => 0)
+    );
     expect(r2.completed).toBe(true);
     expect((await readCastle(cid)).starCoins).toBe(10); // 仍是 10，未重复发放
   });
@@ -209,5 +244,8 @@ describe('奖励/经济逻辑：confirm / buy / submitPractice', () => {
 
 // 辅助：把城堡阳光清零（复用同一行，避免重复插入冲突）
 async function insertCastle2(cid: number) {
-  await getDb().execute({ sql: 'UPDATE castle_state SET sunlight = 0 WHERE child_id = ?', args: [cid] });
+  await getDb().execute({
+    sql: 'UPDATE castle_state SET sunlight = 0 WHERE child_id = ?',
+    args: [cid],
+  });
 }

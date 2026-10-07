@@ -1,11 +1,37 @@
+// @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { MokoCategories, mokoChars, mokoCollection, mokoCollectionByName, subjectMokoKey, games, troubleMokoKeys, GROWTH_MIN, magicShop, starShop, REWARD_TEMPLATES } from '@/lib/moko';
+import {
+  MokoCategories,
+  mokoChars,
+  mokoCollection,
+  mokoCollectionByName,
+  subjectMokoKey,
+  games,
+  troubleMokoKeys,
+  GROWTH_MIN,
+  magicShop,
+  starShop,
+  REWARD_TEMPLATES,
+} from '@/lib/moko';
 import type { MokoChar, Subject } from '@/lib/types';
 
 describe('MokoCategories', () => {
   it('should have all expected categories', () => {
-    const expectedKeys = ['royal', 'mo', 'key', 'jewel', 'sweetie', 'star', 'princess', 'prince', 'villain', 'legend', 'guide', 'trouble'];
-    const actualKeys = MokoCategories.map(c => c.key);
+    const expectedKeys = [
+      'royal',
+      'mo',
+      'key',
+      'jewel',
+      'sweetie',
+      'star',
+      'princess',
+      'prince',
+      'villain',
+      'legend',
+      'guide',
+      'trouble',
+    ];
+    const actualKeys = MokoCategories.map((c) => c.key);
     expect(actualKeys.sort()).toEqual(expectedKeys.sort());
   });
 
@@ -19,12 +45,12 @@ describe('MokoCategories', () => {
   });
 
   it('royal category should have empty emoji (for TTS)', () => {
-    const royal = MokoCategories.find(c => c.key === 'royal');
+    const royal = MokoCategories.find((c) => c.key === 'royal');
     expect(royal?.emoji).toBe('');
   });
 
   it('guide category should have compass emoji', () => {
-    const guide = MokoCategories.find(c => c.key === 'guide');
+    const guide = MokoCategories.find((c) => c.key === 'guide');
     expect(guide?.emoji).toBe('🧭');
   });
 });
@@ -95,7 +121,7 @@ describe('mokoCollection and mokoCollectionByName', () => {
   });
 
   it('should have at least one entry per category', () => {
-    const categories = new Set(mokoCollection.map(m => m.category));
+    const categories = new Set(mokoCollection.map((m) => m.category));
     expect(categories.has('royal')).toBe(true);
     expect(categories.has('mo')).toBe(true);
     expect(categories.has('key')).toBe(true);
@@ -129,7 +155,7 @@ describe('games', () => {
   });
 
   it('should have games for each subject', () => {
-    const subjects = new Set(games.map(g => g.subject));
+    const subjects = new Set(games.map((g) => g.subject));
     expect(subjects.has('语文')).toBe(true);
     expect(subjects.has('数学')).toBe(true);
     expect(subjects.has('英语')).toBe(true);
@@ -167,7 +193,7 @@ describe('magicShop', () => {
   });
 
   it('should have spray, shield, and freeze', () => {
-    const keys = magicShop.map(i => i.key);
+    const keys = magicShop.map((i) => i.key);
     expect(keys).toContain('spray');
     expect(keys).toContain('shield');
     expect(keys).toContain('freeze');

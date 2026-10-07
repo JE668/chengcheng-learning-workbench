@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 时光沙漏补打卡的日期校验回归测试。
  * 路由：src/app/api/castle/use-item/route.ts

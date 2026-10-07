@@ -55,8 +55,11 @@ vi.mock('next/headers', () => ({
   }),
 }));
 
-// Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
+// Mock globalThis.matchMedia
+//
+// 用 globalThis 而非 window：纯逻辑测试会切到 node 环境（见各测试文件的
+// `// @vitest-environment node`），那里没有 window。两者在 jsdom 下等价。
+Object.defineProperty(globalThis, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation((query) => ({
     matches: false,
@@ -85,7 +88,7 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 }));
 
 // Mock speechSynthesis
-Object.defineProperty(window, 'speechSynthesis', {
+Object.defineProperty(globalThis, 'speechSynthesis', {
   writable: true,
   value: {
     speak: vi.fn(),
@@ -163,13 +166,13 @@ function createMemoryStorage(): Storage {
   } as Storage;
 }
 
-Object.defineProperty(window, 'localStorage', {
+Object.defineProperty(globalThis, 'localStorage', {
   value: createMemoryStorage(),
   writable: true,
   configurable: true,
 });
 
-Object.defineProperty(window, 'sessionStorage', {
+Object.defineProperty(globalThis, 'sessionStorage', {
   value: createMemoryStorage(),
   writable: true,
   configurable: true,

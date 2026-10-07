@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -122,7 +123,10 @@ describe('英语 · 单元与词表对齐', () => {
 describe('数学 · 课本单元与练习模块对齐', () => {
   // 直接读源码取 key，避免在 node 测试环境里 import 一堆 React 组件
   const src = readFileSync(resolve(process.cwd(), 'src/lib/study-modules.ts'), 'utf8');
-  const mathBlock = src.slice(src.indexOf('  math: ['), src.indexOf('\n  ],', src.indexOf('  math: [')));
+  const mathBlock = src.slice(
+    src.indexOf('  math: ['),
+    src.indexOf('\n  ],', src.indexOf('  math: ['))
+  );
   const mathKeys = Array.from(mathBlock.matchAll(/key: '(.+?)'/g)).map((m) => m[1]);
 
   it('单元编号与课本章节一一对应', () => {
@@ -150,7 +154,10 @@ describe('数学 · 课本单元与练习模块对齐', () => {
 
 describe('语文 · 课本单元与练习模块对齐', () => {
   const src = readFileSync(resolve(process.cwd(), 'src/lib/study-modules.ts'), 'utf8');
-  const chineseBlock = src.slice(src.indexOf("  chinese: ["), src.indexOf('\n  ],', src.indexOf('  chinese: [')));
+  const chineseBlock = src.slice(
+    src.indexOf('  chinese: ['),
+    src.indexOf('\n  ],', src.indexOf('  chinese: ['))
+  );
   const chineseKeys = Array.from(chineseBlock.matchAll(/key: '(.+?)'/g)).map((m) => m[1]);
 
   it('单元与 GRADE1_CHAR_UNITS 章节一一对应', () => {
@@ -163,7 +170,9 @@ describe('语文 · 课本单元与练习模块对齐', () => {
     for (const u of CHINESE_UNITS) {
       expect(u.moduleKeys.length, `${u.unit} 没挂练习`).toBeGreaterThan(0);
       for (const k of u.moduleKeys) {
-        expect(chineseKeys.includes(k), `第 ${u.chapter} 单元引用了不存在的模块「${k}」`).toBe(true);
+        expect(chineseKeys.includes(k), `第 ${u.chapter} 单元引用了不存在的模块「${k}」`).toBe(
+          true
+        );
       }
     }
   });
@@ -210,7 +219,10 @@ describe('语文 · 生字表结构校验（笔画/释义/拼音）', () => {
   it('每个字的笔画数在 1–40 之间且为整数', () => {
     for (const c of CHARACTERS) {
       expect(Number.isInteger(c.strokeCount), `「${c.char}」笔画不是整数`).toBe(true);
-      expect(c.strokeCount >= 1 && c.strokeCount <= 40, `「${c.char}」笔画 ${c.strokeCount} 越界`).toBe(true);
+      expect(
+        c.strokeCount >= 1 && c.strokeCount <= 40,
+        `「${c.char}」笔画 ${c.strokeCount} 越界`
+      ).toBe(true);
     }
   });
 
@@ -231,7 +243,9 @@ describe('语文 · 生字表结构校验（笔画/释义/拼音）', () => {
   it('多音字的 altPinyin 也是合法拼音', () => {
     for (const c of CHARACTERS) {
       if (c.altPinyin) {
-        expect(PINYIN_RE.test(c.altPinyin), `「${c.char}」altPinyin「${c.altPinyin}」非法`).toBe(true);
+        expect(PINYIN_RE.test(c.altPinyin), `「${c.char}」altPinyin「${c.altPinyin}」非法`).toBe(
+          true
+        );
       }
     }
   });
@@ -240,8 +254,13 @@ describe('语文 · 生字表结构校验（笔画/释义/拼音）', () => {
 describe('数学 · 应用题答案自洽', () => {
   it('每条应用题的答案都在选项里，且选项都是纯数字', () => {
     for (const p of WORD_PROBLEMS) {
-      expect(p.options.every((o) => /^\d+$/.test(o)), `题目「${p.text}」有非数字选项`).toBe(true);
-      expect(p.options.includes(p.answer), `题目「${p.text}」答案「${p.answer}」不在选项里`).toBe(true);
+      expect(
+        p.options.every((o) => /^\d+$/.test(o)),
+        `题目「${p.text}」有非数字选项`
+      ).toBe(true);
+      expect(p.options.includes(p.answer), `题目「${p.text}」答案「${p.answer}」不在选项里`).toBe(
+        true
+      );
     }
   });
 

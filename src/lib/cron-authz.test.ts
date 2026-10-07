@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 定时任务路由的鉴权回归测试。
  * 路由：src/app/api/cron/settle/route.ts（另覆盖 lib/cron-auth.ts 的三条设计约定）

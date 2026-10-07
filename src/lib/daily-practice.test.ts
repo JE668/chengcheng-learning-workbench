@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { DAILY_CORE_MODULE } from './daily-practice';
 import { genEnInitialQ } from './daily-practice/gen-english';
@@ -18,7 +19,7 @@ describe('萌可闯关 → 剧情解锁 闭环', () => {
 
   it('每日一练发星的目标，正是主线剧情 1~3 集绑定的模块', () => {
     const byId = new Map(storyChapters.map((c) => [c.id, c]));
-    const pairs: [string, typeof DAILY_CORE_MODULE['语文']][] = [
+    const pairs: [string, (typeof DAILY_CORE_MODULE)['语文']][] = [
       ['ch1-love', DAILY_CORE_MODULE['语文']],
       ['ch2-courage', DAILY_CORE_MODULE['数学']],
       ['ch3-sing', DAILY_CORE_MODULE['英语']],
@@ -27,10 +28,10 @@ describe('萌可闯关 → 剧情解锁 闭环', () => {
       const ch = byId.get(chapterId);
       expect(ch, `找不到主线章节 ${chapterId}`).toBeTruthy();
       // story 用 {subject,key}，daily-practice 用 {subjectKey,moduleKey}，语义归一后比较
-      expect(
-        ch!.module,
-        `${chapterId} 没有模块解锁绑定或与每日一练发星不一致`,
-      ).toEqual({ subject: req.subjectKey, key: req.moduleKey });
+      expect(ch!.module, `${chapterId} 没有模块解锁绑定或与每日一练发星不一致`).toEqual({
+        subject: req.subjectKey,
+        key: req.moduleKey,
+      });
     }
   });
 
@@ -40,7 +41,7 @@ describe('萌可闯关 → 剧情解锁 闭环', () => {
       expect(metas, `${req.subjectKey} 不是有效学科`).toBeTruthy();
       expect(
         metas!.some((m) => m.key === req.moduleKey),
-        `${req.subjectKey}/${req.moduleKey} 在 STUDY_MODULES 中不存在`,
+        `${req.subjectKey}/${req.moduleKey} 在 STUDY_MODULES 中不存在`
       ).toBe(true);
     }
   });

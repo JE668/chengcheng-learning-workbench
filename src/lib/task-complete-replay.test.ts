@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 任务领积分防重放回归测试（路由：src/app/api/tasks/[id]/complete/route.ts）。
  *

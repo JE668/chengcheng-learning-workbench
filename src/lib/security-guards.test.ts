@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * P0 安全控制的回归测试（承接 src/lib/api-reward-guard.test.ts）。
  *

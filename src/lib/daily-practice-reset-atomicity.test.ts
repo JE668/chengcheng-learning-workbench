@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 时光沙漏重置的原子性回归测试（路由：src/app/api/daily-practice/reset/route.ts）。
  *

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
 import { getDb } from './db';
 import { ensureSchema } from './schema';
@@ -32,7 +33,10 @@ describe('progress-store 进度存储层', () => {
   beforeEach(async () => {
     const db = getDb();
     // 先断开外键关联，再删除所有引用 users 的表，最后删 users
-    await db.execute({ sql: 'UPDATE users SET selected_child_id = NULL, parent_id = NULL', args: [] });
+    await db.execute({
+      sql: 'UPDATE users SET selected_child_id = NULL, parent_id = NULL',
+      args: [],
+    });
     await db.execute({ sql: 'DELETE FROM module_progress', args: [] });
     await db.execute({ sql: 'DELETE FROM child_tasks', args: [] });
     await db.execute({ sql: 'DELETE FROM textbook_progress', args: [] });
@@ -66,7 +70,10 @@ describe('progress-store 进度存储层', () => {
     beforeEach(async () => {
       const db = getDb();
       // 先断开外键关联，再删除所有引用 users 的表，最后删 users
-      await db.execute({ sql: 'UPDATE users SET selected_child_id = NULL, parent_id = NULL', args: [] });
+      await db.execute({
+        sql: 'UPDATE users SET selected_child_id = NULL, parent_id = NULL',
+        args: [],
+      });
       await db.execute({ sql: 'DELETE FROM module_progress', args: [] });
       await db.execute({ sql: 'DELETE FROM child_tasks', args: [] });
       await db.execute({ sql: 'DELETE FROM textbook_progress', args: [] });
@@ -188,7 +195,7 @@ describe('progress-store 进度存储层', () => {
         const all = await getModuleProgressAll(cid);
         expect(all.length).toBe(3);
 
-        const subjects = all.map(p => p.subject).sort();
+        const subjects = all.map((p) => p.subject).sort();
         // 排序顺序取决于 locale，只验证包含这三个科目
         expect(subjects).toContain('语文');
         expect(subjects).toContain('数学');

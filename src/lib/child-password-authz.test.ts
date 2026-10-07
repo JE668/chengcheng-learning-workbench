@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 家长改孩子密码的越权防护回归测试（路由：src/app/api/child/password/route.ts）。
  *

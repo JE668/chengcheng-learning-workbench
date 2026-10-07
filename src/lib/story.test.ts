@@ -1,8 +1,9 @@
+// @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { 
-  storyChapters, 
-  getChapter, 
-  getChapterIndex, 
+import {
+  storyChapters,
+  getChapter,
+  getChapterIndex,
   resolveChapterMokoKey,
   StoryChapter,
   StoryQuiz,
@@ -11,7 +12,7 @@ import {
   CAT_GRADIENT,
   CAT_THEME,
   CAT_TIP,
-  CAT_TITLE
+  CAT_TITLE,
 } from '@/lib/story';
 import { mokoCollectionByName } from '@/lib/moko-collection';
 import { mokoChars } from '@/lib/moko';
@@ -54,7 +55,20 @@ describe('StoryChapter types', () => {
 
 describe('Story constants', () => {
   it('CAT_LABEL should have all categories', () => {
-    const categories = ['royal', 'mo', 'key', 'jewel', 'sweetie', 'star', 'princess', 'prince', 'villain', 'legend', 'guide', 'trouble'];
+    const categories = [
+      'royal',
+      'mo',
+      'key',
+      'jewel',
+      'sweetie',
+      'star',
+      'princess',
+      'prince',
+      'villain',
+      'legend',
+      'guide',
+      'trouble',
+    ];
     const catKeys = Object.keys(CAT_LABEL);
     for (const cat of categories) {
       expect(catKeys).toContain(cat);
@@ -62,7 +76,20 @@ describe('Story constants', () => {
   });
 
   it('CAT_GRADIENT should have all categories', () => {
-    const categories = ['royal', 'mo', 'key', 'jewel', 'sweetie', 'star', 'princess', 'prince', 'villain', 'legend', 'guide', 'trouble'];
+    const categories = [
+      'royal',
+      'mo',
+      'key',
+      'jewel',
+      'sweetie',
+      'star',
+      'princess',
+      'prince',
+      'villain',
+      'legend',
+      'guide',
+      'trouble',
+    ];
     const catKeys = Object.keys(CAT_GRADIENT);
     for (const cat of categories) {
       expect(catKeys).toContain(cat);
@@ -70,7 +97,20 @@ describe('Story constants', () => {
   });
 
   it('CAT_THEME should have all categories', () => {
-    const categories = ['royal', 'mo', 'key', 'jewel', 'sweetie', 'star', 'princess', 'prince', 'villain', 'legend', 'guide', 'trouble'];
+    const categories = [
+      'royal',
+      'mo',
+      'key',
+      'jewel',
+      'sweetie',
+      'star',
+      'princess',
+      'prince',
+      'villain',
+      'legend',
+      'guide',
+      'trouble',
+    ];
     const catKeys = Object.keys(CAT_THEME);
     for (const cat of categories) {
       expect(catKeys).toContain(cat);
@@ -78,7 +118,20 @@ describe('Story constants', () => {
   });
 
   it('CAT_TIP should have all categories', () => {
-    const categories = ['royal', 'mo', 'key', 'jewel', 'sweetie', 'star', 'princess', 'prince', 'villain', 'legend', 'guide', 'trouble'];
+    const categories = [
+      'royal',
+      'mo',
+      'key',
+      'jewel',
+      'sweetie',
+      'star',
+      'princess',
+      'prince',
+      'villain',
+      'legend',
+      'guide',
+      'trouble',
+    ];
     const catKeys = Object.keys(CAT_TIP);
     for (const cat of categories) {
       expect(catKeys).toContain(cat);
@@ -86,7 +139,20 @@ describe('Story constants', () => {
   });
 
   it('CAT_TITLE should have all categories', () => {
-    const categories = ['royal', 'mo', 'key', 'jewel', 'sweetie', 'star', 'princess', 'prince', 'villain', 'legend', 'guide', 'trouble'];
+    const categories = [
+      'royal',
+      'mo',
+      'key',
+      'jewel',
+      'sweetie',
+      'star',
+      'princess',
+      'prince',
+      'villain',
+      'legend',
+      'guide',
+      'trouble',
+    ];
     const catKeys = Object.keys(CAT_TITLE);
     for (const cat of categories) {
       expect(catKeys).toContain(cat);
@@ -123,7 +189,7 @@ describe('HERO_CHAPTERS', () => {
   });
 
   it('should have correct moko names for main chapters', () => {
-    const names = HERO_CHAPTERS.map(c => c.mokoName);
+    const names = HERO_CHAPTERS.map((c) => c.mokoName);
     expect(names).toContain('爱心萌可');
     expect(names).toContain('正正萌可');
     expect(names).toContain('唱唱萌可');
@@ -190,18 +256,18 @@ describe('Story utilities', () => {
 
 describe('Auto-generated chapters (图鉴远征)', () => {
   it('should have auto chapters for all mokoCollection entries', () => {
-    const heroNames = new Set(HERO_CHAPTERS.map(c => c.mokoName));
-    const autoChapters = storyChapters.filter(c => !heroNames.has(c.mokoName));
-    
+    const heroNames = new Set(HERO_CHAPTERS.map((c) => c.mokoName));
+    const autoChapters = storyChapters.filter((c) => !heroNames.has(c.mokoName));
+
     // Should have chapters for all remaining moko in collection
-    const collectionNames = Object.keys(mokoCollectionByName).filter(n => !heroNames.has(n));
+    const collectionNames = Object.keys(mokoCollectionByName).filter((n) => !heroNames.has(n));
     expect(autoChapters.length).toBeGreaterThanOrEqual(collectionNames.length - 1); // some might be excluded
   });
 
   it('each auto chapter should have valid structure', () => {
-    const heroNames = new Set(HERO_CHAPTERS.map(c => c.mokoName));
-    const autoChapters = storyChapters.filter(c => !heroNames.has(c.mokoName));
-    
+    const heroNames = new Set(HERO_CHAPTERS.map((c) => c.mokoName));
+    const autoChapters = storyChapters.filter((c) => !heroNames.has(c.mokoName));
+
     for (const c of autoChapters) {
       expect(c.id).toBeTruthy();
       expect(c.title).toBeTruthy();
@@ -218,9 +284,9 @@ describe('Auto-generated chapters (图鉴远征)', () => {
   });
 
   it('auto chapters should have valid quiz', () => {
-    const heroNames = new Set(HERO_CHAPTERS.map(c => c.mokoName));
-    const autoChapters = storyChapters.filter(c => !heroNames.has(c.mokoName));
-    
+    const heroNames = new Set(HERO_CHAPTERS.map((c) => c.mokoName));
+    const autoChapters = storyChapters.filter((c) => !heroNames.has(c.mokoName));
+
     for (const c of autoChapters) {
       expect(c.quiz).toBeDefined();
       if (c.quiz) {
@@ -234,9 +300,9 @@ describe('Auto-generated chapters (图鉴远征)', () => {
   });
 
   it('auto chapters should be sorted by collection order', () => {
-    const heroNames = new Set(HERO_CHAPTERS.map(c => c.mokoName));
-    const autoChapters = storyChapters.filter(c => !heroNames.has(c.mokoName));
-    
+    const heroNames = new Set(HERO_CHAPTERS.map((c) => c.mokoName));
+    const autoChapters = storyChapters.filter((c) => !heroNames.has(c.mokoName));
+
     // Just verify that auto chapters exist and have valid structure
     expect(autoChapters.length).toBeGreaterThan(0);
     for (const c of autoChapters) {
@@ -247,16 +313,16 @@ describe('Auto-generated chapters (图鉴远征)', () => {
 
 describe('Quiz types', () => {
   it('HERO_CHAPTERS should have quiz types', () => {
-    const types = new Set(HERO_CHAPTERS.map(c => c.quiz?.type).filter(Boolean));
+    const types = new Set(HERO_CHAPTERS.map((c) => c.quiz?.type).filter(Boolean));
     expect(types.has('recall')).toBe(true);
     expect(types.has('math')).toBe(true);
     expect(types.has('english')).toBe(true);
   });
 
   it('auto chapters should have variety of quiz types', () => {
-    const heroNames = new Set(HERO_CHAPTERS.map(c => c.mokoName));
-    const autoChapters = storyChapters.filter(c => !heroNames.has(c.mokoName));
-    const types = new Set(autoChapters.map(c => c.quiz?.type).filter(Boolean));
+    const heroNames = new Set(HERO_CHAPTERS.map((c) => c.mokoName));
+    const autoChapters = storyChapters.filter((c) => !heroNames.has(c.mokoName));
+    const types = new Set(autoChapters.map((c) => c.quiz?.type).filter(Boolean));
     expect(types.size).toBeGreaterThan(1);
   });
 });

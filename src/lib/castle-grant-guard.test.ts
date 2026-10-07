@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 家长发放资源（造币口）的边界回归测试。
  * 路由：src/app/api/castle/grant/route.ts

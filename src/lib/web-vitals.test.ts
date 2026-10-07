@@ -1,12 +1,54 @@
+// @vitest-environment node
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { reportWebVitals, sendToSentry, sendToConsole } from './web-vitals';
 
 // Mock web-vitals with hoisted spies
-const onCLS = vi.hoisted(() => vi.fn((cb) => cb({ name: 'CLS', value: 0.1, rating: 'good', delta: 0.1, id: '1', navigationType: 'navigate' })));
-const onFCP = vi.hoisted(() => vi.fn((cb) => cb({ name: 'FCP', value: 1800, rating: 'good', delta: 1800, id: '2', navigationType: 'navigate' })));
-const onLCP = vi.hoisted(() => vi.fn((cb) => cb({ name: 'LCP', value: 2500, rating: 'needs-improvement', delta: 2500, id: '3', navigationType: 'navigate' })));
-const onTTFB = vi.hoisted(() => vi.fn((cb) => cb({ name: 'TTFB', value: 800, rating: 'poor', delta: 800, id: '4', navigationType: 'navigate' })));
-const onINP = vi.hoisted(() => vi.fn((cb) => cb({ name: 'INP', value: 200, rating: 'good', delta: 200, id: '5', navigationType: 'navigate' })));
+const onCLS = vi.hoisted(() =>
+  vi.fn((cb) =>
+    cb({ name: 'CLS', value: 0.1, rating: 'good', delta: 0.1, id: '1', navigationType: 'navigate' })
+  )
+);
+const onFCP = vi.hoisted(() =>
+  vi.fn((cb) =>
+    cb({
+      name: 'FCP',
+      value: 1800,
+      rating: 'good',
+      delta: 1800,
+      id: '2',
+      navigationType: 'navigate',
+    })
+  )
+);
+const onLCP = vi.hoisted(() =>
+  vi.fn((cb) =>
+    cb({
+      name: 'LCP',
+      value: 2500,
+      rating: 'needs-improvement',
+      delta: 2500,
+      id: '3',
+      navigationType: 'navigate',
+    })
+  )
+);
+const onTTFB = vi.hoisted(() =>
+  vi.fn((cb) =>
+    cb({
+      name: 'TTFB',
+      value: 800,
+      rating: 'poor',
+      delta: 800,
+      id: '4',
+      navigationType: 'navigate',
+    })
+  )
+);
+const onINP = vi.hoisted(() =>
+  vi.fn((cb) =>
+    cb({ name: 'INP', value: 200, rating: 'good', delta: 200, id: '5', navigationType: 'navigate' })
+  )
+);
 
 vi.mock('web-vitals', () => ({
   onCLS,
@@ -54,18 +96,39 @@ describe('web-vitals', () => {
 
   describe('sendToConsole', () => {
     it('logs good rating with checkmark', () => {
-      sendToConsole({ name: 'CLS', value: 0.1, rating: 'good', delta: 0.1, id: '1', navigationType: 'navigate' });
+      sendToConsole({
+        name: 'CLS',
+        value: 0.1,
+        rating: 'good',
+        delta: 0.1,
+        id: '1',
+        navigationType: 'navigate',
+      });
       expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('✅'));
       expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('CLS'));
     });
 
     it('logs needs-improvement rating with warning', () => {
-      sendToConsole({ name: 'LCP', value: 2500, rating: 'needs-improvement', delta: 2500, id: '2', navigationType: 'navigate' });
+      sendToConsole({
+        name: 'LCP',
+        value: 2500,
+        rating: 'needs-improvement',
+        delta: 2500,
+        id: '2',
+        navigationType: 'navigate',
+      });
       expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('⚠️'));
     });
 
     it('logs poor rating with error', () => {
-      sendToConsole({ name: 'TTFB', value: 800, rating: 'poor', delta: 800, id: '3', navigationType: 'navigate' });
+      sendToConsole({
+        name: 'TTFB',
+        value: 800,
+        rating: 'poor',
+        delta: 800,
+        id: '3',
+        navigationType: 'navigate',
+      });
       expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('❌'));
     });
   });
@@ -73,34 +136,53 @@ describe('web-vitals', () => {
   describe('sendToSentry', () => {
     it('logs to logger in development', () => {
       vi.stubEnv('NODE_ENV', 'development');
-      
-      sendToSentry({ name: 'CLS', value: 0.1, rating: 'good', delta: 0.1, id: '1', navigationType: 'navigate' });
-      
-      expect(loggerDebugSpy).toHaveBeenCalledWith('[Web Vitals]', expect.objectContaining({ name: 'CLS' }));
+
+      sendToSentry({
+        name: 'CLS',
+        value: 0.1,
+        rating: 'good',
+        delta: 0.1,
+        id: '1',
+        navigationType: 'navigate',
+      });
+
+      expect(loggerDebugSpy).toHaveBeenCalledWith(
+        '[Web Vitals]',
+        expect.objectContaining({ name: 'CLS' })
+      );
       expect(getCurrentScope).not.toHaveBeenCalled();
       expect(addBreadcrumb).not.toHaveBeenCalled();
     });
 
     it('sends to Sentry in production', () => {
       vi.stubEnv('NODE_ENV', 'production');
-      
-      sendToSentry({ name: 'LCP', value: 2500, rating: 'needs-improvement', delta: 2500, id: '2', navigationType: 'navigate' });
-      
+
+      sendToSentry({
+        name: 'LCP',
+        value: 2500,
+        rating: 'needs-improvement',
+        delta: 2500,
+        id: '2',
+        navigationType: 'navigate',
+      });
+
       expect(mockScope.setTag).toHaveBeenCalledWith('web_vitals_lcp', '2500.00');
       expect(mockScope.setTag).toHaveBeenCalledWith('web_vitals_lcp_rating', 'needs-improvement');
-      expect(addBreadcrumb).toHaveBeenCalledWith(expect.objectContaining({
-        category: 'web-vitals',
-        level: 'info', // 'needs-improvement' uses 'info' level (only 'poor' uses 'warning')
-      }));
+      expect(addBreadcrumb).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: 'web-vitals',
+          level: 'info', // 'needs-improvement' uses 'info' level (only 'poor' uses 'warning')
+        })
+      );
     });
   });
 
   describe('reportWebVitals', () => {
     it('calls all web-vitals callbacks', () => {
       const customReport = vi.fn();
-      
+
       reportWebVitals(customReport);
-      
+
       expect(onCLS).toHaveBeenCalled();
       expect(onFCP).toHaveBeenCalled();
       expect(onLCP).toHaveBeenCalled();
@@ -111,7 +193,7 @@ describe('web-vitals', () => {
 
     it('uses default reporter when none provided', () => {
       reportWebVitals();
-      
+
       expect(onCLS).toHaveBeenCalled();
       expect(loggerInfoSpy).toHaveBeenCalled();
     });

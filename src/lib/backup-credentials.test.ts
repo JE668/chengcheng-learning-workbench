@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 备份/恢复的凭据安全回归测试（对应全量审查发现的 S-1）。
  *

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import {
   PROVERBS,
@@ -58,7 +59,9 @@ describe('语文 · 儿歌乐园（NURSERY_RHYMES）', () => {
 
   it('答案在选项里，且选项不重复', () => {
     for (const r of NURSERY_RHYMES) {
-      expect(r.options.includes(r.answer), `《${r.title}》答案「${r.answer}」不在选项里`).toBe(true);
+      expect(r.options.includes(r.answer), `《${r.title}》答案「${r.answer}」不在选项里`).toBe(
+        true
+      );
       expect(new Set(r.options).size, `《${r.title}》选项有重复`).toBe(r.options.length);
     }
   });
@@ -94,7 +97,10 @@ describe('语文 · 反义词（ANTONYMS）', () => {
 describe('语文 · 量词宝箱（QUANTIFIERS）', () => {
   it('正确答案在选项里，选项互不重复', () => {
     for (const q of QUANTIFIERS) {
-      expect(q.options.includes(q.correct), `「一（ ）${q.item}」正确量词「${q.correct}」不在选项里`).toBe(true);
+      expect(
+        q.options.includes(q.correct),
+        `「一（ ）${q.item}」正确量词「${q.correct}」不在选项里`
+      ).toBe(true);
       expect(new Set(q.options).size, `「一（ ）${q.item}」选项有重复`).toBe(q.options.length);
     }
   });
@@ -113,7 +119,9 @@ describe('语文 · 谜语宝箱（RIDDLES）', () => {
     for (const r of RIDDLES) {
       expect(r.riddle, '谜面为空').toBeTruthy();
       expect(r.hint, '缺好奇萌可提示').toBeTruthy();
-      expect(r.options.includes(r.answer), `「${r.riddle}」谜底「${r.answer}」不在选项里`).toBe(true);
+      expect(r.options.includes(r.answer), `「${r.riddle}」谜底「${r.answer}」不在选项里`).toBe(
+        true
+      );
       expect(new Set(r.options).size, `「${r.riddle}」选项有重复`).toBe(r.options.length);
     }
   });
@@ -169,16 +177,24 @@ describe('扩充题库回归（应用题 / 阅读理解）', () => {
   it('应用题 52 道（含 20~50/50~100 新题），答案都在选项里、纯数字', () => {
     expect(WORD_PROBLEMS).toHaveLength(52);
     for (const p of WORD_PROBLEMS) {
-      expect(p.options.every((o) => /^\d+$/.test(o)), `「${p.text}」有非数字选项`).toBe(true);
+      expect(
+        p.options.every((o) => /^\d+$/.test(o)),
+        `「${p.text}」有非数字选项`
+      ).toBe(true);
       expect(p.options.includes(p.answer), `「${p.text}」答案「${p.answer}」不在选项里`).toBe(true);
-      expect(Number(p.answer) >= 1 && Number(p.answer) <= 100, `「${p.text}」答案 ${p.answer} 超出 100 范围`).toBe(true);
+      expect(
+        Number(p.answer) >= 1 && Number(p.answer) <= 100,
+        `「${p.text}」答案 ${p.answer} 超出 100 范围`
+      ).toBe(true);
     }
   });
 
   it('阅读理解 18 篇，答案都在选项里', () => {
     expect(READING_PASSAGES).toHaveLength(18);
     for (const r of READING_PASSAGES) {
-      expect(r.options.includes(r.answer), `「${r.passage}」答案「${r.answer}」不在选项里`).toBe(true);
+      expect(r.options.includes(r.answer), `「${r.passage}」答案「${r.answer}」不在选项里`).toBe(
+        true
+      );
       expect(new Set(r.options).size, `「${r.passage}」选项有重复`).toBe(r.options.length);
     }
   });

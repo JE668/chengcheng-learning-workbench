@@ -1,10 +1,6 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import {
-  recordLoginFailure,
-  clearLoginFailure,
-  loginLockout,
-  MAX_LOGIN_FAILS,
-} from './rate-limit';
+import { recordLoginFailure, clearLoginFailure, loginLockout, MAX_LOGIN_FAILS } from './rate-limit';
 
 describe('登录防爆破：账号级锁定', () => {
   it('连续失败达到阈值后锁定，成功后清零可恢复', () => {

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 时光沙漏补打卡（restoreDay）的结算游标回归测试。
  *

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 护盾 / 冰冻徽章的**文案契约**回归测试。
  *

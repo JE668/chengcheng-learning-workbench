@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 迁移安全性回归测试（对应 docs/评审修复计划与交接.md 第 7 节第 9 项）。
  *

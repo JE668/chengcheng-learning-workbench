@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * schema 就绪记忆化回归测试（对应 3.25 修复的 e2e 回归）。
  *

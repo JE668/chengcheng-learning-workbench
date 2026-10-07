@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * SM-2 实现的单一真源回归测试。
  *

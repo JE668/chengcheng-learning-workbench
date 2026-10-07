@@ -1,7 +1,19 @@
+// @vitest-environment node
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { getDb } from '@/lib/db';
 import { ensureSchema } from '@/lib/db';
-import { getCastleState, confirm, buy, setSkin, castSpray, applyTimeGlass, grantResource, harvest, getBadges, restoreDay } from '@/lib/castle';
+import {
+  getCastleState,
+  confirm,
+  buy,
+  setSkin,
+  castSpray,
+  applyTimeGlass,
+  grantResource,
+  harvest,
+  getBadges,
+  restoreDay,
+} from '@/lib/castle';
 import { POINTS_PER_CHECKIN } from '@/lib/economy';
 
 /* —— 与 castle.dateStr / addDays 保持一致的本地日期工具 —— */
@@ -69,7 +81,10 @@ describe('castle 核心逻辑：连续打卡与惩罚机制', () => {
     // confirm 会写 completions（打卡积分），先删子行再删 users（外键约束）
     // 先断开 users 自引用外键（parent.selected_child_id / parent_id 指向 child），
     // 否则删 child 会因外键约束失败
-    await db.execute({ sql: "UPDATE users SET selected_child_id = NULL, parent_id = NULL", args: [] });
+    await db.execute({
+      sql: 'UPDATE users SET selected_child_id = NULL, parent_id = NULL',
+      args: [],
+    });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'child'", args: [] });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'parent'", args: [] });
   });
@@ -95,8 +110,10 @@ describe('castle 核心逻辑：连续打卡与惩罚机制', () => {
     const today = dateStr();
     await insertCastle(cid, addDays(today, -4));
     // 昨天(off=1) 全勤；前天(off=2) 缺；大前天(off=3) 全勤
-    for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, addDays(today, -1), subj);
-    for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, addDays(today, -3), subj);
+    for (const subj of ['语文', '数学', '英语'])
+      await confirmSubject(cid, addDays(today, -1), subj);
+    for (const subj of ['语文', '数学', '英语'])
+      await confirmSubject(cid, addDays(today, -3), subj);
     const state = await getCastleState(cid);
     expect(state.streakDays).toBe(1); // 仅昨天连续
   });
@@ -109,7 +126,8 @@ describe('castle 核心逻辑：连续打卡与惩罚机制', () => {
     // 仅 yesterday（today-1）未确认，触发连续第 1 天惩罚
     await insertCastle(cid, addDays(today, -2));
     // today-2 全勤（让结算先跑过这一天，之后 consecutiveMissed 归零）
-    for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, addDays(today, -2), subj);
+    for (const subj of ['语文', '数学', '英语'])
+      await confirmSubject(cid, addDays(today, -2), subj);
 
     await getCastleState(cid); // 触发结算
 
@@ -186,7 +204,8 @@ describe('castle 核心逻辑：连续打卡与惩罚机制', () => {
     await insertChild(cid);
     const today = dateStr();
     await insertCastle(cid, addDays(today, -2));
-    for (const s of ['语文', '数学', '英语'] as const) await confirmSubject(cid, addDays(today, -1), s);
+    for (const s of ['语文', '数学', '英语'] as const)
+      await confirmSubject(cid, addDays(today, -1), s);
     const first = await getCastleState(cid);
     const second = await getCastleState(cid);
     expect(first.streakDays).toBe(1); // 昨天全勤，结算一次 → 1
@@ -216,7 +235,10 @@ describe('惩罚升级：第4天及护盾抵扣', () => {
     await db.execute({ sql: 'DELETE FROM story_progress', args: [] });
     await db.execute({ sql: 'DELETE FROM story_read', args: [] });
     await db.execute({ sql: 'DELETE FROM story_quiz', args: [] });
-    await db.execute({ sql: "UPDATE users SET selected_child_id = NULL, parent_id = NULL", args: [] });
+    await db.execute({
+      sql: 'UPDATE users SET selected_child_id = NULL, parent_id = NULL',
+      args: [],
+    });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'child'", args: [] });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'parent'", args: [] });
   });
@@ -272,7 +294,8 @@ describe('惩罚升级：第4天及护盾抵扣', () => {
       args: [cid],
     });
     // 昨天缺卡，前天全勤
-    for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, addDays(today, -2), subj);
+    for (const subj of ['语文', '数学', '英语'])
+      await confirmSubject(cid, addDays(today, -2), subj);
 
     await getCastleState(cid);
 
@@ -298,7 +321,8 @@ describe('惩罚升级：第4天及护盾抵扣', () => {
       args: [cid],
     });
     // 连续缺卡 today-3, today-2（第1天缺卡无惩罚，第2天触发但被护盾抵消）
-    for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, addDays(today, -3), subj);
+    for (const subj of ['语文', '数学', '英语'])
+      await confirmSubject(cid, addDays(today, -3), subj);
     // today-2 和 today-1 都未确认 → 连续第 2 天缺卡
 
     await getCastleState(cid);
@@ -335,7 +359,10 @@ describe('时光沙漏与补打卡', () => {
     await db.execute({ sql: 'DELETE FROM story_progress', args: [] });
     await db.execute({ sql: 'DELETE FROM story_read', args: [] });
     await db.execute({ sql: 'DELETE FROM story_quiz', args: [] });
-    await db.execute({ sql: "UPDATE users SET selected_child_id = NULL, parent_id = NULL", args: [] });
+    await db.execute({
+      sql: 'UPDATE users SET selected_child_id = NULL, parent_id = NULL',
+      args: [],
+    });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'child'", args: [] });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'parent'", args: [] });
   });
@@ -348,7 +375,8 @@ describe('时光沙漏与补打卡', () => {
     // 昨天缺卡，触发第 1 天惩罚（1 捣蛋萌可）
     await insertCastle(cid, addDays(today, -2));
     // 前天台全勤
-    for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, addDays(today, -2), subj);
+    for (const subj of ['语文', '数学', '英语'])
+      await confirmSubject(cid, addDays(today, -2), subj);
     await getCastleState(cid);
 
     // 应该有捣蛋萌可
@@ -404,7 +432,7 @@ describe('时光沙漏与补打卡', () => {
     });
 
     const yesterday = addDays(today, -1);
-    const res = await import('@/lib/castle').then(m => m.applyTimeGlass(cid, yesterday));
+    const res = await import('@/lib/castle').then((m) => m.applyTimeGlass(cid, yesterday));
     expect(res.ok).toBe(false);
     expect(res.message).toContain('已经打卡过了');
 
@@ -419,7 +447,7 @@ describe('时光沙漏与补打卡', () => {
     });
     expect(Number(r.rows[0]?.star_coins)).toBe(75);
   });
-  });
+});
 
 describe('商城购买与资源赠送', () => {
   beforeAll(async () => {
@@ -443,7 +471,10 @@ describe('商城购买与资源赠送', () => {
     await db.execute({ sql: 'DELETE FROM story_progress', args: [] });
     await db.execute({ sql: 'DELETE FROM story_read', args: [] });
     await db.execute({ sql: 'DELETE FROM story_quiz', args: [] });
-    await db.execute({ sql: "UPDATE users SET selected_child_id = NULL, parent_id = NULL", args: [] });
+    await db.execute({
+      sql: 'UPDATE users SET selected_child_id = NULL, parent_id = NULL',
+      args: [],
+    });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'child'", args: [] });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'parent'", args: [] });
   });
@@ -452,10 +483,16 @@ describe('商城购买与资源赠送', () => {
     const cid = nextChild();
     await insertChild(cid);
     await insertCastle(cid, dateStr(), 0);
-    await getDb().execute({ sql: 'UPDATE castle_state SET sunlight = 20 WHERE child_id = ?', args: [cid] });
+    await getDb().execute({
+      sql: 'UPDATE castle_state SET sunlight = 20 WHERE child_id = ?',
+      args: [cid],
+    });
     const res = await buy(cid, 'spray');
     expect(res.ok).toBe(true);
-    const inv = await getDb().execute({ sql: "SELECT qty FROM inventory WHERE child_id = ? AND item_key = 'spray'", args: [cid] });
+    const inv = await getDb().execute({
+      sql: "SELECT qty FROM inventory WHERE child_id = ? AND item_key = 'spray'",
+      args: [cid],
+    });
     expect(Number(inv.rows[0]?.qty ?? 0)).toBe(1);
   });
 
@@ -482,7 +519,10 @@ describe('商城购买与资源赠送', () => {
     await insertChild(cid);
     await insertCastle(cid, addDays(dateStr(), -5), 0); // 连续 5 天
     // 设置足够的阳光能量
-    await getDb().execute({ sql: 'UPDATE castle_state SET sunlight = 20 WHERE child_id = ?', args: [cid] });
+    await getDb().execute({
+      sql: 'UPDATE castle_state SET sunlight = 20 WHERE child_id = ?',
+      args: [cid],
+    });
     // 确认前 5 天三科全勤
     const today = dateStr();
     for (let i = 5; i >= 1; i--) {
@@ -493,7 +533,10 @@ describe('商城购买与资源赠送', () => {
 
     const res = await buy(cid, 'shield');
     expect(res.ok).toBe(true);
-    const row = await getDb().execute({ sql: 'SELECT shield_equipped FROM castle_state WHERE child_id = ?', args: [cid] });
+    const row = await getDb().execute({
+      sql: 'SELECT shield_equipped FROM castle_state WHERE child_id = ?',
+      args: [cid],
+    });
     expect(Number(row.rows[0]?.shield_equipped ?? 0)).toBe(1);
   });
 
@@ -510,10 +553,16 @@ describe('商城购买与资源赠送', () => {
     const cid = nextChild();
     await insertChild(cid);
     await insertCastle(cid, dateStr());
-    await getDb().execute({ sql: "INSERT INTO inventory (child_id, item_key, qty) VALUES (?, 'skin_winter', 1)", args: [cid] });
+    await getDb().execute({
+      sql: "INSERT INTO inventory (child_id, item_key, qty) VALUES (?, 'skin_winter', 1)",
+      args: [cid],
+    });
     const res = await setSkin(cid, 'skin_winter');
     expect(res.ok).toBe(true);
-    const row = await getDb().execute({ sql: 'SELECT skin FROM castle_state WHERE child_id = ?', args: [cid] });
+    const row = await getDb().execute({
+      sql: 'SELECT skin FROM castle_state WHERE child_id = ?',
+      args: [cid],
+    });
     expect(String(row.rows[0]?.skin)).toBe('skin_winter');
   });
 
@@ -527,10 +576,16 @@ describe('商城购买与资源赠送', () => {
     expect(res2.ok).toBe(true);
     const res3 = await grantResource(cid, 'tickets', 2);
     expect(res3.ok).toBe(true);
-    const r = await getDb().execute({ sql: 'SELECT sunlight, star_coins FROM castle_state WHERE child_id = ?', args: [cid] });
+    const r = await getDb().execute({
+      sql: 'SELECT sunlight, star_coins FROM castle_state WHERE child_id = ?',
+      args: [cid],
+    });
     expect(Number(r.rows[0]?.sunlight)).toBe(10);
     expect(Number(r.rows[0]?.star_coins)).toBe(5);
-    const t = await getDb().execute({ sql: 'SELECT total FROM capture_tickets WHERE child_id = ?', args: [cid] });
+    const t = await getDb().execute({
+      sql: 'SELECT total FROM capture_tickets WHERE child_id = ?',
+      args: [cid],
+    });
     expect(Number(t.rows[0]?.total ?? 0)).toBe(2);
   });
 
@@ -540,7 +595,10 @@ describe('商城购买与资源赠送', () => {
     await insertCastle(cid, dateStr());
     const res = await grantResource(cid, 'sunlight', 150);
     expect(res.ok).toBe(true);
-    const r = await getDb().execute({ sql: 'SELECT sunlight FROM castle_state WHERE child_id = ?', args: [cid] });
+    const r = await getDb().execute({
+      sql: 'SELECT sunlight FROM castle_state WHERE child_id = ?',
+      args: [cid],
+    });
     expect(Number(r.rows[0]?.sunlight)).toBe(100);
   });
 });
@@ -559,7 +617,10 @@ describe('喷雾与收获', () => {
     await db.execute({ sql: 'DELETE FROM troublemakers', args: [] });
     await db.execute({ sql: 'DELETE FROM inventory', args: [] });
     await db.execute({ sql: 'DELETE FROM completions', args: [] });
-    await db.execute({ sql: "UPDATE users SET selected_child_id = NULL, parent_id = NULL", args: [] });
+    await db.execute({
+      sql: 'UPDATE users SET selected_child_id = NULL, parent_id = NULL',
+      args: [],
+    });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'child'", args: [] });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'parent'", args: [] });
   });
@@ -571,22 +632,35 @@ describe('喷雾与收获', () => {
     const today = dateStr();
     // 昨天缺卡 → 1 捣蛋萌可，star_coins 被藏一半
     await insertCastle(cid, addDays(today, -2), 100);
-    for (const subj of ['语文', '数学', '英语']) await confirmSubject(cid, addDays(today, -2), subj);
+    for (const subj of ['语文', '数学', '英语'])
+      await confirmSubject(cid, addDays(today, -2), subj);
     await getCastleState(cid); // 触发惩罚
-    const beforeTrouble = await db.execute({ sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ? AND resolved = 0', args: [cid] });
-    await db.execute({ sql: "INSERT INTO inventory (child_id, item_key, qty) VALUES (?, 'spray', 1)", args: [cid] });
+    const beforeTrouble = await db.execute({
+      sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ? AND resolved = 0',
+      args: [cid],
+    });
+    await db.execute({
+      sql: "INSERT INTO inventory (child_id, item_key, qty) VALUES (?, 'spray', 1)",
+      args: [cid],
+    });
 
     const res = await castSpray(cid);
     expect(res.ok).toBe(true);
     expect(res.message).toContain('星星币');
 
     // 捣蛋萌可已清理（如果之前有的话）
-    const afterTrouble = await db.execute({ sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ? AND resolved = 0', args: [cid] });
+    const afterTrouble = await db.execute({
+      sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ? AND resolved = 0',
+      args: [cid],
+    });
     // 由于测试环境可能未生成捣蛋萌可，仅验证不报错
     expect(Number(afterTrouble.rows[0]?.n ?? 0)).toBeGreaterThanOrEqual(0);
 
     // 结算日重置为昨天
-    const row = await getDb().execute({ sql: 'SELECT last_settled_day FROM castle_state WHERE child_id = ?', args: [cid] });
+    const row = await getDb().execute({
+      sql: 'SELECT last_settled_day FROM castle_state WHERE child_id = ?',
+      args: [cid],
+    });
     expect(String(row.rows[0]?.last_settled_day)).toBe(addDays(dateStr(), -1));
   });
 
@@ -613,7 +687,10 @@ describe('喷雾与收获', () => {
     const res = await harvest(cid);
     expect(res.ok).toBe(true);
     expect(res.gained).toBeGreaterThan(0);
-    const row = await getDb().execute({ sql: 'SELECT star_coins FROM castle_state WHERE child_id = ?', args: [cid] });
+    const row = await getDb().execute({
+      sql: 'SELECT star_coins FROM castle_state WHERE child_id = ?',
+      args: [cid],
+    });
     expect(Number(row.rows[0]?.star_coins)).toBeGreaterThan(0);
   });
 
@@ -647,7 +724,10 @@ describe('勋章系统', () => {
     await db.execute({ sql: 'DELETE FROM mistakes', args: [] });
     await db.execute({ sql: 'DELETE FROM completions', args: [] });
     await db.execute({ sql: 'DELETE FROM troublemakers', args: [] });
-    await db.execute({ sql: "UPDATE users SET selected_child_id = NULL, parent_id = NULL", args: [] });
+    await db.execute({
+      sql: 'UPDATE users SET selected_child_id = NULL, parent_id = NULL',
+      args: [],
+    });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'child'", args: [] });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'parent'", args: [] });
   });
@@ -658,7 +738,7 @@ describe('勋章系统', () => {
     await insertCastle(cid, dateStr(), 0);
     const badges = await getBadges(cid);
     // 全未获得
-    expect(badges.every(b => !b.earned)).toBe(true);
+    expect(badges.every((b) => !b.earned)).toBe(true);
     expect(badges.length).toBe(8);
   });
 
@@ -672,7 +752,7 @@ describe('勋章系统', () => {
       args: [cid],
     });
     const badges = await getBadges(cid);
-    expect(badges.find(b => b.id === 'first')?.earned).toBe(true);
+    expect(badges.find((b) => b.id === 'first')?.earned).toBe(true);
   });
 
   it('streak 勋章：连续 3 天 → 获得', async () => {
@@ -686,7 +766,7 @@ describe('勋章系统', () => {
     }
     await getCastleState(cid);
     const badges = await getBadges(cid);
-    expect(badges.find(b => b.id === 'streak')?.earned).toBe(true);
+    expect(badges.find((b) => b.id === 'streak')?.earned).toBe(true);
   });
 
   it('mistake 勋章：解决 10 道错题 → 获得', async () => {
@@ -701,11 +781,11 @@ describe('勋章系统', () => {
     for (let i = 1; i < 10; i++) {
       await getDb().execute({
         sql: "INSERT INTO mistakes (child_id, subject, kind, prompt, answer, wrong, next_review, interval_days, reps, easiness_factor, resolved) VALUES (?, '数学', 'basic', ?, ?, ?, date('now'), 1, 1, 2.5, 1)",
-        args: [cid, `1+${i}`, String(i+1), '0', String(i+1)],
+        args: [cid, `1+${i}`, String(i + 1), '0', String(i + 1)],
       });
     }
     const badges = await getBadges(cid);
-    expect(badges.find(b => b.id === 'mistake')?.earned).toBe(true);
+    expect(badges.find((b) => b.id === 'mistake')?.earned).toBe(true);
   });
 });
 
@@ -731,7 +811,10 @@ describe('并发安全：confirm 幂等性与事务回滚', () => {
     await db.execute({ sql: 'DELETE FROM story_progress', args: [] });
     await db.execute({ sql: 'DELETE FROM story_read', args: [] });
     await db.execute({ sql: 'DELETE FROM story_quiz', args: [] });
-    await db.execute({ sql: "UPDATE users SET selected_child_id = NULL, parent_id = NULL", args: [] });
+    await db.execute({
+      sql: 'UPDATE users SET selected_child_id = NULL, parent_id = NULL',
+      args: [],
+    });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'child'", args: [] });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'parent'", args: [] });
   });
@@ -743,10 +826,7 @@ describe('并发安全：confirm 幂等性与事务回滚', () => {
     const today = dateStr();
 
     // 模拟并发：连续两次调用 confirm
-    const [r1, r2] = await Promise.all([
-      confirm(cid, today, '语文'),
-      confirm(cid, today, '语文'),
-    ]);
+    const [r1, r2] = await Promise.all([confirm(cid, today, '语文'), confirm(cid, today, '语文')]);
 
     // 只有一个成功
     const okCount = [r1.ok, r2.ok].filter(Boolean).length;
@@ -767,14 +847,20 @@ describe('并发安全：confirm 幂等性与事务回滚', () => {
 
     // 先确认一次
     await confirm(cid, today, '语文');
-    const beforeSun = await getDb().execute({ sql: 'SELECT sunlight FROM castle_state WHERE child_id = ?', args: [cid] });
+    const beforeSun = await getDb().execute({
+      sql: 'SELECT sunlight FROM castle_state WHERE child_id = ?',
+      args: [cid],
+    });
     const beforeSunVal = Number(beforeSun.rows[0]?.sunlight ?? 0);
 
     // 再次确认（幂等拦截）
     const r = await confirm(cid, today, '语文');
     expect(r.ok).toBe(false);
 
-    const afterSun = await getDb().execute({ sql: 'SELECT sunlight FROM castle_state WHERE child_id = ?', args: [cid] });
+    const afterSun = await getDb().execute({
+      sql: 'SELECT sunlight FROM castle_state WHERE child_id = ?',
+      args: [cid],
+    });
     expect(Number(afterSun.rows[0]?.sunlight)).toBe(beforeSunVal);
   });
 });
@@ -801,7 +887,10 @@ describe('补打卡边界：restoreDay', () => {
     await db.execute({ sql: 'DELETE FROM story_progress', args: [] });
     await db.execute({ sql: 'DELETE FROM story_read', args: [] });
     await db.execute({ sql: 'DELETE FROM story_quiz', args: [] });
-    await db.execute({ sql: "UPDATE users SET selected_child_id = NULL, parent_id = NULL", args: [] });
+    await db.execute({
+      sql: 'UPDATE users SET selected_child_id = NULL, parent_id = NULL',
+      args: [],
+    });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'child'", args: [] });
     await db.execute({ sql: "DELETE FROM users WHERE role = 'parent'", args: [] });
   });
@@ -818,7 +907,10 @@ describe('补打卡边界：restoreDay', () => {
     expect(res.ok).toBe(true);
     expect(res.restored).toEqual(['数学']);
 
-    const check = await db.execute({ sql: "SELECT subject FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'", args: [cid, yesterday] });
+    const check = await db.execute({
+      sql: "SELECT subject FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'",
+      args: [cid, yesterday],
+    });
     expect(check.rows.length).toBe(1);
     expect(check.rows[0]?.subject).toBe('数学');
   });
@@ -834,7 +926,10 @@ describe('补打卡边界：restoreDay', () => {
     expect(res.ok).toBe(true);
     expect(res.restored.length).toBe(3);
 
-    const p = await db.execute({ sql: "SELECT completed FROM daily_practice WHERE child_id = ? AND day = ?", args: [cid, yesterday] });
+    const p = await db.execute({
+      sql: 'SELECT completed FROM daily_practice WHERE child_id = ? AND day = ?',
+      args: [cid, yesterday],
+    });
     expect(Number(p.rows[0]?.completed)).toBe(1);
   });
 });

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * TTS 朗读的定时器泄漏回归测试（对应全量审查发现的 speak.ts 泄漏）。
  *
