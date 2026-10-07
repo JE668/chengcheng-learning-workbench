@@ -5,8 +5,18 @@ Object.assign(process.env, {
   NODE_ENV: 'test',
 });
 
-// Testing Library扩展匹配器
-import '@testing-library/jest-dom';
+// Testing Library 扩展匹配器。
+//
+// ⚠️ 必须用 `@testing-library/jest-dom/vitest` 而不是包主入口：
+// 主入口的 types/index.d.ts 只 `/// <reference path="jest.d.ts" />`，
+// 扩展的是 **Jest** 的 `expect`；只有 `/vitest` 入口才会
+// `declare module 'vitest'` 把 toBeInTheDocument / toHaveAttribute 等
+// 匹配器挂到 vitest 的 Assertion 上。
+//
+// 运行时两者等价（main 会自动检测环境），但**类型**只认 `/vitest`。
+// Vitest 5 收紧后这个差异从"隐性"变成了 tsc 直接报错
+// （TS2339: Property 'toBeInTheDocument' does not exist on type 'Assertion'）。
+import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 
 /**

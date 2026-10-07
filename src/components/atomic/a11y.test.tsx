@@ -1,4 +1,6 @@
-import '@testing-library/jest-dom';
+// 见 vitest.setup.ts 的同名说明：主入口只扩展 Jest 的 expect 类型，
+// 这里必须用 /vitest 入口才能让 toBeInTheDocument 等匹配器在 tsc 下可见
+import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
