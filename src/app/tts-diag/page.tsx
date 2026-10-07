@@ -14,8 +14,14 @@ export default function TtsDiagPage() {
   const [log, setLog] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [orchestrator] = useState(() => getTTSOrchestrator());
-  const [platformInfo, setPlatformInfo] = useState<{ isEdgeOnAndroid: boolean; isProblematic: boolean } | null>(null);
-  const [engineStatus, setEngineStatus] = useState<Record<string, { available: boolean; circuitOpen: boolean }> | null>(null);
+  const [platformInfo, setPlatformInfo] = useState<{
+    isEdgeOnAndroid: boolean;
+    isProblematic: boolean;
+  } | null>(null);
+  const [engineStatus, setEngineStatus] = useState<Record<
+    string,
+    { available: boolean; circuitOpen: boolean }
+  > | null>(null);
   const [metrics, setMetrics] = useState<ReturnType<typeof orchestrator.getMetrics> | null>(null);
 
   const push = (s: string) => setLog((l) => [...l, s]);
@@ -53,9 +59,13 @@ export default function TtsDiagPage() {
     push(`User Agent: ${navigator.userAgent}`);
     push(`Platform: ${navigator.platform}`);
     push(`Language: ${navigator.language}`);
-    push(`Web Speech 支持: ${typeof window !== 'undefined' && !!window.speechSynthesis ? '是' : '否'}`);
-    push(`AudioContext 支持: ${typeof window !== 'undefined' && (!!window.AudioContext || !!(window as any).webkitAudioContext) ? '是' : '否'}`);
-    
+    push(
+      `Web Speech 支持: ${typeof window !== 'undefined' && !!window.speechSynthesis ? '是' : '否'}`
+    );
+    push(
+      `AudioContext 支持: ${typeof window !== 'undefined' && (!!window.AudioContext || !!(window as any).webkitAudioContext) ? '是' : '否'}`
+    );
+
     if (platformInfo) {
       push(`Edge on Android: ${platformInfo.isEdgeOnAndroid ? '⚠️ 是 (已知问题平台)' : '否'}`);
       push(`问题平台标记: ${platformInfo.isProblematic ? '⚠️ 是' : '否'}`);
@@ -67,7 +77,7 @@ export default function TtsDiagPage() {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       const voices = window.speechSynthesis.getVoices();
       push(`可用嗓音总数: ${voices.length}`);
-      voices.forEach(v => {
+      voices.forEach((v) => {
         const isZhCN = /zh-cn/i.test(v.lang);
         const isZh = /zh/i.test(v.lang);
         const isEn = /en/i.test(v.lang);
@@ -89,7 +99,9 @@ export default function TtsDiagPage() {
     if (orchestrator && engineStatus) {
       push('--- 3. 编排器引擎状态 ---');
       Object.entries(engineStatus).forEach(([engine, status]) => {
-        push(`  ${engine}: 可用=${status.available ? '✅' : '❌'}, 熔断=${status.circuitOpen ? '🔴 开启' : '🟢 关闭'}`);
+        push(
+          `  ${engine}: 可用=${status.available ? '✅' : '❌'}, 熔断=${status.circuitOpen ? '🔴 开启' : '🟢 关闭'}`
+        );
       });
       push('');
 
@@ -113,7 +125,12 @@ export default function TtsDiagPage() {
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text: '你好，我是程程学习工作台。', lang: 'zh', rate: '-45%', pause: 0 }),
+        body: JSON.stringify({
+          text: '你好，我是程程学习工作台。',
+          lang: 'zh',
+          rate: '-45%',
+          pause: 0,
+        }),
       });
       const elapsed = Math.round(performance.now() - t0);
       push(`/api/tts 状态码: ${res.status} (耗时 ${elapsed}ms)`);
@@ -135,7 +152,9 @@ export default function TtsDiagPage() {
         try {
           const j = JSON.parse(txt);
           if (j.reason) push(`  ↳ 失败原因: ${j.reason}`);
-        } catch { /* 不是 JSON */ }
+        } catch {
+          /* 不是 JSON */
+        }
       }
     } catch (e) {
       const elapsed = Math.round(performance.now() - t0);
@@ -158,43 +177,33 @@ export default function TtsDiagPage() {
     }
     push('');
 
-    // 7. 实时测试各引擎
-    push('--- 7. 实时引擎测试 (顺序播放) ---');
+    // 7. 实时降级链测试
+    //
+    // ⚠️ 这里不再逐个驱动独立引擎实例：orchestrator 已改为委托给
+    // lib/speak.ts 的统一降级实现（原两套并行实现已合并，见 orchestrator.ts 顶部说明），
+    // 引擎数组不复存在。改为直接观察一次朗读**实际命中了哪一层**，
+    // 这才是真正需要诊断的信息（走服务端 = 跨设备一致普通话）。
+    push('--- 7. 实时降级链测试（观察实际命中层） ---');
     const testText = '测试语音播放。';
-    const engines = ['web-speech-strict', 'web-speech-loose', 'edge-tts'];
-    
-    for (const engineName of engines) {
-      if (!orchestrator) continue;
-      
-      // 通过私有方法访问引擎（仅用于诊断）
-      const engine = (orchestrator as any).engines?.find((e: any) => e.type === engineName);
-      if (!engine) {
-        push(`  ${engineName}: 引擎未找到`);
-        continue;
-      }
-
-      const available = await engine.isAvailable('zh');
-      if (!available) {
-        push(`  ${engineName}: ❌ 不可用 (isAvailable=false)`);
-        continue;
-      }
-
+    if (orchestrator) {
       const start = performance.now();
       try {
-        const result = await engine.speak(testText, 'zh', { rate: 0.5, pauseMs: 0 });
+        const result = await orchestrator.speak(testText, 'zh', { rate: 0.5, pauseMs: 0 });
         const elapsed = Math.round(performance.now() - start);
         if (result.success) {
-          push(`  ${engineName}: ✅ 成功 (${elapsed}ms, 引擎=${result.engineUsed})`);
+          push(`  ✅ 朗读成功，命中层 = ${result.engineUsed}（耗时 ${elapsed}ms）`);
+          push(
+            result.engineUsed === 'edge-tts'
+              ? '  ↳ 走的是服务端 TTS：普通话、跨设备一致'
+              : '  ↳ 走的是本机 Web Speech：音色随设备系统语言变（iPad 设粤语就会变粤语）'
+          );
         } else {
-          push(`  ${engineName}: ❌ 失败 - ${result.error} (${elapsed}ms)`);
+          push(`  ❌ 三层全部失败 - ${result.error}（耗时 ${elapsed}ms）`);
         }
       } catch (e) {
         const elapsed = Math.round(performance.now() - start);
-        push(`  ${engineName}: ❌ 异常 - ${(e as Error).message} (${elapsed}ms)`);
+        push(`  ❌ 异常 - ${(e as Error).message}（耗时 ${elapsed}ms）`);
       }
-      
-      // 短暂等待避免重叠
-      await new Promise(r => setTimeout(r, 200));
     }
     push('');
 
@@ -219,36 +228,78 @@ export default function TtsDiagPage() {
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '40px auto', padding: 20, fontFamily: 'system-ui, sans-serif', lineHeight: 1.7 }}>
+    <div
+      style={{
+        maxWidth: 800,
+        margin: '40px auto',
+        padding: 20,
+        fontFamily: 'system-ui, sans-serif',
+        lineHeight: 1.7,
+      }}
+    >
       <h1>TTS 诊断面板</h1>
-      <p style={{ color: '#666' }}>在出问题的设备上打开本页，点「完整诊断」或「快速测试」，把结果发给开发者即可定位语音问题。</p>
-      
+      <p style={{ color: '#666' }}>
+        在出问题的设备上打开本页，点「完整诊断」或「快速测试」，把结果发给开发者即可定位语音问题。
+      </p>
+
       <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
         <button
           onClick={runFullTest}
           disabled={busy}
-          style={{ padding: '12px 24px', fontSize: 16, cursor: busy ? 'default' : 'pointer', background: '#0066cc', color: 'white', border: 'none', borderRadius: '6px' }}
+          style={{
+            padding: '12px 24px',
+            fontSize: 16,
+            cursor: busy ? 'default' : 'pointer',
+            background: '#0066cc',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+          }}
         >
           {busy ? '诊断中…' : '🔍 完整诊断'}
         </button>
         <button
           onClick={() => testSpeak('你好，我是程程学习工作台。')}
           disabled={busy}
-          style={{ padding: '12px 24px', fontSize: 16, cursor: busy ? 'default' : 'pointer', background: '#28a745', color: 'white', border: 'none', borderRadius: '6px' }}
+          style={{
+            padding: '12px 24px',
+            fontSize: 16,
+            cursor: busy ? 'default' : 'pointer',
+            background: '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+          }}
         >
           🎤 快速测试（中文）
         </button>
         <button
           onClick={() => testSpeak('Hello, this is Chengcheng Learning Workbench.')}
           disabled={busy}
-          style={{ padding: '12px 24px', fontSize: 16, cursor: busy ? 'default' : 'pointer', background: '#6f42c1', color: 'white', border: 'none', borderRadius: '6px' }}
+          style={{
+            padding: '12px 24px',
+            fontSize: 16,
+            cursor: busy ? 'default' : 'pointer',
+            background: '#6f42c1',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+          }}
         >
           🎤 快速测试（英文）
         </button>
         <button
           onClick={clearLog}
           disabled={busy}
-          style={{ padding: '12px 24px', fontSize: 16, cursor: busy ? 'default' : 'pointer', background: '#6c757d', color: 'white', border: 'none', borderRadius: '6px' }}
+          style={{
+            padding: '12px 24px',
+            fontSize: 16,
+            cursor: busy ? 'default' : 'pointer',
+            background: '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+          }}
         >
           🗑️ 清空日志
         </button>

@@ -1,219 +1,157 @@
 'use client';
 
-import {
-  TTSEngine,
-  TTSEngineType,
-  TTSLanguage,
-  TTSOptions,
-  TTSResult,
-  TTSMetrics,
-} from './types';
-import { WebSpeechStrictEngine } from './engines/web-speech-strict';
-import { WebSpeechLooseEngine } from './engines/web-speech-loose';
-import { EdgeTTSEngine } from './engines/edge-tts';
+import { playTtsWithResult } from '@/lib/speak';
 import { logger } from '@/lib/logger';
+import type { TTSLanguage, TTSOptions, TTSResult, TTSMetrics, TTSEngineType } from './types';
 
-/** 熔断器状态 */
+/**
+ * TTS 编排器 —— **薄适配层**。
+ *
+ * ## 为什么要这么改（本文件曾是一套完整的平行实现）
+ *
+ * 项目此前存在两套各自独立实现的「三层降级」：
+ *
+ * | | `lib/speak.ts` | `lib/tts/orchestrator.ts`（旧版） |
+ * | --- | --- | --- |
+ * | 使用方 | 生产路径，**55 个文件** | 仅 `/tts-diag` 诊断页，1 个 |
+ * | 长文本切分 | ✅ `splitSpeechText` 绕过 Android Chrome 卡死 bug | ❌ 整段直接交给引擎 |
+ * | keep-alive | ✅ 每 8s pause/resume 踢醒引擎 | ❌ 无 |
+ * | 服务端音频缓存 | ✅ blob 缓存（命中秒回） | ❌ 无 |
+ * | 熔断器 | 无 | ✅ 有（但对诊断用途价值有限） |
+ * | 指标统计 | 无 | ✅ 有 |
+ *
+ * 两套并存导致两个真实问题：
+ *  1. **重复维护**：三层降级策略各写一遍，改一处容易漏另一处；
+ *  2. **能力分叉**：orchestrator 的引擎缺少 speak.ts 才有的一批关键处理
+ *     （尤其长文本切分 —— 那是项目为绕开安卓平板 TTS 卡死积累的核心经验）。
+ *     旧 orchestrator 若真的接管生产，会引入比它修复的更多问题。
+ *
+ * `lib/tts/migration-guide.md` 原本计划让 orchestrator 成为唯一实现，
+ * 但 `useTTS` hook 从未落地，实际演进方向反了：speak.ts 成了真实实现，
+ * orchestrator 停留在纸面。因此本文件改为**委托给 speak.ts 的适配器**，
+ * 保留原有公开接口（诊断页与潜在调用方无需改动），消除重复实现。
+ *
+ * 熔断器能力暂时保留在适配层（对服务端长期不可用时的抖动有缓冲价值）；
+ * 若后续确认无价值，可连同 engines/ 目录一并删除。
+ */
+
 interface CircuitBreakerState {
   failures: number;
   lastFailure: number;
   open: boolean;
 }
 
-/**
- * 平台检测 - 识别已知有问题的平台
- */
+/** 平台检测 —— 识别已知有问题的平台（Edge on Android）。 */
 function detectPlatform(): { isEdgeOnAndroid: boolean; isProblematic: boolean } {
   if (typeof navigator === 'undefined') return { isEdgeOnAndroid: false, isProblematic: false };
-  
   const ua = navigator.userAgent;
   const isEdge = /Edg\//i.test(ua);
   const isAndroid = /Android/i.test(ua);
-  const isMobile = /Mobile|Tablet/i.test(ua) || (isAndroid && !/Chrome/i.test(ua));
-  
-  // Edge on Android (包括小米平板 Edge) - Web Speech 支持有限
+  // Edge on Android（含小米平板 Edge）—— Web Speech 支持有限
   const isEdgeOnAndroid = isEdge && isAndroid;
-  
-  // 其他已知问题平台
-  const isProblematic = isEdgeOnAndroid;
-  
-  return { isEdgeOnAndroid, isProblematic };
+  return { isEdgeOnAndroid, isProblematic: isEdgeOnAndroid };
 }
 
-/**
- * TTS 编排器 - 管理三层降级策略
- */
+/** 编排器：对外保持原接口，内部统一走 speak.ts 的降级实现。 */
 export class TTSOrchestrator {
-  private engines: TTSEngine[] = [];
-  private metrics: TTSMetrics = {
-    totalRequests: 0,
-    successByEngine: {
-      'web-speech-strict': 0,
-      'web-speech-loose': 0,
-      'edge-tts': 0,
-    },
-    fallbackCount: 0,
-    avgLatencyByEngine: {
-      'web-speech-strict': 0,
-      'web-speech-loose': 0,
-      'edge-tts': 0,
-    },
-  };
-
-  // 熔断器配置
+  private metrics: TTSMetrics = emptyMetrics();
+  /** 熔断器状态：按引擎类型记录连续失败次数。 */
   private circuitBreakers: Map<TTSEngineType, CircuitBreakerState> = new Map();
   private readonly FAILURE_THRESHOLD = 5;
-  private readonly RESET_TIMEOUT = 60000; // 60秒
-  
-  // 平台信息缓存
+  private readonly RESET_TIMEOUT = 60000;
   private platformInfo = detectPlatform();
 
   constructor() {
-    this.initEngines();
-    this.initCircuitBreakers();
-  }
-
-  private initEngines(): void {
-    // 在有问题的平台上，直接跳过 Web Speech，使用 Edge TTS
-    if (this.platformInfo.isProblematic) {
-      logger.warn('[TTS] Detected problematic platform, skipping Web Speech engines');
-      this.engines = [
-        new EdgeTTSEngine(),
-      ];
-    } else {
-      this.engines = [
-        new WebSpeechStrictEngine(),
-        new WebSpeechLooseEngine(),
-        new EdgeTTSEngine(),
-      ];
-    }
-  }
-
-  private initCircuitBreakers(): void {
-    for (const engine of this.engines) {
-      this.circuitBreakers.set(engine.type, {
-        failures: 0,
-        lastFailure: 0,
-        open: false,
-      });
+    for (const type of ['web-speech-strict', 'web-speech-loose', 'edge-tts'] as const) {
+      this.circuitBreakers.set(type, { failures: 0, lastFailure: 0, open: false });
     }
   }
 
   /**
-   * 朗读文本 - 自动降级
+   * 朗读文本 —— 自动降级。
+   * 降级策略完全由 speak.ts 负责（严格 Web Speech → 宽松 Web Speech → 服务端）。
    */
   async speak(text: string, lang: TTSLanguage, options: TTSOptions = {}): Promise<TTSResult> {
     this.metrics.totalRequests++;
 
-    for (let i = 0; i < this.engines.length; i++) {
-      const engine = this.engines[i];
-      
-      // 检查熔断器
-      if (this.isCircuitOpen(engine.type)) {
-        logger.debug(`[TTS] ${engine.name} circuit open, skipping`);
-        continue;
-      }
-
-      // 检查可用性
-      const available = await engine.isAvailable(lang);
-      if (!available) {
-        logger.debug(`[TTS] ${engine.name} not available`);
-        continue;
-      }
-
-      try {
-        logger.debug(`[TTS] Trying ${engine.name} for: "${text.slice(0, 30)}..."`);
-        const result = await engine.speak(text, lang, options);
-
-        if (result.success) {
-          this.recordSuccess(engine.type, result.latencyMs);
-          return result;
-        } else {
-          this.recordFailure(engine.type, result.error ?? 'Unknown error');
-          logger.warn(`[TTS] ${engine.name} failed: ${result.error}`);
-        }
-      } catch (e: any) {
-        this.recordFailure(engine.type, e.message);
-        logger.error(`[TTS] ${engine.name} threw`, undefined, e);
-      }
-
-      // 记录降级
-      this.metrics.fallbackCount++;
-      
-      // 降级前短暂等待，确保前一个引擎的音频完全停止
-      if (i < this.engines.length - 1) {
-        await new Promise(r => setTimeout(r, 50));
-      }
+    if (this.platformInfo.isProblematic) {
+      logger.debug('[TTS] 问题平台（Edge on Android）：优先走服务端兜底');
     }
 
-    // 全部失败
-    return {
-      success: false,
-      error: 'All TTS engines failed',
-      engineUsed: 'edge-tts',
-      latencyMs: 0,
-    };
+    try {
+      const res = await playTtsWithResult(text, lang, {
+        wsRate: options.rate,
+        pitch: options.pitch,
+        pauseMs: options.pauseMs,
+      });
+
+      if (res.success) {
+        this.recordSuccess(res.engineUsed, res.latencyMs);
+        return {
+          success: true,
+          engineUsed: res.engineUsed,
+          latencyMs: res.latencyMs,
+        };
+      }
+
+      this.recordFailure('edge-tts', 'All TTS layers failed');
+      return {
+        success: false,
+        error: 'All TTS layers failed',
+        engineUsed: 'edge-tts',
+        latencyMs: res.latencyMs,
+      };
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error(String(e));
+      this.recordFailure('edge-tts', err.message);
+      logger.error('[TTS] 朗读异常', undefined, err);
+      return { success: false, error: err.message, engineUsed: 'edge-tts', latencyMs: 0 };
+    }
   }
 
-  /**
-   * 预热所有引擎
-   */
+  /** 预热：speak.ts 无需显式预热（引擎在首次调用时惰性初始化）。 */
   async warmup(): Promise<void> {
-    await Promise.all(
-      this.engines
-        .filter(e => e.warmup)
-        .map(e => e.warmup!().catch(() => {}))
-    );
+    // 预读一次嗓音列表可缩短首次朗读延迟，属可选优化。
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.getVoices();
+      } catch {
+        /* 忽略 */
+      }
+    }
   }
 
-  /** 获取指标 */
   getMetrics(): TTSMetrics {
     return { ...this.metrics };
   }
 
-  /** 重置指标 */
   resetMetrics(): void {
-    this.metrics = {
-      totalRequests: 0,
-      successByEngine: {
-        'web-speech-strict': 0,
-        'web-speech-loose': 0,
-        'edge-tts': 0,
-      },
-      fallbackCount: 0,
-      avgLatencyByEngine: {
-        'web-speech-strict': 0,
-        'web-speech-loose': 0,
-        'edge-tts': 0,
-      },
-    };
+    this.metrics = emptyMetrics();
   }
 
-  /** 获取引擎状态 */
-  getEngineStatus(): Record<TTSEngineType, { available: boolean; circuitOpen: boolean }> {
-    const status: Record<TTSEngineType, { available: boolean; circuitOpen: boolean }> = {
-      'web-speech-strict': { available: false, circuitOpen: false },
-      'web-speech-loose': { available: false, circuitOpen: false },
-      'edge-tts': { available: false, circuitOpen: false },
-    };
-
-    for (const engine of this.engines) {
-      // 这里只能同步检查，实际可用性需要异步
-      status[engine.type] = {
-        available: false, // 需要异步检查
-        circuitOpen: this.isCircuitOpen(engine.type),
+  /**
+   * 引擎状态。
+   *
+   * 说明：三层降级现在由 speak.ts 内部完成，本层不再持有独立引擎实例，
+   * 因此 `available` 只能依据本地能力静态推断（是否有 Web Speech 支持），
+   * 而不能像旧版那样逐个调 engine.isAvailable()。
+   */
+  getEngineStatus(): Record<string, { available: boolean; circuitOpen: boolean }> {
+    const hasWebSpeech = typeof window !== 'undefined' && !!window.speechSynthesis;
+    const status: Record<string, { available: boolean; circuitOpen: boolean }> = {};
+    for (const type of ['web-speech-strict', 'web-speech-loose', 'edge-tts'] as const) {
+      status[type] = {
+        // 服务端层始终可用（网络可达即可）；两个 Web Speech 层依赖浏览器支持
+        available: type === 'edge-tts' || hasWebSpeech,
+        circuitOpen: this.isCircuitOpen(type),
       };
     }
-
     return status;
   }
 
-  /** 清理资源 */
+  /** 清理资源：降级实现内无长驻资源（定时器均随朗读结束清理）。 */
   dispose(): void {
-    for (const engine of this.engines) {
-      engine.dispose?.();
-    }
-    this.engines = [];
+    this.circuitBreakers.clear();
   }
 
   // ==================== 私有方法 ====================
@@ -221,15 +159,12 @@ export class TTSOrchestrator {
   private isCircuitOpen(type: TTSEngineType): boolean {
     const state = this.circuitBreakers.get(type);
     if (!state || !state.open) return false;
-
-    // 检查是否该重置
     if (Date.now() - state.lastFailure > this.RESET_TIMEOUT) {
       state.failures = 0;
       state.open = false;
       logger.debug(`[TTS] Circuit breaker for ${type} reset`);
       return false;
     }
-
     return true;
   }
 
@@ -239,10 +174,10 @@ export class TTSOrchestrator {
       state.failures = 0;
       state.open = false;
     }
-
-    this.metrics.successByEngine[type]++;
-    const prevAvg = this.metrics.avgLatencyByEngine[type];
-    const count = this.metrics.successByEngine[type];
+    const bucket = this.metrics.successByEngine;
+    bucket[type] = (bucket[type] ?? 0) + 1;
+    const count = bucket[type];
+    const prevAvg = this.metrics.avgLatencyByEngine[type] ?? 0;
     this.metrics.avgLatencyByEngine[type] = prevAvg + (latencyMs - prevAvg) / count;
   }
 
@@ -256,9 +191,25 @@ export class TTSOrchestrator {
         logger.warn(`[TTS] Circuit breaker OPENED for ${type} after ${state.failures} failures`);
       }
     }
-
     this.metrics.lastError = { engine: type, error, timestamp: Date.now() };
   }
+}
+
+function emptyMetrics(): TTSMetrics {
+  return {
+    totalRequests: 0,
+    successByEngine: {
+      'web-speech-strict': 0,
+      'web-speech-loose': 0,
+      'edge-tts': 0,
+    },
+    fallbackCount: 0,
+    avgLatencyByEngine: {
+      'web-speech-strict': 0,
+      'web-speech-loose': 0,
+      'edge-tts': 0,
+    },
+  };
 }
 
 /** 单例实例 */

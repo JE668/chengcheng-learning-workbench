@@ -38,8 +38,10 @@ function ensureVoices() {
   }
   window.speechSynthesis.addEventListener(
     'voiceschanged',
-    () => { voicesReady = true; },
-    { once: true },
+    () => {
+      voicesReady = true;
+    },
+    { once: true }
   );
 }
 
@@ -87,7 +89,7 @@ function unlockAudioOnce() {
   audioUnlocked = true;
   try {
     const silent = new Audio(
-      'data:audio/mpeg;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA',
+      'data:audio/mpeg;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA'
     );
     silent.volume = 0;
     const p = silent.play();
@@ -120,13 +122,16 @@ function pickVoiceStrict(lang: string): SpeechSynthesisVoice | undefined {
   const target = lang.toLowerCase();
   const match = (x: SpeechSynthesisVoice) => {
     const vl = (x.lang || '').toLowerCase();
-    if (target.startsWith('zh')) return (vl === 'zh-cn' || vl === 'zh') && !vl.startsWith('zh-hk') && !vl.startsWith('zh-tw');
+    if (target.startsWith('zh'))
+      return (vl === 'zh-cn' || vl === 'zh') && !vl.startsWith('zh-hk') && !vl.startsWith('zh-tw');
     if (target.startsWith('en')) return (vl === 'en-us' || vl === 'en') && !vl.startsWith('en-gb');
     return vl.startsWith(target);
   };
   const pool = voices.filter(match);
   const friendly = pool.find((x) =>
-    /female|woman|girl|ting|huihui|yaoyao|xiao|mei|child|kids|samantha|zira|google us|microsoft|晓晓|晓颜|婷婷/i.test(x.name),
+    /female|woman|girl|ting|huihui|yaoyao|xiao|mei|child|kids|samantha|zira|google us|microsoft|晓晓|晓颜|婷婷/i.test(
+      x.name
+    )
   );
   return friendly ?? pool[0];
 }
@@ -196,8 +201,37 @@ export function toEdgeRate(wsRate: number): string {
 export async function playTts(
   text: string,
   lang: 'zh' | 'en',
-  opts: { wsRate?: number; pitch?: number; pauseMs?: number } = {},
+  opts: { wsRate?: number; pitch?: number; pauseMs?: number } = {}
 ) {
+  await playTtsWithResult(text, lang, opts);
+}
+
+/**
+ * 与 playTts 完全相同的降级流程，但额外回执「哪一层成功了 + 耗时多少」。
+ *
+ * ## 为什么需要它
+ * 本项目此前存在两套并行的三层降级实现：`lib/speak.ts`（生产路径，55 个文件在用）
+ * 与 `lib/tts/orchestrator.ts`（仅诊断页在用，自建一套引擎 + 熔断器）。
+ * 两套各自实现一遍降级，既有重复维护成本，也出现了能力分叉 ——
+ * orchestrator 的引擎缺少长文本切分、keep-alive、blob 缓存等 speak.ts 才有的关键处理。
+ *
+ * 现在统一为 speak.ts 是唯一实现，orchestrator 退化为薄适配器（见 lib/tts/orchestrator.ts）。
+ * 适配层需要知道「实际用了哪一层」来做指标统计，故由这里回执。
+ *
+ * @returns success + 命中的降级层 + 耗时（ms）
+ */
+export async function playTtsWithResult(
+  text: string,
+  lang: 'zh' | 'en',
+  opts: { wsRate?: number; pitch?: number; pauseMs?: number } = {}
+): Promise<{
+  success: boolean;
+  engineUsed: 'web-speech-strict' | 'web-speech-loose' | 'edge-tts';
+  latencyMs: number;
+}> {
+  const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
   const wsRate = opts.wsRate ?? 0.8;
   const pitch = opts.pitch ?? 1.05;
   const pauseMs = opts.pauseMs ?? 0;
@@ -206,28 +240,47 @@ export async function playTts(
   if (hasStrictVoice(lang)) {
     console.log('[TTS-L1] strict Web Speech', lang, text.slice(0, 25));
     const played = await speakEnd(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch, pauseMs);
-    if (played) return;
+    if (played)
+      return {
+        success: true,
+        engineUsed: 'web-speech-strict',
+        latencyMs: Math.round(now() - startedAt),
+      };
   }
 
   // ── 第 2 层：Web Speech 宽松兜底（零延迟，粤语/台式也行）────
   // 本机无严格嗓音时（如 Android Edge）先走宽松，总比走服务端快。
   if (typeof window !== 'undefined' && window.speechSynthesis) {
     console.log('[TTS-L2] loose Web Speech', lang, text.slice(0, 25));
-    const loosePlayed = await speakEndLoose(text, lang === 'zh' ? 'zh' : 'en', wsRate, pitch, pauseMs);
-    if (loosePlayed) return;
+    const loosePlayed = await speakEndLoose(
+      text,
+      lang === 'zh' ? 'zh' : 'en',
+      wsRate,
+      pitch,
+      pauseMs
+    );
+    if (loosePlayed)
+      return {
+        success: true,
+        engineUsed: 'web-speech-loose',
+        latencyMs: Math.round(now() - startedAt),
+      };
   }
 
   // ── 第 3 层：服务端 edge-tts（神经嗓音，最后兜底）────────────
   console.log('[TTS-L3] server edge-tts', lang, text.slice(0, 30));
   const serverOk = await tryServer(text, lang, { ...opts, wsRate, pitch });
-  if (serverOk) return;
+  if (serverOk)
+    return { success: true, engineUsed: 'edge-tts', latencyMs: Math.round(now() - startedAt) };
+
+  return { success: false, engineUsed: 'edge-tts', latencyMs: Math.round(now() - startedAt) };
 }
 
 /** 第 3 层：走服务端 /api/tts 播放，结束时 resolve；失败则结束（两层 Web Speech 已兜底）。 */
 function tryServer(
   text: string,
   lang: 'zh' | 'en',
-  opts: { wsRate?: number; pitch?: number; pauseMs?: number },
+  opts: { wsRate?: number; pitch?: number; pauseMs?: number }
 ): Promise<boolean> {
   const wsRate = opts.wsRate ?? 0.8;
   const pauseMs = opts.pauseMs ?? 0;
@@ -236,27 +289,47 @@ function tryServer(
       resolve(false);
       return;
     }
+    // ⚠️ settle() 统一收口：所有出口（成功/失败/超时）都经它 resolve，
+    // 并保证 (a) 挂起定时器被清掉、(b) ObjectURL 被释放。
+    // 原实现里 abort 计时只在 .catch 里 clearTimeout，**成功路径完全不清理**；
+    // pauseMs 定时器与 ObjectURL 同理。故事页长文连读会持续累积这些定时器
+    // （实测长文本一次朗读残留 15 个），构成真实内存泄漏。
+    let settled = false;
+    let abortTimer: ReturnType<typeof setTimeout> | null = null;
+    let objectUrl: string | null = null;
+    const settle = (ok: boolean, ms = 0) => {
+      if (settled) return;
+      settled = true;
+      if (abortTimer) {
+        clearTimeout(abortTimer);
+        abortTimer = null;
+      }
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+        objectUrl = null;
+      }
+      if (ms > 0) setTimeout(() => resolve(ok), ms);
+      else resolve(ok);
+    };
+
     // 缓存命中：跳过 fetch，直接播放 blob（~0ms 延迟）
     const edgeRate = toEdgeRate(wsRate);
     const cached = getCachedBlob(text, lang, edgeRate);
     if (cached) {
       const url = URL.createObjectURL(cached);
+      objectUrl = url;
       const audio = new Audio(url);
       audio.preload = 'auto';
-      audio.onended = () => {
-        URL.revokeObjectURL(url);
-        if (pauseMs > 0) setTimeout(() => resolve(true), pauseMs);
-        else resolve(true);
-      };
-      audio.onerror = () => { URL.revokeObjectURL(url); resolve(false); };
-      audio.play().catch(() => { URL.revokeObjectURL(url); resolve(false); });
+      audio.onended = () => settle(true, pauseMs);
+      audio.onerror = () => settle(false);
+      audio.play().catch(() => settle(false));
       return;
     }
     const controller = new AbortController();
     // 超时时长按文本长度动态计算：整段长文一次合成需要数秒，
     // 旧的固定 5s 对故事长段会误杀 → 静默失败。语音播放本身不在此计时内。
     const timeoutMs = Math.min(20000, Math.max(6000, text.length * 120));
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    abortTimer = setTimeout(() => controller.abort(), timeoutMs);
     fetch('/api/tts', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -269,31 +342,24 @@ function tryServer(
       })
       .then((blob) => {
         const url = URL.createObjectURL(blob);
+        objectUrl = url;
         const audio = new Audio(url);
         audio.preload = 'auto';
         audio.onended = () => {
-          URL.revokeObjectURL(url);
           // pauseMs 暂停：音频播放结束后延迟 resolve
-          if (pauseMs > 0) {
-            setTimeout(() => resolve(true), pauseMs);
-          } else {
-            resolve(true);
-          }
+          settle(true, pauseMs);
         };
-        audio.onerror = () => { URL.revokeObjectURL(url); resolve(false); };
-        audio.play().catch(() => { URL.revokeObjectURL(url); resolve(false); });
+        audio.onerror = () => settle(false);
+        audio.play().catch(() => settle(false));
       })
-      .catch(() => {
-        clearTimeout(timer);
-        resolve(false);
-      });
+      .catch(() => settle(false));
   });
 }
 
 export function playTtsEnd(
   text: string,
   lang: 'zh' | 'en',
-  opts: { wsRate?: number; pitch?: number; pauseMs?: number } = {},
+  opts: { wsRate?: number; pitch?: number; pauseMs?: number } = {}
 ): Promise<void> {
   return playTts(text, lang, opts);
 }
@@ -309,16 +375,24 @@ export function playTtsEnd(
  * 同时每句都能可靠拿到 onend，段落连读的节拍也更准确。
  */
 function splitSpeechText(text: string, maxLen = 30): string[] {
-  const sentences = text.match(/[^。！？!?；;…\n]+[。！？!?；;…]*|\n+|[^。！？!?；;…\n]+$/g) ?? [text];
+  const sentences = text.match(/[^。！？!?；;…\n]+[。！？!?；;…]*|\n+|[^。！？!?；;…\n]+$/g) ?? [
+    text,
+  ];
   const out: string[] = [];
   for (const raw of sentences) {
     const t = raw.replace(/\n+/g, '，').trim();
     if (!t || /^[，,、]+$/.test(t)) continue;
-    if (t.length <= maxLen) { out.push(t); continue; }
+    if (t.length <= maxLen) {
+      out.push(t);
+      continue;
+    }
     // 超长句再按逗号/顿号粗切
     let buf = '';
     for (const seg of t.split(/(?<=[，,、 ])/)) {
-      if ((buf + seg).length > maxLen && buf) { out.push(buf); buf = ''; }
+      if ((buf + seg).length > maxLen && buf) {
+        out.push(buf);
+        buf = '';
+      }
       buf += seg;
     }
     if (buf) out.push(buf);
@@ -343,7 +417,7 @@ function speakChunks(
   pauseMs: number,
   pickVoice: (l: string) => SpeechSynthesisVoice | undefined,
   /** 宽松层 true：只收到 onend 也算已播放（部分平台不触发 onstart） */
-  acceptEndWithoutStart = false,
+  acceptEndWithoutStart = false
 ): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
@@ -352,16 +426,69 @@ function speakChunks(
     }
     ensureVoices();
     const v = pickVoice(lang);
-    if (!v) { resolve(false); return; }
+    if (!v) {
+      resolve(false);
+      return;
+    }
 
     const chunks = splitSpeechText(text);
     let idx = 0;
     let done = false;
     let started = false;
     let keepAlive: ReturnType<typeof setInterval> | null = null;
+    /** 所有一次性 setTimeout 的句柄：必须在 finish 时清理，否则逐句朗读会持续堆积。 */
+    const pendingTimeouts = new Set<ReturnType<typeof setTimeout>>();
+    /** 单个定时器的取消函数：供只想提前撤销某一个的场景（如 utterance 触发时）。 */
+    const cancelers = new Map<ReturnType<typeof setTimeout>, () => void>();
+
+    /**
+     * 注册一个一次性定时器。
+     *
+     * ⚠️ `done` 守卫不可省：utterance 的 onend/onstart 在 finish() 之后仍可能被
+     * 触发（引擎异步派发），此时 onend 里的 `later(speakNext, 60)` 会在
+     * cleanup() **之后**注册新定时器 —— 于是它逃出清理，留下一个存活 60ms 的孤儿。
+     * 实测「正常读完一句」恰好残留 1 个；长文本走服务端路径时残留更多。
+     * 这里在已结束时直接不注册，从根上杜绝孤儿定时器。
+     */
+    const later = (fn: () => void, ms: number) => {
+      if (done) return null;
+      const h = setTimeout(() => {
+        pendingTimeouts.delete(h);
+        cancelers.delete(h);
+        fn();
+      }, ms);
+      pendingTimeouts.add(h);
+      cancelers.set(h, () => {
+        clearTimeout(h);
+        pendingTimeouts.delete(h);
+        cancelers.delete(h);
+      });
+      return h;
+    };
+
+    /**
+     * 提前撤销某个定时器。
+     * 接受 null（later 在已结束时返回 null，见上方守卫说明），此时什么都不做。
+     */
+    const cancelLater = (h: ReturnType<typeof setTimeout> | null) => {
+      if (h == null) return;
+      const cancel = cancelers.get(h);
+      if (cancel) cancel();
+      else clearTimeout(h);
+    };
 
     const cleanup = () => {
-      if (keepAlive) { clearInterval(keepAlive); keepAlive = null; }
+      if (keepAlive) {
+        clearInterval(keepAlive);
+        keepAlive = null;
+      }
+      // ⚠️ 必须一并清掉所有挂起定时器。原先只清了 keepAlive，
+      // 而「总兜底计时」是按字数算的（最长 3 分钟）且从不清理 ——
+      // 故事页顺序连读 20 句就堆积 20 个存活定时器，每个还持有 promise 闭包，
+      // 构成真实内存泄漏（同文件的 keepAlive 有清理，说明作者知道要清，只是漏了这些）。
+      for (const h of [...pendingTimeouts]) cancelLater(h);
+      pendingTimeouts.clear();
+      cancelers.clear();
     };
     const finish = (ok: boolean) => {
       if (done) return;
@@ -377,18 +504,20 @@ function speakChunks(
             window.speechSynthesis.pause();
             window.speechSynthesis.resume();
           }
-        } catch { /* 引擎异常交给 utterance onerror/兜底计时处理 */ }
+        } catch {
+          /* 引擎异常交给 utterance onerror/兜底计时处理 */
+        }
       }, 8000);
     };
 
     // 总兜底：按字数估算（慢速童声约 300ms/字），封顶 3 分钟
-    setTimeout(() => finish(started), Math.min(180000, Math.max(20000, text.length * 350)));
+    later(() => finish(started), Math.min(180000, Math.max(20000, text.length * 350)));
 
     const speakNext = () => {
       if (done) return;
       if (idx >= chunks.length) {
         // pauseMs 暂停：全部播完后延迟 resolve，用于顺序连读时的段落间隔
-        if (pauseMs > 0) setTimeout(() => finish(started), pauseMs);
+        if (pauseMs > 0) later(() => finish(started), pauseMs);
         else finish(started);
         return;
       }
@@ -399,23 +528,39 @@ function speakChunks(
       u.pitch = pitch;
       u.voice = v;
       let chunkStarted = false;
-      const startTimer = setTimeout(() => {
-        if (!chunkStarted) {
-          // 只有第一句启动失败才算「朗读失败」让上层降级；
-          // resize 后的句子失败按放弃处理（resolve started，见文件头注释）
-          finish(started && idx > 1);
-        }
-      }, idx === 1 ? 800 : 2000);
-      u.onstart = () => { chunkStarted = true; started = true; clearTimeout(startTimer); startKeepAlive(); };
+      const startTimer = later(
+        () => {
+          if (!chunkStarted) {
+            // 只有第一句启动失败才算「朗读失败」让上层降级；
+            // resize 后的句子失败按放弃处理（resolve started，见文件头注释）
+            finish(started && idx > 1);
+          }
+        },
+        idx === 1 ? 800 : 2000
+      );
+      u.onstart = () => {
+        chunkStarted = true;
+        started = true;
+        cancelLater(startTimer);
+        startKeepAlive();
+      };
       u.onend = () => {
-        clearTimeout(startTimer);
+        cancelLater(startTimer);
+        // ⚠️ done 守卫：引擎派发 onend 是异步的，可能发生在 finish() 之后
+        // （例如最后一句播完 → speakNext 里 finish → 引擎又补发一次 onend）。
+        // 此时若继续排下一句，就会注册一个逃过 cleanup 的孤儿定时器。
+        if (done) return;
         if (acceptEndWithoutStart) started = true; // onend 到达说明确实出声了
-        setTimeout(speakNext, 60);
+        // 走 later() 以便 finish 时统一清理（组件卸载/被打断时不该再排下一句）
+        later(speakNext, 60);
       };
       u.onerror = (e) => {
-        clearTimeout(startTimer);
+        cancelLater(startTimer);
         // 用户/代码主动 cancel 视为正常结束；started 后出错不降级重读
-        if (e.error === 'interrupted' || e.error === 'canceled') { finish(true); return; }
+        if (e.error === 'interrupted' || e.error === 'canceled') {
+          finish(true);
+          return;
+        }
         finish(started && idx > 1);
       };
       try {
@@ -431,12 +576,17 @@ function speakChunks(
         // cancel() 后等待队列清空再 speak，避免 onstart 不触发。
         let retries = 5;
         const trySpeak = () => {
-          if (retries <= 0 || (!window.speechSynthesis.speaking && !window.speechSynthesis.pending)) {
+          if (
+            retries <= 0 ||
+            (!window.speechSynthesis.speaking && !window.speechSynthesis.pending)
+          ) {
             speakNext();
             return;
           }
           retries--;
-          setTimeout(trySpeak, 10);
+          // 走 later()：朗读被打断（finish 已发生）时这条重试链必须停止，
+          // 否则它会在已结束后继续把 speakNext 排上队列
+          later(trySpeak, 10);
         };
         trySpeak();
       } catch {
@@ -453,7 +603,13 @@ function speakChunks(
  * 严格模式朗读（第 1 层）：onstart 触发才算成功。
  * iPad Safari 首句常不触发 onstart（静音）→ 800ms 内未触发即判定失败。
  */
-function speakEnd(text: string, lang: string, rate: number, pitch: number, pauseMs = 0): Promise<boolean> {
+function speakEnd(
+  text: string,
+  lang: string,
+  rate: number,
+  pitch: number,
+  pauseMs = 0
+): Promise<boolean> {
   return speakChunks(text, lang, rate, pitch, pauseMs, pickVoiceStrict);
 }
 
@@ -461,7 +617,13 @@ function speakEnd(text: string, lang: string, rate: number, pitch: number, pause
  * 宽松模式朗读（第 2 层兜底）：不排斥粤语/台式，
  * 只要 onstart 触发就视为成功，不再严格检查嗓音匹配。
  */
-function speakEndLoose(text: string, lang: string, rate: number, pitch: number, pauseMs = 0): Promise<boolean> {
+function speakEndLoose(
+  text: string,
+  lang: string,
+  rate: number,
+  pitch: number,
+  pauseMs = 0
+): Promise<boolean> {
   return speakChunks(text, lang, rate, pitch, pauseMs, pickVoiceLoose, true);
 }
 
