@@ -177,11 +177,39 @@ jobs:
           name: npm-audit-report
           path: audit-report.json
 
-  # E2E 测试（独立 job，可并行，失败不阻塞主流程）
+  # E2E 结果汇流：让 build.yml 的 `needs: precheck` 真正包含 e2e 的成败。
+  #
+  # 背景：build.yml 以 `uses:` 复用本 workflow，而**被复用 workflow 对外只暴露
+  # 整个 workflow 的结果**（等价于单个 job），build.yml 无法写 `needs: [precheck, e2e]`
+  # 引用内部 job。于是原先 `e2e` 即使全红，precheck 依然是绿的 → 照样推镜像到 GHCR。
+  #
+  # 这里加一个汇总 job：needs [check, e2e]，条件是 `if: always()`（否则上游失败时
+  # 它会被跳过，绿灯假象），再显式检查两个上游的结果并在上游有失败时 exit 1。
+  # 这样 precheck 变红 → build 不再触发。
+  e2e-gate:
+    if: always()
+    needs: [check, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 汇总门禁：check 与 e2e 都必须通过
+        run: |
+          echo "check = ${{ needs.check.result }}"
+          echo "e2e   = ${{ needs.e2e.result }}"
+          if [ "${{ needs.check.result }}" != "success" ] || [ "${{ needs.e2e.result }}" != "success" ]; then
+            echo "❌ 门禁未通过：check=${{ needs.check.result }} e2e=${{ needs.e2e.result }}"
+            echo "   单元测试/类型检查/ESLint 或 E2E 有失败，拒绝构建并推送镜像。"
+            exit 1
+          fi
+          echo "✅ check 与 e2e 均通过"
+
+  # E2E 测试（独立 job，可与 check 并行，但**失败必须阻塞镜像构建**）
+  #
+  # ⚠️ 原先这里带 `continue-on-error: true` 且只点名 3 个 spec，
+  # 导致 learning.spec.ts / parent.spec.ts（11 个用例）永不执行，
+  # 且 E2E 全红也照样推镜像到 GHCR —— 等于没有门禁。现已去掉并跑全部 spec。
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v7
 
@@ -273,8 +301,11 @@ jobs:
           # 最后确认
           curl -f http://localhost:3000 || (cat dev.log && exit 1)
 
-      - name: 运行 E2E 测试（核心认证 + 业务流程 + 学习模块）
-        run: pnpm e2e --project=chromium tests/e2e/auth.spec.ts tests/e2e/business-flows.spec.ts tests/e2e/study-modules.spec.ts --timeout=180000
+      - name: 运行 E2E 测试（跑全部 spec，不再点名子集）
+        # 不再只点名 3 个文件：learning/parent 两个 spec 此前从未在 CI 里跑过。
+        # --project=chromium 是因为 CI 只安装 chromium（playwright.config.ts 里另有
+        # firefox/webkit/Mobile 项目，声明了但 CI 不执行）。
+        run: pnpm e2e --project=chromium --timeout=180000
         env:
           E2E_BASE_URL: http://localhost:3000
 

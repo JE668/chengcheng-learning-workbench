@@ -33,6 +33,9 @@ jobs:
     secrets: inherit
 
   build:
+    # 注：e2e 门禁由 ci.yml 内部的 job 依赖链保证（见该文件），
+    # 这里不能写 needs: [precheck, e2e] —— e2e 是被复用 workflow 内部的 job，
+    # 对外只暴露 precheck 一个结果，引用不存在的 job 会让 workflow 直接报错。
     needs: precheck
     runs-on: ubuntu-latest
     steps:
