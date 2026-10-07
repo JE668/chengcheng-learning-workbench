@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { safeJson } from '@/lib/safe-json';
 import { getCurrentUser } from '@/lib/auth';
+import {
+  parseTaskPoints,
+  parseTaskTitle,
+  MIN_TASK_POINTS,
+  MAX_TASK_POINTS,
+} from '@/lib/tasks-validation';
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   // Next 15：路由 params 是 Promise，必须先 await
@@ -18,9 +24,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   });
   if (!own.rows.length) return NextResponse.json({ error: '无权限' }, { status: 403 });
   const { title, subject, description, points } = await safeJson(req, {});
+  // 与 POST 共用同一套校验（lib/tasks-validation.ts），杜绝两处分叉
+  const parsedPoints = parseTaskPoints(points);
+  if (parsedPoints === null) {
+    return NextResponse.json(
+      { error: `积分必须是 ${MIN_TASK_POINTS}-${MAX_TASK_POINTS} 的整数` },
+      { status: 400 }
+    );
+  }
+  const parsedTitle = parseTaskTitle(title);
+  if (parsedTitle === null) {
+    return NextResponse.json({ error: '请输入任务名称' }, { status: 400 });
+  }
   await db.execute({
     sql: 'UPDATE tasks SET title = ?, subject = ?, description = ?, points = ? WHERE id = ?',
-    args: [title, subject, description || '', Number(points) || 5, id],
+    args: [parsedTitle, subject, description || '', parsedPoints, id],
   });
   return NextResponse.json({ ok: true });
 }

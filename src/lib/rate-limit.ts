@@ -92,7 +92,10 @@ export function rateLimit(
 export function getClientIp(req: Request): string {
   const xff = req.headers.get('x-forwarded-for');
   if (xff) {
-    const parts = xff.split(',').map((s) => s.trim()).filter(Boolean);
+    const parts = xff
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
     if (parts.length > 0) return parts[parts.length - 1];
   }
   const realIp = req.headers.get('x-real-ip');
@@ -139,4 +142,16 @@ export function recordLoginFailure(username: string): void {
 /** 登录成功后清除该账号的失败计数 */
 export function clearLoginFailure(username: string): void {
   failStore.delete(username);
+}
+
+/**
+ * 仅供测试：清空所有限流计数。
+ *
+ * store / failStore 是模块级 Map，测试之间会互相累加
+ * （同一 user.id 跨用例累加导致后续用例莫名 429）。
+ * 生产代码不应调用 —— 通过命名与注释双重标注。
+ */
+export function __resetRateLimitsForTests(): void {
+  store.clear();
+  failStore.clear();
 }

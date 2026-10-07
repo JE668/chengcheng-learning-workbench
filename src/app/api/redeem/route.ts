@@ -15,7 +15,10 @@ export async function GET() {
       args: [childId ?? -1],
     });
   } else {
-    rows = await db.execute({ sql: 'SELECT * FROM redemptions WHERE child_id = ? ORDER BY created_at DESC', args: [user.id] });
+    rows = await db.execute({
+      sql: 'SELECT * FROM redemptions WHERE child_id = ? ORDER BY created_at DESC',
+      args: [user.id],
+    });
   }
   return NextResponse.json({ redemptions: rows.rows });
 }
@@ -23,7 +26,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: '未登录' }, { status: 401 });
-  if (user.role !== 'child' && user.role !== 'parent') return NextResponse.json({ error: '无权限' }, { status: 403 });
+  if (user.role !== 'child' && user.role !== 'parent')
+    return NextResponse.json({ error: '无权限' }, { status: 403 });
 
   let rewardName: unknown;
   let cost: unknown;
@@ -62,16 +66,37 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role !== 'parent') return NextResponse.json({ error: '无权限' }, { status: 403 });
+  if (!user || user.role !== 'parent')
+    return NextResponse.json({ error: '无权限' }, { status: 403 });
   const childId = await resolveChildId(user);
   if (!childId) return NextResponse.json({ error: '没有孩子账号' }, { status: 404 });
   const { id, status } = await safeJson(req, {});
+
+  // ⚠️ status 必须白名单校验。原先直接拼进 SQL，可写入任意字符串：
+  //   · 传 'approved' 能凭空批准申请；
+  //   · 传任意非法值（如 'xxx'）会让这笔兑换**从余额扣减中消失** ——
+  //     getChildPoints 只统计 status IN ('pending','approved')（lib/users.ts），
+  //     写入别的值等于凭空退还积分，可反复套现。
+  // 口径与姊妹路由 wishes / parent-cert-request 保持一致。
+  const REDEMPTION_STATUSES = ['pending', 'approved', 'rejected'] as const;
+  if (typeof status !== 'string' || !REDEMPTION_STATUSES.includes(status as never)) {
+    return NextResponse.json(
+      { error: `状态必须是 ${REDEMPTION_STATUSES.join(' / ')} 之一` },
+      { status: 400 }
+    );
+  }
+  const redemptionId = Number(id);
+  if (!Number.isInteger(redemptionId) || redemptionId <= 0) {
+    return NextResponse.json({ error: '无效的兑换记录 id' }, { status: 400 });
+  }
+
   const db = getDb();
   // 越权防护：只能审批自己孩子的兑换申请（按 child_id 收敛，而非任意 id）
   const res = await db.execute({
     sql: 'UPDATE redemptions SET status = ? WHERE id = ? AND child_id = ?',
-    args: [status, Number(id), childId],
+    args: [status, redemptionId, childId],
   });
-  if (Number(res.rowsAffected ?? 0) === 0) return NextResponse.json({ error: '无权限或记录不存在' }, { status: 403 });
+  if (Number(res.rowsAffected ?? 0) === 0)
+    return NextResponse.json({ error: '无权限或记录不存在' }, { status: 403 });
   return NextResponse.json({ ok: true });
 }
