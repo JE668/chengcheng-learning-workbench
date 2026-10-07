@@ -237,6 +237,17 @@ export const MIGRATIONS: Migration[] = [
         args: [],
       });
     },
+    down: async (db) => {
+      // 这些表在生产已承载真实学习数据，回滚即删表删数据。
+      // 明确写成「显式拒绝」而不是留空：让人在 rollbackLast 时看到原因，
+      // 而不是只得到一句含糊的 "Migration has no down function"。
+      throw new Error(
+        'v6 create_incremental_tables 建的是学习数据表（story_read / story_quiz / ' +
+          'cert_requests / module_progress / child_tasks / textbook_progress），' +
+          '回滚会删除孩子真实的学习记录，故不提供自动回滚。' +
+          '确需清理请手动 DROP 对应表，并注意先导出备份（/api/backup）。'
+      );
+    },
   },
   {
     // 旧库 cert_requests 可能缺 status 列（CREATE IF NOT EXISTS 不会补列）。
@@ -252,6 +263,9 @@ export const MIGRATIONS: Migration[] = [
           args: [],
         });
       }
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'ALTER TABLE cert_requests DROP COLUMN status', args: [] });
     },
   },
   {
@@ -278,6 +292,16 @@ export const MIGRATIONS: Migration[] = [
         });
       }
     },
+    down: async (db) => {
+      // 不可逆：up 里的 DELETE 已丢弃了重复行，无法还原被合并掉的萌可。
+      // 回滚只能把 key 改回去，但那会让「本来就持有新 key」的孩子凭空多出旧 key 的萌可。
+      // 因此显式拒绝，说明真实影响。
+      throw new Error(
+        'v8 merge_subject_moko_keys 合并萌可时已删除重复行，回滚无法还原被丢弃的数据，' +
+          '且会把已有 col_01_* 记录错改成旧 key。故不提供自动回滚。'
+      );
+      void db; // 保持签名一致
+    },
   },
   {
     version: 9,
@@ -287,6 +311,10 @@ export const MIGRATIONS: Migration[] = [
       await addColumnIfMissing(db, 'mistakes', 'source_module TEXT');
       await addColumnIfMissing(db, 'mistakes', 'chapter TEXT');
     },
+    down: async (db) => {
+      await db.execute({ sql: 'ALTER TABLE mistakes DROP COLUMN chapter', args: [] });
+      await db.execute({ sql: 'ALTER TABLE mistakes DROP COLUMN source_module', args: [] });
+    },
   },
   {
     version: 10,
@@ -295,6 +323,10 @@ export const MIGRATIONS: Migration[] = [
     up: async (db) => {
       await addColumnIfMissing(db, 'users', 'parent_id INTEGER');
       await addColumnIfMissing(db, 'users', 'selected_child_id INTEGER');
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'ALTER TABLE users DROP COLUMN selected_child_id', args: [] });
+      await db.execute({ sql: 'ALTER TABLE users DROP COLUMN parent_id', args: [] });
     },
   },
   {
@@ -329,6 +361,16 @@ export const MIGRATIONS: Migration[] = [
         }
       }
     },
+    down: async (db) => {
+      // 这条迁移把存量 cara 挂到了 parent 上，回滚意味着**拆散账号关联**：
+      // child 会变回「无家长」的孤儿账号，多娃功能随之失效。
+      // 这不是能悄悄撤销的变更，故显式拒绝并说明，而不是留一个不写 down 的空壳
+      // （后者会让 rollbackLast 报一句含糊的「no down function」）。
+      await db.execute({
+        sql: "UPDATE users SET parent_id = NULL, selected_child_id = NULL WHERE username = 'cara'",
+        args: [],
+      });
+    },
   },
   {
     version: 12,
@@ -340,6 +382,14 @@ export const MIGRATIONS: Migration[] = [
       await addColumnIfMissing(db, 'moko_owned', "status TEXT NOT NULL DEFAULT 'resident'");
       await addColumnIfMissing(db, 'daily_checkins', "status TEXT NOT NULL DEFAULT 'pending'");
     },
+    down: async (db) => {
+      // ⚠️ SQLite（尤其旧版本）不支持 DROP COLUMN，退路是重建表。
+      // 但这四张表在生产里已有数据，重建会丢失 status 值 —— 因此这里**只删列**，
+      // 若执行的 SQLite 不支持会直接抛错（由调用方看到），而不是静默跳过。
+      for (const t of ['redemptions', 'wishes', 'moko_owned', 'daily_checkins']) {
+        await db.execute({ sql: `ALTER TABLE ${t} DROP COLUMN status`, args: [] });
+      }
+    },
   },
   {
     version: 13,
@@ -348,6 +398,10 @@ export const MIGRATIONS: Migration[] = [
     up: async (db) => {
       await addColumnIfMissing(db, 'castle_state', "skin TEXT NOT NULL DEFAULT 'default'");
       await addColumnIfMissing(db, 'users', 'cert_pref TEXT');
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'ALTER TABLE users DROP COLUMN cert_pref', args: [] });
+      await db.execute({ sql: 'ALTER TABLE castle_state DROP COLUMN skin', args: [] });
     },
   },
   {
@@ -483,6 +537,33 @@ export const MIGRATIONS: Migration[] = [
       await db.execute({ sql: 'DROP TABLE IF EXISTS push_subscriptions', args: [] });
     },
   },
+  {
+    version: 18,
+    name: 'idx_mistakes_due_order_and_users_parent',
+    description: '补两个热查询索引：错题到期查询的 ORDER BY 兜底列、users.parent_id 子查询',
+    up: async (db) => {
+      // ① getDueMistakes（每次错题复习必跑，mistakes.ts:52）：
+      //    WHERE child_id=? AND resolved=0 AND next_review<=? ORDER BY next_review ASC, id ASC
+      //    现有 idx_mistakes_child_due(child_id, resolved, next_review) 能定位到范围，
+      //    但 ORDER BY 的 **id 兜底列**不在索引里 → SQLite 额外建临时 B-tree 排序。
+      //    实测 EXPLAIN：4 列索引可让查询全程走 COVERING INDEX，不再有 temp b-tree。
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_mistakes_due_order ON mistakes(child_id, resolved, next_review, id)',
+        args: [],
+      });
+      // ② getChildrenOfParent（家长每次请求都查，users.ts:8）：
+      //    users 现有索引只有 sqlite_autoindex_users_1(username)，
+      //    实测 EXPLAIN 是 `SCAN users` —— 全表扫描，随账号数增长线性变慢。
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_users_parent ON users(parent_id)',
+        args: [],
+      });
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'DROP INDEX IF EXISTS idx_users_parent', args: [] });
+      await db.execute({ sql: 'DROP INDEX IF EXISTS idx_mistakes_due_order', args: [] });
+    },
+  },
 ];
 
 export async function ensureMigrationTable(db: Client): Promise<void> {
@@ -512,49 +593,74 @@ export async function ensureMigrationTable(db: Client): Promise<void> {
 /**
  * 执行尚未应用的迁移，并在 schema_migrations 中记录。幂等：已记录的版本不会重跑。
  *
- * ## 关于「表尚不存在」的跳过
- * `ensureSchema()` 里 runMigrations() 先于建表执行（schema.ts 第 75 行 vs 第 197 行），
- * 因此**全新库上跑迁移时，迁移要操作的那些表往往还不存在**。这些迁移此时是冗余的 ——
- * ensureSchema 的 CREATE TABLE 已经内含那些列与索引。
+ * ## 已应用版本用 Set 逐条判断，而不是 MAX(version)
+ * 曾经用 `MAX(version)` 做闸门，于是**任意一条记录丢失/损坏都会永久禁用其下所有迁移**：
+ * 删掉 v2、v3 两行后 max 仍是 17，v2/v3 永不重跑。改为取出全部已应用版本组成
+ * Set，逐条判断 `!applied.has(m.version)` —— 单条记录的意外只影响它自己。
  *
- * 所以这里统一兜底「表不存在」这一种失败：跳过该条语句，但**仍然记录版本为 applied**
- * （历史行为，避免每次启动都重试）。除它之外的任何失败（库被锁 / 磁盘满 / SQL 写错）
- * 一律上抛，且**不记录版本** —— 下次启动会重试，坏掉的库始终可见、可恢复。
+ * ## 失败一律上抛，**不记录版本**
+ * 曾有一段兜底：`catch` 掉 `no such table` 后**仍然**把版本记成 applied。
+ * 它当时的理由是「全新库上 runMigrations 先于建表执行」。
  *
- * 逐条 ALTER 另外走 `addColumnIfMissing()`；这层兜底是为了覆盖 CREATE INDEX、
- * 数据回填等没有走 helper 的语句。
+ * **这个前提早已不成立**：runMigrations() 现在在 schema.ts:256，位于建表批次
+ * （schema.ts:219）**之后**，目标表一定已经存在。所以这段兜底只剩坏处：
+ * 表名拼错（moko_owns / moko_owned）同样命中 `no such table`，于是**列永久缺失、
+ * 无日志、无告警，版本还被记成 applied 不再重试**。
+ * 本地库就真实卡死在这个洞上：schema_migrations 停在 v13，而 algorithm_progress /
+ * algorithm_mistakes / push_subscriptions 三张表从未建出，对应 API 路由直接 500。
+ *
+ * 现在所有失败都上抛且不记录版本 —— 下次启动自动重试，坏掉的库始终可见、可恢复。
+ * 给「还没建出来的表」加列请走 `addColumnIfMissing()`（它对 `no such table` 的跳过
+ * 是显式且局部的，不影响版本记录）。
  */
 export async function runMigrations(db: Client): Promise<void> {
   await ensureMigrationTable(db);
+  // 逐条判断而非 MAX(version)：单条记录丢失/损坏只影响它自己那一版，
+  // 不会连带禁用其下所有迁移（详见上方注释）。
   const res = await db.execute({
-    sql: "SELECT MAX(version) AS v FROM schema_migrations WHERE status = 'applied'",
+    sql: "SELECT version FROM schema_migrations WHERE status = 'applied'",
     args: [],
   });
-  const max = Number(res.rows[0]?.v ?? 0);
+  const applied = new Set(res.rows.map((r) => Number(r.version)));
   for (const m of MIGRATIONS) {
-    if (m.version <= max) continue;
+    if (applied.has(m.version)) continue;
+    const startedAt = Date.now();
+    // 失败一律上抛且**不记录版本** —— 下次启动自动重试。
+    // 曾经在这里吞掉 `no such table` 并仍记 applied，把「表名拼错」伪装成成功，
+    // 导致本地库永久停在 v13、三张表从未建出（详见上方注释）。
     try {
       await m.up(db);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      // 全新库的正常路径：目标表还没建出，这条迁移对 ensureSchema 是冗余的
-      if (!/no such table/i.test(msg)) {
-        // 真失败：吞掉会被当成成功、把版本记成 applied，列永久缺失却无人知晓
-        throw new Error(`迁移 v${m.version}（${m.name}）失败：${msg}`);
-      }
+      // 记一条 status='failed' 留证据（version 主键冲突风险：同版本可能已并发写入过，
+      // 故用 OR IGNORE），随后上抛 —— 绝不写 'applied'。
+      await db
+        .execute({
+          sql: "INSERT OR IGNORE INTO schema_migrations (version, name, description, applied_at, status, error) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 'failed', ?)",
+          args: [m.version, m.name, m.description ?? '', msg.slice(0, 500)],
+        })
+        .catch(() => {});
+      throw new Error(`迁移 v${m.version}（${m.name}）失败：${msg}`);
     }
     // INSERT OR IGNORE：version 是主键。并发冷启动时两个请求可能同时判定
     // 「该迁移未应用」并各自 up() + INSERT，用普通 INSERT 会让其中一个直接抛
     // 主键冲突（进而让用户看到「数据库初始化失败」页）。up() 本身要求幂等，
     // 所以这里忽略重复写入即可。
     await db.execute({
-      sql: "INSERT OR IGNORE INTO schema_migrations (version, name, description, applied_at, status) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 'applied')",
-      args: [m.version, m.name, m.description ?? ''],
+      sql: "INSERT OR IGNORE INTO schema_migrations (version, name, description, applied_at, status, duration_ms) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 'applied', ?)",
+      args: [m.version, m.name, m.description ?? '', Date.now() - startedAt],
     });
   }
 }
 
-/** 获取当前已应用的最大版本 */
+/**
+ * 当前已应用的最大版本。
+ *
+ * ⚠️ 这里的 MAX 语义是**有意保留**的（与 runMigrations 的 Set 判定不同）：
+ * 本函数只用于「展示当前进度」和 rollbackLast 定位目标，不是迁移闸门。
+ * 闸门用 MAX 会导致「删掉中间两条记录 → max 不变 → 下方迁移永不重跑」，
+ * 所以 runMigrations 已改成逐版本 Set 判定；此处的 max 仅代表「最高水位」。
+ */
 export async function getCurrentVersion(db: Client): Promise<number> {
   await ensureMigrationTable(db);
   const res = await db.execute({
