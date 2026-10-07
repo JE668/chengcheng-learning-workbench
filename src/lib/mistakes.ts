@@ -1,4 +1,5 @@
 import { getDb } from './db';
+import { calculateSM2Next } from './sm2';
 
 /** 错题本一条记录（对应 mistakes 表） */
 export interface MistakeRow {
@@ -56,23 +57,27 @@ export async function getDueMistakes(childId: number, limit = 2): Promise<Mistak
 
 /**
  * 使用 SM-2 算法进行间隔重复推进。
- * 
+ *
  * 质量评分：
  * - 正确 (correct=true) -> 质量 4 (正确但稍有犹豫)
  * - 错误 (correct=false) -> 质量 1 (错误但看到答案后回忆起来)
- * 
+ *
  * SM-2 规则：
  * - 质量 < 3: 重置重复次数为 0，间隔设为 1 天，easiness factor -0.2
  * - 质量 >= 3: 重复次数 +1，间隔按 SM-2 计算，easiness factor 根据质量调整
  * - 连续 4 次成功后标记为成熟 (isMature)
  * - easiness factor 最小 1.3，初始 2.5
  * - 间隔上限 365 天
- * 
+ *
  * 幂等保护：同一天重复提交只按第一次的结果算
- * 
+ *
  * @returns true 表示成功处理，false 表示今日已复习过跳过
  */
-export async function reviewMistake(childId: number, id: number, correct: boolean): Promise<boolean> {
+export async function reviewMistake(
+  childId: number,
+  id: number,
+  correct: boolean
+): Promise<boolean> {
   const db = getDb();
   const res = await db.execute({
     sql: 'SELECT reps, interval_days, easiness_factor, next_review FROM mistakes WHERE id = ? AND child_id = ?',
@@ -80,7 +85,7 @@ export async function reviewMistake(childId: number, id: number, correct: boolea
   });
   if (!res.rows.length) return false;
   const row = res.rows[0];
-  
+
   // 幂等保护：同一天重复提交只按第一次的结果算
   if (String(row.next_review ?? '') > localDate()) return false;
 
@@ -99,40 +104,40 @@ export async function reviewMistake(childId: number, id: number, correct: boolea
       args: [newEasiness, localDate(1), id, childId],
     });
   } else {
-    // 成功：SM-2 计算
-    let actualInterval: number;
-    
-    if (Number(row.reps ?? 0) === 0) {
-      actualInterval = 1;
-    } else if (Number(row.reps ?? 0) === 1) {
-      actualInterval = 6;
-    } else {
-      actualInterval = Math.round(Number(row.interval_days ?? 1) * Number(row.easiness_factor ?? 2.5));
-    }
-    
-    // 间隔上限 365 天
-    actualInterval = Math.min(actualInterval, 365);
-    
-    // 质量调整 easiness factor (quality=4 -> +0.02)
-    const newEasiness = Math.max(1.3, Number(row.easiness_factor ?? 2.5) + 0.02);
-    
-    const newReps = Number(row.reps ?? 0) + 1;
-    const isMature = newReps >= 4;
-    
-    const nextReviewDays = Number(row.reps ?? 0) === 0 ? 1 :
-                          Number(row.reps ?? 0) === 1 ? 6 :
-                          Math.round(Number(row.interval_days ?? 1) * Number(row.easiness_factor ?? 2.5));
-    
-    const nextReviewDate = localDate(Math.min(365, nextReviewDays));
-    
+    // 成功：交给 lib/sm2.ts 的标准实现计算，**不再在此重写一遍递推**。
+    //
+    // ⚠️ 原实现在这里同时算了两份且互不一致：
+    //   ① actualInterval（reps=0→1、reps=1→6，否则 interval*EF）—— 算对了但
+    //      **算完从未使用**，是死变量；
+    //   ② 实际写库用的是裸公式 `round(interval_days * EF)`，忽略了 reps 特殊规则，
+    //      于是第 1 次复习存进 interval_days=3（标准应为 1）、第 2 次存 8（应为 6）。
+    // 另外 EF 增量被硬编码为 +0.02，而标准公式 EF' = EF + (0.1-(5-q)(0.08+(5-q)*0.02))
+    // 在 q=4 时恰为 +0.000 —— 两条路径排期会逐渐分叉。
+    //
+    // 现在统一走 calculateSM2Next（quality=4，与既有注释「正确=4」一致）。
+    const next = calculateSM2Next(
+      {
+        easinessFactor: Number(row.easiness_factor ?? 2.5),
+        repetitions: Number(row.reps ?? 0),
+        interval: Number(row.interval_days ?? 1),
+        nextReview: String(row.next_review ?? ''),
+        isMature: Number(row.reps ?? 0) >= 3,
+      },
+      4,
+      localDate()
+    );
+
     await db.execute({
       sql: 'UPDATE mistakes SET reps = ?, interval_days = ?, easiness_factor = ?, next_review = ?, resolved = ? WHERE id = ? AND child_id = ?',
-      args: [Number(row.reps ?? 0) + 1, 
-             Math.min(365, Math.round(Number(row.interval_days ?? 1) * Number(row.easiness_factor ?? 2.5))), 
-             Math.max(1.3, Number(row.easiness_factor ?? 2.5) + 0.02), 
-             localDate(Math.min(365, nextReviewDays)), 
-             correct ? 1 : 0, 
-             id, childId],
+      args: [
+        next.repetitions,
+        next.interval,
+        next.easinessFactor,
+        next.nextReview,
+        correct ? 1 : 0,
+        id,
+        childId,
+      ],
     });
   }
   return true;

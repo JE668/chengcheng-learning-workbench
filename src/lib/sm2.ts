@@ -1,14 +1,14 @@
 /**
  * SM-2 Algorithm Implementation for Spaced Repetition
- * 
+ *
  * SM-2 is the classic spaced repetition algorithm used by Anki, SuperMemo, etc.
- * 
+ *
  * Key concepts:
  * - easiness factor (EF): starts at 2.5, adjusted based on quality of recall
  * - interval: days until next review
  * - repetitions: number of successful recalls in a row
  * - quality: 0-5 rating of recall quality (0=complete blackout, 5=perfect recall)
- * 
+ *
  * Quality grades:
  * 0 - Complete blackout (no recall)
  * 1 - Incorrect response, but remembered after seeing answer
@@ -45,17 +45,13 @@ export const INITIAL_SM2_STATE: SM2State = {
 
 /**
  * Calculate next review state using SM-2 algorithm
- * 
+ *
  * @param state Current SM-2 state
  * @param quality Quality of recall (0-5)
  * @param today Today's date in YYYY-MM-DD format
  * @returns Updated SM-2 state
  */
-export function calculateSM2Next(
-  state: SM2State,
-  quality: SM2Quality,
-  today: string
-): SM2State {
+export function calculateSM2Next(state: SM2State, quality: SM2Quality, today: string): SM2State {
   let { easinessFactor, repetitions, interval } = state;
   let nextReview: string;
 
@@ -65,7 +61,9 @@ export function calculateSM2Next(
       easinessFactor: Math.max(1.3, easinessFactor - 0.2),
       repetitions: 0,
       interval: 1,
-      nextReview: formatDate(addDays(new Date(), 1)),
+      // ⚠️ 用传入的 today 作基准（原先写死 new Date()，使 today 参数形同虚设）：
+      // 调用方传历史/未来基准日时无法生效，单测也无法注入固定日期做时区回归。
+      nextReview: addDaysToDate(today, 1),
       isMature: false,
     };
   }
@@ -90,18 +88,22 @@ export function calculateSM2Next(
   // Adjust easiness factor based on quality
   // EF' = EF + (0.1 - (5-quality)*(0.08 + (5-quality)*0.02))
   const q = quality;
-  const newEasinessFactor = Math.max(1.3, easinessFactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)));
+  const newEasinessFactor = Math.max(
+    1.3,
+    easinessFactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
+  );
 
   // Next review date。
-  // ⚠️ 用 formatDate()（本地日）而不是 toISOString()（UTC 日）：东八区早上 8 点前
-  // 复习时 UTC 还停在前一天，会把复习排早一天。
-  const nextReviewDate = addDays(new Date(), cappedInterval);
+  // ⚠️ addDaysToDate 内部按本地日折算（不是 toISOString 的 UTC 日）：
+  // 东八区早上 8 点前复习时 UTC 还停在前一天，用 UTC 会把复习排早一天。
+  // 基准取传入的 today，保证与调用方的业务日期一致（见上方 quality<3 分支）。
+  const nextReviewDate = addDaysToDate(today, cappedInterval);
 
   return {
     easinessFactor: newEasinessFactor,
     repetitions: newRepetitions,
     interval: Math.round(state.interval === 0 ? 1 : cappedInterval), // First interval is 1 day
-    nextReview: formatDate(nextReviewDate),
+    nextReview: nextReviewDate,
     isMature: newRepetitions >= 4,
   };
 }
@@ -155,9 +157,9 @@ export function addDaysToDate(dateStr: string, days: number): string {
 
 /** 遗忘曲线数据点 */
 export interface ForgettingCurvePoint {
-  day: number;           // 第 N 天
-  retention: number;     // 记忆保持率 0-1
-  isReviewDay: boolean;  // 是否为复习日
+  day: number; // 第 N 天
+  retention: number; // 记忆保持率 0-1
+  isReviewDay: boolean; // 是否为复习日
 }
 
 /** 复习进度统计 */
@@ -184,7 +186,7 @@ export interface CardReviewHistory {
 
 /** 单次复习记录 */
 export interface ReviewRecord {
-  date: string;        // YYYY-MM-DD
+  date: string; // YYYY-MM-DD
   quality: SM2Quality;
   interval: number;
   easinessFactor: number;
@@ -193,10 +195,10 @@ export interface ReviewRecord {
 
 /** 智能复习建议 */
 export interface SmartReviewSuggestion {
-  recommendedTime: string;      // 推荐复习时间 HH:MM
-  reason: string;               // 推荐理由
+  recommendedTime: string; // 推荐复习时间 HH:MM
+  reason: string; // 推荐理由
   priority: 'high' | 'medium' | 'low';
-  estimatedDuration: number;    // 预计耗时(分钟)
+  estimatedDuration: number; // 预计耗时(分钟)
 }
 
 /**
@@ -211,28 +213,28 @@ export function calculateForgettingCurve(
   const points: ForgettingCurvePoint[] = [];
   const todayDate = new Date(today());
   const nextReviewDate = new Date(state.nextReview + 'T00:00:00');
-  
+
   // 记忆强度 S 与 easiness factor 和 interval 相关
   const S = Math.max(state.easinessFactor * state.interval, 1);
-  
+
   for (let day = 0; day <= days; day++) {
     const currentDate = new Date(todayDate);
     currentDate.setDate(currentDate.getDate() + day);
-    
+
     // 计算记忆保持率
     const retention = Math.exp(-day / S);
-    
+
     // 检查是否为复习日
-    const isReviewDay = currentDate >= nextReviewDate && 
-      formatDate(currentDate) === state.nextReview;
-    
+    const isReviewDay =
+      currentDate >= nextReviewDate && formatDate(currentDate) === state.nextReview;
+
     points.push({
       day,
       retention: Math.max(0, Math.min(1, retention)),
       isReviewDay,
     });
   }
-  
+
   return points;
 }
 
@@ -247,7 +249,7 @@ export function calculateReviewProgress(
   const todayDate = new Date(todayStr + 'T00:00:00');
   const weekLater = new Date(todayDate);
   weekLater.setDate(weekLater.getDate() + 7);
-  
+
   let totalCards = cards.length;
   let dueToday = 0;
   let dueThisWeek = 0;
@@ -257,16 +259,16 @@ export function calculateReviewProgress(
   let totalInterval = 0;
   let streakDays = 0;
   let longestStreak = 0;
-  
+
   for (const card of cards) {
     const { state } = card;
-    
+
     if (state.isMature) matureCards++;
     else learningCards++;
-    
+
     totalEasiness += state.easinessFactor;
     totalInterval += state.interval;
-    
+
     const nextReviewDate = new Date(state.nextReview + 'T00:00:00');
     if (nextReviewDate <= todayDate) {
       dueToday++;
@@ -275,7 +277,7 @@ export function calculateReviewProgress(
       dueThisWeek++;
     }
   }
-  
+
   // 计算连续复习天数
   const allReviewDates = new Set<string>();
   for (const [, history] of reviewHistory) {
@@ -283,12 +285,12 @@ export function calculateReviewProgress(
       allReviewDates.add(record.date);
     }
   }
-  
+
   // 从今天往前计算连续天数
   let currentStreak = 0;
   let maxStreak = 0;
   let checkDate = new Date(todayDate);
-  
+
   for (let i = 0; i < 365; i++) {
     const dateStr = formatDate(checkDate);
     if (allReviewDates.has(dateStr)) {
@@ -300,10 +302,10 @@ export function calculateReviewProgress(
     }
     checkDate.setDate(checkDate.getDate() - 1);
   }
-  
+
   streakDays = currentStreak;
   longestStreak = maxStreak;
-  
+
   return {
     totalCards,
     dueToday,
@@ -323,7 +325,7 @@ export function calculateReviewProgress(
 export function getSmartReviewSuggestion(
   progress: ReviewProgress,
   userPreferences: {
-    preferredTime?: string;    // HH:MM
+    preferredTime?: string; // HH:MM
     maxSessionMinutes?: number;
     dailyGoal?: number;
   } = {}
@@ -332,7 +334,7 @@ export function getSmartReviewSuggestion(
   const preferredTime = userPreferences.preferredTime || '19:00';
   const maxMinutes = userPreferences.maxSessionMinutes || 20;
   const dailyGoal = userPreferences.dailyGoal || 10;
-  
+
   // 高优先级：今天到期
   if (progress.dueToday > 0) {
     const duration = Math.min(progress.dueToday * 2, maxMinutes);
@@ -343,7 +345,7 @@ export function getSmartReviewSuggestion(
       estimatedDuration: duration,
     });
   }
-  
+
   // 中优先级：本周到期
   if (progress.dueThisWeek > progress.dueToday) {
     const remaining = progress.dueThisWeek - progress.dueToday;
@@ -355,7 +357,7 @@ export function getSmartReviewSuggestion(
       estimatedDuration: duration,
     });
   }
-  
+
   // 低优先级：新卡片学习
   if (progress.learningCards > 0 && progress.dueToday < dailyGoal) {
     const newCards = Math.min(progress.learningCards, dailyGoal - progress.dueToday);
@@ -367,7 +369,7 @@ export function getSmartReviewSuggestion(
       estimatedDuration: duration,
     });
   }
-  
+
   // 连续打卡激励
   if (progress.streakDays > 0) {
     suggestions.push({
@@ -377,7 +379,7 @@ export function getSmartReviewSuggestion(
       estimatedDuration: 0,
     });
   }
-  
+
   return suggestions;
 }
 
@@ -385,18 +387,19 @@ export function getSmartReviewSuggestion(
  * 计算最佳复习时间窗口
  * 基于用户历史复习时间分布
  */
-export function calculateOptimalReviewWindow(
-  reviewHistory: Map<string, ReviewRecord[]>
-): { startHour: number; endHour: number } {
+export function calculateOptimalReviewWindow(reviewHistory: Map<string, ReviewRecord[]>): {
+  startHour: number;
+  endHour: number;
+} {
   const hourCounts = new Array(24).fill(0);
-  
+
   for (const [, history] of reviewHistory) {
     for (const record of history) {
       // 从日期字符串无法直接获取小时，这里简化处理
       // 实际应用中需要存储完整的时间戳
     }
   }
-  
+
   // 默认返回晚上 7-9 点
   return { startHour: 19, endHour: 21 };
 }
@@ -414,10 +417,10 @@ export function getNextReviewInfo(state: SM2State): {
   const nextReviewDate = new Date(state.nextReview + 'T00:00:00');
   const diffTime = nextReviewDate.getTime() - todayDate.getTime();
   const daysUntilReview = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
+
   let urgency: 'overdue' | 'due-today' | 'due-soon' | 'later';
   let label: string;
-  
+
   if (daysUntilReview < 0) {
     urgency = 'overdue';
     label = `逾期 ${Math.abs(daysUntilReview)} 天`;
@@ -431,7 +434,7 @@ export function getNextReviewInfo(state: SM2State): {
     urgency = 'later';
     label = `${daysUntilReview} 天后复习`;
   }
-  
+
   return {
     daysUntilReview,
     isOverdue: daysUntilReview < 0,
@@ -443,7 +446,9 @@ export function getNextReviewInfo(state: SM2State): {
 /**
  * 批量计算多张卡片的下次复习信息
  */
-export function getBatchReviewInfo(cards: { id: string; state: SM2State }[]): Map<string, ReturnType<typeof getNextReviewInfo>> {
+export function getBatchReviewInfo(
+  cards: { id: string; state: SM2State }[]
+): Map<string, ReturnType<typeof getNextReviewInfo>> {
   const result = new Map();
   for (const card of cards) {
     result.set(card.id, getNextReviewInfo(card.state));
@@ -460,14 +465,14 @@ export function predictReviewLoad(
 ): Map<string, number> {
   const loadMap = new Map<string, number>();
   const todayDate = new Date(today() + 'T00:00:00');
-  
+
   // 初始化未来 N 天
   for (let i = 0; i < days; i++) {
     const date = new Date(todayDate);
     date.setDate(date.getDate() + i);
     loadMap.set(formatDate(date), 0);
   }
-  
+
   // 统计每天到期的卡片
   for (const card of cards) {
     const nextReview = card.state.nextReview;
@@ -475,6 +480,6 @@ export function predictReviewLoad(
       loadMap.set(nextReview, (loadMap.get(nextReview) || 0) + 1);
     }
   }
-  
+
   return loadMap;
 }
