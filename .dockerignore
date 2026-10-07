@@ -11,8 +11,15 @@ npm-debug.log
 .DS_Store
 README.md
 *.tsbuildinfo
+# 本地数据库：主库 + WAL/SHM 边车文件必须一并排除。
+# 漏掉 -wal/-shm 会让真实业务数据（账号、session、积分、错题）随 COPY . . 进 builder 层，
+# 即使最终镜像不含它们，builder 层仍是历史可取的。
+# 对齐 .gitignore 的四项，勿再遗漏。
 local.db
+local.db-wal
+local.db-shm
 local.db-journal
+backups
 .env*
 .gitignore
 .vitest
