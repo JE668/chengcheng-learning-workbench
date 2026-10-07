@@ -1,25 +1,24 @@
 import Link from 'next/link';
 import MokoCard from '@/components/MokoCard';
+import GameBestBadge from '@/components/GameBestBadge';
 import { games, mokoChars } from '@/lib/moko';
-import { getGameBest } from '@/lib/game-difficulty';
 
 export default function GamesPage() {
-  // 预计算每个游戏的个人最佳成绩（在服务端渲染时一次性计算）
-  const gameBests = new Map<string, number>();
-  if (typeof window === 'undefined') {
-    // SSR 阶段：game-difficulty 用内存存储，首次为 0
-    for (const g of games) gameBests.set(g.id, 0);
-  } else {
-    for (const g of games) gameBests.set(g.id, getGameBest(g.id));
-  }
-  // 更稳健的方式：在客户端用 useEffect 获取，但 SSR 先给 0
-  // 实际最佳成绩会在客户端 hydration 后通过 MokoCard 显示
-
+  // 本页是服务端组件，而最佳成绩存在 localStorage（客户端专属，见 lib/game-difficulty.ts）。
+  // 原实现在这里调用 getGameBest()，该函数开头 `if (typeof window === 'undefined') return 0`
+  // 会让 SSR 恒得 0 → badge 恒为 undefined → **角标永远不显示**。
+  // （原页面里的 gameBests Map 从头到尾没被读取，是一段死代码。）
+  //
+  // 正确做法：把读取放进客户端组件 GameBestBadge，由它在水合完成后渲染，
+  // 这样 SSR 与客户端首帧一致（无 hydration mismatch），随后补上角标。
   return (
     <div className="max-w-4xl mx-auto fade-up">
       <h1 className="page-title mb-2">萌可游戏乐园 🎮</h1>
       <p className="text-gray-600 mb-4">完成学习后来玩游戏吧！游戏也有积分奖励哦~</p>
-      <Link href="/games/adventure" className="block mb-6 rounded-2xl p-4 bg-gradient-to-r from-moko-purple to-moko-violet text-white shadow-lg hover:scale-[1.02] transition">
+      <Link
+        href="/games/adventure"
+        className="block mb-6 rounded-2xl p-4 bg-gradient-to-r from-moko-purple to-moko-violet text-white shadow-lg hover:scale-[1.02] transition"
+      >
         <div className="flex items-center justify-between">
           <div>
             <div className="text-lg font-black">🗺️ 萌可冒险地图</div>
@@ -28,7 +27,10 @@ export default function GamesPage() {
           <div className="text-3xl">➡️</div>
         </div>
       </Link>
-      <Link href="/story" className="block mb-6 rounded-2xl p-4 bg-gradient-to-r from-moko-gold to-moko-yellow text-white shadow-lg hover:scale-[1.02] transition">
+      <Link
+        href="/story"
+        className="block mb-6 rounded-2xl p-4 bg-gradient-to-r from-moko-gold to-moko-yellow text-white shadow-lg hover:scale-[1.02] transition"
+      >
         <div className="flex items-center justify-between">
           <div>
             <div className="text-lg font-black">📜 萌可剧情 · 捕捉萌可</div>
@@ -46,7 +48,7 @@ export default function GamesPage() {
             desc={`${g.desc} · ${g.difficulty}`}
             img={mokoChars[g.mokoKey]?.img || '/moko/lemei.jpg'}
             color="bg-gradient-to-br from-moko-purple to-moko-violet"
-            badge={getGameBest(g.id) > 0 ? `🏆 ${getGameBest(g.id)}` : undefined}
+            badge={<GameBestBadge gameId={g.id} />}
           />
         ))}
       </div>
