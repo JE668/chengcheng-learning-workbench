@@ -65,7 +65,14 @@ test.describe('学习模块完整流程', () => {
       const buttons = page.locator('.grid.grid-cols-2 button:not(:disabled)');
       await expect(buttons.first()).toBeVisible({ timeout: 10000 });
       await buttons.first().click();
-      await page.waitForTimeout(500);
+      // 点击后断言**可观测的状态变化**：StudyQuiz 在选中任一选项后会给
+      // 正确项加 bg-green-100、选错的加 bg-red-100，并把全部选项 disabled。
+      // 原实现只有 waitForTimeout(500)，零断言 —— 无论点对点错都算通过，
+      // 等于没测。这里改为断言「确实产生了选中反馈」。
+      await buttons.first().click();
+      await expect(page.locator('button.bg-green-100, button.bg-red-100').first()).toBeVisible({
+        timeout: 10000,
+      });
     });
 
     test('钟表半时 - 验证钟表显示正确', async ({ page }) => {
@@ -89,8 +96,14 @@ test.describe('学习模块完整流程', () => {
       await expect(optionButtons.first()).toBeVisible({ timeout: 10000 });
 
       // 验证基本交互：点击第一个选项
+      // 点击后断言**可观测的状态变化**：StudyQuiz 在选中任一选项后会给
+      // 正确项加 bg-green-100、选错的加 bg-red-100。
+      // 原实现只有 waitForTimeout(500)，零断言 —— 无论点对点错都算通过，
+      // 等于没测。这里改为断言「确实产生了选中反馈」。
       await optionButtons.first().click();
-      await page.waitForTimeout(500);
+      await expect(page.locator('button.bg-green-100, button.bg-red-100').first()).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 
@@ -107,7 +120,14 @@ test.describe('学习模块完整流程', () => {
       const buttons = page.locator('.grid button:not(:disabled)');
       await expect(buttons.first()).toBeVisible({ timeout: 10000 });
       await buttons.first().click();
-      await page.waitForTimeout(500);
+      // 点击后断言**可观测的状态变化**：StudyQuiz 在选中任一选项后会给
+      // 正确项加 bg-green-100、选错的加 bg-red-100，并把全部选项 disabled。
+      // 原实现只有 waitForTimeout(500)，零断言 —— 无论点对点错都算通过，
+      // 等于没测。这里改为断言「确实产生了选中反馈」。
+      await buttons.first().click();
+      await expect(page.locator('button.bg-green-100, button.bg-red-100').first()).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 
@@ -123,7 +143,14 @@ test.describe('学习模块完整流程', () => {
       const buttons = page.locator('.grid button:not(:disabled)');
       await expect(buttons.first()).toBeVisible({ timeout: 10000 });
       await buttons.first().click();
-      await page.waitForTimeout(500);
+      // 点击后断言**可观测的状态变化**：StudyQuiz 在选中任一选项后会给
+      // 正确项加 bg-green-100、选错的加 bg-red-100，并把全部选项 disabled。
+      // 原实现只有 waitForTimeout(500)，零断言 —— 无论点对点错都算通过，
+      // 等于没测。这里改为断言「确实产生了选中反馈」。
+      await buttons.first().click();
+      await expect(page.locator('button.bg-green-100, button.bg-red-100').first()).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 
@@ -198,7 +225,7 @@ test.describe('Sentry 错误上报验证', () => {
   test('JavaScript 错误被 Sentry 捕获（模拟）', async ({ page }) => {
     // 监控控制台错误
     const errors: string[] = [];
-    page.on('console', msg => {
+    page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text());
     });
 

@@ -1,4 +1,28 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+/**
+ * 读取孩子当前积分总额（用于断言「完成任务后积分确实增加」）。
+ *
+ * 取自孩子首页「我的积分」统计卡（src/app/(child)/home/page.tsx）。
+ * ⚠️ 读取过程会跳到 /home 再读，因此**不要**在「停留在 /tasks」的断言中间调用它 ——
+ * 需要在跳转前后分别取值（本用例的用法正是如此：跳转读 before → 回 /tasks 操作 → 再读 after）。
+ * 读不到时返回 NaN，让 expect.poll 断言**显式失败**，而不是悄悄通过。
+ */
+async function readChildPoints(page: Page): Promise<number> {
+  const here = page.url();
+  await page.goto('/home');
+  // 等首页积分卡渲染出来（点进首页本身会带出当前积分）
+  const m = await page
+    .locator('text=我的积分')
+    .first()
+    .locator('xpath=..')
+    .innerText()
+    .then((t) => t.match(/(\d+)/))
+    .catch(() => null);
+  // 回到原页面，避免打断调用方的操作流
+  await page.goto(here);
+  return m ? Number(m[1]) : NaN;
+}
 
 test.describe('核心业务流程', () => {
   test.beforeEach(async ({ page }) => {
@@ -59,13 +83,30 @@ test.describe('核心业务流程', () => {
       await page.goto('/castle');
       await expect(page.locator('text=萌可城堡').first()).toBeVisible();
 
-      // 查找收获按钮
-      const harvestBtn = page.locator('button:has-text("收获")').or(page.locator('button:has-text("收割")')).or(page.locator('button:has-text("收取")'));
-      if (await harvestBtn.count() > 0) {
-        await harvestBtn.first().click();
-        // 验证收获结果弹窗或提示
-        await expect(page.locator('text=收获')).toBeVisible({ timeout: 5000 });
-      }
+      // ⚠️ 修复「条件式空转断言」。
+      //
+      // 原实现：
+      //   if (await harvestBtn.count() > 0) { click; expect(text=收获) }
+      // 问题有两层：
+      //   ① 按钮不存在时**直接通过** —— CI 里永远绿灯，实际什么都没测；
+      //   ② 内层断言 `text=收获` 是**永真** —— 按钮自身文字就是「收获」，
+      //      点击前页面上就存在，即便走进 if 也没验证到任何业务结果。
+      //
+      // 改法：前置条件不满足就 **显式 skip**（在报告里可见为 skipped，
+      // 而非伪装成 passed），满足时断言「点击后出现的、点击前不存在的东西」。
+      const harvestBtn = page
+        .locator('button:has-text("收获")')
+        .or(page.locator('button:has-text("收割")'))
+        .or(page.locator('button:has-text("收取")'));
+      test.skip((await harvestBtn.count()) === 0, '当前无可收获萌可（需先成为好朋友且今天未收获）');
+
+      // 点击前先确认「已收获」提示尚不存在，避免用永真断言糊弄过去
+      const alreadyHarvested = page.locator('text=今天还没有可收获');
+      await expect(alreadyHarvested).toBeVisible({ timeout: 5000 });
+
+      await harvestBtn.first().click();
+      // 收获后该提示应消失（这才是可观测的状态变化）
+      await expect(alreadyHarvested).toBeHidden({ timeout: 10000 });
     });
 
     test('城堡 - 查看萌可详情', async ({ page }) => {
@@ -109,13 +150,15 @@ test.describe('核心业务流程', () => {
       await expect(page).toHaveURL(/home/);
 
       await page.goto('/mistakes');
-      // 如果有待复习错题，验证复习流程
-      const reviewBtn = page.locator('button:has-text("复习")').or(page.locator('button:has-text("开始复习")'));
-      if (await reviewBtn.count() > 0) {
-        await reviewBtn.first().click();
-        // 验证复习题目显示
-        await expect(page.locator('text=复习')).toBeVisible();
-      }
+      // 修复空转断言：无可复习错题时显式 skip，而非静默通过
+      const reviewBtn = page
+        .locator('button:has-text("复习")')
+        .or(page.locator('button:has-text("开始复习")'));
+      test.skip((await reviewBtn.count()) === 0, '当前无到期错题（需先产生错题）');
+
+      await reviewBtn.first().click();
+      // 断言进入复习界面：题目区出现，而不是断言「复习」二字（按钮文字本身就有）
+      await expect(page.locator('text=错题复习').first()).toBeVisible({ timeout: 10000 });
     });
   });
 
@@ -153,11 +196,22 @@ test.describe('核心业务流程', () => {
 
       // 3. 孩子完成任务
       await page.goto('/tasks');
-      const completeBtn = page.locator('button:has-text("完成")').or(page.locator('button:has-text("打卡")')).first();
-      if (await completeBtn.count() > 0) {
-        await completeBtn.click();
-        await expect(page.locator('text=完成')).toBeVisible({ timeout: 5000 });
-      }
+      // 记录完成前的积分，用于验证「完成后积分确实增加」
+      const pointsBefore = await readChildPoints(page);
+
+      const completeBtn = page
+        .locator('button:has-text("完成")')
+        .or(page.locator('button:has-text("打卡")'))
+        .first();
+      // 修复空转断言：无可完成任务时显式 skip，而非静默通过
+      test.skip((await completeBtn.count()) === 0, '当前没有可完成的任务');
+
+      await completeBtn.click();
+      // 断言积分增加 5（任务设定的奖励）—— 这是可观测的业务结果。
+      // 原实现断言 `text=完成`，而按钮文字本身就是「完成」，属永真断言。
+      await expect
+        .poll(async () => readChildPoints(page), { timeout: 15000 })
+        .toBe(pointsBefore + 5);
     });
   });
 
@@ -174,11 +228,16 @@ test.describe('核心业务流程', () => {
       await expect(page.locator('h1')).toContainText('星星币商城');
 
       // 尝试兑换一个奖励
-      const redeemBtn = page.locator('button:has-text("兑换")').or(page.locator('button:has-text("申请")')).first();
-      if (await redeemBtn.count() > 0) {
-        await redeemBtn.click();
-        await expect(page.locator('text=已申请')).toBeVisible({ timeout: 5000 });
-      }
+      // 修复空转断言：无可兑换项时显式 skip；原内层断言 `text=已申请`
+      // 在点击前也可能已存在（永真），改为断言兑换入口在提交后消失。
+      const redeemBtn = page
+        .locator('button:has-text("兑换")')
+        .or(page.locator('button:has-text("申请")'))
+        .first();
+      test.skip((await redeemBtn.count()) === 0, '当前没有可兑换的奖励（星星币不足或列表为空）');
+
+      await redeemBtn.click();
+      await expect(redeemBtn).toBeHidden({ timeout: 10000 });
     });
 
     test('家长审批兑换申请', async ({ page }) => {
@@ -189,11 +248,16 @@ test.describe('核心业务流程', () => {
       await expect(page).toHaveURL(/dashboard/);
 
       await page.goto('/redeem');
-      const approveBtn = page.locator('button:has-text("通过")').or(page.locator('button:has-text("批准")')).first();
-      if (await approveBtn.count() > 0) {
-        await approveBtn.click();
-        await expect(page.locator('text=已通过')).toBeVisible({ timeout: 5000 });
-      }
+      const approveBtn = page
+        .locator('button:has-text("通过")')
+        .or(page.locator('button:has-text("批准")'))
+        .first();
+      // 修复空转断言：没有待审批记录时显式 skip
+      test.skip((await approveBtn.count()) === 0, '当前没有待审批的兑换申请');
+
+      await approveBtn.click();
+      // 审批后该条目的「通过」按钮应消失（可观测的状态变化）
+      await expect(approveBtn).toBeHidden({ timeout: 10000 });
     });
   });
 });

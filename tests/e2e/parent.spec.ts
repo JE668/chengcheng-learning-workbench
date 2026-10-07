@@ -44,12 +44,14 @@ test.describe('家长管理流程', () => {
   test('审批兑换申请', async ({ page }) => {
     await page.goto('/redeem');
 
-    // 如果有待审批的兑换，应该显示审批按钮
+    // 修复空转断言：没有待审批记录时**显式 skip**（报告里可见为 skipped），
+    // 而非 if 包住后静默通过 —— 后者让 CI 永远绿灯、实际什么都没测。
     const approveButtons = page.locator('button:has-text("通过"), button:has-text("批准")');
-    if (await approveButtons.count() > 0) {
-      await approveButtons.first().click();
-      await expect(page.locator('text=已通过, text=审批成功')).toBeVisible({ timeout: 5000 });
-    }
+    test.skip((await approveButtons.count()) === 0, '当前没有待审批的兑换申请');
+
+    await approveButtons.first().click();
+    // 断言审批入口消失（可观测变化），而非 text=已通过（审批前就可能存在）
+    await expect(approveButtons).toBeHidden({ timeout: 10000 });
   });
 
   test('数据导出', async ({ page }) => {
