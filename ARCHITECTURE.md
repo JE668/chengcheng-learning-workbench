@@ -28,7 +28,7 @@ src/
 │   ├── tts/                # TTS 三层降级（engines + orchestrator）
 │   └── …                   # moko/story/mistakes/sm2/media/… 领域模块
 ├── middleware.ts           # 路由级统一鉴权（软闸，只查 cookie 存在性）
-└── env.mjs                 # 环境变量类型校验（Zod）
+└── tasks-validation.ts     # 任务入参校验唯一出口（积分区间/标题）
 ```
 
 ---
@@ -82,7 +82,7 @@ src/
 | `useCaptureStore`          | 萌可捕捉动画             | ❌     |
 | `useUIStore`               | 全局 Loading/Toast/Modal | ❌     |
 
-> 说明：`useOfflineStore`（离线同步队列）当前仅定义了结构、尚未接入业务，属于「路线图」项，见文末。
+> 说明：`useOfflineStore`（离线同步队列）**已接入业务**：`daily-practice` 交卷失败时本地暂存，`OfflineSync` 组件在恢复联网后重放（服务端 `submitPractice` 幂等，重放不会重复发奖）。
 
 ---
 
@@ -104,19 +104,26 @@ src/
 
 1. **Web Speech Strict** — 严格匹配 zh-CN / en-US
 2. **Web Speech Loose** — 宽松匹配任意 zh/en 嗓音
-3. **Edge TTS Server** — 服务端神经嗓音兜底（含熔断 + 指标）
+3. **Edge TTS Server** — 服务端神经嗓音兜底（`/api/tts` + 常驻 Python worker）
 
-核心：`lib/tts/`（`TTSEngine` 接口 + `engines/` 三实现 + `orchestrator.ts` 编排器），React 集成走 `useTTS` Hook。
+**唯一实现是 `lib/speak.ts`**（`playTts` / `playTtsWithResult`），全站 55+ 处调用。三层各自的关键处理都在这里：
+
+- 长文本切句（`splitSpeechText`）绕开 Android Chrome/Edge 长 utterance 卡死的平台 bug；
+- Chrome keep-alive（每 8s pause/resume 踢醒引擎）；
+- 服务端音频 blob 缓存（命中秒回）；
+- 所有定时器统一登记并在朗读结束时清理。
+
+`lib/tts/` 目录只保留**薄适配层**：`orchestrator.ts` 委托 `speak.ts` 执行朗读，仅额外提供指标统计与熔断状态，供 `/tts-diag` 诊断页使用。原先的 `lib/tts/engines/*`（第二套平行实现，缺少上面的关键处理）已删除——两套并存会导致重复维护与能力分叉。
 
 ---
 
 ## 测试策略
 
-| 层级      | 工具                              | 说明                                                             |
-| --------- | --------------------------------- | ---------------------------------------------------------------- |
-| 单元/集成 | Vitest（315 用例，29 个测试文件） | 领域逻辑、算法、Store、迁移（`file::memory:` 隔离，不碰真实 DB） |
-| E2E       | Playwright                        | 关键用户流程（tests/e2e/）                                       |
-| 可访问性  | axe-core                          | `atomic/a11y.test.tsx` + `test-axe.mjs`                          |
+| 层级      | 工具                              | 说明                                                                                  |
+| --------- | --------------------------------- | ------------------------------------------------------------------------------------- |
+| 单元/集成 | Vitest（381 用例，38 个测试文件） | 领域逻辑、算法、Store、迁移（`file::memory:` 隔离，不碰真实 DB）                      |
+| E2E       | Playwright                        | 关键用户流程（tests/e2e/，5 个 spec）。前置条件不满足的用例**显式 skip** 而非静默通过 |
+| 可访问性  | axe-core                          | `atomic/a11y.test.tsx` + `test-axe.mjs`                                               |
 
 命令：`pnpm test` / `pnpm test:coverage` / `pnpm e2e`。
 
@@ -149,7 +156,7 @@ src/
 
 ## 路线图（规划中，未实现）
 
-- **PWA 离线补打卡**：离线同步队列（`useOfflineStore`）尚未接入业务，需补齐「本地暂存 → 联网批量同步 → 失败重试」。
+- **离线补打卡增强**：当前只重放「每日一练交卷」一种动作（`flushOfflineQueue` 仅支持 `checkin`），其余学习行为未纳入离线队列。
 - **设计系统推广**：将 `components/atomic` 组件逐步替换页面内自建样式，收敛重复 UI。
 - **多实例支持**：若未来上 Serverless/多副本，需把进程内限流/写锁/会话锁定替换为共享存储（Redis 等）。
 - **Feature 减法**：对非核心模块（部分小游戏等）做取舍，把维护成本集中到「每日一练 + 城堡 + 打卡」核心闭环。

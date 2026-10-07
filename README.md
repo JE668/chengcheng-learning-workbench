@@ -116,7 +116,7 @@
 | 认证     | 自定义 session cookie（bcrypt 哈希，家长/孩子双角色，7天过期）                                                                   |
 | 状态管理 | Zustand（含离线打卡：断网时排队，重连后自动同步）                                                                                |
 | TTS      | 三层策略：Web Speech → 宽松 Web Speech → Python edge-tts 持久化进程（长文按句分块播放，适配 Android 平板；播放前预取下一段音频） |
-| 测试     | Vitest（315 个用例，29 个测试文件）+ Playwright E2E + axe-core 无障碍；ESLint 0 警告，TypeScript strict 0 错误                   |
+| 测试     | Vitest（381 个用例，38 个测试文件）+ Playwright E2E + axe-core 无障碍；ESLint 0 警告，TypeScript strict 0 错误                   |
 | 部署     | GitHub Actions → Docker 多阶段构建（~550MB）→ GHCR；支持飞牛 NAS / Vercel                                                        |
 
 ## ✨ 特色功能

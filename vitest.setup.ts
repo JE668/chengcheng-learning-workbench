@@ -35,7 +35,7 @@ vi.mock('next/headers', () => ({
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -106,19 +106,51 @@ Object.defineProperty(global, 'crypto', {
   },
 });
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  length: 0,
-  key: vi.fn(),
-};
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+/**
+ * localStorage / sessionStorage 的**真实内存实现**。
+ *
+ * ⚠️ 原先是 `vi.fn()` 空壳：setItem/getItem/clear 全是空函数，
+ * 于是任何依赖 localStorage 的测试都**测不出真实行为** ——
+ * 写入的数据读不回来，组件测试还会「碰巧」因为读不到而走「无数据」分支通过，
+ * 从而掩盖真实 bug（例：GameBestBadge 的「🏆 历史最佳」角标不显示）。
+ * 这里用 Map 实现完整语义（含 key/length 遍历），让存储类逻辑可被真正验证。
+ */
+function createMemoryStorage(): Storage {
+  const map = new Map<string, string>();
+  return {
+    get length() {
+      return map.size;
+    },
+    key(index: number): string | null {
+      // 按插入顺序返回第 index 个键
+      return [...map.keys()][index] ?? null;
+    },
+    getItem(key: string): string | null {
+      return map.has(key) ? map.get(key)! : null;
+    },
+    setItem(key: string, value: string): void {
+      map.set(String(key), String(value));
+    },
+    removeItem(key: string): void {
+      map.delete(key);
+    },
+    clear(): void {
+      map.clear();
+    },
+  } as Storage;
+}
 
-// Mock sessionStorage
-Object.defineProperty(window, 'sessionStorage', { value: localStorageMock });
+Object.defineProperty(window, 'localStorage', {
+  value: createMemoryStorage(),
+  writable: true,
+  configurable: true,
+});
+
+Object.defineProperty(window, 'sessionStorage', {
+  value: createMemoryStorage(),
+  writable: true,
+  configurable: true,
+});
 
 // 静默 console.error 在测试中（可选，调试时取消注释）
 // const originalError = console.error;
