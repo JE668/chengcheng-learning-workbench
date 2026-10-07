@@ -15,15 +15,34 @@ export async function POST(req: Request) {
   await cleanupExpiredSessions().catch(() => {});
   const db = getDb();
   const today = dateStr();
-  const all = await db.execute({ sql: "SELECT id FROM users WHERE role = ?", args: ['child'] });
+  const all = await db.execute({ sql: 'SELECT id FROM users WHERE role = ?', args: ['child'] });
+  const ids = all.rows.map((r) => Number(r.id));
+  // 结算后一次性读回全部城堡状态，取代原来「每个孩子结算完再单独 SELECT 一次」——
+  // settleCastle 本身已持有并更新了该行，这个 SELECT 是纯浪费，还把 N 次查询
+  // 摊进了 N 次 await（多娃时线性变慢）。
   const children: { childId: number; prosperity: number; starCoins: number }[] = [];
-  for (const row of all.rows) {
-    const cid = Number(row.id);
+  for (const cid of ids) {
     // 显式结算：不再依赖 getCastleState 的副作用，职责清晰且避免读取整套城堡视图。
     await settleCastle(cid, today);
-    const st = await db.execute({ sql: 'SELECT prosperity, star_coins FROM castle_state WHERE child_id = ?', args: [cid] });
-    const r = st.rows[0];
-    children.push({ childId: cid, prosperity: Number(r?.prosperity ?? 0), starCoins: Number(r?.star_coins ?? 0) });
+  }
+  if (ids.length) {
+    const placeholders = ids.map(() => '?').join(',');
+    const st = await db.execute({
+      sql:
+        'SELECT child_id, prosperity, star_coins FROM castle_state WHERE child_id IN (' +
+        placeholders +
+        ')',
+      args: ids,
+    });
+    const byId = new Map(st.rows.map((r) => [Number(r.child_id), r]));
+    for (const cid of ids) {
+      const r = byId.get(cid);
+      children.push({
+        childId: cid,
+        prosperity: Number(r?.prosperity ?? 0),
+        starCoins: Number(r?.star_coins ?? 0),
+      });
+    }
   }
   return NextResponse.json({ ok: true, children });
 }

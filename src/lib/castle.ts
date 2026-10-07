@@ -606,7 +606,11 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
         args: [childId],
       }),
       db.execute({
-        sql: 'SELECT day, subject, status FROM daily_checkins WHERE child_id = ? AND day < ? ORDER BY day DESC',
+        // 只取最近 30 天。
+        // 原先没有 LIMIT，会把**全部历史打卡**捞出来；而这些行最终只用来拼
+        // 最近 14 天的 missedDays（下面 slice(0, 14)），多出来的纯属白读白解析，
+        // 并随孩子使用月数增长而无界变慢。30 天足够覆盖 14 天窗口 + 排序余量。
+        sql: 'SELECT day, subject, status FROM daily_checkins WHERE child_id = ? AND day < ? ORDER BY day DESC LIMIT 30',
         args: [childId, today],
       }),
       db.execute({

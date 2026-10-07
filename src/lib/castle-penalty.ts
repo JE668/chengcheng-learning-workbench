@@ -47,12 +47,18 @@ async function applyPenalty(childId: number, day: string, consecutiveMissed: num
 
   // 随机惩罚萌可
   const residents = (
-    await db.execute({ sql: "SELECT * FROM moko_owned WHERE child_id = ? AND status = 'resident'", args: [childId] })
+    await db.execute({
+      sql: "SELECT * FROM moko_owned WHERE child_id = ? AND status = 'resident'",
+      args: [childId],
+    })
   ).rows;
   const flee = (id: number) =>
     db.execute({ sql: "UPDATE moko_owned SET status = 'fled', mood = 0 WHERE id = ?", args: [id] });
   const hitMood = (id: number, dec: number) =>
-    db.execute({ sql: 'UPDATE moko_owned SET mood = MAX(0, mood - ?) WHERE id = ?', args: [dec, id] });
+    db.execute({
+      sql: 'UPDATE moko_owned SET mood = MAX(0, mood - ?) WHERE id = ?',
+      args: [dec, id],
+    });
 
   const getMokoName = (r: any) => {
     const mc = mokoChars[String(r.moko_key)];
@@ -78,7 +84,11 @@ async function applyPenalty(childId: number, day: string, consecutiveMissed: num
       const shuffled = shuffle(residents);
       await flee(Number(shuffled[0].id));
       await hitMood(Number(shuffled[1].id), 2);
-      penaltySummary = getMokoName(shuffled[0]) + ' 被吓跑了！' + getMokoName(shuffled[1]) + ' 心情下降，还丢了 25% 的星星币 😰';
+      penaltySummary =
+        getMokoName(shuffled[0]) +
+        ' 被吓跑了！' +
+        getMokoName(shuffled[1]) +
+        ' 心情下降，还丢了 25% 的星星币 😰';
     } else if (residents.length === 1) {
       const [target] = shuffle(residents);
       await hitMood(Number(target.id), 2);
@@ -99,7 +109,8 @@ async function applyPenalty(childId: number, day: string, consecutiveMissed: num
       penaltySummary = names.join('、') + ' 被吓跑了！连续 4 天没打卡，城堡陷入危机 😱';
     } else {
       for (const r of residents) await hitMood(Number(r.id), 2);
-      if (residents.length) penaltySummary = getMokoName(residents[0]) + ' 心情很低落，连续 4 天没打卡了 😱';
+      if (residents.length)
+        penaltySummary = getMokoName(residents[0]) + ' 心情很低落，连续 4 天没打卡了 😱';
     }
   } else {
     for (const r of residents) await flee(Number(r.id));
@@ -107,7 +118,13 @@ async function applyPenalty(childId: number, day: string, consecutiveMissed: num
   }
 
   if (penaltySummary) {
-    await logGrowthEvent(childId, 'penalty', '⚠️', '连续 ' + consecutiveMissed + ' 天漏打卡', penaltySummary);
+    await logGrowthEvent(
+      childId,
+      'penalty',
+      '⚠️',
+      '连续 ' + consecutiveMissed + ' 天漏打卡',
+      penaltySummary
+    );
   }
 
   await db.execute({
@@ -136,6 +153,14 @@ export async function settleCastle(childId: number, today: string) {
     let streak = Number(row.streak_days ?? 0);
     let consecutiveMissed = 0;
     let last = initialLast;
+    // ⚠️ 补结算上限：游标落后太多时（容器停了几天/几周），逐日重放会长时间
+    // 持有**全局写锁**（withWriteLock），把其它写接口全堵在后面；而且这些天
+    // 多半本来就没打卡，逐日结算只会一路累加惩罚事件。
+    // 这里只补最近 MAX_CATCHUP_DAYS 天，更早的部分把游标直接推到窗口起点 ——
+    // 漏卡事实仍记在 daily_checkins 里，UI 的 missedDays 展示不受影响。
+    const MAX_CATCHUP_DAYS = 30;
+    const catchupFloor = addDays(yesterday, -(MAX_CATCHUP_DAYS - 1));
+    if (cursor < catchupFloor) cursor = catchupFloor;
     while (cursor <= yesterday) {
       const confirmed = confirmedByDay.get(cursor) ?? 0;
       const isFullDay = confirmed === 3;
@@ -143,17 +168,37 @@ export async function settleCastle(childId: number, today: string) {
         // 🧊 检查冰冻徽章：有则消耗保护一天连胜（与连胜更新在同一条 SQL 中保证一致性）
         let frozen = false;
         try {
-          const fr = await db.execute({ sql: "SELECT id, qty FROM inventory WHERE child_id = ? AND item_key = 'freeze' AND qty > 0", args: [childId] });
+          const fr = await db.execute({
+            sql: "SELECT id, qty FROM inventory WHERE child_id = ? AND item_key = 'freeze' AND qty > 0",
+            args: [childId],
+          });
           if (fr.rows.length > 0) {
             const freezeId = Number(fr.rows[0].id);
-            await db.execute({ sql: 'UPDATE inventory SET qty = qty - 1 WHERE id = ?', args: [freezeId] });
-            await db.execute({ sql: "DELETE FROM inventory WHERE id = ? AND qty <= 0", args: [freezeId] });
+            await db.execute({
+              sql: 'UPDATE inventory SET qty = qty - 1 WHERE id = ?',
+              args: [freezeId],
+            });
+            await db.execute({
+              sql: 'DELETE FROM inventory WHERE id = ? AND qty <= 0',
+              args: [freezeId],
+            });
             frozen = true;
             streak = streak + 1;
-            await db.execute({ sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?', args: [streak, childId] });
-            await logGrowthEvent(childId, 'freeze', '🧊', '冰冻徽章保护', '🧊 冰冻徽章自动消耗，' + cursor + ' 漏卡但连胜未中断！');
+            await db.execute({
+              sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?',
+              args: [streak, childId],
+            });
+            await logGrowthEvent(
+              childId,
+              'freeze',
+              '🧊',
+              '冰冻徽章保护',
+              '🧊 冰冻徽章自动消耗，' + cursor + ' 漏卡但连胜未中断！'
+            );
           }
-        } catch { /* inventory 表可能不存在 */ }
+        } catch {
+          /* inventory 表可能不存在 */
+        }
         if (!frozen) {
           consecutiveMissed++;
           await applyPenalty(childId, cursor, consecutiveMissed);
@@ -163,12 +208,18 @@ export async function settleCastle(childId: number, today: string) {
         consecutiveMissed = 0;
         streak = streak + 1;
       }
-      await db.execute({ sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?', args: [streak, childId] });
+      await db.execute({
+        sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?',
+        args: [streak, childId],
+      });
       last = cursor;
       cursor = addDays(cursor, 1);
     }
     if (last !== initialLast) {
-      await db.execute({ sql: 'UPDATE castle_state SET last_settled_day = ? WHERE child_id = ?', args: [last, childId] });
+      await db.execute({
+        sql: 'UPDATE castle_state SET last_settled_day = ? WHERE child_id = ?',
+        args: [last, childId],
+      });
     }
   });
 }
