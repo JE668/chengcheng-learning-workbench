@@ -1,7 +1,7 @@
-import { 
-  WORD_PROBLEMS, 
-  ORDINALS, 
-  CLOCKS, 
+import {
+  WORD_PROBLEMS,
+  ORDINALS,
+  CLOCKS,
   CLOCK_HALF,
   SHAPES,
   ANGLES,
@@ -115,10 +115,10 @@ export function genMultiStepWordProblemQ(): PracticeQuestion {
       emoji: '💗',
     },
   ];
-  
+
   const p = templates[Math.floor(Math.random() * templates.length)];
   const ans = Number(p.answer);
-  
+
   // 🔧 修复：当答案为 0 或 1 时，特殊处理干扰项，避免重复
   const set = new Set<number>([ans]);
   if (ans === 0) {
@@ -166,7 +166,7 @@ export function genOrdinalQ(): PracticeQuestion {
     kind: 'math',
     subject: '数学',
     prompt: o.question,
-    emojiRow: o.row,  // 新增：一排 emoji，用于渲染带序号的卡片
+    emojiRow: o.row, // 新增：一排 emoji，用于渲染带序号的卡片
     options: shuffled,
     answer,
     explain: o.answer,
@@ -317,10 +317,9 @@ export function genThreeDigitAddSubQ(): PracticeQuestion {
   const c = firstPlus ? randInt(10, Math.min(30, mid - 1)) : randInt(10, 30);
   const ans = firstPlus ? mid - c : mid + c;
   const prompt = `${a} ${op1} ${b} ${op2} ${c} = ?`;
-  const explain =
-    firstPlus
-      ? `${a} ${op1} ${b} = ${mid}，再 ${mid} ${op2} ${c} = ${ans}`
-      : `${a} ${op1} ${b} = ${mid}，再 ${mid} ${op2} ${c} = ${ans}`;
+  const explain = firstPlus
+    ? `${a} ${op1} ${b} = ${mid}，再 ${mid} ${op2} ${c} = ${ans}`
+    : `${a} ${op1} ${b} = ${mid}，再 ${mid} ${op2} ${c} = ${ans}`;
 
   const set = new Set<number>([ans]);
   while (set.size < 4) {
@@ -344,16 +343,46 @@ export function genThreeDigitAddSubQ(): PracticeQuestion {
 /* 分数题 */
 export function genFractionQ(): PracticeQuestion {
   const fractions = [
-    { q: '把一个苹果平均分成 2 份，每份是？', a: '1/2', opts: ['1/2', '1/3', '2/1', '1/4'], e: '🍎' },
-    { q: '把一块饼干平均分成 3 份，每份是？', a: '1/3', opts: ['1/3', '1/2', '2/3', '1/4'], e: '🍪' },
+    {
+      q: '把一个苹果平均分成 2 份，每份是？',
+      a: '1/2',
+      opts: ['1/2', '1/3', '2/1', '1/4'],
+      e: '🍎',
+    },
+    {
+      q: '把一块饼干平均分成 3 份，每份是？',
+      a: '1/3',
+      opts: ['1/3', '1/2', '2/3', '1/4'],
+      e: '🍪',
+    },
     { q: '把一张纸平均分成 4 份，每份是？', a: '1/4', opts: ['1/4', '1/2', '3/4', '1/3'], e: '📄' },
-    { q: '小明吃了 1/2 个苹果，还剩几分之几？', a: '1/2', opts: ['1/2', '1/3', '1/4', '2/1'], e: '🍎' },
-    { q: '圆形分成 4 等份，涂 3 份，涂了几分之几？', a: '3/4', opts: ['3/4', '1/4', '1/2', '2/3'], e: '⭕' },
-    { q: '长方形分成 2 等份，涂 1 份，涂了几分之几？', a: '1/2', opts: ['1/2', '1/3', '2/1', '1/4'], e: '🟫' },
+    {
+      q: '小明吃了 1/2 个苹果，还剩几分之几？',
+      a: '1/2',
+      opts: ['1/2', '1/3', '1/4', '2/1'],
+      e: '🍎',
+    },
+    {
+      q: '圆形分成 4 等份，涂 3 份，涂了几分之几？',
+      a: '3/4',
+      opts: ['3/4', '1/4', '1/2', '2/3'],
+      e: '⭕',
+    },
+    {
+      q: '长方形分成 2 等份，涂 1 份，涂了几分之几？',
+      a: '1/2',
+      opts: ['1/2', '1/3', '2/1', '1/4'],
+      e: '🟫',
+    },
     { q: '把 8 颗糖平均分给 4 个小朋友，每人几颗？', a: '2', opts: ['2', '3', '4', '1'], e: '🍬' },
-    { q: '12 块饼干，每人分 3 块，能分给几个小朋友？', a: '4', opts: ['4', '3', '5', '6'], e: '🍪' },
+    {
+      q: '12 块饼干，每人分 3 块，能分给几个小朋友？',
+      a: '4',
+      opts: ['4', '3', '5', '6'],
+      e: '🍪',
+    },
   ];
-  
+
   const p = fractions[Math.floor(Math.random() * fractions.length)];
   const shuffled = shuffle([p.a, ...p.opts.filter((x) => x !== p.a)]).slice(0, 4);
   const answer = shuffled.indexOf(p.a);
@@ -372,11 +401,12 @@ export function genFractionQ(): PracticeQuestion {
 /* 几何图形识别题 */
 export function genShapeQ(): PracticeQuestion {
   const shapeType = Math.random() < 0.5 ? 'plane' : 'solid';
-  
+
   if (shapeType === 'plane') {
     const s = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-    const opts = ['圆形', '正方形', '长方形', '三角形', '椭圆形', '半圆形', '五角星']
-      .filter((x) => x !== s.name);
+    const opts = ['圆形', '正方形', '长方形', '三角形', '椭圆形', '半圆形', '五角星'].filter(
+      (x) => x !== s.name
+    );
     const shuffled = shuffle([s.name, ...shuffle(opts).slice(0, 3)]);
     const answer = shuffled.indexOf(s.name);
     return {
@@ -391,8 +421,7 @@ export function genShapeQ(): PracticeQuestion {
     };
   } else {
     const s = SOLID_SHAPES[Math.floor(Math.random() * SOLID_SHAPES.length)];
-    const opts = ['长方体', '正方体', '圆柱', '球']
-      .filter((x) => x !== s.name);
+    const opts = ['长方体', '正方体', '圆柱', '球'].filter((x) => x !== s.name);
     const shuffled = shuffle([s.name, ...shuffle(opts).slice(0, 3)]);
     const answer = shuffled.indexOf(s.name);
     return {
@@ -506,8 +535,9 @@ export function genPositionQ(): PracticeQuestion {
 /* 数字组成题（11-20） */
 export function genNumber1120Q(): PracticeQuestion {
   const n = NUMBERS_1120[Math.floor(Math.random() * NUMBERS_1120.length)];
-  const opts = ['10+1', '10+2', '10+3', '10+4', '10+5', '10+6', '10+7', '10+8', '10+9']
-    .filter((x) => x !== n.compose);
+  const opts = ['10+1', '10+2', '10+3', '10+4', '10+5', '10+6', '10+7', '10+8', '10+9'].filter(
+    (x) => x !== n.compose
+  );
   const shuffled = shuffle([n.compose, ...shuffle(opts).slice(0, 3)]);
   const answer = shuffled.indexOf(n.compose);
   return {
@@ -525,12 +555,32 @@ export function genNumber1120Q(): PracticeQuestion {
 /* 分与合题 */
 export function genSplitQ(): PracticeQuestion {
   const s = SPLITS[Math.floor(Math.random() * SPLITS.length)];
-  const opts = s.pairs.filter((p) => p[0] !== 0 && p[1] !== 0).map((p) => `${p[0]}+${p[1]}`);
-  if (opts.length < 3) {
-    opts.push('1+1', '2+2', '3+3');
-  }
   const correct = `${s.pairs[0][0]}+${s.pairs[0][1]}`;
-  const shuffled = shuffle([correct, ...shuffle(opts).slice(0, 3)]);
+  // ⚠️ 「分与合」的本质是选出**一个**正确的分法，因此必须保证最终 4 个选项里
+  // **恰好只有一个**表达式的和等于 num。
+  //
+  // 原实现有两处缺陷（实测重复率 59%~100%，num=2/6/7 为必然重复）：
+  //  ① 把 pairs 全量映射成干扰项（**含 pairs[0]，即 correct 本身**），
+  //     随后又单独把 correct 塞进选项数组 → 同一表达式出现 2~3 次；
+  //  ② 更隐蔽：SPLITS 里同一 num 的多个分法**都成立**（num=5 的 1+4 与 2+3 都对），
+  //     一旦 `2+3` 进了选项，孩子点它会被判错 —— 这不是"干扰项"，是第二个正确答案。
+  //     因此干扰项必须按「和 ≠ num」过滤，而不只是「字符串 ≠ correct」。
+  const wrongPool = s.pairs
+    .filter((p) => p[0] !== 0 && p[1] !== 0)
+    .map((p) => `${p[0]}+${p[1]}`)
+    .filter((x) => {
+      const [x1, x2] = x.split('+').map(Number);
+      // 排除「和等于 num」的项（无论文本是否与 correct 相同）——保证唯一正解
+      return x1 + x2 !== s.num;
+    });
+  // 兜底：SPLITS 中每个 num 的分法都成立时 wrongPool 会为空（如 num=2 只有一个 1+1），
+  // 此时用通用错误拆法补齐。
+  for (const fallback of ['1+1', '2+2', '3+3', '1+2', '2+1', '1+3', '3+1']) {
+    if (wrongPool.length >= 3) break;
+    const [f1, f2] = fallback.split('+').map(Number);
+    if (f1 + f2 !== s.num && !wrongPool.includes(fallback)) wrongPool.push(fallback);
+  }
+  const shuffled = shuffle([correct, ...shuffle(wrongPool).slice(0, 3)]);
   const answer = shuffled.indexOf(correct);
   return {
     id: `split-${s.num}`,
@@ -556,7 +606,7 @@ export function genPatternQ(): PracticeQuestion {
     { seq: '5, 10, 15, 20, ?', ans: '25', opts: ['25', '24', '30', '22'], e: '➕5' },
     { seq: '100, 90, 80, 70, ?', ans: '60', opts: ['60', '65', '55', '50'], e: '➖10' },
   ];
-  
+
   const p = patterns[Math.floor(Math.random() * patterns.length)];
   const shuffled = shuffle([p.ans, ...p.opts.filter((x) => x !== p.ans)]).slice(0, 4);
   const answer = shuffled.indexOf(p.ans);
@@ -599,7 +649,8 @@ export const MATH_QUESTION_GENERATORS = [
 
 /** 随机生成一道数学题（可指定难度） */
 export function genRandomMathQ(hard = false): PracticeQuestion {
-  const generator = MATH_QUESTION_GENERATORS[Math.floor(Math.random() * MATH_QUESTION_GENERATORS.length)];
+  const generator =
+    MATH_QUESTION_GENERATORS[Math.floor(Math.random() * MATH_QUESTION_GENERATORS.length)];
   // 对于基础口算题，传递 hard 参数
   if (generator === genMathQ) {
     return generator(hard);
@@ -632,7 +683,7 @@ export function genMathQByType(type: string): PracticeQuestion | null {
     split: genSplitQ,
     pattern: genPatternQ,
   };
-  
+
   const generator = typeMap[type];
   return generator ? generator() : null;
 }
