@@ -212,11 +212,21 @@ export async function POST(req: NextRequest) {
   }
 
   // 逐表恢复：先清空再插入，整段放进互斥锁保护的写事务，失败整体回滚。
-  // PRAGMA foreign_keys 必须在事务外设置，否则不生效。
+  //
+  // ⚠️ 这里**不能**用 `PRAGMA foreign_keys = OFF`。实测它是**连接级**的：
+  // libSQL 本地驱动全局只有一个连接，被关闭后其它并发请求（渲染页面、记一笔打卡）
+  // 在这段窗口内同样失去外键保护、能写进孤儿行；而 withWriteLock 只串行化**写**，
+  // 读请求根本不受它约束。原实现里两处 `.catch(() => {})` 还会在「恢复外键」
+  // 本身失败时静默吞掉，进程就带着外键关闭的状态一直跑下去直到重启。
+  //
+  // 改用 `PRAGMA defer_foreign_keys = ON`：它是**事务级**的，只把外键检查推迟到
+  // COMMIT，因此「先清子表、再清父表、再按顺序插回」这种合法的恢复顺序可以走完，
+  // 而事务外 foreign_keys 始终保持 1（已实测验证）。
   return withWriteLock(async () => {
-    await db.execute('PRAGMA foreign_keys = OFF');
-    await db.execute('BEGIN');
+    await db.execute('BEGIN IMMEDIATE');
     try {
+      // 事务内推迟外键检查；随 COMMIT 自动失效，无需手动恢复。
+      await db.execute('PRAGMA defer_foreign_keys = ON');
       // 先清空所有表（按外键依赖顺序）；sessions 不在 IMPORT_TABLES 里
       for (const t of IMPORT_TABLES) {
         if (!allowed.has(t)) continue;
@@ -270,15 +280,17 @@ export async function POST(req: NextRequest) {
           continue;
         }
       }
+      // COMMIT 时才真正做外键检查（defer_foreign_keys 的语义）：
+      // 若恢复数据留下了孤儿行，这里会失败 → 走 ROLLBACK，不会写进残缺库。
       await db.execute('COMMIT');
-      await db.execute('PRAGMA foreign_keys = ON').catch(() => {});
       return NextResponse.json({
         ok: true,
         message: '数据已恢复（' + IMPORT_TABLES.length + ' 张表，登录会话需重新登录）✅',
       });
     } catch (e) {
+      // 无需再手动恢复 foreign_keys：defer_foreign_keys 随 ROLLBACK 自动失效，
+      // 事务外的外键保护自始至终都是开着的。
       await db.execute('ROLLBACK').catch(() => {});
-      await db.execute('PRAGMA foreign_keys = ON').catch(() => {});
       // 细节只写日志：原先把原始异常回传客户端，会泄露表名/驱动信息
       console.error('[backup] 导入失败:', e instanceof Error ? e.message : e);
       return NextResponse.json({ error: '恢复失败，请稍后重试或查看容器日志' }, { status: 500 });
