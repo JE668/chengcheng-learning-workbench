@@ -14,10 +14,16 @@ export const dynamic = 'force-dynamic';
  * （parent / 12345678）本就是弱口令，bcrypt cost=10 离线爆破是分钟级。
  * 备份的用途是恢复**学习数据**，凭据不该跟着流动。
  * 导入侧会保留库里现有的密码哈希（见 restoreUsers），所以恢复后账号照常可登录。
+ *
+ * ⚠️ **`sessions` 同样刻意不在导出列表里**（与上面同源的理由，且后果更直接）：
+ * sessions 每行就是 `{ token, user_id, created_at }`，token 是 7 天内可直接使用的
+ * 免密登录凭据。历史上 `sessions` 曾被列在导出表里，而 `79ac3b3` 那次只给 users
+ * 加了列白名单、其余表一律 `SELECT *`，于是导出的明文 JSON 里带着**当时全部有效会话**
+ * ——备份是家长直接发到微信/网盘的东西，等同于把全家的登录态公开。
+ * 现在导出与导入两侧都不含 sessions（见 IMPORT_TABLES 的说明），凭据一律不流动。
  */
 const EXPORT_TABLES = [
   'users',
-  'sessions',
   'tasks',
   'completions',
   'redemptions',

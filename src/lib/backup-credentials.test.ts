@@ -86,6 +86,36 @@ describe('备份导出 · 凭据不外泄（S-1 回归）', () => {
     expect(text, '导出内容中出现 bcrypt 哈希').not.toMatch(/\$2[aby]\$\d\d\$/);
   });
 
+  /**
+   * 登录凭据不能随备份流动（回归：sessions 曾被列在 EXPORT_TABLES 里）。
+   *
+   * sessions 每行是 { token, user_id, created_at }，token 是 7 天内可直接使用的
+   * 免密凭据；备份是家长直接发微信/网盘的东西，等同于公开全家登录态。
+   * 这里断言的是「键根本不存在」，比断言「值为空」更严格 —— 万一有人日后
+   * 把它加回来并顺手做了脱敏，这条会立刻失败。
+   */
+  it('导出结果不含 sessions 表（修复前必然失败）', async () => {
+    const res = await backupGET();
+    const json = (await res.json()) as Record<string, unknown>;
+    expect(Object.keys(json), '导出结果泄露了 sessions 表（内含有效登录 token）').not.toContain(
+      'sessions'
+    );
+  });
+
+  it('导出内容里不含任何会话 token 字样', async () => {
+    await getDb().execute({
+      sql: "INSERT OR REPLACE INTO sessions (token, user_id, created_at) VALUES ('deadbeef-secret-token', ?, datetime('now'))",
+      args: [PARENT_ID],
+    });
+    const res = await backupGET();
+    const text = await res.text();
+    expect(text, '导出内容中出现了会话 token').not.toContain('deadbeef-secret-token');
+    await getDb().execute({
+      sql: "DELETE FROM sessions WHERE token = 'deadbeef-secret-token'",
+      args: [],
+    });
+  });
+
   it('仍保留恢复所需的非敏感列（用户名/角色不能被误删）', async () => {
     const res = await backupGET();
     const json = (await res.json()) as Record<string, Record<string, unknown>[]>;
