@@ -9,6 +9,14 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: '无权限' }, { status: 403 });
   const db = getDb();
   const taskId = Number(id);
+  // ⚠️ 必须挡住非有限数值。`Number('abc')` 得到 NaN、`Number('1e999')` 得到
+  // Infinity，直接当 SQL 参数会抛
+  // `RangeError: Only finite numbers (not Infinity or NaN) can be passed as
+  // arguments` —— 路由整体 500，而不是干净地返回 404。
+  // 顺带排除非正整数（0 / 负数 / 小数都不是合法主键）。
+  if (!Number.isInteger(taskId) || taskId <= 0) {
+    return NextResponse.json({ error: '任务不存在' }, { status: 404 });
+  }
   const task = await db.execute({ sql: 'SELECT * FROM tasks WHERE id = ?', args: [taskId] });
   if (!task.rows.length) return NextResponse.json({ error: '任务不存在' }, { status: 404 });
 
