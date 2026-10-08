@@ -47,6 +47,11 @@ const CHILD_TABLES = [
   'speech_scores',
   'algorithm_progress',
   'algorithm_mistakes',
+  // —— 第三次漏清：push_subscriptions 的 child_id 是 NOT NULL（见 migrations 的
+  //    create_push_subscriptions_table），属彻底的孩子数据，却一直没进这个清单。
+  //    后果：还原出厂设置后孩子的推送订阅仍在，设备继续挂在已清空的孩子身上。
+  //    这次同时补了护栏测试（reset-child-tables-guard.test.ts），防止第四次。
+  'push_subscriptions',
 ];
 
 export async function POST(req: NextRequest) {
@@ -71,7 +76,10 @@ export async function POST(req: NextRequest) {
     }
 
     const db = getDb();
-    const hashRes = await db.execute({ sql: 'SELECT password_hash FROM users WHERE id = ?', args: [user.id] });
+    const hashRes = await db.execute({
+      sql: 'SELECT password_hash FROM users WHERE id = ?',
+      args: [user.id],
+    });
     const hash = String(hashRes.rows[0]?.password_hash ?? '');
     if (!verifyPassword(password, hash)) {
       return NextResponse.json({ error: '家长密码错误' }, { status: 401 });
