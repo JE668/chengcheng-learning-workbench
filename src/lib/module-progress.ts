@@ -93,5 +93,12 @@ export function useModuleProgress(subject: string, moduleKey: string) {
     [subject, moduleKey]
   );
 
-  return { ...data, record };
+  /**
+   * `loaded` 表示首帧拉取**已结束**（成功或失败都算）。
+   *
+   * 它不是内部实现细节：在拿到真实星数之前，`data.stars` 仍是 EMPTY 的 0，
+   * 直接渲染会让「已有 3 颗星」的孩子先看到一眼「☆☆☆ 未完成」再跳成「★★★」。
+   * 消费方需要据此区分「确实是 0 星」与「还不知道」。
+   */
+  return { ...data, loaded, record };
 }

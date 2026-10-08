@@ -83,10 +83,6 @@ export default [
     // 每一组都写明理由。新增豁免时请一并写清楚为什么不能删。
     files: [
       // ① 写了一半的功能：setter 已调用，但值从未被读取，UI 尚未接上。
-      'src/components/study/ChildTaskList.tsx', // finishing
-      'src/components/study/ChineseModules.tsx', // reciteText
-      'src/components/study/StudyQuiz.tsx', // displayStars / initialRounds / initialLastPlayed
-      'src/lib/module-progress.ts', // loaded
       'src/app/api/tts-edge/route.ts', // pause
       'src/app/tts-diag/page.tsx', // isMobile
       'src/app/(child)/home/page.tsx', // ownedCount

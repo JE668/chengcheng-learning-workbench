@@ -304,16 +304,31 @@ function PoemCard({ item }: { item: PoemItem }) {
           <audio controls src={audioUrl} className="w-full" />
         </div>
       )}
-      {reciteScore !== null && reciteScore > 0 && (
+      {/* ⚠️ 原先这里只在 `reciteScore > 0` 时渲染 —— 孩子认认真真背完却得了 0 分，
+          屏幕上**什么都没有**：不知道系统听没听到、也不知道为什么没星星。
+          现在 0 分也给一句鼓励，并把「识别到的内容」显示出来，让结果可解释
+          （识别不准时家长也能一眼看出原因）。 */}
+      {reciteScore !== null && (
         <div className="mt-2 rounded-xl bg-moko-yellow/10 p-2 text-sm">
-          <div className="text-2xl">{stars}</div>
-          <p className="text-xs text-gray-500 mt-1">
-            {reciteScore >= 3
-              ? '背得真好！爱心萌可给你点赞！'
-              : reciteScore >= 2
-                ? '不错，再练几遍更熟！'
-                : '加油，多读几遍再来背！'}
-          </p>
+          {reciteScore > 0 ? (
+            <>
+              <div className="text-2xl">{stars}</div>
+              <p className="text-xs text-gray-500 mt-1">
+                {reciteScore >= 3
+                  ? '背得真好！爱心萌可给你点赞！'
+                  : reciteScore >= 2
+                    ? '不错，再练几遍更熟！'
+                    : '加油，多读几遍再来背！'}
+              </p>
+            </>
+          ) : (
+            <p className="text-xs text-gray-500">
+              这次没太听清～ 对着麦克风大声、慢慢地再读一遍试试！
+            </p>
+          )}
+          {reciteText && (
+            <p className="text-[11px] text-gray-400 mt-1 break-all">我听到的是：{reciteText}</p>
+          )}
         </div>
       )}
     </div>

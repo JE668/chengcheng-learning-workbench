@@ -48,7 +48,6 @@ function readItem(mode: DictData['mode'], it: DictItem) {
 function DictationCard({ task, data, onDone }: { task: Task; data: DictData; onDone: () => void }) {
   const [idx, setIdx] = useState(0);
   const [results, setResults] = useState<boolean[]>([]);
-  const [finishing, setFinishing] = useState(false);
   const [done, setDone] = useState(false);
 
   const total = data.items.length;
@@ -73,7 +72,6 @@ function DictationCard({ task, data, onDone }: { task: Task; data: DictData; onD
       });
     }
     if (idx + 1 >= total) {
-      setFinishing(true);
       setDone(true);
       onDone();
     } else {
