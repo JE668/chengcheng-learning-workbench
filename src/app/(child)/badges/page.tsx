@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { getActivity, type ActivityKey } from '@/lib/activity';
+import { getActivity } from '@/lib/activity';
 import { BadgeCelebrate } from '@/components/BadgeCelebrate';
 
 type Tier = 0 | 1 | 2 | 3; // 0 未获得，1 铜，2 银，3 金
@@ -39,8 +39,12 @@ export default function BadgesPage() {
   useEffect(() => {
     let alive = true;
     Promise.all([
-      fetch('/api/story/progress').then((r) => r.json()).catch(() => ({})),
-      fetch('/api/daily-practice').then((r) => r.json()).catch(() => ({})),
+      fetch('/api/story/progress')
+        .then((r) => r.json())
+        .catch(() => ({})),
+      fetch('/api/daily-practice')
+        .then((r) => r.json())
+        .catch(() => ({})),
     ]).then(([s, d]) => {
       if (!alive) return;
       setCaptured(Array.isArray(s.captured) ? s.captured.length : 0);
@@ -57,15 +61,64 @@ export default function BadgesPage() {
 
   const badges: BadgeDef[] = useMemo(
     () => [
-      { key: 'collector', name: '萌可收藏家', emoji: '🧸', desc: '收集到的萌可数量', tiers: [10, 50, 150], value: captured },
-      { key: 'streak', name: '坚持打卡', emoji: '📅', desc: '连续完成每日一练天数', tiers: [3, 14, 30], value: streak },
-      { key: 'pinyin', name: '拼音小将', emoji: '🀄', desc: '玩拼读乐园次数', tiers: [5, 15, 30], value: act.pinyin ?? 0 },
-      { key: 'char', name: '识字小能手', emoji: '✍️', desc: '描红 + 象形字练习次数', tiers: [3, 10, 25], value: charAct },
-      { key: 'poem', name: '小诗人', emoji: '📜', desc: '古诗填空练习次数', tiers: [2, 6, 12], value: act.poem ?? 0 },
-      { key: 'math', name: '数学小星', emoji: '🔢', desc: '数学练习次数', tiers: [5, 15, 30], value: (act.math ?? 0) + (act.quiz ?? 0) },
-      { key: 'talk', name: '表达小明星', emoji: '🗣️', desc: '看图说话练习次数', tiers: [2, 5, 10], value: act.talk ?? 0 },
+      {
+        key: 'collector',
+        name: '萌可收藏家',
+        emoji: '🧸',
+        desc: '收集到的萌可数量',
+        tiers: [10, 50, 150],
+        value: captured,
+      },
+      {
+        key: 'streak',
+        name: '坚持打卡',
+        emoji: '📅',
+        desc: '连续完成每日一练天数',
+        tiers: [3, 14, 30],
+        value: streak,
+      },
+      {
+        key: 'pinyin',
+        name: '拼音小将',
+        emoji: '🀄',
+        desc: '玩拼读乐园次数',
+        tiers: [5, 15, 30],
+        value: act.pinyin ?? 0,
+      },
+      {
+        key: 'char',
+        name: '识字小能手',
+        emoji: '✍️',
+        desc: '描红 + 象形字练习次数',
+        tiers: [3, 10, 25],
+        value: charAct,
+      },
+      {
+        key: 'poem',
+        name: '小诗人',
+        emoji: '📜',
+        desc: '古诗填空练习次数',
+        tiers: [2, 6, 12],
+        value: act.poem ?? 0,
+      },
+      {
+        key: 'math',
+        name: '数学小星',
+        emoji: '🔢',
+        desc: '数学练习次数',
+        tiers: [5, 15, 30],
+        value: (act.math ?? 0) + (act.quiz ?? 0),
+      },
+      {
+        key: 'talk',
+        name: '表达小明星',
+        emoji: '🗣️',
+        desc: '看图说话练习次数',
+        tiers: [2, 5, 10],
+        value: act.talk ?? 0,
+      },
     ],
-    [captured, streak, act, charAct],
+    [captured, streak, act, charAct]
   );
 
   const earned = badges.filter((b) => tierFor(b.value, b.tiers) > 0).length;
@@ -90,19 +143,30 @@ export default function BadgesPage() {
         // 短暂延迟让页面渲染完毕再弹庆祝
         setTimeout(() => setCelebrate(newlyUpgraded), 500);
       }
-    } catch { /* 忽略 localStorage 异常 */ }
+    } catch {
+      /* 忽略 localStorage 异常 */
+    }
   }, [loading, badges]);
 
   return (
     <div className="max-w-4xl mx-auto fade-up">
-      <Link href="/home" className="text-moko-violet font-black no-underline">‹ 返回首页</Link>
+      <Link href="/home" className="text-moko-violet font-black no-underline">
+        ‹ 返回首页
+      </Link>
       <h1 className="page-title mt-2 mb-1">我的勋章墙 🏆</h1>
       <p className="text-gray-600 mb-4">
         每多学一点就能解锁一枚勋章，已经拿到 {earned} / {badges.length} 枚啦！
       </p>
 
       {loading ? (
-        <div className="rounded-3xl p-10 bg-white shadow flex flex-col items-center justify-center gap-3 text-moko-violet font-black"><span className="moko-loader"><span></span><span></span><span></span></span>加载中…</div>
+        <div className="rounded-3xl p-10 bg-white shadow flex flex-col items-center justify-center gap-3 text-moko-violet font-black">
+          <span className="moko-loader">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+          加载中…
+        </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {badges.map((b) => {
@@ -111,17 +175,22 @@ export default function BadgesPage() {
             const nextTh = b.tiers[Math.min(tier, 2)] ?? b.tiers[2];
             const remain = tier < 3 ? Math.max(0, nextTh - b.value) : 0;
             return (
-              <div key={b.key} className={`rounded-3xl p-5 shadow-lg border-2 ${meta.cls} flex flex-col items-center text-center`}>
+              <div
+                key={b.key}
+                className={`rounded-3xl p-5 shadow-lg border-2 ${meta.cls} flex flex-col items-center text-center`}
+              >
                 <div className="text-5xl mb-2">{tier === 0 ? '🔒' : b.emoji}</div>
                 <div className="text-2xl">{meta.icon}</div>
                 <h3 className="text-lg font-black text-moko-violet mt-1">{b.name}</h3>
                 <p className="text-xs text-gray-500 mt-1">{b.desc}</p>
-                <div className="mt-2 text-sm font-bold text-moko-violet">{b.value} / {b.tiers[2]}</div>
-                {tier === 0 && (
-                  <p className="text-xs text-gray-400 mt-1">再 {remain} 个解锁铜牌</p>
-                )}
+                <div className="mt-2 text-sm font-bold text-moko-violet">
+                  {b.value} / {b.tiers[2]}
+                </div>
+                {tier === 0 && <p className="text-xs text-gray-400 mt-1">再 {remain} 个解锁铜牌</p>}
                 {tier > 0 && tier < 3 && (
-                  <p className="text-xs text-gray-400 mt-1">再 {remain} 个升 {TIER_META[tier + 1].label}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    再 {remain} 个升 {TIER_META[tier + 1].label}
+                  </p>
                 )}
                 {tier === 3 && <p className="text-xs text-moko-gold font-bold mt-1">已满级 🌟</p>}
               </div>
@@ -130,7 +199,9 @@ export default function BadgesPage() {
         </div>
       )}
 
-      {celebrate.length > 0 && <BadgeCelebrate badges={celebrate} onClose={() => setCelebrate([])} />}
+      {celebrate.length > 0 && (
+        <BadgeCelebrate badges={celebrate} onClose={() => setCelebrate([])} />
+      )}
 
       <div className="mt-6 rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-purple/20">
         <h3 className="text-lg font-black text-moko-violet mb-2">💡 怎么得更多勋章</h3>

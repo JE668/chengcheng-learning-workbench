@@ -18,6 +18,11 @@ node_modules
 public/hanzi
 src/lib/moko-collection
 
+# 学科数据文件：手写排版是为可读性服务的 —— 把 '天','地','人' 挤在一行好核对生字表，
+# 让 prettier 按 printWidth=100 逐字换行会产生几百行伪 diff，掩盖真正的改动
+# （实测「清理死代码」那轮就踩过，已验证汉字序列前后完全一致）。
+src/lib/study-data/
+
 # 本地数据库
 local.db
 local.db-shm

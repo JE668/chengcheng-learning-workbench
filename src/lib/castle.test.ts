@@ -8,7 +8,6 @@ import {
   buy,
   setSkin,
   castSpray,
-  applyTimeGlass,
   grantResource,
   harvest,
   getBadges,

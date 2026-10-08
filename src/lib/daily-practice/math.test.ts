@@ -13,7 +13,6 @@ describe('genMathQ', () => {
   });
 
   it('should generate valid hard addition questions', () => {
-    const foundAdd = false;
     for (let i = 0; i < 20; i++) {
       const q = genMathQ(true);
       if (q.prompt.includes('+')) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { SCHOOL_ITEMS } from '@/lib/study-data/life';
 import { PINYIN_BLEND, type PinyinBlendItem } from '@/lib/study-data/pinyin';

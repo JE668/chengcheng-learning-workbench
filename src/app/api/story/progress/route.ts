@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
-import { storyChapters, getChapterIndex } from '@/lib/story';
+import { storyChapters } from '@/lib/story';
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user || user.role !== 'child') return NextResponse.json({ error: '无权限' }, { status: 403 });
+  if (!user || user.role !== 'child')
+    return NextResponse.json({ error: '无权限' }, { status: 403 });
   try {
     const db = getDb();
     const res = await db.execute({

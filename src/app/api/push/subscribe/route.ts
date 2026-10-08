@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { getDb } from '@/lib/db-core';
-import { getVapidPublicKey, isPushConfigured, sendPushNotification } from '@/lib/push-notifications';
+import { getVapidPublicKey, isPushConfigured } from '@/lib/push-notifications';
 import { isSafePushEndpoint } from '@/lib/push-endpoint';
 
 export async function GET() {
@@ -21,7 +21,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     if (!isPushConfigured) {
-      return NextResponse.json({ error: '服务端未配置 Web Push（VAPID 密钥缺失）' }, { status: 503 });
+      return NextResponse.json(
+        { error: '服务端未配置 Web Push（VAPID 密钥缺失）' },
+        { status: 503 }
+      );
     }
     const user = await getCurrentUser();
     if (!user) {
@@ -35,7 +38,12 @@ export async function POST(req: NextRequest) {
 
     const { subscription } = await req.json();
     const keys = subscription?.keys;
-    if (!subscription || typeof subscription.endpoint !== 'string' || !keys?.p256dh || !keys?.auth) {
+    if (
+      !subscription ||
+      typeof subscription.endpoint !== 'string' ||
+      !keys?.p256dh ||
+      !keys?.auth
+    ) {
       return NextResponse.json({ error: '无效的订阅信息' }, { status: 400 });
     }
     if (!isSafePushEndpoint(subscription.endpoint)) {
@@ -43,7 +51,7 @@ export async function POST(req: NextRequest) {
     }
 
     const db = getDb();
-    
+
     // 存储订阅信息
     await db.execute({
       sql: `INSERT INTO push_subscriptions (child_id, endpoint, p256dh, auth, created_at)
@@ -85,7 +93,7 @@ async function sendWelcomeNotification(childId: number) {
       }));
 
       const { sendPushNotification } = await import('@/lib/push-notifications');
-      
+
       await Promise.all(
         subscriptions.map(async (sub) => {
           await sendPushNotification(sub, {

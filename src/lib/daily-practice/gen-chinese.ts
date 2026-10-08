@@ -8,7 +8,7 @@ import {
   POEMS,
 } from '../study-data';
 import type { PracticeQuestion } from './types';
-import { randInt, shuffle } from './types';
+import { shuffle } from './types';
 
 /* —— 拼音：可完整发四声的音节（4 个代表字都不为空） —— */
 const PINYIN_FULL = Object.keys(PINYIN_TONES).filter((b) => PINYIN_TONES[b].every((t) => t));

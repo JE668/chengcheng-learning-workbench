@@ -7,8 +7,6 @@
  * 由 ExampleVisuals.tsx 逐幕渲染，不再用竖式套所有方法。
  */
 
-import type { AlgorithmQuestion } from './types';
-
 /** 萌可算法主题定义（不含具体题目，题目由 generators.ts 生成） */
 export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions'>[] = [
   /* ==================== 1. 凑十法 ==================== */

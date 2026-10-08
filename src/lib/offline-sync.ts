@@ -11,7 +11,12 @@ import { useOfflineStore } from './stores';
  *
  * 动作类型映射（仅实现 truly 可重放的）：
  *   - checkin → POST /api/daily-practice
+ *   - mistake → POST /api/mistakes
  * 其余未知类型保留在队列，不冒然丢弃。
+ *
+ * 关于 mistake 的幂等性：/api/mistakes 以 (child_id, subject, prompt, answer, resolved=0)
+ * 去重（SELECT 命中则 UPDATE 而非 INSERT，整段在 withWriteLock + BEGIN IMMEDIATE 内）。
+ * 因此同一道错题重放多次只会更新同一条记录，不会重复堆积。
  */
 
 const MAX_RETRIES = 5;
@@ -40,6 +45,12 @@ export async function flushOfflineQueue(): Promise<number> {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ answers: action.payload.answers }),
+        });
+      } else if (action.type === 'mistake') {
+        res = await fetch('/api/mistakes', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(action.payload),
         });
       } else {
         // 未支持的类型：保留，跳过

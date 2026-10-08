@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { ALL_EN_WORDS, type WordItem } from '@/lib/study-data-en';
+import { ALL_EN_WORDS } from '@/lib/study-data-en';
 
 import { speakEn, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';

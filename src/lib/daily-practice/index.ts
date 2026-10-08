@@ -1,13 +1,9 @@
 import { getDb, withWriteLock } from '../db';
 import { confirm, logGrowthEvent } from '../castle';
-import { 
-  PINYIN_TONES, applyTone, CHARACTERS, PROVERBS, ANTONYMS, RIDDLES, POEMS, 
-  WORD_PROBLEMS, ORDINALS, CLOCKS, EN_SENTENCES, ALL_EN_WORDS,
-  GRADE1_CHAR_UNITS, MATH_UNITS 
-} from '../study-data';
+import { GRADE1_CHAR_UNITS, MATH_UNITS } from '../study-data';
 import { mokoChars, subjectMokoKey, SUN_PER_SUBJECT } from '../moko';
 import { mokoCollection } from '../moko-collection';
-import { getDueMistakes, reviewMistake, type MistakeRow } from '../mistakes';
+import { getDueMistakes, reviewMistake } from '../mistakes';
 import { upsertModuleProgress, getTextbookProgress } from '../progress-store';
 import { dateStr, addDays } from '../date';
 import { MILESTONE_DAYS } from '../economy';
@@ -23,29 +19,15 @@ import type {
 } from './types';
 
 // 导入所有生成器
-import {
-  passThreshold,
-  DAILY_CORE_MODULE,
-  randInt,
-  shuffle,
-  shapeOf,
-  computePracticeStreak,
-} from './types';
+import { passThreshold, DAILY_CORE_MODULE, shuffle, computePracticeStreak } from './types';
 
 import {
-  genPinyinQ,
-  genDictationQ,
-  genChineseQuizQ,
-  genAntonymQ,
   genProverbQ,
   genRiddleQ,
-  genPoemQ,
   genUniquePinyinQ,
   genUniqueDictationQ,
   genUniqueChineseQuizQ,
   genUniqueAntonymQ,
-  genUniqueProverbQ,
-  genUniqueRiddleQ,
   genUniquePoemQ,
 } from './gen-chinese';
 
@@ -59,18 +41,9 @@ import {
   genClockQ,
 } from './gen-math';
 
-import {
-  genEnglishQ,
-  genEnPicQ,
-  genEnInitialQ,
-  genUniqueEnglishQ,
-  genUniqueEnPicQ,
-  genUniqueEnInitialQ,
-} from './gen-english';
+import { genEnPicQ, genEnInitialQ, genUniqueEnglishQ } from './gen-english';
 
-import {
-  genMistakeQ,
-} from './gen-mistake';
+import { genMistakeQ } from './gen-mistake';
 
 import { genAlgorithmQ } from './gen-algorithm';
 import { ALGORITHM_GENERATORS } from '../algorithm/generators';
@@ -94,7 +67,7 @@ export { passThreshold, DAILY_CORE_MODULE, computePracticeStreak };
 
 export async function generateQuestions(childId: number): Promise<PracticeQuestion[]> {
   const qs: PracticeQuestion[] = [];
-  
+
   // 0) 错题优先：今天到期的错题最多抽 2 题排在最前面
   try {
     const due = await getDueMistakes(childId, 6);
@@ -112,7 +85,7 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
 
   // 语文 10 题：每天随机出不同题型组合（听写/拼音/识字/反义词/谚语/谜语），保持新鲜感
   const zhPool: (() => PracticeQuestion)[] = [
-    () => genUniquePoemQ(),   // 古诗（不涉及汉字去重，直接出题）
+    () => genUniquePoemQ(), // 古诗（不涉及汉字去重，直接出题）
     // 带去重的拼音题
     () => genUniquePinyinQ(usedChars),
     () => genUniquePinyinQ(usedChars),
@@ -122,9 +95,9 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
     () => genUniqueDictationQ(usedChars),
     // 识字（看释义选字）
     () => genUniqueChineseQuizQ(usedChars),
-    () => genUniqueAntonymQ(),   // 反义词（不涉及汉字去重，是不同的词对）
-    () => genProverbQ(),   // 谚语配对（不涉及汉字去重）
-    () => genRiddleQ(),    // 谜语（不涉及汉字去重）
+    () => genUniqueAntonymQ(), // 反义词（不涉及汉字去重，是不同的词对）
+    () => genProverbQ(), // 谚语配对（不涉及汉字去重）
+    () => genRiddleQ(), // 谜语（不涉及汉字去重）
   ];
   const zhPick = shuffle(zhPool).slice(0, 10);
   for (const fn of zhPick) qs.push(fn());
@@ -137,17 +110,21 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
   // 数学 10 题：基础口算+应用题+乘法表+三位数加减+算法题等，每天随机（数字题天然不重复，无需去重）。
   // 刻意排除除法：一年级尚未学除法，避免超纲。
   const mathPool: (() => PracticeQuestion)[] = [
-    () => genMathQ(useHard(0)), () => genMathQ(useHard(1)), () => genMathQ(useHard(2)), () => genMathQ(useHard(3)),
-    () => genMathQ(useHard(4)), () => genMathQ(useHard(5)),  // 6 道口算（难度递增）
-    () => genWordProblemQ(),                                  // 应用题
-    () => genWordProblemQ(),                                  // 应用题
-    () => genWordProblemQ(),                                  // 应用题
-    () => genWordProblemQ(),                                  // 应用题
-    () => genMultiplyQ(),                                     // 乘法口诀表（2~9）
-    () => genThreeDigitAddSubQ(),                             // 三个两位数相加减
-    () => genCompareQ(),                                      // 比大小（老文件题型保留）
-    () => genOrdinalQ(),                                      // 序数（老文件题型保留）
-    () => genClockQ(),                                        // 钟表（老文件题型保留）
+    () => genMathQ(useHard(0)),
+    () => genMathQ(useHard(1)),
+    () => genMathQ(useHard(2)),
+    () => genMathQ(useHard(3)),
+    () => genMathQ(useHard(4)),
+    () => genMathQ(useHard(5)), // 6 道口算（难度递增）
+    () => genWordProblemQ(), // 应用题
+    () => genWordProblemQ(), // 应用题
+    () => genWordProblemQ(), // 应用题
+    () => genWordProblemQ(), // 应用题
+    () => genMultiplyQ(), // 乘法口诀表（2~9）
+    () => genThreeDigitAddSubQ(), // 三个两位数相加减
+    () => genCompareQ(), // 比大小（老文件题型保留）
+    () => genOrdinalQ(), // 序数（老文件题型保留）
+    () => genClockQ(), // 钟表（老文件题型保留）
     // 算法题：每天随机抽 2 道，从已掌握的算法主题中出题
     ...ALGORITHM_TOPICS.map((topic) => () => {
       const gen = ALGORITHM_GENERATORS[topic.id];
@@ -168,7 +145,7 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
     () => genEnPicQ(),
   ];
   for (const fn of enPool) qs.push(fn());
-  
+
   return qs;
 }
 
@@ -181,7 +158,7 @@ export async function computePracticeStreakFromDB(childId: number, today: string
     sql: 'SELECT day FROM daily_practice WHERE child_id = ? AND completed = 1 AND day >= ? AND day <= ? ORDER BY day DESC',
     args: [childId, start, today],
   });
-  const completedDays = new Set(res.rows.map(r => String(r.day)));
+  const completedDays = new Set(res.rows.map((r) => String(r.day)));
   let streak = 0;
   let d = today;
   while (completedDays.has(d)) {
@@ -195,17 +172,30 @@ export async function computePracticeStreakFromDB(childId: number, today: string
 /**
  * 取今天的一练数据。generate=true 且无记录时，自动生成并落库（保证刷新一致）。
  */
-export async function getTodayPractice(childId: number, generate = false): Promise<PracticeDayRecord> {
+export async function getTodayPractice(
+  childId: number,
+  generate = false
+): Promise<PracticeDayRecord> {
   const db = getDb();
   const today = dateStr();
-  let row = (await db.execute({ sql: 'SELECT * FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, today] })).rows[0];
+  let row = (
+    await db.execute({
+      sql: 'SELECT * FROM daily_practice WHERE child_id = ? AND day = ?',
+      args: [childId, today],
+    })
+  ).rows[0];
   if (!row && generate) {
     const qs = await generateQuestions(childId);
     await db.execute({
       sql: 'INSERT OR IGNORE INTO daily_practice (child_id, day, completed, correct, total, questions) VALUES (?, ?, 0, 0, ?, ?)',
       args: [childId, today, qs.length, JSON.stringify(qs)],
     });
-    row = (await db.execute({ sql: 'SELECT * FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, today] })).rows[0];
+    row = (
+      await db.execute({
+        sql: 'SELECT * FROM daily_practice WHERE child_id = ? AND day = ?',
+        args: [childId, today],
+      })
+    ).rows[0];
   } else if (row && row.questions) {
     // 缓存命中：当天已有题目，即使刷新页面也不重新生成
     // 确保孩子看到的是同一套题，不会做到一半刷新就全变了
@@ -224,12 +214,21 @@ export async function getTodayPractice(childId: number, generate = false): Promi
     const parts: string[] = [];
     if (cnUnit) parts.push(`语文第${cnUnit.chapter}单元「${cnUnit.unit}」`);
     if (mathUnit) parts.push(`数学第${mathUnit.chapter}单元「${mathUnit.unit}」`);
-    if (parts.length > 0) textbookHint = `📖 课本进度：${parts.join('，')}。每日一练的题型和课本同步，加油巩固！`;
+    if (parts.length > 0)
+      textbookHint = `📖 课本进度：${parts.join('，')}。每日一练的题型和课本同步，加油巩固！`;
   } catch {
     /* textbook progress 查询失败不影响出题 */
   }
   if (!row) {
-    return { completed: false, correct: 0, total: 0, questions: [], practiceStreak: streak, nextMilestone, textbookHint };
+    return {
+      completed: false,
+      correct: 0,
+      total: 0,
+      questions: [],
+      practiceStreak: streak,
+      nextMilestone,
+      textbookHint,
+    };
   }
   const questions: PracticeQuestion[] = row.questions
     ? safeJsonParse<PracticeQuestion[]>(String(row.questions), [])
@@ -250,23 +249,38 @@ export async function getTodayPractice(childId: number, generate = false): Promi
  * - 某科 3 题全对 → 该科打卡完成（confirm 发阳光 + 对应萌可），已确认的科不会因重做答错被取消；
  * - 三科全部确认 → 今日一练完成（completed=1），并参与连续天数 / 7 天大奖。
  */
-export async function submitPractice(childId: number, answers: number[]): Promise<PracticeSubmitResult> {
+export async function submitPractice(
+  childId: number,
+  answers: number[]
+): Promise<PracticeSubmitResult> {
   const db = getDb();
   const today = dateStr();
-  let row = (await db.execute({ sql: 'SELECT * FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, today] })).rows[0];
+  let row = (
+    await db.execute({
+      sql: 'SELECT * FROM daily_practice WHERE child_id = ? AND day = ?',
+      args: [childId, today],
+    })
+  ).rows[0];
   if (!row) {
     const qs = await generateQuestions(childId);
     await db.execute({
       sql: 'INSERT OR IGNORE INTO daily_practice (child_id, day, completed, correct, total, questions) VALUES (?, ?, 0, 0, ?, ?)',
       args: [childId, today, qs.length, JSON.stringify(qs)],
     });
-    row = (await db.execute({ sql: 'SELECT * FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, today] })).rows[0];
+    row = (
+      await db.execute({
+        sql: 'SELECT * FROM daily_practice WHERE child_id = ? AND day = ?',
+        args: [childId, today],
+      })
+    ).rows[0];
   }
-  const questions: PracticeQuestion[] = safeJsonParse<PracticeQuestion[]>(String(row.questions), []);
+  const questions: PracticeQuestion[] = safeJsonParse<PracticeQuestion[]>(
+    String(row.questions),
+    []
+  );
   const total = questions.length;
 
   // 按学科归类题目
-  const SUBJECTS: Subject[] = ['语文', '数学', '英语'];
   const bySubject: Record<Subject, PracticeQuestion[]> = { 语文: [], 数学: [], 英语: [] };
   for (const q of questions) (bySubject[q.subject] ?? bySubject['语文']).push(q);
 
@@ -349,16 +363,37 @@ export async function submitPractice(childId: number, answers: number[]): Promis
     practiceStreak = await computePracticeStreak(childId, dateStr());
     // 读 streak_rewarded + 写奖励必须在同一把写锁内，否则两个并发提交都能通过检查导致双倍奖励。
     await withWriteLock(async () => {
-      const stRow = (await db.execute({ sql: 'SELECT streak_rewarded FROM daily_practice WHERE child_id = ? AND day = ?', args: [childId, dateStr()] })).rows[0];
+      const stRow = (
+        await db.execute({
+          sql: 'SELECT streak_rewarded FROM daily_practice WHERE child_id = ? AND day = ?',
+          args: [childId, dateStr()],
+        })
+      ).rows[0];
       if (MILESTONE_DAYS.includes(practiceStreak!) && Number(stRow?.streak_rewarded ?? 0) !== 1) {
         // 先查候选萌可（图鉴里下一只未拥有的 col_ 萌可）
-        const ownedKeys = (await getDb().execute({ sql: 'SELECT moko_key FROM moko_owned WHERE child_id = ?', args: [childId] })).rows.map((r) => String(r.moko_key));
-        const candidate = mokoCollection.find((m) => m.key.startsWith('col_') && !ownedKeys.includes(m.key));
+        const ownedKeys = (
+          await getDb().execute({
+            sql: 'SELECT moko_key FROM moko_owned WHERE child_id = ?',
+            args: [childId],
+          })
+        ).rows.map((r) => String(r.moko_key));
+        const candidate = mokoCollection.find(
+          (m) => m.key.startsWith('col_') && !ownedKeys.includes(m.key)
+        );
         // +10 星星币与事件日志独立于「是否能再解锁新萌可」，
         // 否则图鉴集齐后（无候选萌可）里程碑奖励会静默消失。
-        await getDb().execute({ sql: 'UPDATE castle_state SET star_coins = star_coins + 10 WHERE child_id = ?', args: [childId] });
+        await getDb().execute({
+          sql: 'UPDATE castle_state SET star_coins = star_coins + 10 WHERE child_id = ?',
+          args: [childId],
+        });
         const mokoNote = candidate ? `解锁新萌可「${candidate.name}」，并` : '';
-        await logGrowthEvent(childId, 'milestone', '🌟', `连续 ${practiceStreak} 日一练达成！`, `${mokoNote}收获 10 星星币！`);
+        await logGrowthEvent(
+          childId,
+          'milestone',
+          '🌟',
+          `连续 ${practiceStreak} 日一练达成！`,
+          `${mokoNote}收获 10 星星币！`
+        );
         if (candidate) {
           await getDb().execute({
             sql: `INSERT INTO moko_owned (child_id, moko_key, subject, stage, stage_at, mood, status)
@@ -366,14 +401,22 @@ export async function submitPractice(childId: number, answers: number[]): Promis
                   ON CONFLICT(child_id, moko_key) DO UPDATE SET status = 'resident', mood = 3`,
             args: [childId, candidate.key],
           });
-          milestone = { mokoKey: candidate.key, mokoName: candidate.name ?? '新萌可', img: candidate.img ?? '' };
+          milestone = {
+            mokoKey: candidate.key,
+            mokoName: candidate.name ?? '新萌可',
+            img: candidate.img ?? '',
+          };
         }
-        await getDb().execute({ sql: 'UPDATE daily_practice SET streak_rewarded = 1 WHERE child_id = ? AND day = ?', args: [childId, dateStr()] });
+        await getDb().execute({
+          sql: 'UPDATE daily_practice SET streak_rewarded = 1 WHERE child_id = ? AND day = ?',
+          args: [childId, dateStr()],
+        });
       }
     });
   }
 
-  const rewards = newlyMokos.length > 0 ? { mokos: newlyMokos, sunlight: sunlightGain, prosperity } : undefined;
+  const rewards =
+    newlyMokos.length > 0 ? { mokos: newlyMokos, sunlight: sunlightGain, prosperity } : undefined;
 
   return {
     ok: true,

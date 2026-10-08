@@ -1,13 +1,49 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { speakZh, praise } from '@/lib/speak';
 
 const EMOJIS = [
-  '🍎', '🍌', '🍇', '🍓', '🍊', '🍉', '🍑', '🍒', '🥝', '🍍',
-  '🐶', '🐱', '🐰', '🐻', '🐼', '🐯', '🦁', '🐸', '🐵', '🐷',
-  '🌸', '🌻', '🌟', '⭐', '🌈', '🔥', '💧', '🌙', '☀️', '🍀',
-  '🚗', '🚀', '⚽', '🎈', '🎁', '📚', '🎈', '🍔', '🍕', '🐟',
+  '🍎',
+  '🍌',
+  '🍇',
+  '🍓',
+  '🍊',
+  '🍉',
+  '🍑',
+  '🍒',
+  '🥝',
+  '🍍',
+  '🐶',
+  '🐱',
+  '🐰',
+  '🐻',
+  '🐼',
+  '🐯',
+  '🦁',
+  '🐸',
+  '🐵',
+  '🐷',
+  '🌸',
+  '🌻',
+  '🌟',
+  '⭐',
+  '🌈',
+  '🔥',
+  '💧',
+  '🌙',
+  '☀️',
+  '🍀',
+  '🚗',
+  '🚀',
+  '⚽',
+  '🎈',
+  '🎁',
+  '📚',
+  '🎈',
+  '🍔',
+  '🍕',
+  '🐟',
 ];
 
 const TOTAL_ROUNDS = 6;
@@ -36,7 +72,13 @@ function makeRound(level: number): Round {
   return { left: base, right, diff, cols };
 }
 
-export default function SpotDifference({ onFinish, level = 1 }: { onFinish: (score: number) => void; level?: number }) {
+export default function SpotDifference({
+  onFinish,
+  level = 1,
+}: {
+  onFinish: (score: number) => void;
+  level?: number;
+}) {
   const [round, setRound] = useState(0);
   const [r, setR] = useState<Round>(() => makeRound(level));
   const [found, setFound] = useState(false);
@@ -45,7 +87,12 @@ export default function SpotDifference({ onFinish, level = 1 }: { onFinish: (sco
   const [shake, setShake] = useState<{ panel: 'l' | 'r'; i: number } | null>(null);
   const shakeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => () => { if (shakeTimer.current) clearTimeout(shakeTimer.current); }, []);
+  useEffect(
+    () => () => {
+      if (shakeTimer.current) clearTimeout(shakeTimer.current);
+    },
+    []
+  );
 
   function tap(panel: 'l' | 'r', i: number) {
     if (found) return;
@@ -95,20 +142,27 @@ export default function SpotDifference({ onFinish, level = 1 }: { onFinish: (sco
         <div className="text-3xl mb-1">🔍✨</div>
         <p className="font-bold">好奇萌可：左右两幅图只有一处不一样，圈出它！</p>
         <p className="text-xs opacity-90 mt-1">
-          第 {Math.min(round + 1, TOTAL_ROUNDS)} / {TOTAL_ROUNDS} 关 · 已得 {score} 分 · 点错 {mistakes} 次
+          第 {Math.min(round + 1, TOTAL_ROUNDS)} / {TOTAL_ROUNDS} 关 · 已得 {score} 分 · 点错{' '}
+          {mistakes} 次
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-2xl p-2 bg-white shadow border-2 border-moko-purple/20">
           <div className="text-center text-xs font-bold text-moko-purple mb-1">左图</div>
-          <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${r.cols}, minmax(0, 1fr))` }}>
+          <div
+            className="grid gap-1"
+            style={{ gridTemplateColumns: `repeat(${r.cols}, minmax(0, 1fr))` }}
+          >
             {r.left.map((_, i) => cell('l', i))}
           </div>
         </div>
         <div className="rounded-2xl p-2 bg-white shadow border-2 border-moko-purple/20">
           <div className="text-center text-xs font-bold text-moko-purple mb-1">右图</div>
-          <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${r.cols}, minmax(0, 1fr))` }}>
+          <div
+            className="grid gap-1"
+            style={{ gridTemplateColumns: `repeat(${r.cols}, minmax(0, 1fr))` }}
+          >
             {r.right.map((_, i) => cell('r', i))}
           </div>
         </div>

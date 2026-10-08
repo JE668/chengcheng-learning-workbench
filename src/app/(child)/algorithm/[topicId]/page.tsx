@@ -1,5 +1,5 @@
 import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser, resolveChildId } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/auth';
 import { getTopic } from '@/lib/algorithm/topics';
 import { genPracticeSet } from '@/lib/algorithm/generators';
 import { AlgorithmTopicClient, type PracticeSetSummary } from './client';

@@ -326,8 +326,6 @@ const CHAR_LESSON: string[] = [
   // 2025 新增：萌可趣味学园（识字/生活类）
   'proverbs', 'antonyms', 'quantifiers', 'riddles', 'safety', 'char-transform',
 ];
-const PINYIN_LESSON: string[] = ['pinyin', 'pinyin-blend', 'characters'];
-const READ_LESSON: string[] = ['texts', 'textchars', 'reading', 'finger-read', 'quiz', 'poems', 'poem-fun', 'nursery-rhymes'];
 
 /** 由 GRADE1_CHAR_UNITS 派生：按单元性质精挑相关模块 key */
 function deriveChineseUnits(): ChineseUnit[] {

@@ -88,17 +88,6 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
 
   const weekday = ['一', '二', '三', '四', '五', '六', '日'];
   // 彩虹渐变：连续打卡天数越多，颜色越鲜艳
-  const RAINBOW_COLORS = [
-    'bg-gray-100 text-gray-400', // 0 天
-    'bg-orange-100 text-orange-600', // 1 天
-    'bg-yellow-100 text-yellow-700', // 2 天
-    'bg-green-100 text-green-700', // 3 天
-    'bg-cyan-100 text-cyan-700', // 4 天
-    'bg-blue-100 text-blue-700', // 5 天
-    'bg-purple-100 text-purple-700', // 6 天
-    'rainbow-gradient text-white', // 7+ 天
-  ];
-
   // 计算从该天开始的连续打卡天数
   const getStreak = (index: number): number => {
     let streak = 0;

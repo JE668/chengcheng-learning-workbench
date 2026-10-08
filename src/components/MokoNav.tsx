@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
 import type { MokoNavEntry } from '@/lib/moko-nav-mapping';
 
 /**
@@ -24,7 +23,9 @@ export function MokoNavBtn({
       onClick={onNavigate}
       aria-label={entry.label}
       className={`relative flex flex-col items-center justify-center min-w-0 flex-1 py-1.5 rounded-2xl transition tap group ${
-        active ? 'bg-white/90 text-moko-rose shadow-lg scale-105' : 'text-white/90 hover:bg-white/15'
+        active
+          ? 'bg-white/90 text-moko-rose shadow-lg scale-105'
+          : 'text-white/90 hover:bg-white/15'
       }`}
     >
       {/* 萌可头像圆：悬停放大+摇摆原本由 framer-motion 的 whileHover 驱动，
@@ -45,7 +46,9 @@ export function MokoNavBtn({
           priority
         />
       </div>
-      <span className={`text-[10px] leading-tight mt-0.5 font-bold truncate max-w-full ${active ? 'text-moko-rose' : ''}`}>
+      <span
+        className={`text-[10px] leading-tight mt-0.5 font-bold truncate max-w-full ${active ? 'text-moko-rose' : ''}`}
+      >
         {entry.label}
       </span>
       {/* 活跃指示器（.pop-in = 原 initial/animate 的 scale 0→1） */}

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { localDate, addDaysToDate, toMistakeRow, MistakeRow } from './mistakes';
+import { localDate, addDaysToDate, toMistakeRow } from './mistakes';
 
 describe('localDate', () => {
   it('returns today when offset=0', () => {

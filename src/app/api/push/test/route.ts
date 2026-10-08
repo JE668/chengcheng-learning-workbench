@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { getDb } from '@/lib/db-core';
-import { sendPushNotification, isPushConfigured } from '@/lib/push-notifications';
+import { isPushConfigured } from '@/lib/push-notifications';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 // 这是「让服务器主动向订阅地址发请求」的动作，必须限流，避免被当作探测工具刷。
@@ -18,7 +18,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (!isPushConfigured) {
-      return NextResponse.json({ error: '服务端未配置 Web Push（VAPID 密钥缺失）' }, { status: 503 });
+      return NextResponse.json(
+        { error: '服务端未配置 Web Push（VAPID 密钥缺失）' },
+        { status: 503 }
+      );
     }
 
     const user = await getCurrentUser();
@@ -53,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { sendPushNotification } = await import('@/lib/push-notifications');
-    
+
     const results = await Promise.all(
       subscriptions.map(async (sub) => {
         try {
@@ -70,14 +73,14 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    const success = results.filter(r => r.success).length;
-    const failed = results.filter(r => !r.success).length;
+    const success = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
 
-    return NextResponse.json({ 
-      ok: true, 
-      sent: success, 
+    return NextResponse.json({
+      ok: true,
+      sent: success,
       failed,
-      total: subscriptions.length 
+      total: subscriptions.length,
     });
   } catch (error) {
     console.error('Test push error:', error);

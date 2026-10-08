@@ -17,7 +17,7 @@
  *
  * 这些断言在鉴权被放宽时必然失败。
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { POST as settlePOST } from '@/app/api/cron/settle/route';
 import { getDb, ensureSchema } from '@/lib/db';

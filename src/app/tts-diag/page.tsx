@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { getTTSOrchestrator } from '@/lib/tts/orchestrator';
-import { logger } from '@/lib/logger';
-
 /**
  * TTS 诊断页（仅在出问题的设备上手动打开，例如 https://你的域名/tts-diag）。
  * 目的：确认「读古诗词 / 各模块语音」到底走的是「服务端 TTS（跨设备一致普通话）」

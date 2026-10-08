@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { STUDY_MODULES } from '@/lib/study-modules';
-
 /**
  * 学习模块搜索栏：客户端过滤，不影响服务端渲染的模块进度数据。
  * 接收模块数据后在前端按关键词实时过滤。
@@ -11,7 +9,10 @@ export default function StudySearch({
   moduleData,
   children,
 }: {
-  moduleData: Record<string, { key: string; label: string; emoji: string; desc: string; color: string }[]>;
+  moduleData: Record<
+    string,
+    { key: string; label: string; emoji: string; desc: string; color: string }[]
+  >;
   children: (filtered: Record<string, any[]>) => React.ReactNode;
 }) {
   const [query, setQuery] = useState('');
@@ -20,10 +21,7 @@ export default function StudySearch({
   for (const [subject, modules] of Object.entries(moduleData)) {
     filtered[subject] = query
       ? modules.filter(
-          (m) =>
-            m.label.includes(query) ||
-            m.desc.includes(query) ||
-            m.key.includes(query)
+          (m) => m.label.includes(query) || m.desc.includes(query) || m.key.includes(query)
         )
       : modules;
   }

@@ -6,6 +6,7 @@ import { CHARACTERS } from '@/lib/study-data/characters';
 import { GRADE1_CHAR_UNITS } from '@/lib/study-data/units';
 
 import { speakZh } from '@/lib/speak';
+import { logMistake } from '@/lib/mistake-log';
 import { useModuleProgress } from '@/lib/module-progress';
 import { ModuleStars } from '@/components/study/ModuleStars';
 
@@ -103,26 +104,6 @@ export default function DictationPractice() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
-  async function logMistake(wrong: string) {
-    try {
-      await fetch('/api/mistakes', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          subject: '语文',
-          kind: '听写',
-          prompt: item.text,
-          answer: item.answer,
-          wrong,
-          source_module: 'dictation-self',
-          chapter: unit === 'ALL' ? '全册' : unit,
-        }),
-      });
-    } catch {
-      /* 离线时静默，不影响练习 */
-    }
-  }
-
   async function submit() {
     if (revealed || !input.trim()) return;
     const ok =
@@ -134,8 +115,18 @@ export default function DictationPractice() {
     if (ok) {
       setScore((s) => s + 1);
     } else {
-      await logMistake(input.trim());
-      setWrongLogged(true);
+      // 用共享实现：失败时会入离线队列，联网后自动补记。
+      // 返回值区分「已送达」与「排队中」，用于给孩子诚实反馈。
+      const delivered = await logMistake({
+        subject: '语文',
+        kind: '听写',
+        prompt: item.text,
+        answer: item.answer,
+        wrong: input.trim(),
+        sourceModule: 'dictation-self',
+        chapter: unit === 'ALL' ? '全册' : unit,
+      });
+      setWrongLogged(delivered);
     }
   }
 
@@ -295,6 +286,15 @@ export default function DictationPractice() {
             >
               {correct ? '✅ 写对啦！' : `✏️ 正确答案：${item.answer}`}
             </div>
+            {/* 诚实反馈：离线时错题是**排队等补记**，不是已经进复习本了。
+                此前这里无论成败都显示同一句承诺，等于对孩子说谎。 */}
+            {!correct && (
+              <p
+                className={`text-center text-xs font-bold ${wrongLogged ? 'text-moko-violet' : 'text-amber-600'}`}
+              >
+                {wrongLogged ? '📕 已记入复习本' : '📡 网络不稳，联网后会自动补记到复习本'}
+              </p>
+            )}
             <button
               onClick={next}
               className="w-full py-3 rounded-2xl bg-moko-yellow text-white font-black shadow hover:scale-[1.02] transition"

@@ -12,7 +12,6 @@ import {
   TICKET_PER_SUBJECT,
   COST_SPRAY,
   COST_SHIELD,
-  SHIELD_STREAK_REQ,
 } from '@/lib/economy';
 import type { Subject } from '@/lib/types';
 

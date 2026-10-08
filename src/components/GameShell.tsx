@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { mokoChars } from '@/lib/moko';
-import { sfxComplete, sfxClick, sfxStar } from '@/lib/sfx';
+import { sfxComplete, sfxClick } from '@/lib/sfx';
 import { getGameLevel, setGameLevel, recordGameResult, getGameBest } from '@/lib/game-difficulty';
 
 export default function GameShell({
@@ -18,7 +18,11 @@ export default function GameShell({
   title: string;
   mokoKey: string;
   levels?: { name: string; tag: string }[];
-  children: (props: { onFinish: (score: number) => void; started: boolean; level: number }) => React.ReactNode;
+  children: (props: {
+    onFinish: (score: number) => void;
+    started: boolean;
+    level: number;
+  }) => React.ReactNode;
   onScore?: () => void;
 }) {
   const [started, setStarted] = useState(false);
@@ -36,7 +40,9 @@ export default function GameShell({
 
   async function handleFinish(finalScore: number) {
     setScore(finalScore);
-    try { sfxComplete(); } catch {}
+    try {
+      sfxComplete();
+    } catch {}
     setFinished(true);
     setStarted(false);
     // 依据本次成绩调整下一局的难度档位（发挥好升档、退步降档）。
@@ -59,10 +65,18 @@ export default function GameShell({
     <div className="max-w-3xl mx-auto">
       <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
         <div className="flex items-center gap-4">
-          <Image src={moko.img || '/moko/lemei.jpg'} alt={moko.name} width={112} height={112} className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-moko-pink shadow object-cover" />
+          <Image
+            src={moko.img || '/moko/lemei.jpg'}
+            alt={moko.name}
+            width={112}
+            height={112}
+            className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-moko-pink shadow object-cover"
+          />
           <div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-moko-violet">{title}</h1>
-            <p className="text-gray-600 font-medium">{moko.name}：{moko.line}</p>
+            <p className="text-gray-600 font-medium">
+              {moko.name}：{moko.line}
+            </p>
           </div>
         </div>
       </div>
@@ -84,10 +98,14 @@ export default function GameShell({
                         setGameLevel(gameId, n);
                       }}
                       className={`tap px-5 py-3 rounded-2xl font-bold shadow transition border-2 ${
-                        active ? 'border-moko-rose bg-moko-rose/10 text-moko-rose scale-105' : 'border-gray-200 text-gray-600 hover:border-moko-pink'
+                        active
+                          ? 'border-moko-rose bg-moko-rose/10 text-moko-rose scale-105'
+                          : 'border-gray-200 text-gray-600 hover:border-moko-pink'
                       }`}
                     >
-                      <div className="text-lg">第 {n} 关 · {lv.name}</div>
+                      <div className="text-lg">
+                        第 {n} 关 · {lv.name}
+                      </div>
                       <div className="text-xs font-normal mt-0.5 opacity-80">{lv.tag}</div>
                     </button>
                   );
@@ -97,7 +115,12 @@ export default function GameShell({
           )}
           <p className="text-lg text-gray-700 mb-6">准备好接受挑战了吗？完成后可以获得积分哦！</p>
           <button
-            onClick={() => { try { sfxClick(); } catch {} setStarted(true); }}
+            onClick={() => {
+              try {
+                sfxClick();
+              } catch {}
+              setStarted(true);
+            }}
             className="tap px-10 py-4 bg-gradient-to-r from-moko-rose to-moko-pink text-white text-xl font-extrabold rounded-full shadow-lg hover:scale-105 transition"
           >
             开始游戏 ▶
@@ -116,11 +139,13 @@ export default function GameShell({
               className="confetti"
               style={{
                 left: Math.random() * 100 + '%',
-                background: ['#FF5DA0', '#C084FC', '#60A5FA', '#FACC15', '#22D3EE', '#6EE7B7'][i % 6],
+                background: ['#FF5DA0', '#C084FC', '#60A5FA', '#FACC15', '#22D3EE', '#6EE7B7'][
+                  i % 6
+                ],
                 animationDelay: Math.random() * 0.5 + 's',
-                animationDuration: (2 + Math.random() * 2) + 's',
-                width: (6 + Math.random() * 8) + 'px',
-                height: (6 + Math.random() * 8) + 'px',
+                animationDuration: 2 + Math.random() * 2 + 's',
+                width: 6 + Math.random() * 8 + 'px',
+                height: 6 + Math.random() * 8 + 'px',
               }}
             />
           ))}
@@ -128,7 +153,9 @@ export default function GameShell({
             <div className="text-7xl mb-4">🎉</div>
             <h2 className="text-3xl font-extrabold text-moko-violet mb-2">太棒了！</h2>
             <p className="text-xl text-moko-rose font-bold mb-4">{msg || `获得 ${score} 积分！`}</p>
-            <p className="text-sm text-gray-400 mb-4">🏆 历史最高分：{Math.max(getGameBest(gameId), score)} 分</p>
+            <p className="text-sm text-gray-400 mb-4">
+              🏆 历史最高分：{Math.max(getGameBest(gameId), score)} 分
+            </p>
             <div className="flex justify-center gap-3">
               <button
                 onClick={() => {

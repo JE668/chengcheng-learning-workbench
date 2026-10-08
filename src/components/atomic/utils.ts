@@ -1,4 +1,3 @@
-import { cva, type VariantProps } from 'class-variance-authority';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -13,12 +12,14 @@ export function cn(...inputs: Parameters<typeof clsx>) {
 /**
  * Focus 可见样式 - 统一无障碍焦点环
  */
-export const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900';
+export const focusRing =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900';
 
 /**
  * 禁用状态样式
  */
-export const disabledStyles = 'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed';
+export const disabledStyles =
+  'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed';
 
 /**
  * 过渡动画基础类

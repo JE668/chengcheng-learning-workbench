@@ -15,21 +15,6 @@ import { randInt, shuffle } from '@/lib/daily-practice/types';
 const inp = (stepId: string, idx: number) => `${stepId}-${idx}`;
 
 /** 创建单步输入框 */
-const makeInput = (
-  stepId: string,
-  idx: number,
-  expectedValue: number,
-  prefix?: string,
-  suffix?: string,
-  placeholder?: string
-): StepInput => ({
-  id: inp(stepId, idx),
-  prefix,
-  suffix,
-  expectedValue,
-  placeholder: (placeholder ?? String(expectedValue).length > 1) ? '?' : '数字',
-});
-
 /** 创建单步 */
 const makeStep = (
   id: string,

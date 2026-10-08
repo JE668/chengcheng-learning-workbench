@@ -75,8 +75,32 @@ test.describe('家长管理流程', () => {
     // 一旦留下副作用，后续所有以 cara/0000 登录的用例（learning.spec 的
     // beforeEach 就是）会集体失败 —— 且表现为「一堆无关用例红」，极难定位。
     // 因此这里必须自己把密码改回去（finally 保证失败时也还原）。
+    //
+    // ⚠️ 还原必须走 **API**，不能走 UI：原先的 finally 又点了一次设置页表单，
+    // 只要此时页面状态不对（前一步断言超时、导航中断等），还原就会一起失败，
+    // 毒数据留在库里。实测已发生过一次：连续两轮 e2e 之后 cara/0000 全部 401，
+    // 一轮里 11 个看似无关的用例集体变红。
+    // 这里改用 page.request —— 复用同一 context 的登录态，不依赖页面能否渲染。
     const CARD = 'div.card-moko';
     const ORIGINAL_PW = '0000';
+    const CHILD_USERNAME = 'cara';
+
+    /** 直接打接口还原，并**断言真的还原成功**：失败要立刻可见，不能留给后面的用例当谜题。 */
+    const restoreViaApi = async () => {
+      const res = await page.request.post('/api/child/password', {
+        data: { childUsername: CHILD_USERNAME, newPassword: ORIGINAL_PW },
+      });
+      expect(
+        res.ok(),
+        `还原 cara 密码失败（HTTP ${res.status()}）—— 后续所有 cara 登录用例都会红`
+      ).toBeTruthy();
+      // 二次确认：用还原后的密码真的能登录（防止「接口说 ok 但没生效」）
+      const login = await page.request.post('/api/auth/login', {
+        data: { username: CHILD_USERNAME, password: ORIGINAL_PW },
+      });
+      expect(login.ok(), '还原后仍无法用原密码登录，数据库已中毒').toBeTruthy();
+    };
+
     const setChildPassword = async (pw: string) => {
       await page.goto('/settings');
       const card = page.locator(CARD).filter({ hasText: '修改孩子密码' });
@@ -93,7 +117,7 @@ test.describe('家长管理流程', () => {
       const card = page.locator(CARD).filter({ hasText: '修改孩子密码' });
       await expect(card.getByText('孩子密码已更新')).toBeVisible({ timeout: 10000 });
     } finally {
-      await setChildPassword(ORIGINAL_PW);
+      await restoreViaApi();
     }
   });
 });

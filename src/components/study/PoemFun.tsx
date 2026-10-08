@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { POEMS, POEM_PICTURE_Q, type PoemItem } from '@/lib/study-data/poems';
 

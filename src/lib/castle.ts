@@ -43,7 +43,6 @@ import {
   logGrowthEvent,
   getGrowthDiary,
   getMokoProgress,
-  shuffle,
 } from './castle-core';
 import { settleCastle } from './castle-penalty';
 

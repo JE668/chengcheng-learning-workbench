@@ -8,46 +8,6 @@ import { StudyClient } from './StudyClient';
 
 export const dynamic = 'force-dynamic';
 
-const cards = [
-  {
-    key: 'chinese',
-    label: '语文城堡',
-    sub: '爱心萌可陪你学拼音、识字、古诗、描红',
-    img: '/moko/heartping.jpg',
-    color: 'bg-moko-pink',
-    border: 'border-moko-pink/30',
-  },
-  {
-    key: 'math',
-    label: '数学星球',
-    sub: '正正萌可带你认数、比较、看角、练加减',
-    img: '/moko/courageping.jpg',
-    color: 'bg-moko-blue',
-    border: 'border-moko-blue/30',
-  },
-  {
-    key: 'english',
-    label: '英语乐园',
-    sub: '唱唱萌可教你字母、单词、听读练习',
-    img: '/moko/singping.jpg',
-    color: 'bg-moko-yellow',
-    border: 'border-moko-yellow/30',
-  },
-];
-
-const TOOLS = [
-  { href: '/study/talk', emoji: '🗣️', title: '看图说话', sub: '看场景说 3 句话，录下自己的声音' },
-  { href: '/study/picto', emoji: '🌟', title: '象形字变变变', sub: '汉字怎么从「画」变成「字」' },
-  { href: '/study/trace', emoji: '✍️', title: '描红跟写', sub: '米字格描红范字，听读音记字形' },
-  {
-    href: '/study/poem-fill',
-    emoji: '📜',
-    title: '古诗填空背诵',
-    sub: '从字卡补全古诗，填对听萌可念',
-  },
-  { href: '/study/eye', emoji: '💆', title: '护眼小操', sub: '四节眼保健操，看书久了做一遍' },
-];
-
 interface Rec {
   resumeHref: string;
   resumeLabel: string;
