@@ -18,7 +18,6 @@ local.db-wal
 # 本地专用配置（macOS 13 使用系统 Chrome，CI 不受影响）
 playwright.config.local.mts
 .DS_Store
-.vercel
 .env*
 
 # Python deps for PDF splitting script (not committed)

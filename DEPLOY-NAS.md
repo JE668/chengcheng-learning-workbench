@@ -6,11 +6,13 @@
 ---
 
 ## 一、前置条件
+
 - NAS 已安装 Docker（群晖 Container Manager / 威联通 Container Station）。
 - 在 NAS 上克隆本仓库到一个共享文件夹，例如 `/volume1/docker/chengcheng/chengcheng-workbench`。
 - 有终端/SSH 进入 NAS，或直接在 NAS 的「计划任务 / 终端」里跑命令。
 
 ## 一之二、飞牛OS（FnOS）专属说明
+
 飞牛OS 基于 Debian，自带「容器」应用（底层就是标准 Docker），所以本包的
 `docker-compose.yml` 与脚本**原样可用**，只需注意下面几点：
 
@@ -45,13 +47,16 @@ docker compose up -d --build
 
 启动后访问 `http://<NAS内网IP>:3000`。
 首次打开时根布局会自动建库并写入初始账号，无需手动 seed：
+
 - 家长端：`parent` / `12345678`
 - 孩子端：`cara` / `0000`
 
 ## 三、外网访问（孩子在爷爷奶奶家 / 户外也能用）
+
 任选其一，都免费：
 
 **A. Cloudflare Tunnel（推荐，最省事、自带 HTTPS、隐藏你家 IP）**
+
 ```bash
 # 在 NAS 或任一台内网机器装 cloudflared 后：
 cloudflared tunnel --url http://localhost:3000
@@ -60,23 +65,28 @@ cloudflared tunnel --url http://localhost:3000
 ```
 
 **B. DDNS + 路由器端口转发 + 证书**
+
 - 群晖/威联通自带 DDNS；或在路由器做 3000→3000 转发。
 - HTTPS：用 NAS 的证书申请（Let's Encrypt）或反代（Nginx Proxy Manager）给域名签证书。
-- 注意：Vercel 站是 https 才需 NAS https；**整站 NAS 同域，只要你访问用 https 即可**，混合内容问题不存在。
+- 注意：**整站 NAS 同域，只要你访问用 https 即可**，混合内容问题不存在。
 
 **C. 反向代理 + HTTPS（本项目推荐形态，公网 IP 机器适用）**
 本项目按「反代终止 HTTPS」设计：容器内 Next.js 只监听 http://:3000，前面由 Nginx / Nginx Proxy Manager / Caddy 反代出 443。与 A/B 相比：不暴露 3000 端口、隐藏真实 IP、适合有固定公网 IP 的 NAS（如飞牛）。
+
 - **登录 cookie 的 secure 标记自动判断**：后端优先看反代透传的 `x-forwarded-proto`（取第一个值）。Nginx Proxy Manager 及 Nginx 默认的 `proxy_set_header X-Forwarded-Proto $scheme;` 都会带上；若你手写配置，务必透传该头——否则容器内按 NODE_ENV=production 仍会给 cookie 打 secure，纯 http 内网访问时浏览器会拒收该 cookie（表现为「登录后立刻回到未登录」）。
 - **媒体与应用同域**：/textbooks、/raz 与被代理的页面同一域名，无混合内容问题。
 - 反代一律把 / 转发到 `http://127.0.0.1:3000` 即可（WebSocket 若启用也可正常穿透，本项目暂未用到 ws 反向场景）。
 
 ## 四、数据持久化（重点）
+
 - `./data:/data` → 容器里的 `local.db`（账号/城堡/打卡/错题）落在 NAS 卷，**重建容器不丢**。
 - 媒体走挂卷，也不进镜像。
 - 切勿把 `./data` 指向会随容器删除的位置。
 
 ### 每日自动备份（推荐）
+
 容器内自带热备份接口（`VACUUM INTO`，WAL 安全、无需停服）：
+
 - 触发：`POST /api/cron/backup`，携带 `Authorization: <CRON_SECRET>`（同定时结算密钥）；备份落在 `./data/backups/local-时间戳.db`，默认保留最近 14 份（可加 `BACKUP_KEEP_COUNT` 调整，见 .env.example）。
 - NAS 一键脚本：`scripts/backup-db.sh`（自动读 `.env` 里的 CRON_SECRET 并在容器地址本机触发）。在飞牛「计划任务」里建一条每天 03:00 的定时任务，或 crontab：
   ```cron
@@ -85,12 +95,15 @@ cloudflared tunnel --url http://localhost:3000
 - 异地容灾：把 `./data/backups/` 再 rsync 到另一台机器 / 网盘挂载点即可。
 
 ## 五、日常更新
+
 ```bash
 ./scripts/nas-update.sh
 ```
+
 拉最新代码 → 重建镜像 → 重启容器，数据库与媒体卷不受影响。
 
 ## 六、常见坑
+
 - **媒体 404**：检查 docker-compose 里两个媒体挂载路径是否指向真实的 `public/raz`、`public/textbooks`（里面应有 94 个 PDF + 97 个 MP4、17 个课本 PDF）。注意镜像**不含媒体**，挂载目录是手动拷贝的——**新增课本/绘本后必须把新文件同步到 NAS 的 media 目录**，否则页面上能看到入口但点开 404。本地可用 `pnpm check-media` 校验仓库内媒体完整性，或在 NAS 上 `node scripts/check-media.mjs /vol1/1000/Docker/chengcheng-workbench/media` 校验挂载目录。
 - **媒体需登录才能看**：为避免公开库中被直接遍历/盗链，`/textbooks/`、`/raz/` 下的 PDF/MP4 已加登录门禁——未登录点开页面会跳 `/login`，直链返回 401 JSON（不影响上面 404 的排查）。
 - **容器起不来 / 端口占用**：确认 NAS 的 3000 端口没被别的容器占用（`docker logs chengcheng` 看报错）。
@@ -98,13 +111,16 @@ cloudflared tunnel --url http://localhost:3000
 - **TTS**：`api/tts` 走微软 Edge 神经嗓音，需要 NAS 能出网；若纯内网断外网，会自动降级为浏览器 Web Speech。
 
 ## 七、想换载体？
+
 本包同样适用于「国内轻量云服务器（阿里/腾讯 轻量应用服务器）」：
 把仓库 clone 到服务器，同样 `docker compose up -d --build`，再用该云服务器的固定公网 IP + Let's Encrypt 提供 HTTPS 即可（比家里 NAS 更抗断电/掉线，代价是少量年费）。
 
 ## 八、推荐升级：GitHub 预构建镜像（飞牛零编译）⭐
+
 上面的方式要在飞牛上编译 Next.js（吃 CPU/内存、也依赖飞牛能拉 npm 包）。更省事的做法：**让 GitHub Actions 在云端把镜像编好推到 GHCR，飞牛只负责 `docker pull` + 挂载媒体**，飞牛上完全不需要源码、不需要编译。
 
 ### 飞牛端只需三样
+
 1. 一个目录（如 `/vol1/chengcheng/`），放 `docker-compose.ghcr.yml`；
 2. 媒体目录 `media/raz`（来自本地 `public/raz`）、`media/textbooks`（来自本地 `public/textbooks`）；
 3. 运行：
@@ -114,19 +130,24 @@ cloudflared tunnel --url http://localhost:3000
    ```
 
 ### 镜像怎么来
+
 - 仓库根新增 `.github/workflows/build.yml`：push 到 `main` 时自动 `docker build` 并推送到 `ghcr.io/je668/chengcheng-learning-workbench:latest`（也打 commit sha 标签）。
 - 镜像**不含媒体**（`.dockerignore` 已排除 `public/raz`、`public/textbooks`），只有应用本体；媒体仍由飞牛挂载。
 - 首次构建由「push 代码」或 Actions 页手动 `workflow_dispatch` 触发。
 
 ### 飞牛怎么拉到（ghcr 可见性）
+
 - **公开包（最省事）**：GitHub → 你的头像 → Packages → 该镜像 → Settings → Change visibility → Public。之后飞牛无需登录直接 `pull`。
 - **私有包**：飞牛上先 `docker login ghcr.io -u JE668 -p <你的PAT>`，再 pull（PAT 需 `read:packages` 权限）。
 - **ghcr.io 在大陆拉取慢/受限**：在 Docker 守护进程配置镜像加速源（registry mirror），`image` 名保持 `ghcr.io/je668/chengcheng-learning-workbench:latest` 不变，不要改成第三方镜像站前缀（本仓库只推送 ghcr.io）。（镜像只拉一次会缓存）
 
 ### 日常更新
+
 GitHub 上 push 代码 → 自动出新镜像 → 飞牛执行：
+
 ```bash
 docker compose -f docker-compose.ghcr.yml pull
 docker compose -f docker-compose.ghcr.yml up -d
 ```
+
 数据库（`./data`）与媒体（`./media`）卷不受影响，数据不丢。

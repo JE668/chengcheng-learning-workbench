@@ -4,7 +4,7 @@
  * 路由：src/app/api/cron/settle/route.ts（另覆盖 lib/cron-auth.ts 的三条设计约定）
  *
  * ## 这个路由在防什么
- * /api/cron/* 是**公网可访问**的路由（Vercel Cron / NAS 计划任务会从外网打进来），
+ * /api/cron/* 是**公网可访问**的路由（NAS 计划任务 / 外部调度器会从外网打进来），
  * 唯一的闸门就是 isCronAuthorized。未授权即可触发：
  *   - 全量城堡结算（篡改所有孩子的 prosperity / starCoins）
  *   - 批量删除过期会话

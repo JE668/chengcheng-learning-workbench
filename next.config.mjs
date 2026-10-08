@@ -119,8 +119,6 @@ const sentryWebpackPluginOptions = {
   hideSourceMaps: true,
   // Disable logger
   disableLogger: true,
-  // Automatic Vercel/Netlify/Heroku deployment detection
-  automaticVercelMonitors: false,
 };
 
 const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });

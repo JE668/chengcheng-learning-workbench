@@ -37,7 +37,7 @@ export async function createSession(userId: number): Promise<string> {
     args: [token, userId],
   });
   // 顺手清理过期会话：登录是高频操作，借此把 sessions 表持续修剪，
-  // 避免 NAS 自托管（无 Vercel Cron）长期运行后 token 无限累积。
+  // 避免 NAS 自托管长期运行后 token 无限累积。
   await cleanupExpiredSessions().catch(() => {});
   return token;
 }

@@ -117,7 +117,7 @@
 | 状态管理 | Zustand（含离线打卡：断网时排队，重连后自动同步）                                                                                                  |
 | TTS      | 三层策略：Web Speech → 宽松 Web Speech → Python edge-tts 持久化进程（长文按句分块播放，适配 Android 平板；播放前预取下一段音频）                   |
 | 测试     | Vitest（517 个用例 / 54 个单测文件）+ Playwright E2E（5 spec / 36 用例，已纳入 CI 门禁）+ axe-core 无障碍；ESLint 0 警告，TypeScript strict 0 错误 |
-| 部署     | GitHub Actions → Docker 多阶段构建（~550MB）→ GHCR；支持飞牛 NAS / Vercel                                                                          |
+| 部署     | GitHub Actions → Docker 多阶段构建（~550MB）→ GHCR；面向飞牛 NAS 等自托管环境                                                                      |
 
 ## ✨ 特色功能
 

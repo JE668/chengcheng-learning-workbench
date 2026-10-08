@@ -5,7 +5,7 @@ import { dateStr } from '@/lib/date';
 import { cleanupExpiredSessions } from '@/lib/auth';
 import { isCronAuthorized } from '@/lib/cron-auth';
 
-// Vercel Cron 调用：对城堡做一次结算（捣蛋萌可捣乱/成长刷新）。多娃下遍历所有孩子。
+// 定时任务调用：对城堡做一次结算（捣蛋萌可捣乱/成长刷新）。多娃下遍历所有孩子。
 export async function POST(req: Request) {
   // 只认 Authorization 头，恒定时间比较（见 lib/cron-auth）
   if (!isCronAuthorized(req)) {

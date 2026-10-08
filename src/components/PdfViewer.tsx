@@ -7,8 +7,9 @@ import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
  *
  * 设计目标：
  *  1) 优先用 PDF.js 把每页渲染成 <canvas> —— 彻底绕开浏览器原生「下载」行为，实现只能看不能下载；
- *  2) 任何失败（PDF.js 加载/初始化/渲染抛错、弱网下取不到 PDF）都**安全降级**为内嵌 <iframe>，
- *     由 vercel.json 的 Content-Disposition: inline 保证桌面端内联显示；
+ *  2) 任何失败（PDF.js 加载/初始化/渲染抛错、弱网下取不到 PDF）都**安全降级**为内嵌 <iframe>；
+ *     内联显示由静态服务端的 `Content-Disposition: inline` 决定（自托管时需在 Nginx/Caddy
+ *     等反代上为该路径配置；缺失时桌面端浏览器多数仍会内联渲染 PDF，移动端可能触发下载）；
  *  3) 用 ErrorBoundary 接住一切未被 try/catch 兜住的同步渲染异常，绝不让整页白屏（client-side exception）。
  *
  * worker 自托管在 /pdf.worker.min.mjs（同源，不受国内访问影响）。
@@ -28,7 +29,10 @@ function PdfIframeFallback({ url }: { url: string }) {
 }
 
 /** 错误边界：接住子组件的同步渲染异常，降级为 iframe，避免整页 client-side exception 白屏 */
-class PdfErrorBoundary extends Component<{ url: string; children: ReactNode }, { hasError: boolean }> {
+class PdfErrorBoundary extends Component<
+  { url: string; children: ReactNode },
+  { hasError: boolean }
+> {
   state = { hasError: false };
   static getDerivedStateFromError() {
     return { hasError: true };
@@ -135,7 +139,9 @@ function PdfCanvas({ url, className = '' }: { url: string; className?: string })
         <div className="flex items-center justify-center text-gray-400 py-10">📄 正在加载绘本…</div>
       )}
       {status === 'error' && (
-        <div className="flex items-center justify-center text-gray-500 py-10">😢 该绘本暂不可用</div>
+        <div className="flex items-center justify-center text-gray-500 py-10">
+          😢 该绘本暂不可用
+        </div>
       )}
       <div ref={containerRef} className="w-full" />
     </div>
