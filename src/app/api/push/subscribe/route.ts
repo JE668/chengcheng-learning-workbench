@@ -52,14 +52,20 @@ export async function POST(req: NextRequest) {
 
     const db = getDb();
 
-    // 存储订阅信息
+    // ⚠️ conflict target 必须与表上真实存在的唯一约束一致。
+    // 表定义是 UNIQUE(child_id, endpoint)（migrations 的 create_push_subscriptions_table），
+    // 而这里原先写的是 ON CONFLICT(endpoint) —— SQLite 在**准备语句时**就会拒绝：
+    //   SQLITE_ERROR: ON CONFLICT clause does not match any PRIMARY KEY or UNIQUE constraint
+    // 于是 POST /api/push/subscribe **每次调用都 500**，Web Push 订阅从未成功过。
+    // 另外原 SQL 还写了 updated_at = CURRENT_TIMESTAMP，但该表**没有 updated_at 列**
+    // （只有 created_at），即便 conflict target 对了也会报 no such column。
+    // 现已换成与 UNIQUE(child_id, endpoint) 匹配、且只写存在列的版本。
     await db.execute({
       sql: `INSERT INTO push_subscriptions (child_id, endpoint, p256dh, auth, created_at)
             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(endpoint) DO UPDATE SET
+            ON CONFLICT(child_id, endpoint) DO UPDATE SET
               p256dh = excluded.p256dh,
-              auth = excluded.auth,
-              updated_at = CURRENT_TIMESTAMP`,
+              auth = excluded.auth`,
       args: [childId, subscription.endpoint, keys.p256dh, keys.auth],
     });
 
