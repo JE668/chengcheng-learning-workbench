@@ -42,19 +42,44 @@ export default function DailyPracticePage() {
   const [offlineQueued, setOfflineQueued] = useState(false);
   // 时光沙漏：是否拥有（已完成态下显示「再做一次」按钮用）
   const [hasTimeGlass, setHasTimeGlass] = useState(false);
+  /** 加载失败的原因。与「今天没有练习」必须区分开，见下方 load() 注释。 */
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  /**
+   * 拉取今日练习。
+   *
+   * ⚠️ 这里原本是 `try { fetch; setData } finally { setLoading(false) }` —— **没有 catch**，
+   * 也没有校验响应。后果是：
+   *   · 请求失败 / 返回 {error} / JSON 解析失败 → data 保持 null
+   *   · 渲染时 `q` 为 undefined → 落到下面「今天暂时没有练习哦～」的空状态
+   * 于是**接口出错被伪装成「今天本来就没题」**：孩子以为今天不用练，家长也看不出异常；
+   * e2e 里则表现为「找不到攻略按钮」这种看不出真因的失败（实测 CI 上就是这样，
+   * 而且三次重试全挂 —— 因为状态是持久的，重试不会自愈）。
+   *
+   * 现在把失败单独暴露出来，并给一个「重试」入口。
+   */
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const r = await fetch('/api/daily-practice');
+      const j = await r.json().catch(() => null);
+      if (!r.ok || !j || !Array.isArray(j.questions)) {
+        setLoadError(j?.error || `题目加载失败（HTTP ${r.status}）`);
+        return;
+      }
+      setData(j);
+      setSelected(new Array(j.questions.length).fill(-1));
+    } catch {
+      setLoadError('网络好像走神了，请稍后再试');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const r = await fetch('/api/daily-practice');
-        const j = await r.json();
-        setData(j);
-        setSelected(new Array(j.questions?.length ?? 0).fill(-1));
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+    void load();
+  }, [load]);
 
   const q: PracticeQuestion | undefined = data?.questions[idx];
 
@@ -141,6 +166,24 @@ export default function DailyPracticePage() {
           <span></span>
         </span>
         <span>萌可正在准备今天的练习…</span>
+      </div>
+    );
+  }
+
+  // ⚠️ 必须排在「今天没有练习」空状态**之前**：否则接口出错会伪装成「今天本来就没题」，
+  // 孩子以为不用练、家长看不出异常，e2e 也只得到「找不到元素」这种看不出真因的失败。
+  if (loadError) {
+    return (
+      <div className="max-w-2xl mx-auto p-10">
+        <EmptyState emoji="😵" title="题目没能加载出来" desc={loadError} />
+        <div className="text-center mt-6">
+          <button
+            onClick={() => void load()}
+            className="px-6 py-3 rounded-full bg-moko-pink text-white font-bold shadow active:scale-95 transition"
+          >
+            🔄 重试
+          </button>
+        </div>
       </div>
     );
   }
