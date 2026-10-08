@@ -52,7 +52,7 @@ export const INITIAL_SM2_STATE: SM2State = {
  * @returns Updated SM-2 state
  */
 export function calculateSM2Next(state: SM2State, quality: SM2Quality, today: string): SM2State {
-  let { easinessFactor, repetitions, interval } = state;
+  const { easinessFactor, repetitions, interval } = state;
   let nextReview: string;
 
   if (quality < 3) {
@@ -250,7 +250,7 @@ export function calculateReviewProgress(
   const weekLater = new Date(todayDate);
   weekLater.setDate(weekLater.getDate() + 7);
 
-  let totalCards = cards.length;
+  const totalCards = cards.length;
   let dueToday = 0;
   let dueThisWeek = 0;
   let matureCards = 0;
@@ -289,7 +289,7 @@ export function calculateReviewProgress(
   // 从今天往前计算连续天数
   let currentStreak = 0;
   let maxStreak = 0;
-  let checkDate = new Date(todayDate);
+  const checkDate = new Date(todayDate);
 
   for (let i = 0; i < 365; i++) {
     const dateStr = formatDate(checkDate);

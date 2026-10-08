@@ -13,7 +13,7 @@ function fmt(d: Date): Now {
   const y = d.getFullYear();
   const m = d.getMonth() + 1;
   const day = d.getDate();
-  let h = d.getHours();
+  const h = d.getHours();
   const min = d.getMinutes().toString().padStart(2, '0');
   const sec = d.getSeconds().toString().padStart(2, '0');
   const ap = h < 12 ? '上午' : '下午';

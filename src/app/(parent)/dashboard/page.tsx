@@ -78,7 +78,7 @@ export default async function DashboardPage() {
 
   // 今日完成情况（数据已在上面的 Promise.all 里取回）
   let todayDone = false;
-  let todaySubj = { 语文: false, 数学: false, 英语: false };
+  const todaySubj = { 语文: false, 数学: false, 英语: false };
   if (cId && practiceP) {
     todayDone = practiceP.completed;
     for (const r of checkinsP?.rows ?? [])
@@ -117,7 +117,7 @@ export default async function DashboardPage() {
   }
 
   // 本周积分趋势（最近 7 天每日积分）
-  let weeklyPoints: { day: string; points: number }[] = [];
+  const weeklyPoints: { day: string; points: number }[] = [];
   try {
     if (cId) {
       const weekAgo = new Date();

@@ -1,4 +1,12 @@
-import { PINYIN_TONES, applyTone, CHARACTERS, PROVERBS, ANTONYMS, RIDDLES, POEMS } from '../study-data';
+import {
+  PINYIN_TONES,
+  applyTone,
+  CHARACTERS,
+  PROVERBS,
+  ANTONYMS,
+  RIDDLES,
+  POEMS,
+} from '../study-data';
 import type { PracticeQuestion } from './types';
 import { randInt, shuffle } from './types';
 
@@ -48,7 +56,9 @@ export function genPinyinQ(): PracticeQuestion {
 export function genDictationQ(): PracticeQuestion {
   const c = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
   const han = c.char;
-  const distractors = shuffle(CHARACTERS.filter((x) => x.char !== han)).slice(0, 3).map((x) => x.char);
+  const distractors = shuffle(CHARACTERS.filter((x) => x.char !== han))
+    .slice(0, 3)
+    .map((x) => x.char);
   const options = shuffle([han, ...distractors]);
   const answer = options.indexOf(han);
   return {
@@ -69,7 +79,9 @@ export function genChineseQuizQ(): PracticeQuestion {
   const safeChars = CHARACTERS.filter((c) => !c.meaning.includes(c.char));
   const pool = safeChars.length > 0 ? safeChars : CHARACTERS;
   const c = pool[Math.floor(Math.random() * pool.length)];
-  const distractors = shuffle(CHARACTERS.filter((x) => x.meaning !== c.meaning)).slice(0, 3).map((x) => x.char);
+  const distractors = shuffle(CHARACTERS.filter((x) => x.meaning !== c.meaning))
+    .slice(0, 3)
+    .map((x) => x.char);
   const options = shuffle([c.char, ...distractors]);
   const answer = options.indexOf(c.char);
   return {
@@ -107,7 +119,9 @@ export function genAntonymQ(): PracticeQuestion {
 /* 谚语配对题 */
 export function genProverbQ(): PracticeQuestion {
   const p = PROVERBS[Math.floor(Math.random() * PROVERBS.length)];
-  const distractors = shuffle(PROVERBS.filter((x) => x.second !== p.second).map((x) => x.second)).slice(0, 3);
+  const distractors = shuffle(
+    PROVERBS.filter((x) => x.second !== p.second).map((x) => x.second)
+  ).slice(0, 3);
   const options = shuffle([p.second, ...distractors]);
   const answer = options.indexOf(p.second);
   return {
@@ -125,7 +139,7 @@ export function genProverbQ(): PracticeQuestion {
 /* 谜语题 */
 export function genRiddleQ(): PracticeQuestion {
   const r = RIDDLES[Math.floor(Math.random() * RIDDLES.length)];
-  let options = shuffle([...r.options]);
+  const options = shuffle([...r.options]);
   // 确保至少有 4 个选项，使用通用干扰项而非「选项X」填充
   while (options.length < 4) {
     const filler = `都不对`;

@@ -28,7 +28,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit --skipLibCheck -p tsconfig.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -97,6 +97,7 @@
     "prettier": "^3.9.6",
     "tailwindcss": "^3.4.7",
     "typescript": "^5.5.4",
+    "typescript-eslint": "^8.46.1",
     "vite": "^6.4.3",
     "vitest": "^5.0.3"
   }

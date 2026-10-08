@@ -18,6 +18,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { safeJson } from '@/lib/safe-json';
 import { spawn } from 'node:child_process';
+import { join } from 'node:path';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -65,7 +66,7 @@ const ttsPending = new Map<string, (data: Buffer | Promise<never>) => void>();
 
 function getTtsProcess() {
   if (ttsProcess && !ttsProcess.killed) return ttsProcess;
-  const scriptPath = require('node:path').join(process.cwd(), 'scripts', 'tts-server.py');
+  const scriptPath = join(process.cwd(), 'scripts', 'tts-server.py');
   // ⚠️ 绝对不要设 `timeout`：Node 的 spawn timeout 是**进程总存活时长**硬上限，
   // 到点直接 SIGTERM。原先写了 `timeout: 30000`，与本文件通篇强调的
   // 「持久化进程避免 200-300ms 启动开销」直接矛盾 —— worker 每 30 秒必被杀一次，

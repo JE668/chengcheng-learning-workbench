@@ -162,7 +162,6 @@ export function genMakingTenQ(level: number): AlgorithmQuestion {
 export function genBreakingTenQ(level: number): AlgorithmQuestion {
   // 关卡渐进：11-15 → 11-19
   let a: number; // 被减数（十几）
-  let b: number; // 减数
   if (level <= 2) {
     a = randInt(11, 13); // 关 1-2: 11-13
   } else if (level <= 4) {
@@ -193,7 +192,7 @@ export function genBreakingTenQ(level: number): AlgorithmQuestion {
   if (a % 10 < 2) a = randInt(12, 19);
   const ones = a % 10;
   // 1 <= b <= ones：b=ones 合法（如 15-5），比原来的 ones-1 更贴近真实题型
-  b = randInt(1, ones);
+  const b = randInt(1, ones);
 
   const sub1 = 10 - b; // 10 - b 的答案
   const answer = a - b;

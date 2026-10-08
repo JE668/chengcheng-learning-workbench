@@ -73,10 +73,10 @@ function installBrowser(
     speak: (u: FakeUtterance) => {
       realSetTimeout(() => {
         if (behavior === 'cancel') {
-          u.onerror && u.onerror({ error: 'canceled' });
+          if (u.onerror) u.onerror({ error: 'canceled' });
         } else {
-          u.onstart && u.onstart();
-          u.onend && u.onend();
+          if (u.onstart) u.onstart();
+          if (u.onend) u.onend();
         }
       }, 5);
     },
@@ -97,7 +97,9 @@ function installBrowser(
     onended: (() => void) | null = null;
     onerror: (() => void) | null = null;
     play() {
-      realSetTimeout(() => this.onerror && this.onerror(), 5);
+      realSetTimeout(() => {
+        if (this.onerror) this.onerror();
+      }, 5);
       return Promise.resolve();
     }
   }

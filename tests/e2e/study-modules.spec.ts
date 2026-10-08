@@ -234,7 +234,7 @@ test.describe('Sentry 错误上报验证', () => {
 
     // 注入一个测试错误
     await page.evaluate(() => {
-      // @ts-ignore
+      // @ts-expect-error —— window.Sentry 由 @sentry/nextjs 在运行时注入，没有类型声明
       window.Sentry?.captureException?.(new Error('E2E Test Error'));
     });
 

@@ -24,8 +24,8 @@ function installBrowser(opts: { zhCN: boolean; start?: boolean }) {
     speak: (u: any) => {
       spoken.push(u);
       queueMicrotask(() => {
-        if (fireStart) u.onstart && u.onstart();
-        u.onend && u.onend();
+        if (fireStart) if (u.onstart) u.onstart();
+        if (u.onend) u.onend();
       });
     },
     cancel: () => {},
@@ -35,7 +35,9 @@ function installBrowser(opts: { zhCN: boolean; start?: boolean }) {
     onended: (() => void) | null = null;
     onerror: (() => void) | null = null;
     play() {
-      queueMicrotask(() => this.onended && this.onended());
+      queueMicrotask(() => {
+        if (this.onended) this.onended();
+      });
       return Promise.resolve();
     }
   }
