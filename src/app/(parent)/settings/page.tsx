@@ -194,7 +194,11 @@ export default function SettingsPage() {
             <button
               onClick={restoreFromFile}
               disabled={restoring}
-              className="px-5 py-2 rounded-xl bg-moko-violet text-white font-bold text-sm shadow hover:scale-105 transition active:scale-95 disabled:opacity-50"
+              // ⚠️ 必须 shrink-0 + whitespace-nowrap：
+              // 左边 input 用了 flex-1，而 flex 项默认 flex-shrink:1 —— 空间紧张时
+              // 浏览器会**压缩按钮**而不是让 input 收缩，于是「📥 恢复」被折成
+              // 「📥 恢 / 复」两行，看起来像坏掉的按钮（实测 1000px 宽就是这样）。
+              className="shrink-0 whitespace-nowrap px-5 py-2 rounded-xl bg-moko-violet text-white font-bold text-sm shadow hover:scale-105 transition active:scale-95 disabled:opacity-50"
             >
               {restoring ? '恢复中…' : '📥 恢复'}
             </button>

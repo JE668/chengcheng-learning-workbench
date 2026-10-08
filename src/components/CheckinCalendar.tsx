@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { dateStr } from '@/lib/date';
+import { formatBackfillDayLabel } from '@/lib/backfill-date';
 
 interface CalendarDay {
   day: string;
@@ -124,7 +125,7 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
                 <span className="text-4xl">⏳</span>
                 <div className="font-black text-lg text-moko-violet mt-2">补打卡？</div>
                 <div className="text-sm text-gray-600 mt-1">
-                  {confirmDay.slice(5).replace('-', '月')}月{confirmDay.slice(8)}日 只打了{' '}
+                  {formatBackfillDayLabel(confirmDay)} 只打了{' '}
                   {days.find((d) => d.day === confirmDay)?.count}/3 科
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
@@ -175,7 +176,7 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
             ) : isBrokenDay(c) ? (
               <div
                 key={ci}
-                title={`「${c.day.slice(5).replace('-', '月')}月${c.day.slice(8)}日」只打了 ${c.count}/3 科，点一下申请时光沙漏补打卡`}
+                title={`「${formatBackfillDayLabel(c.day)}」只打了 ${c.count}/3 科，点一下申请时光沙漏补打卡`}
                 onClick={() => setConfirmDay(c.day)}
                 className={
                   'h-10 rounded-xl flex flex-col items-center justify-center relative text-xs font-bold transition cursor-pointer border-2 border-dashed border-moko-violet/40 hover:border-moko-violet hover:scale-105 ' +
@@ -188,7 +189,7 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
             ) : (
               <div
                 key={ci}
-                title={`${c.day} · 打卡 ${c.count}/3 科 · 连续 ${streak} 天${c.hasTrouble ? ' · 有捣蛋萌可' : ''}`}
+                title={`${formatBackfillDayLabel(c.day)} · 打卡 ${c.count}/3 科 · 连续 ${streak} 天${c.hasTrouble ? ' · 有捣蛋萌可' : ''}`}
                 className={
                   'h-10 rounded-xl flex flex-col items-center justify-center relative text-xs font-bold transition ' +
                   dayColor(c.count, streak)
