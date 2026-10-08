@@ -1,6 +1,8 @@
 'use client';
 
-import { GRADE1_CHAR_UNITS, TEXTS, type CharUnit, type TextItem } from '@/lib/study-data';
+import { TEXTS, type TextItem } from '@/lib/study-data/texts';
+import { GRADE1_CHAR_UNITS, type CharUnit } from '@/lib/study-data/units';
+
 import { speakZh } from '@/lib/speak';
 
 /* ---------- 识字课文（按课本单元，与听写同一份生字表） ---------- */

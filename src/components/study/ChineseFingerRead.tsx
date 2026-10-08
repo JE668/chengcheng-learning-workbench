@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FINGER_READ } from '@/lib/study-data';
+
+import { FINGER_READ } from '@/lib/study-data/texts';
+
 import { speakZh } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -71,7 +73,9 @@ export function FingerReadModule() {
       <div className="rounded-3xl p-5 bg-gradient-to-br from-moko-purple to-moko-pink text-white shadow-lg text-center">
         <div className="text-4xl mb-1">👆📖</div>
         <h2 className="text-2xl font-black">指读小课堂</h2>
-        <p className="text-sm opacity-90 mt-1">爱心萌可：点一个字，听它怎么读；或点「听读」，跟着小手指一起滑过去！</p>
+        <p className="text-sm opacity-90 mt-1">
+          爱心萌可：点一个字，听它怎么读；或点「听读」，跟着小手指一起滑过去！
+        </p>
       </div>
 
       <div className="rounded-3xl p-6 bg-white shadow-xl border-2 border-moko-pink/20 text-center">
@@ -111,7 +115,9 @@ export function FingerReadModule() {
             下一句 ›
           </button>
         </div>
-        <p className="text-xs text-gray-400 mt-3">点字会单独读，标点符号不发声；「听读」会一句一句带你读。</p>
+        <p className="text-xs text-gray-400 mt-3">
+          点字会单独读，标点符号不发声；「听读」会一句一句带你读。
+        </p>
       </div>
     </div>
   );

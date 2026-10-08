@@ -1,15 +1,17 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+
 import {
+  CLOCKS,
+  NUMBERS_1120,
   POSITIONS,
   SOLID_SHAPES,
-  NUMBERS_1120,
-  CLOCKS,
+  type ClockItem,
   type PositionItem,
   type SolidShapeItem,
-  type ClockItem,
-} from '@/lib/study-data';
+} from '@/lib/study-data/math';
+
 import { speakZh } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 

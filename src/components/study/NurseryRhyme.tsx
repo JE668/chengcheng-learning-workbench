@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { NURSERY_RHYMES } from '@/lib/study-data';
+
+import { NURSERY_RHYMES } from '@/lib/study-data/chinese-fun';
+
 import { useModuleProgress } from '@/lib/module-progress';
 import { speakZh, praise } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
@@ -87,7 +89,9 @@ export function NurseryRhymeModule() {
         <div className="text-center mb-3">
           <div className="text-4xl">{rhyme.emoji}</div>
           <h3 className="text-xl font-black text-moko-pink mt-1">《{rhyme.title}》</h3>
-          <p className="text-xs text-gray-400">第 {idx + 1} 首 · 共 {NURSERY_RHYMES.length} 首</p>
+          <p className="text-xs text-gray-400">
+            第 {idx + 1} 首 · 共 {NURSERY_RHYMES.length} 首
+          </p>
           <button
             onClick={readAll}
             className="mt-2 px-4 py-1.5 rounded-full bg-moko-yellow text-white font-bold text-sm shadow active:scale-95 transition"

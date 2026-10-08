@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { IDIOMS } from '@/lib/study-data';
+
+import { IDIOMS } from '@/lib/study-data/yiketie';
+
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -86,7 +88,9 @@ export function IdiomModule() {
         </button>
         {showAnswer && (
           <div className="mt-4 rounded-xl p-4 bg-gradient-to-r from-moko-green/10 to-moko-mint/10 border-2 border-dashed border-moko-green/30 text-left">
-            <div className="text-lg font-bold text-moko-green mb-2">「{item.idiom}」缺的是「{item.blank}」</div>
+            <div className="text-lg font-bold text-moko-green mb-2">
+              「{item.idiom}」缺的是「{item.blank}」
+            </div>
             <div className="text-sm text-gray-600 mb-2">{item.meaning}</div>
             <div className="text-xs text-gray-400">例：{item.example}</div>
           </div>
@@ -98,7 +102,8 @@ export function IdiomModule() {
           下一个成语 →
         </button>
         <div className="mt-3 text-xs text-gray-400">
-          已补全 <span className="font-bold text-moko-green">{streak}</span> / {IDIOMS.length} 个 · 进度 {idx + 1}/{IDIOMS.length}
+          已补全 <span className="font-bold text-moko-green">{streak}</span> / {IDIOMS.length} 个 ·
+          进度 {idx + 1}/{IDIOMS.length}
         </div>
       </div>
     </div>

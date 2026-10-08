@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { TEXT_COMPREHENSION_QS, TEXTBOOK_TEXTS } from '@/lib/study-data';
+
+import { TEXTBOOK_TEXTS, TEXT_COMPREHENSION_QS } from '@/lib/study-data/texts';
+
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -115,7 +117,8 @@ export function TextComprehensionModule() {
           下一题 →
         </button>
         <div className="mt-2 text-xs text-gray-400 text-center">
-          连对 <span className="font-bold text-moko-green">{streak}</span> 题 · 进度 {idx + 1}/{TEXT_COMPREHENSION_QS.length}
+          连对 <span className="font-bold text-moko-green">{streak}</span> 题 · 进度 {idx + 1}/
+          {TEXT_COMPREHENSION_QS.length}
         </div>
       </div>
     </div>

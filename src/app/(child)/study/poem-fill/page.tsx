@@ -2,7 +2,10 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { POEMS, CHARACTERS } from '@/lib/study-data';
+
+import { CHARACTERS } from '@/lib/study-data/characters';
+import { POEMS } from '@/lib/study-data/poems';
+
 import { speakZh, praise } from '@/lib/speak';
 import { trackActivity } from '@/lib/activity';
 import { useModuleProgress } from '@/lib/module-progress';
@@ -74,8 +77,12 @@ export default function PoemFillPage() {
   const lines = useMemo(() => buildLines(poem.lines), [poem]);
   const blankCount = useMemo(() => lines.flat().filter((t) => t.kind === 'blank').length, [lines]);
   const blanks = useMemo(
-    () => lines.flat().filter((t): t is Extract<Token, { kind: 'blank' }> => t.kind === 'blank').map((t) => t.expected),
-    [lines],
+    () =>
+      lines
+        .flat()
+        .filter((t): t is Extract<Token, { kind: 'blank' }> => t.kind === 'blank')
+        .map((t) => t.expected),
+    [lines]
   );
 
   const [slots, setSlots] = useState<(string | null)[]>(() => Array(blankCount).fill(null));
@@ -85,7 +92,7 @@ export default function PoemFillPage() {
 
   const candidates = useMemo(
     () => shuffle([...blanks, ...pickDistractors(blanks, Math.min(3, blanks.length))]),
-    [blanks],
+    [blanks]
   );
 
   const reset = useCallback(() => {
@@ -133,7 +140,9 @@ export default function PoemFillPage() {
 
   return (
     <div className="max-w-3xl mx-auto fade-up">
-      <Link href="/study" className="text-moko-violet font-black no-underline">‹ 返回学习城堡</Link>
+      <Link href="/study" className="text-moko-violet font-black no-underline">
+        ‹ 返回学习城堡
+      </Link>
       <div className="flex items-center justify-between mt-2 mb-1">
         <h1 className="page-title">古诗填空背诵 📜</h1>
         <ModuleStars subject="chinese" moduleKey="poem-fill" />
@@ -148,15 +157,30 @@ export default function PoemFillPage() {
             <h2 className="text-2xl font-black text-moko-violet">{poem.title}</h2>
             <p className="text-sm text-gray-500">〔{poem.author}〕</p>
           </div>
-          <button onClick={readAll} className="rounded-2xl px-4 py-2 bg-moko-gold text-white font-black shadow hover:scale-105 transition text-sm">🔊 朗读全诗</button>
+          <button
+            onClick={readAll}
+            className="rounded-2xl px-4 py-2 bg-moko-gold text-white font-black shadow hover:scale-105 transition text-sm"
+          >
+            🔊 朗读全诗
+          </button>
         </div>
 
         <div className="space-y-3 text-2xl leading-relaxed font-bold tracking-wide">
           {lines.map((toks, li) => (
             <div key={li} className="flex flex-wrap items-end gap-1">
               {toks.map((t, ci) => {
-                if (t.kind === 'punct') return <span key={ci} className="text-gray-400 mx-0.5">{t.text}</span>;
-                if (t.kind === 'char') return <span key={ci} className="text-moko-violet">{t.text}</span>;
+                if (t.kind === 'punct')
+                  return (
+                    <span key={ci} className="text-gray-400 mx-0.5">
+                      {t.text}
+                    </span>
+                  );
+                if (t.kind === 'char')
+                  return (
+                    <span key={ci} className="text-moko-violet">
+                      {t.text}
+                    </span>
+                  );
                 const filled = slots[t.slot];
                 const isWrong = wrongSlot === t.slot;
                 return (
@@ -166,8 +190,8 @@ export default function PoemFillPage() {
                       isWrong
                         ? 'border-moko-pink bg-moko-pink/15 text-moko-pink'
                         : filled
-                        ? 'border-moko-cyan bg-moko-cyan/10 text-moko-violet'
-                        : 'border-dashed border-gray-300 text-gray-300'
+                          ? 'border-moko-cyan bg-moko-cyan/10 text-moko-violet'
+                          : 'border-dashed border-gray-300 text-gray-300'
                     }`}
                   >
                     {filled ?? '＿'}
@@ -181,7 +205,9 @@ export default function PoemFillPage() {
         {solved && (
           <div className="mt-5 rounded-2xl p-4 bg-moko-gold/15 text-center">
             <div className="text-4xl mb-1">🎉🌟🎉</div>
-            <p className="text-moko-violet font-black">太棒啦！这首诗你填对啦，跟着萌可一起背一遍吧～</p>
+            <p className="text-moko-violet font-black">
+              太棒啦！这首诗你填对啦，跟着萌可一起背一遍吧～
+            </p>
           </div>
         )}
       </div>
@@ -205,9 +231,24 @@ export default function PoemFillPage() {
           ))}
         </div>
         <div className="mt-4 flex gap-3">
-          <button onClick={reset} className="rounded-2xl px-5 py-2 bg-gray-200 text-gray-700 font-black shadow hover:scale-105 transition">🧽 重填</button>
-          <button onClick={prevPoem} className="rounded-2xl px-5 py-2 bg-moko-yellow text-white font-black shadow hover:scale-105 transition">‹ 上一首</button>
-          <button onClick={nextPoem} className="rounded-2xl px-5 py-2 bg-moko-violet text-white font-black shadow hover:scale-105 transition">下一首 ›</button>
+          <button
+            onClick={reset}
+            className="rounded-2xl px-5 py-2 bg-gray-200 text-gray-700 font-black shadow hover:scale-105 transition"
+          >
+            🧽 重填
+          </button>
+          <button
+            onClick={prevPoem}
+            className="rounded-2xl px-5 py-2 bg-moko-yellow text-white font-black shadow hover:scale-105 transition"
+          >
+            ‹ 上一首
+          </button>
+          <button
+            onClick={nextPoem}
+            className="rounded-2xl px-5 py-2 bg-moko-violet text-white font-black shadow hover:scale-105 transition"
+          >
+            下一首 ›
+          </button>
         </div>
       </div>
 

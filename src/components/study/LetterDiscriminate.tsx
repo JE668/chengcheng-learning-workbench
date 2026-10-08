@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { LETTER_PAIRS } from '@/lib/study-data';
+
+import { LETTER_PAIRS } from '@/lib/study-data/yiketie';
+
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -97,7 +99,8 @@ export function LetterDiscriminateModule() {
           下一组 →
         </button>
         <div className="mt-3 text-xs text-gray-400">
-          已辨别 <span className="font-bold text-moko-green">{streak}</span> / {LETTER_PAIRS.length} 组 · 进度 {idx + 1}/{LETTER_PAIRS.length}
+          已辨别 <span className="font-bold text-moko-green">{streak}</span> / {LETTER_PAIRS.length}{' '}
+          组 · 进度 {idx + 1}/{LETTER_PAIRS.length}
         </div>
       </div>
     </div>

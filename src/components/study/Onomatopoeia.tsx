@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ONOMATOPOEIA } from '@/lib/study-data';
+
+import { ONOMATOPOEIA } from '@/lib/study-data/yiketie';
+
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -45,7 +47,9 @@ export function OnomatopoeiaModule() {
       <div className="rounded-3xl p-5 bg-gradient-to-br from-moko-yellow to-moko-orange text-white shadow-lg text-center">
         <div className="text-4xl mb-1">🎵✨</div>
         <h2 className="text-2xl font-black">拟声词乐园</h2>
-        <p className="text-sm opacity-90 mt-1">甜甜萌可：小动物们都有自己的声音！点一点，听一听！</p>
+        <p className="text-sm opacity-90 mt-1">
+          甜甜萌可：小动物们都有自己的声音！点一点，听一听！
+        </p>
       </div>
 
       <div className="rounded-3xl p-6 bg-white shadow-lg border-2 border-moko-yellow/30 text-center">
@@ -81,7 +85,8 @@ export function OnomatopoeiaModule() {
           下一个 →
         </button>
         <div className="mt-3 text-xs text-gray-400">
-          连对 <span className="font-bold text-moko-green">{streak}</span> 个 · 进度 {idx + 1}/{ONOMATOPOEIA.length}
+          连对 <span className="font-bold text-moko-green">{streak}</span> 个 · 进度 {idx + 1}/
+          {ONOMATOPOEIA.length}
         </div>
       </div>
     </div>

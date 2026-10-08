@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { WRITING_TIPS } from '@/lib/study-data';
+
+import { WRITING_TIPS } from '@/lib/study-data/writing';
+
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -82,14 +84,18 @@ export function WritingTraceModule() {
               </div>
               {/* 字 */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className={`text-72px font-black ${step === 0 ? 'text-gray-300' : 'text-moko-cyan'}`}>
+                <span
+                  className={`text-72px font-black ${step === 0 ? 'text-gray-300' : 'text-moko-cyan'}`}
+                >
                   {item.char}
                 </span>
               </div>
             </div>
           </div>
           <div className="w-48 h-48 rounded-xl border-4 border-dashed border-moko-yellow/50 bg-moko-yellow/5 flex items-center justify-center">
-            <span className={`text-72px font-black ${step === 0 ? 'text-moko-yellow/20' : 'text-moko-yellow'}`}>
+            <span
+              className={`text-72px font-black ${step === 0 ? 'text-moko-yellow/20' : 'text-moko-yellow'}`}
+            >
               {item.char}
             </span>
           </div>
@@ -106,7 +112,8 @@ export function WritingTraceModule() {
           {step === 0 ? '👀 观察笔顺 →' : '✏️ 描红完成 →'}
         </button>
         <div className="mt-2 text-xs text-gray-400 text-center">
-          已练习 <span className="font-bold text-moko-green">{streak}</span> / {WRITING_TIPS.length} 字 · 进度 {idx + 1}/{WRITING_TIPS.length}
+          已练习 <span className="font-bold text-moko-green">{streak}</span> / {WRITING_TIPS.length}{' '}
+          字 · 进度 {idx + 1}/{WRITING_TIPS.length}
         </div>
       </div>
     </div>

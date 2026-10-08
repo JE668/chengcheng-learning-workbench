@@ -2,26 +2,88 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { PINYIN_TONES } from '@/lib/study-data';
+
+import { PINYIN_TONES } from '@/lib/study-data/pinyin';
+
 import { speakPinyin, speakZh } from '@/lib/speak';
 import { trackActivity } from '@/lib/activity';
 
 /* 真声母（不含 y/w 零声母改写，拼读阶段先不教） */
-const REAL_INITIALS = ['zh', 'ch', 'sh', 'b', 'p', 'm', 'f', 'd', 't', 'n', 'l', 'g', 'k', 'h', 'j', 'q', 'x', 'r', 'z', 'c', 's'];
+const REAL_INITIALS = [
+  'zh',
+  'ch',
+  'sh',
+  'b',
+  'p',
+  'm',
+  'f',
+  'd',
+  't',
+  'n',
+  'l',
+  'g',
+  'k',
+  'h',
+  'j',
+  'q',
+  'x',
+  'r',
+  'z',
+  'c',
+  's',
+];
 
 /* 声母呼读音（朗读用近似汉字） */
 const INITIAL_HAN: Record<string, string> = {
-  b: '波', p: '坡', m: '摸', f: '佛', d: '得', t: '特', n: '讷', l: '勒',
-  g: '哥', k: '科', h: '喝', j: '机', q: '七', x: '西',
-  zh: '知', ch: '吃', sh: '狮', r: '日', z: '资', c: '次', s: '丝',
+  b: '波',
+  p: '坡',
+  m: '摸',
+  f: '佛',
+  d: '得',
+  t: '特',
+  n: '讷',
+  l: '勒',
+  g: '哥',
+  k: '科',
+  h: '喝',
+  j: '机',
+  q: '七',
+  x: '西',
+  zh: '知',
+  ch: '吃',
+  sh: '狮',
+  r: '日',
+  z: '资',
+  c: '次',
+  s: '丝',
 };
 
 /* 韵母同音汉字（朗读用） */
 const VOWEL_HAN: Record<string, string> = {
-  a: '啊', o: '喔', e: '鹅', i: '衣', u: '乌', ü: '鱼',
-  ai: '爱', ei: '欸', ui: '微', ao: '奥', ou: '欧', iu: '优',
-  ie: '耶', üe: '月', er: '耳', an: '安', en: '恩', in: '因',
-  un: '温', ün: '云', ang: '昂', eng: '鞥', ing: '英', ong: '嗡',
+  a: '啊',
+  o: '喔',
+  e: '鹅',
+  i: '衣',
+  u: '乌',
+  ü: '鱼',
+  ai: '爱',
+  ei: '欸',
+  ui: '微',
+  ao: '奥',
+  ou: '欧',
+  iu: '优',
+  ie: '耶',
+  üe: '月',
+  er: '耳',
+  an: '安',
+  en: '恩',
+  in: '因',
+  un: '温',
+  ün: '云',
+  ang: '昂',
+  eng: '鞥',
+  ing: '英',
+  ong: '嗡',
 };
 
 const PRAISE = ['你真棒！', '太厉害啦！', '读得真好听！', '就是这样！', '萌可为你鼓掌！'];
@@ -55,8 +117,18 @@ const ALL_FINALS = Array.from(new Set(BLEND_POOL.map((b) => b.final)));
 
 /* 易混韵母（前后鼻音、平翘舌相关），高难度时优先当干扰项 */
 const CONFUSABLE: Record<string, string[]> = {
-  an: ['ang'], ang: ['an'], en: ['eng'], eng: ['en'], in: ['ing'], ing: ['in'],
-  ian: ['iang'], iang: ['ian'], un: ['ün'], ün: ['un'], üe: ['ie'], ie: ['üe'],
+  an: ['ang'],
+  ang: ['an'],
+  en: ['eng'],
+  eng: ['en'],
+  in: ['ing'],
+  ing: ['in'],
+  ian: ['iang'],
+  iang: ['ian'],
+  un: ['ün'],
+  ün: ['un'],
+  üe: ['ie'],
+  ie: ['üe'],
 };
 
 type Mode = 'blend' | 'pick';
@@ -129,7 +201,9 @@ export default function PinyinBlendPage() {
 
   return (
     <div className="relative max-w-3xl mx-auto min-h-screen p-4 fade-up">
-      <Link href="/home" className="text-sm text-moko-rose font-bold">‹ 返回首页</Link>
+      <Link href="/home" className="text-sm text-moko-rose font-bold">
+        ‹ 返回首页
+      </Link>
       <h1 className="page-title mt-2 mb-1">🀄 拼音拼读乐园</h1>
       <p className="text-gray-500 mb-4">把声母和韵母拼起来，就能读出好多字啦！</p>
 
@@ -169,11 +243,28 @@ export default function PinyinBlendPage() {
               </div>
             </div>
             <div className="flex flex-wrap justify-center gap-3 mb-4">
-              <button onClick={listenInitial} className="px-5 py-3 rounded-2xl bg-white border-2 border-moko-rose text-moko-rose font-black">🔊 听声母</button>
-              <button onClick={listenFinal} className="px-5 py-3 rounded-2xl bg-white border-2 border-moko-blue text-moko-blue font-black">🔊 听韵母</button>
-              <button onClick={listenSyllable} className="px-6 py-3 rounded-2xl bg-gradient-to-r from-moko-pink to-moko-rose text-white font-black text-lg">🔊 拼一拼</button>
+              <button
+                onClick={listenInitial}
+                className="px-5 py-3 rounded-2xl bg-white border-2 border-moko-rose text-moko-rose font-black"
+              >
+                🔊 听声母
+              </button>
+              <button
+                onClick={listenFinal}
+                className="px-5 py-3 rounded-2xl bg-white border-2 border-moko-blue text-moko-blue font-black"
+              >
+                🔊 听韵母
+              </button>
+              <button
+                onClick={listenSyllable}
+                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-moko-pink to-moko-rose text-white font-black text-lg"
+              >
+                🔊 拼一拼
+              </button>
             </div>
-            <p className="text-gray-400 text-sm">提示：先听声母、再听韵母，最后点「拼一拼」跟读～</p>
+            <p className="text-gray-400 text-sm">
+              提示：先听声母、再听韵母，最后点「拼一拼」跟读～
+            </p>
           </div>
         ) : (
           <div className="py-4">
@@ -183,13 +274,23 @@ export default function PinyinBlendPage() {
                 <span className="text-sm text-gray-500 ml-2">声母</span>
               </div>
               <span className="text-3xl font-black text-moko-violet">+ ? =</span>
-              <button onClick={listenSyllable} className="px-5 py-4 rounded-3xl bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black text-lg shadow">🔊 听一听</button>
+              <button
+                onClick={listenSyllable}
+                className="px-5 py-4 rounded-3xl bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black text-lg shadow"
+              >
+                🔊 听一听
+              </button>
             </div>
             <div className="flex items-center justify-center gap-2 mb-2">
               <span className="text-sm text-gray-400">难度</span>
-              <span className="text-moko-gold">{level >= 1 ? '⭐'.repeat(level) : ''}{'☆'.repeat(3 - level)}</span>
+              <span className="text-moko-gold">
+                {level >= 1 ? '⭐'.repeat(level) : ''}
+                {'☆'.repeat(3 - level)}
+              </span>
             </div>
-            <p className="text-center text-gray-500 mb-4">听听这个音，选出正确的韵母吧！连对会升级，连错会降级哦～</p>
+            <p className="text-center text-gray-500 mb-4">
+              听听这个音，选出正确的韵母吧！连对会升级，连错会降级哦～
+            </p>
             <div className="grid grid-cols-2 gap-3 mb-4">
               {pickOptions.map((f) => {
                 const chosen = picked === f;
@@ -222,7 +323,12 @@ export default function PinyinBlendPage() {
       </div>
 
       <div className="text-center mt-6">
-        <button onClick={next} className="px-8 py-4 rounded-3xl bg-moko-violet text-white font-black text-lg shadow hover:scale-105 transition">➡ 下一题</button>
+        <button
+          onClick={next}
+          className="px-8 py-4 rounded-3xl bg-moko-violet text-white font-black text-lg shadow hover:scale-105 transition"
+        >
+          ➡ 下一题
+        </button>
       </div>
     </div>
   );

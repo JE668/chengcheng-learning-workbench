@@ -1,15 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  STROKES,
-  RADICALS,
-  STROKE_RULES,
-  TEXT_CHAR_LESSONS,
-  SPLITS,
-  type TextCharLesson,
-  type TextCharItem,
-} from '@/lib/study-data';
+
+import { SPLITS } from '@/lib/study-data/math';
+import { TEXT_CHAR_LESSONS, type TextCharItem, type TextCharLesson } from '@/lib/study-data/texts';
+import { RADICALS, STROKES, STROKE_RULES } from '@/lib/study-data/writing';
+
 import { RAZ_BOOKS, type RazBook } from '@/lib/raz-books';
 import { speakZh, speakEn } from '@/lib/speak';
 import PdfViewer from '@/components/PdfViewer';
@@ -27,7 +23,17 @@ function shuffle<T>(arr: T[]): T[] {
 /* ============================================================
    语文 · 笔画与偏旁
    ============================================================ */
-function StrokeCard({ stroke, name, example, dir }: { stroke: string; name: string; example: string; dir: string }) {
+function StrokeCard({
+  stroke,
+  name,
+  example,
+  dir,
+}: {
+  stroke: string;
+  name: string;
+  example: string;
+  dir: string;
+}) {
   return (
     <button
       onClick={() => speakZh(`${name}，${example.replace(/\s+/g, '')}。${dir}`)}
@@ -41,7 +47,15 @@ function StrokeCard({ stroke, name, example, dir }: { stroke: string; name: stri
   );
 }
 
-function RadicalCard({ radical, name, examples }: { radical: string; name: string; examples: string[] }) {
+function RadicalCard({
+  radical,
+  name,
+  examples,
+}: {
+  radical: string;
+  name: string;
+  examples: string[];
+}) {
   return (
     <button
       onClick={() => speakZh(`${name}，${examples.join('')}`)}
@@ -62,7 +76,10 @@ export function StrokeRadicalModule() {
         <p className="text-sm text-gray-500 mb-3">记住口诀，写字就不容易写错顺序啦～</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
           {STROKE_RULES.map((r) => (
-            <div key={r.name} className="rounded-2xl p-3 bg-white shadow-lg border-2 border-moko-rose/20 text-center">
+            <div
+              key={r.name}
+              className="rounded-2xl p-3 bg-white shadow-lg border-2 border-moko-rose/20 text-center"
+            >
               <div className="text-2xl mb-1">{r.emoji}</div>
               <div className="font-bold text-moko-rose text-sm">{r.name}</div>
               <div className="text-xs text-gray-500 mt-1 leading-relaxed">{r.rhyme}</div>
@@ -112,7 +129,10 @@ export function TextCharModule() {
   return (
     <div className="grid md:grid-cols-2 gap-4">
       {TEXT_CHAR_LESSONS.map((lesson: TextCharLesson) => (
-        <div key={lesson.title} className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-pink/20">
+        <div
+          key={lesson.title}
+          className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-pink/20"
+        >
           <div className="flex items-center gap-2 mb-3">
             <span className="text-2xl">{lesson.emoji}</span>
             <h3 className="text-lg font-black text-moko-rose">{lesson.title}</h3>
@@ -182,7 +202,9 @@ export function SplitModule() {
             key={s.num}
             onClick={() => setNum(s.num)}
             className={`w-11 h-11 rounded-full font-black text-lg transition active:scale-95 ${
-              num === s.num ? 'bg-moko-blue text-white shadow' : 'bg-white text-moko-blue border-2 border-moko-blue'
+              num === s.num
+                ? 'bg-moko-blue text-white shadow'
+                : 'bg-white text-moko-blue border-2 border-moko-blue'
             }`}
           >
             {s.num}
@@ -306,7 +328,8 @@ export function RazReaderModule() {
   return (
     <div className="space-y-3">
       <p className="text-sm text-gray-500">
-        🎵 唱唱萌可带你读 RAZ AA 绘本～点开一本书，先看动画听发音，再翻绘本跟读；点「读标题」听单词发音！
+        🎵 唱唱萌可带你读 RAZ AA
+        绘本～点开一本书，先看动画听发音，再翻绘本跟读；点「读标题」听单词发音！
       </p>
       {RAZ_BOOKS.map((b) => (
         <ReaderCard key={b.id} book={b} />

@@ -1,15 +1,17 @@
 'use client';
 
 import { useRef, useState } from 'react';
+
 import {
-  WORD_PROBLEMS,
-  ORDINALS,
   CLOCK_HALF,
   COMPARE_MORE,
+  ORDINALS,
   WEEK_CALENDAR,
-  type OrdinalItem,
+  WORD_PROBLEMS,
   type ClockHalfItem,
-} from '@/lib/study-data';
+  type OrdinalItem,
+} from '@/lib/study-data/math';
+
 import { speakZh } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { StudyQuiz, type QuizItem } from './StudyQuiz';
@@ -39,7 +41,16 @@ export function MathWordProblemModule() {
     answer: p.answer,
     kind: '应用题',
   }));
-  return <StudyQuiz items={items} subject="数学" color="bg-moko-blue" textColor="text-moko-blue" autoSpeak="zh" moduleKey="word-problem" />;
+  return (
+    <StudyQuiz
+      items={items}
+      subject="数学"
+      color="bg-moko-blue"
+      textColor="text-moko-blue"
+      autoSpeak="zh"
+      moduleKey="word-problem"
+    />
+  );
 }
 
 /* ========================================================================
@@ -54,14 +65,15 @@ export function OrdinalModule() {
           {/* emoji 行 - 不加序号标签，让孩子自己数 */}
           <div className="flex flex-wrap items-center justify-center gap-2">
             {o.row.map((e, i) => (
-              <span key={i} className="w-14 h-14 flex items-center justify-center rounded-2xl bg-moko-blue/10 text-3xl shadow-sm">
+              <span
+                key={i}
+                className="w-14 h-14 flex items-center justify-center rounded-2xl bg-moko-blue/10 text-3xl shadow-sm"
+              >
                 {e}
               </span>
             ))}
           </div>
-          <div className="font-black text-lg text-moko-blue text-center">
-            {o.question}
-          </div>
+          <div className="font-black text-lg text-moko-blue text-center">{o.question}</div>
         </div>
       ),
       speak: o.question,
@@ -70,7 +82,16 @@ export function OrdinalModule() {
       kind: '序数',
     };
   });
-  return <StudyQuiz items={items} subject="数学" color="bg-moko-blue" textColor="text-moko-blue" autoSpeak="zh" moduleKey="ordinal" />;
+  return (
+    <StudyQuiz
+      items={items}
+      subject="数学"
+      color="bg-moko-blue"
+      textColor="text-moko-blue"
+      autoSpeak="zh"
+      moduleKey="ordinal"
+    />
+  );
 }
 
 /* ========================================================================
@@ -129,11 +150,23 @@ export function ClockHalfModule() {
       </div>
     ),
     speak: `现在是${c.label}`,
-    options: shuffle(CLOCK_HALF.map((x) => x.label).filter((x) => x !== c.label)).slice(0, 3).concat([c.label]),
+    options: shuffle(CLOCK_HALF.map((x) => x.label).filter((x) => x !== c.label))
+      .slice(0, 3)
+      .concat([c.label]),
     answer: c.label,
     kind: '钟表半时',
   }));
-  return <StudyQuiz items={items} subject="数学" color="bg-moko-cyan" textColor="text-moko-cyan" autoSpeak="zh" moduleKey="clock-half" roundSize={6} />;
+  return (
+    <StudyQuiz
+      items={items}
+      subject="数学"
+      color="bg-moko-cyan"
+      textColor="text-moko-cyan"
+      autoSpeak="zh"
+      moduleKey="clock-half"
+      roundSize={6}
+    />
+  );
 }
 
 /* ========================================================================
@@ -153,7 +186,16 @@ export function CompareMoreModule() {
     answer: c.answer,
     kind: '比一比',
   }));
-  return <StudyQuiz items={items} subject="数学" color="bg-moko-cyan" textColor="text-moko-cyan" autoSpeak="zh" moduleKey="compare-more" />;
+  return (
+    <StudyQuiz
+      items={items}
+      subject="数学"
+      color="bg-moko-cyan"
+      textColor="text-moko-cyan"
+      autoSpeak="zh"
+      moduleKey="compare-more"
+    />
+  );
 }
 
 /* ========================================================================
@@ -171,5 +213,14 @@ export function CalendarModule() {
     answer: c.answer,
     kind: '星期日历',
   }));
-  return <StudyQuiz items={items} subject="数学" color="bg-moko-blue" textColor="text-moko-blue" autoSpeak="zh" moduleKey="calendar" />;
+  return (
+    <StudyQuiz
+      items={items}
+      subject="数学"
+      color="bg-moko-blue"
+      textColor="text-moko-blue"
+      autoSpeak="zh"
+      moduleKey="calendar"
+    />
+  );
 }

@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { TRACE_CHARS, CHARACTERS } from '@/lib/study-data';
+
+import { CHARACTERS } from '@/lib/study-data/characters';
+import { TRACE_CHARS } from '@/lib/study-data/texts';
+
 import { speakZh } from '@/lib/speak';
 import { trackActivity } from '@/lib/activity';
 
@@ -20,33 +23,36 @@ export default function TracePage() {
 
   const size = 320; // logical canvas size
 
-  const drawGrid = useCallback((ctx: CanvasRenderingContext2D) => {
-    const s = size;
-    ctx.clearRect(0, 0, s, s);
-    // 米字格背景
-    ctx.strokeStyle = '#f3c6d6';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(6, 6, s - 12, s - 12);
-    ctx.setLineDash([6, 6]);
-    ctx.beginPath();
-    ctx.moveTo(s / 2, 6);
-    ctx.lineTo(s / 2, s - 6);
-    ctx.moveTo(6, s / 2);
-    ctx.lineTo(s - 6, s / 2);
-    // 对角线
-    ctx.moveTo(6, 6);
-    ctx.lineTo(s - 6, s - 6);
-    ctx.moveTo(s - 6, 6);
-    ctx.lineTo(6, s - 6);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    // 描红范字（浅灰）
-    ctx.fillStyle = '#d9d9d9';
-    ctx.font = `bold ${s * 0.62}px "Kaiti SC","KaiTi","STKaiti",serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(char, s / 2, s / 2 + s * 0.02);
-  }, [char]);
+  const drawGrid = useCallback(
+    (ctx: CanvasRenderingContext2D) => {
+      const s = size;
+      ctx.clearRect(0, 0, s, s);
+      // 米字格背景
+      ctx.strokeStyle = '#f3c6d6';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(6, 6, s - 12, s - 12);
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(s / 2, 6);
+      ctx.lineTo(s / 2, s - 6);
+      ctx.moveTo(6, s / 2);
+      ctx.lineTo(s - 6, s / 2);
+      // 对角线
+      ctx.moveTo(6, 6);
+      ctx.lineTo(s - 6, s - 6);
+      ctx.moveTo(s - 6, 6);
+      ctx.lineTo(6, s - 6);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // 描红范字（浅灰）
+      ctx.fillStyle = '#d9d9d9';
+      ctx.font = `bold ${s * 0.62}px "Kaiti SC","KaiTi","STKaiti",serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(char, s / 2, s / 2 + s * 0.02);
+    },
+    [char]
+  );
 
   const redraw = useCallback(() => {
     const cv = canvasRef.current;
@@ -123,7 +129,9 @@ export default function TracePage() {
 
   return (
     <div className="max-w-3xl mx-auto fade-up">
-      <Link href="/study" className="text-moko-violet font-black no-underline">‹ 返回学习城堡</Link>
+      <Link href="/study" className="text-moko-violet font-black no-underline">
+        ‹ 返回学习城堡
+      </Link>
       <h1 className="page-title mt-2 mb-1">描红跟写 ✍️</h1>
       <p className="text-gray-600 mb-5">
         沿着灰色范字一笔一画描红，写完点「下一个」换字。共 {TRACE_CHARS.length} 个字可以练。
@@ -154,21 +162,46 @@ export default function TracePage() {
               {info.meaning} · 共 {info.strokeCount} 画
             </div>
           )}
-          {info?.phrase && (
-            <div className="text-sm text-gray-400 mt-1">词语：{info.phrase}</div>
-          )}
+          {info?.phrase && <div className="text-sm text-gray-400 mt-1">词语：{info.phrase}</div>}
         </div>
 
         <div className="flex flex-wrap gap-3 justify-center mt-5">
-          <button onClick={read} className="rounded-2xl px-5 py-3 bg-moko-violet text-white font-black shadow hover:scale-105 transition">🔊 听读音</button>
-          <button onClick={readPhrase} className="rounded-2xl px-5 py-3 bg-moko-cyan text-white font-black shadow hover:scale-105 transition">📖 听词语</button>
-          <button onClick={clear} className="rounded-2xl px-5 py-3 bg-gray-200 text-gray-700 font-black shadow hover:scale-105 transition">🧽 重写</button>
+          <button
+            onClick={read}
+            className="rounded-2xl px-5 py-3 bg-moko-violet text-white font-black shadow hover:scale-105 transition"
+          >
+            🔊 听读音
+          </button>
+          <button
+            onClick={readPhrase}
+            className="rounded-2xl px-5 py-3 bg-moko-cyan text-white font-black shadow hover:scale-105 transition"
+          >
+            📖 听词语
+          </button>
+          <button
+            onClick={clear}
+            className="rounded-2xl px-5 py-3 bg-gray-200 text-gray-700 font-black shadow hover:scale-105 transition"
+          >
+            🧽 重写
+          </button>
         </div>
 
         <div className="flex items-center gap-6 mt-6">
-          <button onClick={prev} className="rounded-full w-14 h-14 bg-moko-yellow text-white font-black shadow text-2xl hover:scale-105 transition">‹</button>
-          <span className="text-gray-500 font-black">{idx + 1} / {TRACE_CHARS.length}</span>
-          <button onClick={next} className="rounded-full w-14 h-14 bg-moko-pink text-white font-black shadow text-2xl hover:scale-105 transition">›</button>
+          <button
+            onClick={prev}
+            className="rounded-full w-14 h-14 bg-moko-yellow text-white font-black shadow text-2xl hover:scale-105 transition"
+          >
+            ‹
+          </button>
+          <span className="text-gray-500 font-black">
+            {idx + 1} / {TRACE_CHARS.length}
+          </span>
+          <button
+            onClick={next}
+            className="rounded-full w-14 h-14 bg-moko-pink text-white font-black shadow text-2xl hover:scale-105 transition"
+          >
+            ›
+          </button>
         </div>
       </div>
 

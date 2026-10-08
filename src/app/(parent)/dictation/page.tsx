@@ -2,7 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { CHARACTERS, ALL_EN_WORDS, SPLITS, GRADE1_CHAR_UNITS } from '@/lib/study-data';
+
+import { ALL_EN_WORDS } from '@/lib/study-data-en';
+import { CHARACTERS } from '@/lib/study-data/characters';
+import { SPLITS } from '@/lib/study-data/math';
+import { GRADE1_CHAR_UNITS } from '@/lib/study-data/units';
 
 type Mode = 'char' | 'math' | 'en';
 
@@ -12,10 +16,28 @@ interface Item {
   kind: string;
 }
 
-const MODE_META: Record<Mode, { label: string; subject: string; tip: string; placeholder: string }> = {
-  char: { label: '语文听写', subject: '语文', tip: '每行写一个字或词，孩子听读音写下来', placeholder: '月亮\n山水\n火\n书本' },
-  math: { label: '数学口算', subject: '数学', tip: '自动生成加法口算题，孩子听题写答案', placeholder: '' },
-  en: { label: '英语听读', subject: '英语', tip: '每行写一个英文单词，孩子听音跟读/拼写', placeholder: 'apple\ncat\ndog\nred' },
+const MODE_META: Record<
+  Mode,
+  { label: string; subject: string; tip: string; placeholder: string }
+> = {
+  char: {
+    label: '语文听写',
+    subject: '语文',
+    tip: '每行写一个字或词，孩子听读音写下来',
+    placeholder: '月亮\n山水\n火\n书本',
+  },
+  math: {
+    label: '数学口算',
+    subject: '数学',
+    tip: '自动生成加法口算题，孩子听题写答案',
+    placeholder: '',
+  },
+  en: {
+    label: '英语听读',
+    subject: '英语',
+    tip: '每行写一个英文单词，孩子听音跟读/拼写',
+    placeholder: 'apple\ncat\ndog\nred',
+  },
 };
 
 function rand<T>(arr: T[], n: number): T[] {
@@ -52,7 +74,10 @@ export default function DictationPage() {
 
   const build = (): Item[] => {
     if (mode === 'math') return genMath(count);
-    const lines = manual.split('\n').map((s) => s.trim()).filter(Boolean);
+    const lines = manual
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
     if (mode === 'char') {
       // 按单元一键听写：取该单元词语（无词语则用生字）
       if (unit) {
@@ -68,7 +93,11 @@ export default function DictationPage() {
     }
     // en
     if (lines.length) return lines.map((w) => ({ prompt: w, answer: w, kind: 'english' }));
-    return rand(ALL_EN_WORDS, count).map((w) => ({ prompt: w.word, answer: w.word, kind: 'english' }));
+    return rand(ALL_EN_WORDS, count).map((w) => ({
+      prompt: w.word,
+      answer: w.word,
+      kind: 'english',
+    }));
   };
 
   const onPreview = () => setPreview(build());
@@ -113,16 +142,24 @@ export default function DictationPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Link href="/tasks" className="text-moko-violet font-black no-underline">‹ 返回任务</Link>
+      <Link href="/tasks" className="text-moko-violet font-black no-underline">
+        ‹ 返回任务
+      </Link>
       <h1 className="page-title mt-2 mb-1">布置听写 / 口算 📝</h1>
-      <p className="text-gray-600 mb-4">选好科目和内容，孩子端会用语音读出来，写完点「会了/还不会」，不会的自动进错题本。</p>
+      <p className="text-gray-600 mb-4">
+        选好科目和内容，孩子端会用语音读出来，写完点「会了/还不会」，不会的自动进错题本。
+      </p>
 
       <div className="card-moko mb-4">
         <div className="flex gap-2 mb-4">
           {(Object.keys(MODE_META) as Mode[]).map((m) => (
             <button
               key={m}
-              onClick={() => { setMode(m); setPreview([]); setUnit(''); }}
+              onClick={() => {
+                setMode(m);
+                setPreview([]);
+                setUnit('');
+              }}
               className={`flex-1 py-3 rounded-2xl font-black ${mode === m ? 'bg-moko-violet text-white' : 'bg-white text-moko-violet border-2 border-moko-purple/20'}`}
             >
               {MODE_META[m].label}
@@ -169,13 +206,26 @@ export default function DictationPage() {
           <label className="text-sm font-bold text-moko-violet">
             {mode === 'math' ? '题数' : '随机抽数量'}：
             <input
-              type="number" min={1} max={30} value={count}
+              type="number"
+              min={1}
+              max={30}
+              value={count}
               onChange={(e) => setCount(Math.max(1, Math.min(30, Number(e.target.value) || 1)))}
               className="ml-2 w-16 rounded-xl border-2 border-moko-purple/20 p-1 text-center"
             />
           </label>
-          <button onClick={onGenRandom} className="px-4 py-2 rounded-2xl bg-moko-cyan text-white font-black shadow hover:scale-105 transition">🎲 随机生成 {mode === 'math' ? '口算' : '内容'}</button>
-          <button onClick={onPreview} className="px-4 py-2 rounded-2xl bg-white border-2 border-moko-violet text-moko-violet font-black hover:scale-105 transition">👀 预览</button>
+          <button
+            onClick={onGenRandom}
+            className="px-4 py-2 rounded-2xl bg-moko-cyan text-white font-black shadow hover:scale-105 transition"
+          >
+            🎲 随机生成 {mode === 'math' ? '口算' : '内容'}
+          </button>
+          <button
+            onClick={onPreview}
+            className="px-4 py-2 rounded-2xl bg-white border-2 border-moko-violet text-moko-violet font-black hover:scale-105 transition"
+          >
+            👀 预览
+          </button>
         </div>
       </div>
 
@@ -205,7 +255,9 @@ export default function DictationPage() {
         <label>
           <span className="text-sm font-bold text-moko-violet">积分</span>
           <input
-            type="number" min={1} value={points}
+            type="number"
+            min={1}
+            value={points}
             onChange={(e) => setPoints(Math.max(1, Number(e.target.value) || 1))}
             className="w-20 mt-1 rounded-2xl border-2 border-moko-purple/20 p-3 text-center text-moko-violet font-bold"
           />
@@ -219,7 +271,11 @@ export default function DictationPage() {
         </button>
       </div>
 
-      {msg && <div className="rounded-2xl p-3 bg-moko-gold/15 text-moko-violet font-bold text-center">{msg}</div>}
+      {msg && (
+        <div className="rounded-2xl p-3 bg-moko-gold/15 text-moko-violet font-bold text-center">
+          {msg}
+        </div>
+      )}
     </div>
   );
 }

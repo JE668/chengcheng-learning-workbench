@@ -1,7 +1,9 @@
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { getModuleProgressAll, getTextbookProgress } from '@/lib/progress-store';
 import { STUDY_MODULES, SUBJECT_META } from '@/lib/study-modules';
-import { GRADE1_CHAR_UNITS } from '@/lib/study-data';
+
+import { GRADE1_CHAR_UNITS } from '@/lib/study-data/units';
+
 import { StudyClient } from './StudyClient';
 
 export const dynamic = 'force-dynamic';
@@ -37,7 +39,12 @@ const TOOLS = [
   { href: '/study/talk', emoji: '🗣️', title: '看图说话', sub: '看场景说 3 句话，录下自己的声音' },
   { href: '/study/picto', emoji: '🌟', title: '象形字变变变', sub: '汉字怎么从「画」变成「字」' },
   { href: '/study/trace', emoji: '✍️', title: '描红跟写', sub: '米字格描红范字，听读音记字形' },
-  { href: '/study/poem-fill', emoji: '📜', title: '古诗填空背诵', sub: '从字卡补全古诗，填对听萌可念' },
+  {
+    href: '/study/poem-fill',
+    emoji: '📜',
+    title: '古诗填空背诵',
+    sub: '从字卡补全古诗，填对听萌可念',
+  },
   { href: '/study/eye', emoji: '💆', title: '护眼小操', sub: '四节眼保健操，看书久了做一遍' },
 ];
 
@@ -79,9 +86,7 @@ async function loadRecommend(): Promise<{
   const readIdx = tb['chinese'] ?? 0;
   const nextUnit = GRADE1_CHAR_UNITS.find((u) => u.chapter === readIdx);
   const nextLabel = nextUnit ? `第 ${nextUnit.chapter} 单元 · ${nextUnit.unit}` : '';
-  const nextHref = nextUnit
-    ? `/study/chinese?chapter=${nextUnit.chapter}`
-    : '/study/chinese';
+  const nextHref = nextUnit ? `/study/chinese?chapter=${nextUnit.chapter}` : '/study/chinese';
 
   return { resumeHref, resumeLabel, nextHref, nextLabel };
 }

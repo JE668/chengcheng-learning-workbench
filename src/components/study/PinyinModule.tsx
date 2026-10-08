@@ -1,19 +1,29 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+
 import {
   PINYIN_GROUPS,
   PINYIN_HAN,
   PINYIN_TONES,
   applyTone,
   type PinyinItem,
-} from '@/lib/study-data';
+} from '@/lib/study-data/pinyin';
+
 import { speakPinyin } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
 const TONE_SIGNS = ['ˉ', '´', 'ˇ', '`'];
 
-function PinyinCard({ item, done, onDone }: { item: PinyinItem; done?: boolean; onDone?: () => void }) {
+function PinyinCard({
+  item,
+  done,
+  onDone,
+}: {
+  item: PinyinItem;
+  done?: boolean;
+  onDone?: () => void;
+}) {
   const [show, setShow] = useState(false);
   const [tone, setTone] = useState<number | null>(null);
   const tones = PINYIN_TONES[item.pinyin];
@@ -42,16 +52,16 @@ function PinyinCard({ item, done, onDone }: { item: PinyinItem; done?: boolean; 
           : 'bg-gradient-to-br from-moko-pink to-moko-rose text-white'
       }`}
     >
-      <div className={`text-4xl font-black mb-1 ${done ? 'text-green-600' : ''}`}>{done ? '✅ ' : ''}{display}</div>
+      <div className={`text-4xl font-black mb-1 ${done ? 'text-green-600' : ''}`}>
+        {done ? '✅ ' : ''}
+        {display}
+      </div>
       <div className={`text-sm ${done ? 'text-green-600' : 'opacity-90'}`}>
         {show ? item.examples.join(' · ') : done ? '认识啦！' : '点我读一读'}
       </div>
 
       {tones && (
-        <div
-          className="mt-2 grid grid-cols-4 gap-1"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="mt-2 grid grid-cols-4 gap-1" onClick={(e) => e.stopPropagation()}>
           {([1, 2, 3, 4] as const).map((t) => {
             const han = tones[t - 1];
             const disabled = !han;
@@ -78,9 +88,7 @@ function PinyinCard({ item, done, onDone }: { item: PinyinItem; done?: boolean; 
                 }
               >
                 <span className="text-base">{TONE_SIGNS[t - 1]}</span>
-                <span className="text-[10px] mt-0.5 h-3 overflow-hidden">
-                  {han || '·'}
-                </span>
+                <span className="text-[10px] mt-0.5 h-3 overflow-hidden">{han || '·'}</span>
               </button>
             );
           })}
@@ -143,7 +151,9 @@ export default function PinyinModule() {
             ‹ 返回拼音组
           </button>
           <h2 className="text-xl font-black text-moko-rose">🔤 {activeData.group}</h2>
-          <span className="text-sm font-bold text-gray-400">已会 {doneItems.size}/{activeData.items.length}</span>
+          <span className="text-sm font-bold text-gray-400">
+            已会 {doneItems.size}/{activeData.items.length}
+          </span>
         </div>
         <p className="text-sm text-gray-400 -mt-2">{activeData.sub}</p>
 
@@ -163,7 +173,9 @@ export default function PinyinModule() {
             />
           ))}
         </div>
-        <p className="text-center text-xs text-gray-400">把每个拼音点一遍（听读音），这一组就会啦～</p>
+        <p className="text-center text-xs text-gray-400">
+          把每个拼音点一遍（听读音），这一组就会啦～
+        </p>
       </div>
     );
   }
@@ -173,7 +185,8 @@ export default function PinyinModule() {
     <div className="space-y-6">
       <div className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-pink/15 text-center">
         <p className="text-gray-600 text-sm">
-          拼音按<span className="font-black text-moko-rose"> 小组 </span>排队啦！一组一组学，学会 2 组拿 1 颗⭐，全学会 3 颗星！
+          拼音按<span className="font-black text-moko-rose"> 小组 </span>排队啦！一组一组学，学会 2
+          组拿 1 颗⭐，全学会 3 颗星！
         </p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -184,11 +197,15 @@ export default function PinyinModule() {
               key={g.group}
               onClick={() => setActiveGroup(g.group)}
               className={`rounded-3xl p-4 text-center shadow-lg border-2 active:scale-95 transition ${
-                done ? 'bg-green-50 border-green-300' : 'bg-white border-moko-pink/30 hover:border-moko-rose'
+                done
+                  ? 'bg-green-50 border-green-300'
+                  : 'bg-white border-moko-pink/30 hover:border-moko-rose'
               }`}
             >
               <div className="text-4xl mb-1">{done ? '✅' : '🔤'}</div>
-              <div className={`font-black ${done ? 'text-green-600' : 'text-moko-rose'}`}>{g.group}</div>
+              <div className={`font-black ${done ? 'text-green-600' : 'text-moko-rose'}`}>
+                {g.group}
+              </div>
               <div className={`text-xs mt-1 ${done ? 'text-green-500' : 'text-gray-400'}`}>
                 {done ? '学会啦' : `${g.items.length} 个 · ${g.sub ?? ''}`}
               </div>
@@ -196,7 +213,9 @@ export default function PinyinModule() {
           );
         })}
       </div>
-      <p className="text-center text-sm text-gray-400 font-bold">已学会 {doneGroups.size} / {PINYIN_GROUPS.length} 组</p>
+      <p className="text-center text-sm text-gray-400 font-bold">
+        已学会 {doneGroups.size} / {PINYIN_GROUPS.length} 组
+      </p>
     </div>
   );
 }

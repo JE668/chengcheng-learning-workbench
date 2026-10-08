@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+
 import {
-  LETTERS,
-  EN_WORD_TOPICS,
-  EN_UNITS,
   ALL_EN_WORDS,
-  type WordItem,
+  EN_WORD_TOPICS,
+  LETTERS,
   type LetterItem,
-} from '@/lib/study-data';
+  type WordItem,
+} from '@/lib/study-data-en';
+import { EN_UNITS } from '@/lib/study-data/english';
+
 import { speakEn } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { useModuleProgress } from '@/lib/module-progress';
@@ -21,7 +23,11 @@ function lev(a: string, b: string): number {
   for (let j = 0; j <= n; j++) dp[0][j] = j;
   for (let i = 1; i <= m; i++)
     for (let j = 1; j <= n; j++)
-      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
   return dp[m][n];
 }
 
@@ -54,7 +60,12 @@ function WordCard({ item, done, onDone }: { item: WordItem; done?: boolean; onDo
   const [scoring, setScoring] = useState(false);
   const [score, setScore] = useState<number | null>(null);
   const [heard, setHeard] = useState('');
-  const { recording, audioUrl: recordUrl, micError, start: startRecord } = useRecorder({ maxMs: 3000 });
+  const {
+    recording,
+    audioUrl: recordUrl,
+    micError,
+    start: startRecord,
+  } = useRecorder({ maxMs: 3000 });
   const logM = useMistakeLogger();
 
   async function scorePronunciation() {
@@ -79,13 +90,16 @@ function WordCard({ item, done, onDone }: { item: WordItem; done?: boolean; onDo
       s = ratio >= 0.8 ? 3 : ratio >= 0.5 ? 2 : 1;
     }
     setScore(s);
-    if (s < 2) logM({ subject: '英语', kind: '单词', prompt: item.word, answer: item.word, wrong: text });
+    if (s < 2)
+      logM({ subject: '英语', kind: '单词', prompt: item.word, answer: item.word, wrong: text });
   }
 
   const stars = score === null ? '' : '⭐'.repeat(score) + '☆'.repeat(3 - score);
 
   return (
-    <div className={`rounded-2xl p-4 shadow-lg border-2 text-center transition ${done ? 'bg-green-50 border-green-300' : 'bg-white border-moko-yellow/30'}`}>
+    <div
+      className={`rounded-2xl p-4 shadow-lg border-2 text-center transition ${done ? 'bg-green-50 border-green-300' : 'bg-white border-moko-yellow/30'}`}
+    >
       <div className="text-5xl mb-2">{item.emoji}</div>
       <div
         onClick={() => speakEn(item.word)}
@@ -96,7 +110,10 @@ function WordCard({ item, done, onDone }: { item: WordItem; done?: boolean; onDo
       <div className="text-sm text-gray-500 mb-3">{item.cn}</div>
       {item.sentence && <div className="text-xs text-gray-400 mb-3 italic">{item.sentence}</div>}
       <div className="flex gap-2">
-        <button onClick={() => speakEn(item.word)} className="flex-1 py-2 rounded-full bg-moko-yellow text-white font-bold text-sm active:scale-95 transition">
+        <button
+          onClick={() => speakEn(item.word)}
+          className="flex-1 py-2 rounded-full bg-moko-yellow text-white font-bold text-sm active:scale-95 transition"
+        >
           🔊 点读
         </button>
         <button
@@ -138,7 +155,11 @@ function WordCard({ item, done, onDone }: { item: WordItem; done?: boolean; onDo
         <div className="mt-3 rounded-xl bg-moko-violet/5 p-2">
           <div className="text-2xl">{stars}</div>
           <p className="text-xs text-gray-500">
-            {score >= 3 ? '太棒了，发音很准！' : score === 2 ? '不错，再练习一下更标准～' : '加油，跟着点读多读几遍！'}
+            {score >= 3
+              ? '太棒了，发音很准！'
+              : score === 2
+                ? '不错，再练习一下更标准～'
+                : '加油，跟着点读多读几遍！'}
             {heard && <span className="block">我听到：{heard}</span>}
           </p>
         </div>
@@ -156,7 +177,7 @@ export function WordModule() {
   const prevDone = useRef(0);
 
   const topics = Object.keys(EN_WORD_TOPICS);
-  const activeWords = activeTopic ? EN_WORD_TOPICS[activeTopic] ?? [] : [];
+  const activeWords = activeTopic ? (EN_WORD_TOPICS[activeTopic] ?? []) : [];
 
   // 完成主题数 → 星：4 主题 1 星、8 主题 2 星、全部 3 星（取历史最佳）
   useEffect(() => {
@@ -200,7 +221,9 @@ export function WordModule() {
             ‹ 返回主题
           </button>
           <h2 className="text-xl font-black text-moko-violet">📚 {activeTopic}</h2>
-          <span className="text-sm font-bold text-gray-400">已认识 {doneWords.size}/{activeWords.length}</span>
+          <span className="text-sm font-bold text-gray-400">
+            已认识 {doneWords.size}/{activeWords.length}
+          </span>
         </div>
 
         {celebrate === activeTopic && (
@@ -219,7 +242,9 @@ export function WordModule() {
             />
           ))}
         </div>
-        <p className="text-center text-xs text-gray-400">把每个词点成「我认识」，这一组就完成啦～</p>
+        <p className="text-center text-xs text-gray-400">
+          把每个词点成「我认识」，这一组就完成啦～
+        </p>
       </div>
     );
   }
@@ -229,7 +254,8 @@ export function WordModule() {
     <div className="space-y-6">
       <div className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-yellow/20 text-center">
         <p className="text-gray-600 text-sm">
-          单词按<span className="font-black text-moko-yellow"> 主题 </span>排队啦！一次认一组，认完 4 组拿 1 颗⭐，全认完 3 颗星！
+          单词按<span className="font-black text-moko-yellow"> 主题 </span>排队啦！一次认一组，认完
+          4 组拿 1 颗⭐，全认完 3 颗星！
         </p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -242,17 +268,25 @@ export function WordModule() {
               key={topic}
               onClick={() => setActiveTopic(topic)}
               className={`rounded-3xl p-4 text-center shadow-lg border-2 active:scale-95 transition ${
-                done ? 'bg-green-50 border-green-300' : 'bg-white border-moko-yellow/30 hover:border-moko-yellow'
+                done
+                  ? 'bg-green-50 border-green-300'
+                  : 'bg-white border-moko-yellow/30 hover:border-moko-yellow'
               }`}
             >
               <div className="text-4xl mb-1">{done ? '✅' : emoji}</div>
-              <div className={`font-black ${done ? 'text-green-600' : 'text-moko-violet'}`}>{topic}</div>
-              <div className={`text-xs mt-1 ${done ? 'text-green-500' : 'text-gray-400'}`}>{done ? '完成啦' : `${words.length} 个词 · 点开认一认`}</div>
+              <div className={`font-black ${done ? 'text-green-600' : 'text-moko-violet'}`}>
+                {topic}
+              </div>
+              <div className={`text-xs mt-1 ${done ? 'text-green-500' : 'text-gray-400'}`}>
+                {done ? '完成啦' : `${words.length} 个词 · 点开认一认`}
+              </div>
             </button>
           );
         })}
       </div>
-      <p className="text-center text-sm text-gray-400 font-bold">已认完 {doneTopics.size} / {topics.length} 组</p>
+      <p className="text-center text-sm text-gray-400 font-bold">
+        已认完 {doneTopics.size} / {topics.length} 组
+      </p>
     </div>
   );
 }
@@ -266,8 +300,23 @@ const LEVEL_META: Record<DiffLevel, { label: string; emoji: string }> = {
 };
 const LEVEL_ORDER: DiffLevel[] = ['easy', 'medium', 'hard'];
 
-const EN_WORD_MAP: Record<string, WordItem> = Object.fromEntries(ALL_EN_WORDS.map((w) => [w.word, w]));
-const EN_EASY_WORDS = ['apple', 'dog', 'cat', 'sun', 'red', 'blue', 'eye', 'ear', 'book', 'one', 'two', 'mom']
+const EN_WORD_MAP: Record<string, WordItem> = Object.fromEntries(
+  ALL_EN_WORDS.map((w) => [w.word, w])
+);
+const EN_EASY_WORDS = [
+  'apple',
+  'dog',
+  'cat',
+  'sun',
+  'red',
+  'blue',
+  'eye',
+  'ear',
+  'book',
+  'one',
+  'two',
+  'mom',
+]
   .map((w) => EN_WORD_MAP[w])
   .filter(Boolean) as WordItem[];
 
@@ -281,7 +330,12 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function buildQuestion(level: DiffLevel): { target: WordItem; options: WordItem[] } {
-  const pool = level === 'easy' ? EN_EASY_WORDS : level === 'medium' ? ALL_EN_WORDS.slice(0, 40) : ALL_EN_WORDS;
+  const pool =
+    level === 'easy'
+      ? EN_EASY_WORDS
+      : level === 'medium'
+        ? ALL_EN_WORDS.slice(0, 40)
+        : ALL_EN_WORDS;
   const k = level === 'easy' ? 3 : 4;
   const target = pool[Math.floor(Math.random() * pool.length)];
   const distractors = shuffle(pool.filter((w) => w.word !== target.word)).slice(0, k - 1);
@@ -290,7 +344,9 @@ function buildQuestion(level: DiffLevel): { target: WordItem; options: WordItem[
 
 function EnListenQuiz() {
   const [level, setLevel] = useState<DiffLevel>('easy');
-  const [q, setQ] = useState<{ target: WordItem; options: WordItem[] }>(() => buildQuestion('easy'));
+  const [q, setQ] = useState<{ target: WordItem; options: WordItem[] }>(() =>
+    buildQuestion('easy')
+  );
   const [picked, setPicked] = useState<string | null>(null);
   const [streak, setStreak] = useState({ right: 0, wrong: 0 });
   const logM = useMistakeLogger();
@@ -333,7 +389,13 @@ function EnListenQuiz() {
       const nw = streak.wrong + 1;
       setStreak({ right: 0, wrong: nw });
       if (nw >= 2 && level !== 'easy') nl = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) - 1];
-      logM({ subject: '英语', kind: '听音选词', prompt: q.target.word, answer: q.target.word, wrong: opt.word });
+      logM({
+        subject: '英语',
+        kind: '听音选词',
+        prompt: q.target.word,
+        answer: q.target.word,
+        wrong: opt.word,
+      });
     }
     setTimeout(() => nextRound(nl), ok ? 1400 : 1700);
   }
@@ -343,7 +405,9 @@ function EnListenQuiz() {
   return (
     <div className="rounded-2xl p-5 bg-gradient-to-br from-moko-yellow to-amber-300 text-white shadow-lg">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-bold bg-white/25 rounded-full px-3 py-1">难度：{meta.emoji} {meta.label}</span>
+        <span className="text-sm font-bold bg-white/25 rounded-full px-3 py-1">
+          难度：{meta.emoji} {meta.label}
+        </span>
         <span className="text-xs opacity-90">连对 {streak.right} · 自动调整中</span>
       </div>
       <div className="text-center mb-4">
@@ -415,7 +479,8 @@ export function EnSpeakModule() {
       s = ratio >= 0.8 ? 3 : ratio >= 0.5 ? 2 : 1;
     }
     setScore(s);
-    if (s < 2) logM({ subject: '英语', kind: '口语', prompt: item.word, answer: item.word, wrong: text });
+    if (s < 2)
+      logM({ subject: '英语', kind: '口语', prompt: item.word, answer: item.word, wrong: text });
   }
 
   const stars = score === null ? '' : '⭐'.repeat(score) + '☆'.repeat(3 - score);
@@ -423,13 +488,19 @@ export function EnSpeakModule() {
   return (
     <div className="rounded-2xl p-6 bg-gradient-to-br from-moko-violet to-purple-400 text-white shadow-lg text-center">
       <div className="text-6xl mb-2">{item.emoji}</div>
-      <button onClick={() => speakEn(item.word)} className="text-4xl font-black underline decoration-white/40">
+      <button
+        onClick={() => speakEn(item.word)}
+        className="text-4xl font-black underline decoration-white/40"
+      >
         {item.word}
       </button>
       <p className="text-sm opacity-90 mt-1">{item.cn}</p>
       <p className="text-xs opacity-80 italic mt-1">{item.sentence}</p>
       <div className="flex justify-center gap-3 mt-4">
-        <button onClick={() => speakEn(item.word)} className="px-5 py-2 rounded-full bg-white text-moko-violet font-bold text-sm active:scale-95 transition">
+        <button
+          onClick={() => speakEn(item.word)}
+          className="px-5 py-2 rounded-full bg-white text-moko-violet font-bold text-sm active:scale-95 transition"
+        >
           🔊 听
         </button>
         <button
@@ -502,7 +573,10 @@ export function UnitModule() {
         const words: WordItem[] = u.topics.flatMap((t) => EN_WORD_TOPICS[t] ?? []);
         const isOpen = open === u.unit;
         return (
-          <div key={u.unit} className="rounded-2xl bg-white shadow-lg border-2 border-moko-yellow/20 overflow-hidden">
+          <div
+            key={u.unit}
+            className="rounded-2xl bg-white shadow-lg border-2 border-moko-yellow/20 overflow-hidden"
+          >
             <button
               onClick={() => setOpen(isOpen ? null : u.unit)}
               className="w-full flex items-center gap-3 p-4 text-left active:scale-[0.99] transition"
@@ -511,7 +585,9 @@ export function UnitModule() {
               <span className="flex-1">
                 <span className="block text-sm text-gray-400">
                   {u.unit}
-                  {u.extra ? <span className="ml-1 text-[10px] text-moko-yellow font-bold">拓展</span> : null}
+                  {u.extra ? (
+                    <span className="ml-1 text-[10px] text-moko-yellow font-bold">拓展</span>
+                  ) : null}
                   <span className="ml-1 text-[10px] text-gray-300">{words.length} 词</span>
                 </span>
                 <span className="block text-lg font-black text-moko-violet">{u.title}</span>

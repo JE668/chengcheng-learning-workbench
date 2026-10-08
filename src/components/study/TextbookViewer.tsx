@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { TEXTBOOKS, type Textbook, type Chapter } from '@/lib/textbooks';
-import { MATH_UNITS, GRADE1_CHAR_UNITS } from '@/lib/study-data';
+
+import { GRADE1_CHAR_UNITS, MATH_UNITS } from '@/lib/study-data/units';
+
 import { STUDY_MODULES } from '@/lib/study-modules';
 import PdfViewer from '@/components/PdfViewer';
 import { mediaUrl } from '@/lib/media';
@@ -10,22 +12,37 @@ import { mediaUrl } from '@/lib/media';
 type Progress = Record<string, number>; // bookKey -> 上次读到的章节 idx
 
 /** 某章节对应的练习模块（从 MATH_UNITS / GRADE1_CHAR_UNITS 反查） */
-function getChapterModules(bookKey: string, chapterIdx: number): { key: string; label: string; emoji: string; desc: string; color: string }[] {
+function getChapterModules(
+  bookKey: string,
+  chapterIdx: number
+): { key: string; label: string; emoji: string; desc: string; color: string }[] {
   if (bookKey === 'chinese-workbook') {
     // 练习册没有按章拆分的练习，推荐全部语文练习
     const cn = STUDY_MODULES['chinese'];
     if (!cn) return [];
     // 返回前几个核心模块
-    return ['characters', 'quiz', 'word-form', 'strokes-order', 'poems', 'poem-fun'].map((k) =>
-      cn.find((m) => m.key === k),
-    ).filter(Boolean) as { key: string; label: string; emoji: string; desc: string; color: string }[];
+    return ['characters', 'quiz', 'word-form', 'strokes-order', 'poems', 'poem-fun']
+      .map((k) => cn.find((m) => m.key === k))
+      .filter(Boolean) as {
+      key: string;
+      label: string;
+      emoji: string;
+      desc: string;
+      color: string;
+    }[];
   }
   if (bookKey === 'math') {
     const u = MATH_UNITS.find((x) => x.chapter === chapterIdx);
     if (!u) return [];
     return u.moduleKeys
       .map((k) => STUDY_MODULES['math']?.find((m) => m.key === k))
-      .filter(Boolean) as { key: string; label: string; emoji: string; desc: string; color: string }[];
+      .filter(Boolean) as {
+      key: string;
+      label: string;
+      emoji: string;
+      desc: string;
+      color: string;
+    }[];
   }
   if (bookKey === 'chinese') {
     const u = GRADE1_CHAR_UNITS.find((x) => x.chapter === chapterIdx);
@@ -38,9 +55,13 @@ function getChapterModules(bookKey: string, chapterIdx: number): { key: string; 
       : isReading
         ? ['texts', 'textchars', 'reading', 'poems', 'poem-fun']
         : ['characters', 'quiz', 'word-form', 'strokes-order', 'char-transform'];
-    return keys
-      .map((k) => STUDY_MODULES['chinese']?.find((m) => m.key === k))
-      .filter(Boolean) as { key: string; label: string; emoji: string; desc: string; color: string }[];
+    return keys.map((k) => STUDY_MODULES['chinese']?.find((m) => m.key === k)).filter(Boolean) as {
+      key: string;
+      label: string;
+      emoji: string;
+      desc: string;
+      color: string;
+    }[];
   }
   return [];
 }
@@ -49,20 +70,24 @@ function getChapterModules(bookKey: string, chapterIdx: number): { key: string; 
 function PracticeRecommendation({ bookKey, chapterIdx }: { bookKey: string; chapterIdx: number }) {
   const modules = useMemo(() => getChapterModules(bookKey, chapterIdx), [bookKey, chapterIdx]);
   if (modules.length === 0) return null;
-  const subject = bookKey === 'math' ? '数学' : bookKey === 'chinese-workbook' ? '语文练习册' : '语文';
+  const subject =
+    bookKey === 'math' ? '数学' : bookKey === 'chinese-workbook' ? '语文练习册' : '语文';
   // 练习链接的路径段用真正的学科名（chinese-workbook 属语文），否则 /study/chinese-workbook/* 会因 subject 非法而 404
   const routeSubject = bookKey === 'math' ? 'math' : 'chinese';
-  const chapterTitle = bookKey === 'math'
-    ? MATH_UNITS.find((u) => u.chapter === chapterIdx)?.unit ?? ''
-    : bookKey === 'chinese-workbook'
-      ? '一课一贴'
-      : GRADE1_CHAR_UNITS.find((u) => u.chapter === chapterIdx)?.unit ?? '';
+  const chapterTitle =
+    bookKey === 'math'
+      ? (MATH_UNITS.find((u) => u.chapter === chapterIdx)?.unit ?? '')
+      : bookKey === 'chinese-workbook'
+        ? '一课一贴'
+        : (GRADE1_CHAR_UNITS.find((u) => u.chapter === chapterIdx)?.unit ?? '');
 
   return (
     <div className="mt-4 rounded-3xl bg-gradient-to-br from-moko-yellow to-moko-orange p-5 shadow-lg border-2 border-moko-yellow/30">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-2xl">📝</span>
-        <h3 className="text-lg font-black text-moko-violet">{subject} · {chapterTitle} · 练一练</h3>
+        <h3 className="text-lg font-black text-moko-violet">
+          {subject} · {chapterTitle} · 练一练
+        </h3>
       </div>
       <p className="text-sm text-gray-600 mb-3">读完这一章，来巩固一下今天学到的知识吧～</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -117,7 +142,7 @@ export default function TextbookViewer() {
       setOpenPages(c.pages);
       remember(b.key, c.idx);
     },
-    [remember],
+    [remember]
   );
 
   // 选择一本书：默认打开上次读到的章节（有则），否则打开第一章
@@ -137,7 +162,7 @@ export default function TextbookViewer() {
       }
       openChapter(b, b.chapters[0]);
     },
-    [progress, openChapter],
+    [progress, openChapter]
   );
 
   // 书单视图
@@ -159,7 +184,9 @@ export default function TextbookViewer() {
                 alt={b.title}
                 className="w-24 h-24 rounded-full border-4 border-white/50 shadow mx-auto mb-4 object-cover"
               />
-              <h2 className="text-2xl font-black text-center mb-1">{b.emoji} {b.title}</h2>
+              <h2 className="text-2xl font-black text-center mb-1">
+                {b.emoji} {b.title}
+              </h2>
               <p className="text-sm opacity-90 text-center leading-relaxed mb-3">{b.sub}</p>
               <div className="text-center">
                 <span className="inline-block px-4 py-2 rounded-2xl bg-white/20 font-bold text-sm">
@@ -218,7 +245,11 @@ export default function TextbookViewer() {
               >
                 <span className="font-black opacity-70">{c.idx}.</span>
                 <span className="flex-1 truncate">{c.title}</span>
-                {isLast && !active && <span className="text-[10px] bg-moko-yellow/80 text-gray-800 rounded px-1">上次</span>}
+                {isLast && !active && (
+                  <span className="text-[10px] bg-moko-yellow/80 text-gray-800 rounded px-1">
+                    上次
+                  </span>
+                )}
                 <span className="text-[10px] opacity-60">{c.pages}p</span>
               </button>
             );
@@ -226,7 +257,10 @@ export default function TextbookViewer() {
         </aside>
 
         {/* 阅读区（懒加载：画布渲染，只能看不能下载） */}
-        <div className="rounded-3xl overflow-hidden border-4 border-moko-purple/20 shadow-xl bg-white" style={{ height: '78vh' }}>
+        <div
+          className="rounded-3xl overflow-hidden border-4 border-moko-purple/20 shadow-xl bg-white"
+          style={{ height: '78vh' }}
+        >
           {openFile ? (
             <div className="w-full h-full overflow-auto p-2">
               <PdfViewer url={mediaUrl(openFile)} className="w-full" />
@@ -237,13 +271,15 @@ export default function TextbookViewer() {
             </div>
           )}
         </div>
-
       </div>
 
       {/* 📝 本章练习推荐：放在目录+阅读区栅格之外，独占整行
           （若留在 grid 里会被挤到 260px 的目录列，排版变形） */}
       {openFile && (
-        <PracticeRecommendation bookKey={book.key} chapterIdx={book.chapters.find((c) => c.file === openFile)?.idx ?? 0} />
+        <PracticeRecommendation
+          bookKey={book.key}
+          chapterIdx={book.chapters.find((c) => c.file === openFile)?.idx ?? 0}
+        />
       )}
 
       <p className="text-xs text-gray-400 text-center">

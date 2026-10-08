@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+
+import { SCHOOL_ITEMS } from '@/lib/study-data/life';
+import { PINYIN_BLEND, type PinyinBlendItem } from '@/lib/study-data/pinyin';
+import { READING_PASSAGES } from '@/lib/study-data/texts';
 import {
   CHAR_UNIT_OPTIONS,
-  PINYIN_BLEND,
-  READING_PASSAGES,
-  SCHOOL_ITEMS,
   STROKE_ORDER_CHARS,
   strokeOrderByChapter,
-  type PinyinBlendItem,
-} from '@/lib/study-data';
+} from '@/lib/study-data/units';
+
 import { speakZh, speakPinyin, praise } from '@/lib/speak';
 import { StudyQuiz, type QuizItem } from './StudyQuiz';
 import { useModuleProgress } from '@/lib/module-progress';
@@ -47,7 +48,7 @@ export function PinyinBlendModule() {
           kind: '拼音拼读',
         };
       }),
-    [],
+    []
   );
 
   return (
@@ -55,11 +56,17 @@ export function PinyinBlendModule() {
       <div className="rounded-3xl p-6 bg-gradient-to-br from-moko-pink to-rose-300 text-white shadow-lg text-center">
         <p className="text-sm opacity-90 mb-3">把声母和韵母拼在一起，读一读～</p>
         <div className="flex items-center justify-center gap-3 text-4xl font-black">
-          <div className="w-20 h-20 rounded-2xl bg-white/25 flex items-center justify-center">{b.sheng}</div>
+          <div className="w-20 h-20 rounded-2xl bg-white/25 flex items-center justify-center">
+            {b.sheng}
+          </div>
           <span className="opacity-80">+</span>
-          <div className="w-20 h-20 rounded-2xl bg-white/25 flex items-center justify-center">{b.yun}</div>
+          <div className="w-20 h-20 rounded-2xl bg-white/25 flex items-center justify-center">
+            {b.yun}
+          </div>
           <span className="opacity-80">→</span>
-          <div className="w-24 h-24 rounded-2xl bg-white flex items-center justify-center text-moko-rose">{b.syllable}</div>
+          <div className="w-24 h-24 rounded-2xl bg-white flex items-center justify-center text-moko-rose">
+            {b.syllable}
+          </div>
         </div>
         <div className="mt-3 text-2xl font-black">
           {b.emoji} 例字：{b.word}
@@ -94,7 +101,13 @@ export function PinyinBlendModule() {
 
       <div>
         <h3 className="text-lg font-black text-moko-violet mb-2">🎯 拼读小考场</h3>
-        <StudyQuiz items={quizItems} subject="语文" color="bg-moko-pink" textColor="text-moko-rose" moduleKey="pinyin-blend" />
+        <StudyQuiz
+          items={quizItems}
+          subject="语文"
+          color="bg-moko-pink"
+          textColor="text-moko-rose"
+          moduleKey="pinyin-blend"
+        />
       </div>
     </div>
   );
@@ -103,7 +116,15 @@ export function PinyinBlendModule() {
 /* ========================================================================
  * 笔顺（hanzi-writer 动画演示）
  * ===================================================================== */
-function StrokeOrderCard({ item, learned, onLearned }: { item: { char: string; py: string; mean: string }; learned?: boolean; onLearned?: () => void }) {
+function StrokeOrderCard({
+  item,
+  learned,
+  onLearned,
+}: {
+  item: { char: string; py: string; mean: string };
+  learned?: boolean;
+  onLearned?: () => void;
+}) {
   const elRef = useRef<HTMLDivElement>(null);
   const writerRef = useRef<any>(null);
   // 笔顺数据加载状态：hanzi-writer 的 create 是同步返回的，字形数据异步拉取；
@@ -225,7 +246,9 @@ export function StrokeOrderModule() {
         <button
           onClick={() => pickChapter(0)}
           className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition active:scale-95 ${
-            chapter === 0 ? 'bg-moko-rose text-white' : 'bg-white text-moko-rose border-2 border-moko-rose/40'
+            chapter === 0
+              ? 'bg-moko-rose text-white'
+              : 'bg-white text-moko-rose border-2 border-moko-rose/40'
           }`}
         >
           📚 全册 {STROKE_ORDER_CHARS.length} 字
@@ -235,14 +258,20 @@ export function StrokeOrderModule() {
             key={u.chapter}
             onClick={() => pickChapter(u.chapter)}
             className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition active:scale-95 ${
-              chapter === u.chapter ? 'bg-moko-rose text-white' : 'bg-white text-moko-rose border-2 border-moko-rose/40'
+              chapter === u.chapter
+                ? 'bg-moko-rose text-white'
+                : 'bg-white text-moko-rose border-2 border-moko-rose/40'
             }`}
           >
             {u.emoji} 第{u.chapter}单元 {u.count}
           </button>
         ))}
       </div>
-      <StrokeOrderCard item={item} learned={learned.includes(item.char)} onLearned={() => learn(item.char)} />
+      <StrokeOrderCard
+        item={item}
+        learned={learned.includes(item.char)}
+        onLearned={() => learn(item.char)}
+      />
       <div className="flex items-center justify-center gap-3">
         <button
           onClick={() => setIdx((i) => i - 1 + chars.length)}
@@ -276,7 +305,9 @@ export function TextComprehensionModule() {
       READING_PASSAGES.map((p) => ({
         prompt: (
           <div className="space-y-2">
-            <div className="text-base bg-moko-purple/5 rounded-xl p-3 text-gray-700 leading-relaxed">📖 {p.passage}</div>
+            <div className="text-base bg-moko-purple/5 rounded-xl p-3 text-gray-700 leading-relaxed">
+              📖 {p.passage}
+            </div>
             <div className="font-black text-moko-violet">
               {p.emoji} {p.question}
             </div>
@@ -288,9 +319,18 @@ export function TextComprehensionModule() {
         kind: '阅读理解',
         chapter: p.chapter,
       })),
-    [],
+    []
   );
-  return <StudyQuiz items={items} subject="语文" color="bg-moko-purple" textColor="text-moko-purple" autoSpeak="zh" moduleKey="reading" />;
+  return (
+    <StudyQuiz
+      items={items}
+      subject="语文"
+      color="bg-moko-purple"
+      textColor="text-moko-purple"
+      autoSpeak="zh"
+      moduleKey="reading"
+    />
+  );
 }
 
 /* ========================================================================
@@ -391,7 +431,9 @@ export function SentenceBuildModule() {
               disabled={used || result !== 'idle'}
               onClick={() => tapWord(origIdx)}
               className={`py-3 rounded-xl font-black text-2xl shadow active:scale-95 transition ${
-                used ? 'bg-gray-100 text-gray-300' : 'bg-white text-moko-rose border-2 border-moko-rose'
+                used
+                  ? 'bg-gray-100 text-gray-300'
+                  : 'bg-white text-moko-rose border-2 border-moko-rose'
               }`}
             >
               {s.words[origIdx]}
@@ -416,7 +458,9 @@ export function SentenceBuildModule() {
         </button>
       </div>
       {result !== 'idle' && (
-        <p className={`text-center mt-3 font-bold ${result === 'right' ? 'text-green-600' : 'text-red-500'}`}>
+        <p
+          className={`text-center mt-3 font-bold ${result === 'right' ? 'text-green-600' : 'text-red-500'}`}
+        >
           {result === 'right' ? `🎉 太棒了：${s.answer}` : '💡 顺序还不对，再试试～'}
         </p>
       )}
@@ -441,7 +485,9 @@ export function SchoolPrepModule() {
   }
   function check() {
     setChecked(true);
-    const correctCount = SCHOOL_ITEMS.filter((it) => choice[it.name] === (it.bring ? 'bag' : 'home')).length;
+    const correctCount = SCHOOL_ITEMS.filter(
+      (it) => choice[it.name] === (it.bring ? 'bag' : 'home')
+    ).length;
     record(Math.round((correctCount / SCHOOL_ITEMS.length) * 3));
     const ok = correctCount === SCHOOL_ITEMS.length;
     if (ok) praise();
@@ -454,7 +500,9 @@ export function SchoolPrepModule() {
 
   return (
     <div className="space-y-4">
-      <p className="text-gray-600 text-sm">🎒 明天要上学啦！点一点，把要带的东西放进书包，不用的留在家里。</p>
+      <p className="text-gray-600 text-sm">
+        🎒 明天要上学啦！点一点，把要带的东西放进书包，不用的留在家里。
+      </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {SCHOOL_ITEMS.map((it) => {
           const c = choice[it.name];
@@ -514,7 +562,9 @@ export function SchoolPrepModule() {
       {checked && (
         <p
           className={`text-center font-bold ${
-            SCHOOL_ITEMS.every((it) => choice[it.name] === (it.bring ? 'bag' : 'home')) ? 'text-green-600' : 'text-red-500'
+            SCHOOL_ITEMS.every((it) => choice[it.name] === (it.bring ? 'bag' : 'home'))
+              ? 'text-green-600'
+              : 'text-red-500'
           }`}
         >
           {SCHOOL_ITEMS.every((it) => choice[it.name] === (it.bring ? 'bag' : 'home'))

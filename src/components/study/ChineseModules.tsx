@@ -2,17 +2,16 @@
 
 import Link from 'next/link';
 import { useRef, useState, useEffect } from 'react';
-import {
-  CHARACTERS,
-  CHARACTER_CATEGORIES,
-  POEMS,
-  TEXTBOOK_CHARACTERS,
-  TRACE_CHARS,
-  textbookCharsUpTo,
-  type CharacterItem,
-  type PoemItem,
-  type TextbookChar,
-} from '@/lib/study-data';
+// ⚠️ 直接从具体子模块导入，不要走 `@/lib/study-data` barrel。
+//
+// barrel 用 `export *` 聚合 11 个子模块，而它们全是**数据**（webpack 无法对值做
+// tree-shaking），于是任何一处 barrel 导入都会把全部 ~110KB 数据打进客户端
+// chunk。该 chunk 被 40+ 个组件共用，于是每个模块页都要为「自己用不到的那 7 个」
+// 买单。本文件只需要 characters / poems / texts / units 四个子模块。
+import { CHARACTERS, CHARACTER_CATEGORIES, type CharacterItem } from '@/lib/study-data/characters';
+import { POEMS, type PoemItem } from '@/lib/study-data/poems';
+import { TRACE_CHARS } from '@/lib/study-data/texts';
+import { TEXTBOOK_CHARACTERS, textbookCharsUpTo, type TextbookChar } from '@/lib/study-data/units';
 import { speakZh } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { useModuleProgress } from '@/lib/module-progress';
@@ -20,13 +19,30 @@ import { ModuleStars } from '@/components/study/ModuleStars';
 import { useRecorder, recognizeSpeech } from './useRecorder';
 
 /* ---------- 识字（按类别，一屏一类） ---------- */
-function CharacterCard({ item, done, onDone }: { item: CharacterItem; done: boolean; onDone: () => void }) {
+function CharacterCard({
+  item,
+  done,
+  onDone,
+}: {
+  item: CharacterItem;
+  done: boolean;
+  onDone: () => void;
+}) {
   return (
-    <div className={`rounded-2xl p-4 shadow-lg border-2 text-center transition ${done ? 'bg-green-50 border-green-300' : 'bg-white border-moko-pink/20'}`}>
-      <div className="text-xs text-moko-rose/70 font-bold tracking-wide">{item.pinyin}{item.altPinyin ? <span className="text-moko-purple/80"> · 又读 {item.altPinyin}</span> : null}</div>
+    <div
+      className={`rounded-2xl p-4 shadow-lg border-2 text-center transition ${done ? 'bg-green-50 border-green-300' : 'bg-white border-moko-pink/20'}`}
+    >
+      <div className="text-xs text-moko-rose/70 font-bold tracking-wide">
+        {item.pinyin}
+        {item.altPinyin ? (
+          <span className="text-moko-purple/80"> · 又读 {item.altPinyin}</span>
+        ) : null}
+      </div>
       <div className="text-5xl font-black text-moko-rose mb-2">{item.char}</div>
       <div className="text-sm text-gray-600">{item.meaning}</div>
-      <div className="text-xs text-gray-400 mt-1">{item.strokeCount} 画 · {item.phrase}</div>
+      <div className="text-xs text-gray-400 mt-1">
+        {item.strokeCount} 画 · {item.phrase}
+      </div>
       <div className="flex gap-1.5 mt-2">
         <button
           onClick={() => speakZh(`${item.char}，${item.meaning}。${item.phrase}`)}
@@ -132,8 +148,12 @@ export function CharacterModule() {
           >
             ‹ 返回分类
           </button>
-          <h2 className="text-xl font-black text-moko-rose">{CAT_EMOJI[activeCat] ?? CAT_FALLBACK} {activeCat}</h2>
-          <span className="text-sm font-bold text-gray-400">已认识 {doneChars.size}/{items.length}</span>
+          <h2 className="text-xl font-black text-moko-rose">
+            {CAT_EMOJI[activeCat] ?? CAT_FALLBACK} {activeCat}
+          </h2>
+          <span className="text-sm font-bold text-gray-400">
+            已认识 {doneChars.size}/{items.length}
+          </span>
         </div>
 
         {celebrate === activeCat && (
@@ -144,10 +164,17 @@ export function CharacterModule() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {items.map((c) => (
-            <CharacterCard key={c.char} item={c} done={doneChars.has(c.char) || catDone} onDone={() => markDone(c.char)} />
+            <CharacterCard
+              key={c.char}
+              item={c}
+              done={doneChars.has(c.char) || catDone}
+              onDone={() => markDone(c.char)}
+            />
           ))}
         </div>
-        <p className="text-center text-xs text-gray-400">把每个字点成「我认识」，这一组就完成啦～</p>
+        <p className="text-center text-xs text-gray-400">
+          把每个字点成「我认识」，这一组就完成啦～
+        </p>
       </div>
     );
   }
@@ -157,7 +184,8 @@ export function CharacterModule() {
     <div className="space-y-6">
       <div className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-pink/15 text-center">
         <p className="text-gray-600 text-sm">
-          字宝宝按<span className="font-black text-moko-rose"> 小分类 </span>排队啦！先挑一组，认完这一组再去下一组，
+          字宝宝按<span className="font-black text-moko-rose"> 小分类 </span>
+          排队啦！先挑一组，认完这一组再去下一组，
           <span className="font-bold text-moko-rose">认满 3 组就拿 1 颗⭐</span>，全认完 3 颗星！
         </p>
       </div>
@@ -171,17 +199,26 @@ export function CharacterModule() {
               key={cat}
               onClick={() => enterCat(cat)}
               className={`rounded-3xl p-4 text-center shadow-lg border-2 active:scale-95 transition ${
-                done ? 'bg-green-50 border-green-300' : 'bg-white border-moko-pink/30 hover:border-moko-rose'
+                done
+                  ? 'bg-green-50 border-green-300'
+                  : 'bg-white border-moko-pink/30 hover:border-moko-rose'
               }`}
             >
-              <div className="text-4xl mb-1">{done ? '✅' : CAT_EMOJI[cat] ?? CAT_FALLBACK}</div>
-              <div className={`font-black ${done ? 'text-green-600' : 'text-moko-rose'}`}>{cat}</div>
-              <div className={`text-xs mt-1 ${done ? 'text-green-500' : 'text-gray-400'}`}>{done ? '完成啦' : `${items.length} 个字 · 点开认一认`}</div>
+              <div className="text-4xl mb-1">{done ? '✅' : (CAT_EMOJI[cat] ?? CAT_FALLBACK)}</div>
+              <div className={`font-black ${done ? 'text-green-600' : 'text-moko-rose'}`}>
+                {cat}
+              </div>
+              <div className={`text-xs mt-1 ${done ? 'text-green-500' : 'text-gray-400'}`}>
+                {done ? '完成啦' : `${items.length} 个字 · 点开认一认`}
+              </div>
             </button>
           );
         })}
       </div>
-      <p className="text-center text-sm text-gray-400 font-bold">已认完 {doneCats.size} / {CHARACTER_CATEGORIES.filter((c) => CHARACTERS.some((x) => x.category === c)).length} 组</p>
+      <p className="text-center text-sm text-gray-400 font-bold">
+        已认完 {doneCats.size} /{' '}
+        {CHARACTER_CATEGORIES.filter((c) => CHARACTERS.some((x) => x.category === c)).length} 组
+      </p>
     </div>
   );
 }
@@ -217,7 +254,10 @@ function PoemCard({ item }: { item: PoemItem }) {
     if (score > 0) recordPoemStars(score);
   }
 
-  const stars = reciteScore !== null && reciteScore > 0 ? '⭐'.repeat(reciteScore) + '☆'.repeat(3 - reciteScore) : '';
+  const stars =
+    reciteScore !== null && reciteScore > 0
+      ? '⭐'.repeat(reciteScore) + '☆'.repeat(3 - reciteScore)
+      : '';
 
   return (
     <div className="rounded-2xl p-5 bg-gradient-to-br from-moko-purple/20 to-moko-pink/20 shadow-lg border-2 border-moko-purple/20">
@@ -234,7 +274,10 @@ function PoemCard({ item }: { item: PoemItem }) {
         ))}
       </p>
       <div className="flex gap-2 mt-3">
-        <button onClick={() => speakZh(item.lines.join(''))} className="flex-1 btn btn-violet text-sm">
+        <button
+          onClick={() => speakZh(item.lines.join(''))}
+          className="flex-1 btn btn-violet text-sm"
+        >
           🔊 朗读古诗
         </button>
         {recording ? (
@@ -265,7 +308,11 @@ function PoemCard({ item }: { item: PoemItem }) {
         <div className="mt-2 rounded-xl bg-moko-yellow/10 p-2 text-sm">
           <div className="text-2xl">{stars}</div>
           <p className="text-xs text-gray-500 mt-1">
-            {reciteScore >= 3 ? '背得真好！爱心萌可给你点赞！' : reciteScore >= 2 ? '不错，再练几遍更熟！' : '加油，多读几遍再来背！'}
+            {reciteScore >= 3
+              ? '背得真好！爱心萌可给你点赞！'
+              : reciteScore >= 2
+                ? '不错，再练几遍更熟！'
+                : '加油，多读几遍再来背！'}
           </p>
         </div>
       )}
@@ -279,7 +326,9 @@ export function PoemModule() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-400">第 {idx + 1} / {POEMS.length} 首 · 一首一首读，慢慢来</div>
+        <div className="text-sm text-gray-400">
+          第 {idx + 1} / {POEMS.length} 首 · 一首一首读，慢慢来
+        </div>
         <ModuleStars subject="chinese" moduleKey="poems" />
       </div>
       <PoemCard key={poem.title} item={poem} />
@@ -287,11 +336,15 @@ export function PoemModule() {
         <button
           onClick={() => setIdx((i) => (i - 1 + POEMS.length) % POEMS.length)}
           className="rounded-2xl px-5 py-2 bg-white shadow text-moko-violet font-black hover:scale-105 transition"
-        >‹ 上一首</button>
+        >
+          ‹ 上一首
+        </button>
         <button
           onClick={() => setIdx((i) => (i + 1) % POEMS.length)}
           className="rounded-2xl px-5 py-2 bg-moko-purple text-white font-black shadow hover:scale-105 transition"
-        >下一首 ›</button>
+        >
+          下一首 ›
+        </button>
       </div>
     </div>
   );
@@ -384,10 +437,16 @@ function TracingCard({ char }: { char: string }) {
         onTouchEnd={end}
       />
       <div className="flex gap-2 mt-3">
-        <button onClick={clear} className="flex-1 py-2 rounded-full bg-gray-100 text-gray-600 font-bold text-sm">
+        <button
+          onClick={clear}
+          className="flex-1 py-2 rounded-full bg-gray-100 text-gray-600 font-bold text-sm"
+        >
           🧼 擦除重练
         </button>
-        <button onClick={() => speakZh(char)} className="flex-1 py-2 rounded-full bg-moko-pink text-white font-bold text-sm">
+        <button
+          onClick={() => speakZh(char)}
+          className="flex-1 py-2 rounded-full bg-moko-pink text-white font-bold text-sm"
+        >
           🔊 读字
         </button>
       </div>
@@ -406,7 +465,9 @@ export function TraceModule() {
             key={c}
             onClick={() => setTraceChar(c)}
             className={`w-10 h-10 rounded-full font-black text-lg transition ${
-              traceChar === c ? 'bg-moko-rose text-white' : 'bg-white text-moko-rose border-2 border-moko-rose'
+              traceChar === c
+                ? 'bg-moko-rose text-white'
+                : 'bg-white text-moko-rose border-2 border-moko-rose'
             }`}
           >
             {c}
@@ -474,13 +535,23 @@ function buildQuestion(level: DiffLevel, opts: { shuffle?: boolean } = {}): Char
     const distractors = arrange(pool.filter((c) => c.char !== safeTarget.char))
       .slice(0, 3)
       .map((c) => c.char);
-    return { mode: 'mean2char', target: safeTarget, options: arrange([safeTarget.char, ...distractors]), answer: safeTarget.char };
+    return {
+      mode: 'mean2char',
+      target: safeTarget,
+      options: arrange([safeTarget.char, ...distractors]),
+      answer: safeTarget.char,
+    };
   }
   // 释义可能撞车（比如两个字都写「小孩」），撞车的选项会让孩子答对被判错，先过滤掉
   const distractors = arrange(pool.filter((c) => c.meaning !== target.meaning))
     .slice(0, 3)
     .map((c) => c.meaning);
-  return { mode: 'char2mean', target, options: arrange([target.meaning, ...distractors]), answer: target.meaning };
+  return {
+    mode: 'char2mean',
+    target,
+    options: arrange([target.meaning, ...distractors]),
+    answer: target.meaning,
+  };
 }
 
 export function CharacterQuizModule() {
@@ -566,13 +637,20 @@ export function CharacterQuizModule() {
   return (
     <div className="rounded-2xl p-5 bg-gradient-to-br from-moko-pink to-rose-300 text-white shadow-lg">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-bold bg-white/25 rounded-full px-3 py-1">难度：{meta.emoji} {meta.label}</span>
+        <span className="text-sm font-bold bg-white/25 rounded-full px-3 py-1">
+          难度：{meta.emoji} {meta.label}
+        </span>
         <span className="text-xs opacity-90">连对 {streak.right} · 自动调整中</span>
       </div>
       <div className="text-center mb-4">
         {q.mode === 'char2mean' ? (
           <>
-            <div className="text-sm font-bold opacity-90">{q.target.pinyin}{q.target.altPinyin ? <span className="opacity-75"> · 又读 {q.target.altPinyin}</span> : null}</div>
+            <div className="text-sm font-bold opacity-90">
+              {q.target.pinyin}
+              {q.target.altPinyin ? (
+                <span className="opacity-75"> · 又读 {q.target.altPinyin}</span>
+              ) : null}
+            </div>
             <div className="text-6xl font-black mb-1">{q.target.char}</div>
             <button
               onClick={() => speakZh(q.target.char)}
@@ -589,7 +667,9 @@ export function CharacterQuizModule() {
           课本第 {q.target.chapter} 单元 · {q.target.unit}
         </div>
       </div>
-      <div className={`grid gap-2 ${q.mode === 'mean2char' ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'}`}>
+      <div
+        className={`grid gap-2 ${q.mode === 'mean2char' ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'}`}
+      >
         {q.options.map((opt) => {
           const isAnswer = opt === q.answer;
           const isPicked = opt === picked;

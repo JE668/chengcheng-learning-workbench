@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { POLYPHONIC_CHARS } from '@/lib/study-data';
+
+import { POLYPHONIC_CHARS } from '@/lib/study-data/yiketie';
+
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -39,7 +41,9 @@ export function PolyphonicModule() {
       <div className="rounded-3xl p-5 bg-gradient-to-br from-moko-violet to-moko-purple text-white shadow-lg text-center">
         <div className="text-4xl mb-1">🔀✨</div>
         <h2 className="text-2xl font-black">多音字认认认</h2>
-        <p className="text-sm opacity-90 mt-1">好奇萌可：一个字怎么有好几种读音？点一点，听一听！</p>
+        <p className="text-sm opacity-90 mt-1">
+          好奇萌可：一个字怎么有好几种读音？点一点，听一听！
+        </p>
       </div>
 
       <div className="rounded-3xl p-6 bg-white shadow-lg border-2 border-moko-violet/30 text-center">
@@ -51,7 +55,10 @@ export function PolyphonicModule() {
         {showAnswer && (
           <div className="space-y-3 mb-4 text-left">
             {item.readings.map((r, i) => (
-              <div key={i} className="rounded-xl p-4 bg-gradient-to-r from-moko-pink/10 to-moko-rose/10 border border-moko-pink/20">
+              <div
+                key={i}
+                className="rounded-xl p-4 bg-gradient-to-r from-moko-pink/10 to-moko-rose/10 border border-moko-pink/20"
+              >
                 <div className="flex items-center gap-3 mb-1">
                   <span className="text-2xl font-black text-moko-rose">{r.pinyin}</span>
                   <span className="font-bold text-gray-700">「{r.meaning}」</span>
@@ -82,7 +89,8 @@ export function PolyphonicModule() {
           下一个 →
         </button>
         <div className="mt-3 text-xs text-gray-400">
-          连对 <span className="font-bold text-moko-green">{streak}</span> 个 · 进度 {idx + 1}/{POLYPHONIC_CHARS.length}
+          连对 <span className="font-bold text-moko-green">{streak}</span> 个 · 进度 {idx + 1}/
+          {POLYPHONIC_CHARS.length}
         </div>
       </div>
     </div>

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { SIMILAR_CHARS } from '@/lib/study-data';
+
+import { SIMILAR_CHARS } from '@/lib/study-data/yiketie';
+
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -49,7 +51,9 @@ export function SimilarCharModule() {
       <div className="rounded-3xl p-5 bg-gradient-to-br from-moko-cyan to-moko-blue text-white shadow-lg text-center">
         <div className="text-4xl mb-1">🔍✨</div>
         <h2 className="text-2xl font-black">形近字辨认</h2>
-        <p className="text-sm opacity-90 mt-1">好奇萌可：这两个字长得像不像？点一点，听一听，辨一辨！</p>
+        <p className="text-sm opacity-90 mt-1">
+          好奇萌可：这两个字长得像不像？点一点，听一听，辨一辨！
+        </p>
       </div>
 
       <div className="rounded-3xl p-6 bg-white shadow-lg border-2 border-moko-cyan/30 text-center">
@@ -59,7 +63,9 @@ export function SimilarCharModule() {
           <button
             onClick={() => pick('a')}
             className={`rounded-2xl w-28 h-28 flex items-center justify-center text-5xl font-black transition active:scale-95 ${
-              picked === 'a' ? 'bg-moko-green text-white ring-4 ring-moko-green/30' : 'bg-moko-cyan/10 text-moko-blue hover:bg-moko-cyan/20'
+              picked === 'a'
+                ? 'bg-moko-green text-white ring-4 ring-moko-green/30'
+                : 'bg-moko-cyan/10 text-moko-blue hover:bg-moko-cyan/20'
             }`}
           >
             {g.a}
@@ -67,7 +73,9 @@ export function SimilarCharModule() {
           <button
             onClick={() => pick('b')}
             className={`rounded-2xl w-28 h-28 flex items-center justify-center text-5xl font-black transition active:scale-95 ${
-              picked === 'b' ? 'bg-moko-rose text-white ring-4 ring-moko-rose/30' : 'bg-moko-pink/10 text-moko-rose hover:bg-moko-pink/20'
+              picked === 'b'
+                ? 'bg-moko-rose text-white ring-4 ring-moko-rose/30'
+                : 'bg-moko-pink/10 text-moko-rose hover:bg-moko-pink/20'
             }`}
           >
             {g.b}
@@ -95,7 +103,8 @@ export function SimilarCharModule() {
           下一组 →
         </button>
         <div className="mt-3 text-xs text-gray-400">
-          连对 <span className="font-bold text-moko-green">{streak}</span> 组 · 进度 {idx + 1}/{SIMILAR_CHARS.length}
+          连对 <span className="font-bold text-moko-green">{streak}</span> 组 · 进度 {idx + 1}/
+          {SIMILAR_CHARS.length}
         </div>
       </div>
     </div>

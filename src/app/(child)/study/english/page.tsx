@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { SubjectStudyPage } from '@/components/study/SubjectStudyPage';
-import { EN_UNITS } from '@/lib/study-data';
+
+import { EN_UNITS } from '@/lib/study-data/english';
+
 import { RAZ_VOCAB, RAZ_ALL_WORDS } from '@/lib/raz-vocab';
 
 export default async function EnglishStudyPage() {
@@ -15,21 +17,52 @@ export default async function EnglishStudyPage() {
           <h2 className="section-title mb-3">📘 按单元学</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             {EN_UNITS.map((u) => (
-              <div key={u.unit} className="rounded-2xl bg-white shadow border-2 border-moko-yellow/10 p-4">
+              <div
+                key={u.unit}
+                className="rounded-2xl bg-white shadow border-2 border-moko-yellow/10 p-4"
+              >
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{u.emoji}</span>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[11px] text-gray-400 font-bold">{u.unit}{u.extra ? '（拓展）' : ''}</div>
+                    <div className="text-[11px] text-gray-400 font-bold">
+                      {u.unit}
+                      {u.extra ? '（拓展）' : ''}
+                    </div>
                     <div className="text-sm font-black text-gray-800 truncate">{u.title}</div>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-2.5">
                   {/* 单元关联的练习模块入口 */}
-                  <Link href="/study/english/letters" className="px-2.5 py-1 rounded-full bg-moko-yellow/10 text-moko-yellow text-xs font-bold hover:bg-moko-yellow/20 transition">🔤 字母乐园</Link>
-                  <Link href="/study/english/words" className="px-2.5 py-1 rounded-full bg-moko-yellow/10 text-moko-yellow text-xs font-bold hover:bg-moko-yellow/20 transition">📚 单词世界</Link>
-                  <Link href="/study/english/units" className="px-2.5 py-1 rounded-full bg-moko-yellow/10 text-moko-yellow text-xs font-bold hover:bg-moko-yellow/20 transition">🗂️ 单元通关</Link>
-                  <Link href="/study/english/listen" className="px-2.5 py-1 rounded-full bg-moko-yellow/10 text-moko-yellow text-xs font-bold hover:bg-moko-yellow/20 transition">🎧 听音选词</Link>
-                  <Link href="/study/english/speak" className="px-2.5 py-1 rounded-full bg-moko-yellow/10 text-moko-yellow text-xs font-bold hover:bg-moko-yellow/20 transition">🎙️ 口语跟读</Link>
+                  <Link
+                    href="/study/english/letters"
+                    className="px-2.5 py-1 rounded-full bg-moko-yellow/10 text-moko-yellow text-xs font-bold hover:bg-moko-yellow/20 transition"
+                  >
+                    🔤 字母乐园
+                  </Link>
+                  <Link
+                    href="/study/english/words"
+                    className="px-2.5 py-1 rounded-full bg-moko-yellow/10 text-moko-yellow text-xs font-bold hover:bg-moko-yellow/20 transition"
+                  >
+                    📚 单词世界
+                  </Link>
+                  <Link
+                    href="/study/english/units"
+                    className="px-2.5 py-1 rounded-full bg-moko-yellow/10 text-moko-yellow text-xs font-bold hover:bg-moko-yellow/20 transition"
+                  >
+                    🗂️ 单元通关
+                  </Link>
+                  <Link
+                    href="/study/english/listen"
+                    className="px-2.5 py-1 rounded-full bg-moko-yellow/10 text-moko-yellow text-xs font-bold hover:bg-moko-yellow/20 transition"
+                  >
+                    🎧 听音选词
+                  </Link>
+                  <Link
+                    href="/study/english/speak"
+                    className="px-2.5 py-1 rounded-full bg-moko-yellow/10 text-moko-yellow text-xs font-bold hover:bg-moko-yellow/20 transition"
+                  >
+                    🎙️ 口语跟读
+                  </Link>
                 </div>
               </div>
             ))}
@@ -40,7 +73,8 @@ export default async function EnglishStudyPage() {
         <section className="mb-8">
           <h2 className="section-title mb-3">📖 RAZ 词汇练习</h2>
           <p className="text-xs text-gray-400 mb-3">
-            {RAZ_ALL_WORDS.length} 个核心词汇 · {Object.keys(RAZ_VOCAB).length} 个主题分类 · 听音认词（绘本阅读见「课本」页）
+            {RAZ_ALL_WORDS.length} 个核心词汇 · {Object.keys(RAZ_VOCAB).length} 个主题分类 ·
+            听音认词（绘本阅读见「课本」页）
           </p>
           <Link
             href="/study/english/raz-vocab"

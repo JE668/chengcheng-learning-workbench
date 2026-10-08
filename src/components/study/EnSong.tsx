@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { EN_SONGS, type EnSong } from '@/lib/study-data';
+
+import { EN_SONGS, type EnSong } from '@/lib/study-data/english';
+
 import { useModuleProgress } from '@/lib/module-progress';
 import { speakEn, praise } from '@/lib/speak';
 
@@ -78,7 +80,9 @@ export function EnSongModule() {
         <div className="text-center mb-3">
           <div className="text-4xl">{song.emoji}</div>
           <h3 className="text-xl font-black text-moko-yellow">{song.title}</h3>
-          <p className="text-xs text-gray-400">第 {idx + 1} 首 · 共 {EN_SONGS.length} 首</p>
+          <p className="text-xs text-gray-400">
+            第 {idx + 1} 首 · 共 {EN_SONGS.length} 首
+          </p>
           <button
             onClick={singAll}
             className="mt-2 px-4 py-1.5 rounded-full bg-moko-yellow text-white font-bold text-sm shadow active:scale-95 transition"
@@ -111,9 +115,7 @@ export function EnSongModule() {
 
       {/* 关键词 */}
       <div className="rounded-3xl p-4 bg-white shadow-lg border-2 border-moko-yellow/30">
-        <p className="font-black text-moko-yellow mb-2">
-          🔤 甜心萌可的词卡（点点听发音）
-        </p>
+        <p className="font-black text-moko-yellow mb-2">🔤 甜心萌可的词卡（点点听发音）</p>
         <div className="flex flex-wrap gap-2">
           {song.keywords.map((k) => (
             <button

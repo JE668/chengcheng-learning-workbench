@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { NEUTRAL_TONE_WORDS } from '@/lib/study-data';
+
+import { NEUTRAL_TONE_WORDS } from '@/lib/study-data/yiketie';
+
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -55,9 +57,7 @@ export function NeutralToneModule() {
           </div>
           <div className="rounded-2xl bg-moko-pink/10 border-2 border-dashed border-moko-pink/30 px-6 py-4">
             <div className="text-4xl font-black text-moko-pink">{item.word[1]}</div>
-            <div className="text-sm text-gray-400 mt-1">
-              {showAnswer ? item.light[1] : '? ? ?'}
-            </div>
+            <div className="text-sm text-gray-400 mt-1">{showAnswer ? item.light[1] : '? ? ?'}</div>
           </div>
         </div>
         <button
@@ -89,7 +89,8 @@ export function NeutralToneModule() {
           下一个词 →
         </button>
         <div className="mt-3 text-xs text-gray-400">
-          已学会 <span className="font-bold text-moko-green">{streak}</span> / {NEUTRAL_TONE_WORDS.length} 个 · 进度 {idx + 1}/{NEUTRAL_TONE_WORDS.length}
+          已学会 <span className="font-bold text-moko-green">{streak}</span> /{' '}
+          {NEUTRAL_TONE_WORDS.length} 个 · 进度 {idx + 1}/{NEUTRAL_TONE_WORDS.length}
         </div>
       </div>
     </div>

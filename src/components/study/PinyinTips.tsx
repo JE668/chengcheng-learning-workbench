@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { PINYIN_TIPS, PINYIN_GROUPS, PINYIN_HAN } from '@/lib/study-data';
+
+import { PINYIN_GROUPS, PINYIN_HAN, PINYIN_TIPS } from '@/lib/study-data/pinyin';
+
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -57,7 +59,9 @@ export function PinyinTipsModule() {
           <div className="text-5xl">{tip.emoji}</div>
           <div className="flex-1">
             <h3 className="text-xl font-black text-moko-rose">{tip.title}</h3>
-            <p className="text-sm text-gray-400">第 {idx + 1} / {PINYIN_TIPS.length} 个口诀</p>
+            <p className="text-sm text-gray-400">
+              第 {idx + 1} / {PINYIN_TIPS.length} 个口诀
+            </p>
           </div>
         </div>
         <div className="rounded-xl p-4 bg-gradient-to-r from-moko-pink/5 to-moko-rose/5 border-2 border-dashed border-moko-pink/30 mb-4">
@@ -84,7 +88,8 @@ export function PinyinTipsModule() {
           下一个口诀 →
         </button>
         <div className="mt-3 text-xs text-gray-400 text-center">
-          已记住 <span className="font-bold text-moko-green">{streak}</span> / {PINYIN_TIPS.length} 个
+          已记住 <span className="font-bold text-moko-green">{streak}</span> / {PINYIN_TIPS.length}{' '}
+          个
         </div>
       </div>
     </div>

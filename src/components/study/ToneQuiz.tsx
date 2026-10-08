@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { TONE_ITEMS } from '@/lib/study-data';
+
+import { TONE_ITEMS } from '@/lib/study-data/pinyin';
+
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 

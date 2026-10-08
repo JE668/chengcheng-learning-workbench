@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { CHAR_TRANSFORMS } from '@/lib/study-data';
+
+import { CHAR_TRANSFORMS } from '@/lib/study-data/yiketie';
+
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -39,7 +41,9 @@ export function CharTransformModule() {
       <div className="rounded-3xl p-5 bg-gradient-to-br from-moko-rose to-moko-pink text-white shadow-lg text-center">
         <div className="text-4xl mb-1">🔍✨</div>
         <h2 className="text-2xl font-black">汉字变变变</h2>
-        <p className="text-sm opacity-90 mt-1">好奇萌可：咦？一个字加一加就变成另一个字啦！真神奇！</p>
+        <p className="text-sm opacity-90 mt-1">
+          好奇萌可：咦？一个字加一加就变成另一个字啦！真神奇！
+        </p>
       </div>
 
       <div className="rounded-3xl p-6 bg-white shadow-lg border-2 border-moko-rose/30 text-center">
@@ -67,7 +71,8 @@ export function CharTransformModule() {
           </button>
         ) : (
           <div className="rounded-2xl p-3 bg-moko-yellow/10 border-2 border-moko-yellow/30 text-sm text-gray-700 fade-up">
-            <span className="font-bold text-moko-rose">好奇萌可说：</span>{t.hint}
+            <span className="font-bold text-moko-rose">好奇萌可说：</span>
+            {t.hint}
           </div>
         )}
       </div>
@@ -86,7 +91,10 @@ export function CharTransformModule() {
           下一组 ➡️
         </button>
       </div>
-      <p className="text-center text-xs text-gray-400">第 {idx + 1} / {CHAR_TRANSFORMS.length} 组 · 点每个字认识它，点「看看发现了什么」听好奇萌可的发现！</p>
+      <p className="text-center text-xs text-gray-400">
+        第 {idx + 1} / {CHAR_TRANSFORMS.length} 组 ·
+        点每个字认识它，点「看看发现了什么」听好奇萌可的发现！
+      </p>
     </div>
   );
 }

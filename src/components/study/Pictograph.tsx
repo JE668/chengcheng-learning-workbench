@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { PICTOGRAPHS } from '@/lib/study-data';
+
+import { PICTOGRAPHS } from '@/lib/study-data/yiketie';
+
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -43,7 +45,9 @@ export function PictographModule() {
       <div className="rounded-3xl p-5 bg-gradient-to-br from-moko-green to-moko-mint text-white shadow-lg text-center">
         <div className="text-4xl mb-1">🎨✨</div>
         <h2 className="text-2xl font-black">象形字博物馆</h2>
-        <p className="text-sm opacity-90 mt-1">好奇萌可：古人是怎样造字的？点一点，看古字变今字！</p>
+        <p className="text-sm opacity-90 mt-1">
+          好奇萌可：古人是怎样造字的？点一点，看古字变今字！
+        </p>
       </div>
 
       <div className="rounded-3xl p-6 bg-white shadow-lg border-2 border-moko-green/30 text-center">
@@ -76,7 +80,9 @@ export function PictographModule() {
         </div>
         {showHint && (
           <div className="rounded-xl p-4 bg-gradient-to-r from-moko-green/10 to-moko-mint/10 border-2 border-dashed border-moko-green/30">
-            <div className="text-lg font-bold text-moko-green mb-2">「{item.meaning}」{item.py}</div>
+            <div className="text-lg font-bold text-moko-green mb-2">
+              「{item.meaning}」{item.py}
+            </div>
             <div className="text-sm text-gray-600">{item.hint}</div>
           </div>
         )}
@@ -87,7 +93,8 @@ export function PictographModule() {
           下一个象形字 →
         </button>
         <div className="mt-3 text-xs text-gray-400">
-          已探索 <span className="font-bold text-moko-green">{streak}</span> / {PICTOGRAPHS.length} 个字 · 进度 {idx + 1}/{PICTOGRAPHS.length}
+          已探索 <span className="font-bold text-moko-green">{streak}</span> / {PICTOGRAPHS.length}{' '}
+          个字 · 进度 {idx + 1}/{PICTOGRAPHS.length}
         </div>
       </div>
     </div>

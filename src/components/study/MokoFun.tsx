@@ -1,12 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
-import {
-  PROVERBS,
-  ANTONYMS,
-  QUANTIFIERS,
-  RIDDLES,
-} from '@/lib/study-data';
+
+import { ANTONYMS, PROVERBS, QUANTIFIERS, RIDDLES } from '@/lib/study-data/chinese-fun';
+
 import { StudyQuiz, type QuizItem } from './StudyQuiz';
 
 /** 从数组里随机取 n 个不同的项（用于生成干扰项） */
@@ -27,12 +24,13 @@ function buildProverbItems(): QuizItem[] {
   return PROVERBS.map((p) => {
     const distractors = pickN(
       PROVERBS.filter((x) => x.second !== p.second).map((x) => x.second),
-      2,
+      2
     );
     return {
       prompt: (
         <span>
-          🧙 「{p.first}」<br />后半句是？
+          🧙 「{p.first}」<br />
+          后半句是？
           <br />
           <span className="text-xs opacity-80">{p.hint}</span>
         </span>
@@ -53,12 +51,13 @@ function buildAntonymItems(): QuizItem[] {
   return ANTONYMS.map((x) => {
     const distractors = pickN(
       ANTONYMS.filter((y) => y.b !== x.b).map((y) => y.b),
-      3,
+      3
     );
     return {
       prompt: (
         <span>
-          😈 {x.emojiA} 「{x.a}」<br />它的反义词是？
+          😈 {x.emojiA} 「{x.a}」<br />
+          它的反义词是？
         </span>
       ),
       speak: `${x.a}的反义词是？`,
@@ -77,7 +76,9 @@ function buildQuantifierItems(): QuizItem[] {
   return QUANTIFIERS.map((q) => ({
     prompt: (
       <span>
-        🎁 {q.emoji} 一（ ）{q.item}<br />选正确的量词
+        🎁 {q.emoji} 一（ ）{q.item}
+        <br />
+        选正确的量词
       </span>
     ),
     speak: `一什么${q.item}？`,
@@ -117,7 +118,9 @@ export function ProverbModule() {
       <div className="rounded-3xl p-5 bg-gradient-to-br from-moko-purple to-moko-pink text-white shadow-lg text-center">
         <div className="text-4xl mb-1">📘✨</div>
         <h2 className="text-2xl font-black">睿智萌可的智慧名言</h2>
-        <p className="text-sm opacity-90 mt-1">睿智萌可捧着智慧书：知识就是力量！古人的话里藏着大智慧～</p>
+        <p className="text-sm opacity-90 mt-1">
+          睿智萌可捧着智慧书：知识就是力量！古人的话里藏着大智慧～
+        </p>
       </div>
       <StudyQuiz
         items={items}
@@ -142,7 +145,9 @@ export function AntonymModule() {
       <div className="rounded-3xl p-5 bg-gradient-to-br from-moko-rose to-moko-pink text-white shadow-lg text-center">
         <div className="text-4xl mb-1">😈💪</div>
         <h2 className="text-2xl font-black">淘气萌可的捣蛋配对</h2>
-        <p className="text-sm opacity-90 mt-1">淘气萌可把反义词全打乱啦！正正萌可陪你一起整理好～</p>
+        <p className="text-sm opacity-90 mt-1">
+          淘气萌可把反义词全打乱啦！正正萌可陪你一起整理好～
+        </p>
       </div>
       <StudyQuiz
         items={items}
@@ -167,7 +172,9 @@ export function QuantifierModule() {
       <div className="rounded-3xl p-5 bg-gradient-to-br from-moko-violet to-moko-purple text-white shadow-lg text-center">
         <div className="text-4xl mb-1">🎁🔑</div>
         <h2 className="text-2xl font-black">宝盒萌可的量词宝箱</h2>
-        <p className="text-sm opacity-90 mt-1">宝盒萌可：猜猜里面有什么？——一（ ）猫？选对就打开！</p>
+        <p className="text-sm opacity-90 mt-1">
+          宝盒萌可：猜猜里面有什么？——一（ ）猫？选对就打开！
+        </p>
       </div>
       <StudyQuiz
         items={items}
@@ -192,7 +199,9 @@ export function RiddleModule() {
       <div className="rounded-3xl p-5 bg-gradient-to-br from-moko-cyan to-moko-blue text-white shadow-lg text-center">
         <div className="text-4xl mb-1">🔍🎁</div>
         <h2 className="text-2xl font-black">好奇萌可的谜语宝箱</h2>
-        <p className="text-sm opacity-90 mt-1">好奇萌可拿着放大镜：咦？这是什么呢？来猜猜谜语吧！</p>
+        <p className="text-sm opacity-90 mt-1">
+          好奇萌可拿着放大镜：咦？这是什么呢？来猜猜谜语吧！
+        </p>
       </div>
       <StudyQuiz
         items={items}

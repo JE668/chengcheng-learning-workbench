@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ALL_EN_WORDS, type WordItem } from '@/lib/study-data';
+
+import { ALL_EN_WORDS, type WordItem } from '@/lib/study-data-en';
+
 import { speakEn, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 import { useMistakeLogger } from '@/lib/mistake-logger';
@@ -16,7 +18,9 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 /** 选出适合拼写的词（3-6 字母，不含特殊字符） */
-const SPELLABLE = ALL_EN_WORDS.filter((w) => w.word.length >= 3 && w.word.length <= 6 && /^[a-z]+$/.test(w.word));
+const SPELLABLE = ALL_EN_WORDS.filter(
+  (w) => w.word.length >= 3 && w.word.length <= 6 && /^[a-z]+$/.test(w.word)
+);
 
 export function EnSpellModule() {
   const { record } = useModuleProgress('english', 'en-spell');
@@ -40,7 +44,10 @@ export function EnSpellModule() {
     return 1 + Math.floor(Math.random() * (max - 1));
   }, [item.word]);
 
-  const display = item.word.split('').map((c, i) => (i === blankIdx ? '_' : c)).join(' ');
+  const display = item.word
+    .split('')
+    .map((c, i) => (i === blankIdx ? '_' : c))
+    .join(' ');
 
   // 干扰项：3 个与答案字形相近的字母
   const options = useMemo(() => {
@@ -58,7 +65,13 @@ export function EnSpellModule() {
       praise();
       setCorrect((n) => n + 1);
     } else {
-      logM({ subject: '英语', kind: '拼写', prompt: item.word, answer: item.word[blankIdx], wrong: c });
+      logM({
+        subject: '英语',
+        kind: '拼写',
+        prompt: item.word,
+        answer: item.word[blankIdx],
+        wrong: c,
+      });
     }
     setTimeout(() => {
       const n = done + 1;
@@ -80,9 +93,17 @@ export function EnSpellModule() {
         <div className="text-4xl mb-2">🎉</div>
         <h2 className="text-xl font-black text-moko-violet mb-2">拼写练习完成！</h2>
         <p className="text-gray-500 mb-4">一共拼对了 {correct} / 8 个字母</p>
-        <button onClick={() => { setRoundDone(false); setDone(0); setCorrect(0); setPicked(null); }}
+        <button
+          onClick={() => {
+            setRoundDone(false);
+            setDone(0);
+            setCorrect(0);
+            setPicked(null);
+          }}
           className="px-5 py-2 rounded-full bg-moko-yellow text-white font-bold text-sm active:scale-95 transition"
-        >再来一轮</button>
+        >
+          再来一轮
+        </button>
       </div>
     );
   }
@@ -104,20 +125,35 @@ export function EnSpellModule() {
           {options.map((c) => {
             const isAns = c === item.word[blankIdx];
             const isPicked = c === picked;
-            let cls = 'w-12 h-12 rounded-2xl bg-moko-yellow/10 text-moko-violet border-2 border-moko-yellow/30 text-2xl font-black';
+            let cls =
+              'w-12 h-12 rounded-2xl bg-moko-yellow/10 text-moko-violet border-2 border-moko-yellow/30 text-2xl font-black';
             if (picked) {
-              if (isAns) cls = 'w-12 h-12 rounded-2xl bg-green-100 text-green-700 border-2 border-green-500 text-2xl font-black';
-              else if (isPicked) cls = 'w-12 h-12 rounded-2xl bg-red-100 text-red-600 border-2 border-red-500 text-2xl font-black';
-              else cls = 'w-12 h-12 rounded-2xl bg-gray-100 text-gray-300 border-2 border-gray-200 text-2xl font-black';
+              if (isAns)
+                cls =
+                  'w-12 h-12 rounded-2xl bg-green-100 text-green-700 border-2 border-green-500 text-2xl font-black';
+              else if (isPicked)
+                cls =
+                  'w-12 h-12 rounded-2xl bg-red-100 text-red-600 border-2 border-red-500 text-2xl font-black';
+              else
+                cls =
+                  'w-12 h-12 rounded-2xl bg-gray-100 text-gray-300 border-2 border-gray-200 text-2xl font-black';
             }
             return (
-              <button key={c} disabled={!!picked} onClick={() => pick(c)}
+              <button
+                key={c}
+                disabled={!!picked}
+                onClick={() => pick(c)}
                 className={`${cls} active:scale-95 transition`}
-              >{c}</button>
+              >
+                {c}
+              </button>
             );
           })}
         </div>
-        <button onClick={() => speakEn(item.word)} className="mt-4 text-xs px-3 py-1 rounded-full bg-moko-yellow text-white font-bold">
+        <button
+          onClick={() => speakEn(item.word)}
+          className="mt-4 text-xs px-3 py-1 rounded-full bg-moko-yellow text-white font-bold"
+        >
           🔊 听完整单词
         </button>
       </div>

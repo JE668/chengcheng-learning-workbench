@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { GRADE1_CHAR_UNITS, CHARACTERS } from '@/lib/study-data';
+
+import { CHARACTERS } from '@/lib/study-data/characters';
+import { GRADE1_CHAR_UNITS } from '@/lib/study-data/units';
+
 import { speakZh } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 import { ModuleStars } from '@/components/study/ModuleStars';
@@ -16,7 +19,7 @@ interface Item {
 }
 
 const PINYIN_MAP = new Map<string, string>(
-  CHARACTERS.map((c) => [c.char, c.pinyin] as [string, string]),
+  CHARACTERS.map((c) => [c.char, c.pinyin] as [string, string])
 );
 
 function wordPinyin(w: string): string {
@@ -41,7 +44,8 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function buildItems(unit: string, mode: Mode, count: number): Item[] {
-  const units = unit === 'ALL' ? GRADE1_CHAR_UNITS : GRADE1_CHAR_UNITS.filter((u) => u.unit === unit);
+  const units =
+    unit === 'ALL' ? GRADE1_CHAR_UNITS : GRADE1_CHAR_UNITS.filter((u) => u.unit === unit);
   const pool: string[] = [];
   units.forEach((u) => {
     if (mode === 'pinyin') pool.push(...u.chars);
@@ -121,7 +125,10 @@ export default function DictationPractice() {
 
   async function submit() {
     if (revealed || !input.trim()) return;
-    const ok = mode === 'pinyin' ? normPinyin(input) === normPinyin(item.answer) : input.trim() === item.answer.trim();
+    const ok =
+      mode === 'pinyin'
+        ? normPinyin(input) === normPinyin(item.answer)
+        : input.trim() === item.answer.trim();
     setCorrect(ok);
     setRevealed(true);
     if (ok) {
@@ -215,13 +222,18 @@ export default function DictationPractice() {
               </span>
             ))}
           </div>
-          <p className="text-gray-600 mb-1">写对了 {score} / {items.length} 个，正确率 {acc}%</p>
+          <p className="text-gray-600 mb-1">
+            写对了 {score} / {items.length} 个，正确率 {acc}%
+          </p>
           <div className="flex items-center justify-center gap-1 mb-4 text-sm text-moko-violet">
             <span>累计星星</span>
             <ModuleStars subject="chinese" moduleKey="dictation" />
           </div>
           <div className="flex gap-2 justify-center">
-            <button onClick={start} className="px-6 py-2 rounded-full bg-moko-yellow text-white font-bold text-sm active:scale-95 transition">
+            <button
+              onClick={start}
+              className="px-6 py-2 rounded-full bg-moko-yellow text-white font-bold text-sm active:scale-95 transition"
+            >
               再来一轮 ›
             </button>
           </div>
@@ -251,7 +263,9 @@ export default function DictationPractice() {
             <div className="text-xs text-gray-400">听读音，写出它的拼音</div>
           </div>
         ) : (
-          <div className="text-center mb-4 text-lg font-bold text-gray-500">听一听，写出你听到的字或词</div>
+          <div className="text-center mb-4 text-lg font-bold text-gray-500">
+            听一听，写出你听到的字或词
+          </div>
         )}
 
         <input
@@ -276,10 +290,15 @@ export default function DictationPractice() {
           </button>
         ) : (
           <div className="mt-3 space-y-2">
-            <div className={`rounded-2xl p-3 text-center font-black ${correct ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+            <div
+              className={`rounded-2xl p-3 text-center font-black ${correct ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}
+            >
               {correct ? '✅ 写对啦！' : `✏️ 正确答案：${item.answer}`}
             </div>
-            <button onClick={next} className="w-full py-3 rounded-2xl bg-moko-yellow text-white font-black shadow hover:scale-[1.02] transition">
+            <button
+              onClick={next}
+              className="w-full py-3 rounded-2xl bg-moko-yellow text-white font-black shadow hover:scale-[1.02] transition"
+            >
               {idx + 1 >= items.length ? '看结果 ›' : '下一题 ›'}
             </button>
           </div>

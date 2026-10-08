@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { MY_DAY } from '@/lib/study-data';
+
+import { MY_DAY } from '@/lib/study-data/life';
+
 import { speakZh, praise } from '@/lib/speak';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -28,7 +30,12 @@ export function MyDayModule() {
   const scrambled = useMemo(() => shuffle(MY_DAY.map((_, i) => i)), []);
   const wrongTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => () => { if (wrongTimer.current) clearTimeout(wrongTimer.current); }, []);
+  useEffect(
+    () => () => {
+      if (wrongTimer.current) clearTimeout(wrongTimer.current);
+    },
+    []
+  );
 
   function read(i: number) {
     setActive(i);
@@ -39,7 +46,9 @@ export function MyDayModule() {
   // 排序游戏：按时间从早到晚点
   function tapOrder(origIdx: number) {
     if (done || order.includes(origIdx)) return;
-    const expected = MY_DAY.filter((_, i) => !order.includes(i)).sort((a, b) => toMin(a.time) - toMin(b.time))[0];
+    const expected = MY_DAY.filter((_, i) => !order.includes(i)).sort(
+      (a, b) => toMin(a.time) - toMin(b.time)
+    )[0];
     if (origIdx === MY_DAY.indexOf(expected)) {
       const next = [...order, origIdx];
       setOrder(next);
@@ -68,7 +77,9 @@ export function MyDayModule() {
       <div className="rounded-3xl p-5 bg-gradient-to-br from-moko-blue to-moko-cyan text-white shadow-lg text-center">
         <div className="text-4xl mb-1">🕒🌞</div>
         <h2 className="text-2xl font-black">我的一天</h2>
-        <p className="text-sm opacity-90 mt-1">正正萌可：点一点，听听程程每一天都在做什么；再帮它们排排队！</p>
+        <p className="text-sm opacity-90 mt-1">
+          正正萌可：点一点，听听程程每一天都在做什么；再帮它们排排队！
+        </p>
       </div>
 
       {/* 时间线 */}
@@ -77,14 +88,20 @@ export function MyDayModule() {
         <ol className="relative border-l-4 border-moko-blue/30 ml-3 space-y-3">
           {MY_DAY.map((d, i) => (
             <li key={i} className="ml-4">
-              <span className="absolute -left-[18px] flex items-center justify-center w-7 h-7 bg-white rounded-full border-2 border-moko-blue shadow text-sm">{d.emoji}</span>
+              <span className="absolute -left-[18px] flex items-center justify-center w-7 h-7 bg-white rounded-full border-2 border-moko-blue shadow text-sm">
+                {d.emoji}
+              </span>
               <button
                 onClick={() => read(i)}
                 className={`w-full text-left rounded-2xl px-4 py-2 transition ${
-                  active === i ? 'bg-moko-blue text-white shadow' : 'bg-moko-blue/5 hover:bg-moko-blue/10'
+                  active === i
+                    ? 'bg-moko-blue text-white shadow'
+                    : 'bg-moko-blue/5 hover:bg-moko-blue/10'
                 }`}
               >
-                <span className="font-black text-moko-blue mr-2">{active === i ? '🔊' : '🕐'} {d.time}</span>
+                <span className="font-black text-moko-blue mr-2">
+                  {active === i ? '🔊' : '🕐'} {d.time}
+                </span>
                 <span className={active === i ? 'text-white' : 'text-gray-700'}>{d.text}</span>
               </button>
             </li>
@@ -100,7 +117,10 @@ export function MyDayModule() {
           <div className="text-center py-4">
             <div className="text-4xl mb-2">🎉</div>
             <p className="font-black text-moko-cyan">你排好了一整天，时间观念真好！</p>
-            <button onClick={resetGame} className="mt-3 px-6 py-2 rounded-full bg-moko-cyan text-white font-bold text-sm active:scale-95 transition">
+            <button
+              onClick={resetGame}
+              className="mt-3 px-6 py-2 rounded-full bg-moko-cyan text-white font-bold text-sm active:scale-95 transition"
+            >
               🔄 再排一次
             </button>
           </div>
@@ -128,7 +148,9 @@ export function MyDayModule() {
                 );
               })}
             </div>
-            <p className="text-xs text-gray-400 mt-2 text-center">已排好 {order.length} / {MY_DAY.length} 件</p>
+            <p className="text-xs text-gray-400 mt-2 text-center">
+              已排好 {order.length} / {MY_DAY.length} 件
+            </p>
           </>
         )}
       </div>

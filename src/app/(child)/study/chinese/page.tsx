@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { STUDY_MODULES } from '@/lib/study-modules';
 import { SubjectStudyPage } from '@/components/study/SubjectStudyPage';
-import { CHINESE_UNITS } from '@/lib/study-data';
+
+import { CHINESE_UNITS } from '@/lib/study-data/units';
 
 export default async function ChineseStudyPage() {
   const modules = STUDY_MODULES.chinese;
@@ -18,7 +19,10 @@ export default async function ChineseStudyPage() {
           <h2 className="section-title mb-3">📘 跟着课本走</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             {CHINESE_UNITS.map((u) => (
-              <div key={u.chapter} className="rounded-2xl bg-white shadow border-2 border-moko-rose/10 p-4">
+              <div
+                key={u.chapter}
+                className="rounded-2xl bg-white shadow border-2 border-moko-rose/10 p-4"
+              >
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{u.emoji}</span>
                   <div className="flex-1 min-w-0">

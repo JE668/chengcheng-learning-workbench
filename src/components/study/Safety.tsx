@@ -1,7 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { SAFETY_TIPS } from '@/lib/study-data';
+
+import { SAFETY_TIPS } from '@/lib/study-data/life';
+
 import { useModuleProgress } from '@/lib/module-progress';
 import { speakZh, praise } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
@@ -79,7 +81,9 @@ export function SafetyModule() {
         <div className="rounded-3xl p-8 bg-white shadow-lg border-2 border-moko-mint/40 text-center">
           <div className="text-5xl mb-2">🌸🎉</div>
           <h3 className="text-xl font-black text-moko-cyan mb-1">安全小卫士，你真棒！</h3>
-          <p className="text-gray-500 mb-4">一共答对了 {rightCount} / {SAFETY_TIPS.length} 题</p>
+          <p className="text-gray-500 mb-4">
+            一共答对了 {rightCount} / {SAFETY_TIPS.length} 题
+          </p>
           <button
             onClick={restart}
             className="px-6 py-2.5 rounded-full bg-moko-mint text-white font-black shadow active:scale-95 transition"

@@ -1,7 +1,10 @@
 'use client';
 
 import { useMemo } from 'react';
-import { WORD_FORM, buildUnitWordItems } from '@/lib/study-data';
+
+import { buildUnitWordItems } from '@/lib/study-data/units';
+import { WORD_FORM } from '@/lib/study-data/yiketie';
+
 import { StudyQuiz, type QuizItem } from './StudyQuiz';
 import { useModuleProgress } from '@/lib/module-progress';
 
@@ -49,7 +52,9 @@ function buildItems(): QuizItem[] {
       prompt: (
         <span>
           给「<b className="text-moko-rose">{it.char}</b>」组一个词，下面哪个对？
-          <span className="block text-xs text-gray-400 font-normal mt-1">课本第 {it.chapter} 单元 · {it.unit}</span>
+          <span className="block text-xs text-gray-400 font-normal mt-1">
+            课本第 {it.chapter} 单元 · {it.unit}
+          </span>
         </span>
       ),
       speak: `给${it.char}组一个词，下面哪个对`,

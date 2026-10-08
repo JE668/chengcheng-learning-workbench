@@ -1,6 +1,7 @@
 'use client';
 
-import { CVC_WORDS, EN_SENTENCES } from '@/lib/study-data';
+import { CVC_WORDS, EN_SENTENCES } from '@/lib/study-data/english';
+
 import { StudyQuiz, type QuizItem } from './StudyQuiz';
 
 function shuffle<T>(arr: T[]): T[] {
@@ -33,7 +34,16 @@ export function EnglishPhonicsModule() {
       kind: '自然拼读',
     };
   });
-  return <StudyQuiz items={items} subject="英语" color="bg-moko-yellow" textColor="text-moko-violet" autoSpeak="en" moduleKey="phonics" />;
+  return (
+    <StudyQuiz
+      items={items}
+      subject="英语"
+      color="bg-moko-yellow"
+      textColor="text-moko-violet"
+      autoSpeak="en"
+      moduleKey="phonics"
+    />
+  );
 }
 
 /* ========================================================================
@@ -46,7 +56,9 @@ export function EnglishSentenceModule() {
       prompt: (
         <div className="text-2xl font-black text-moko-violet leading-relaxed">
           {parts[0]}
-          <span className="inline-block min-w-[3rem] border-b-4 border-moko-yellow mx-1 align-middle">&nbsp;</span>
+          <span className="inline-block min-w-[3rem] border-b-4 border-moko-yellow mx-1 align-middle">
+            &nbsp;
+          </span>
           {parts[1]}
         </div>
       ),
@@ -56,5 +68,14 @@ export function EnglishSentenceModule() {
       kind: '英语句型',
     };
   });
-  return <StudyQuiz items={items} subject="英语" color="bg-moko-violet" textColor="text-moko-violet" autoSpeak="en" moduleKey="sentences" />;
+  return (
+    <StudyQuiz
+      items={items}
+      subject="英语"
+      color="bg-moko-violet"
+      textColor="text-moko-violet"
+      autoSpeak="en"
+      moduleKey="sentences"
+    />
+  );
 }
