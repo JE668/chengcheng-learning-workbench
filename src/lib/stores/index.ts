@@ -119,8 +119,12 @@ export const useTTSStore = create<TTSState>((set, get) => ({
   enqueue: (item) => {
     const id = `tts-${Date.now()}-${++ttsId}`;
     const newItem = { ...item, id };
-    const priorityValue = (p?: 'normal' | 'high') => p === 'high' ? 1 : 0;
-    set((s) => ({ queue: [...s.queue, newItem].sort((a, b) => priorityValue(b.opts.priority) - priorityValue(a.opts.priority)) }));
+    const priorityValue = (p?: 'normal' | 'high') => (p === 'high' ? 1 : 0);
+    set((s) => ({
+      queue: [...s.queue, newItem].sort(
+        (a, b) => priorityValue(b.opts.priority) - priorityValue(a.opts.priority)
+      ),
+    }));
     return id;
   },
 
@@ -164,7 +168,7 @@ export const useCaptureStore = create<CaptureState>((set) => ({
 /** 离线队列 Store（用于 PWA 离线同步） */
 interface OfflineAction {
   id: string;
-  type: 'completion' | 'checkin' | 'task' | 'redemption' | 'harvest' | 'capture';
+  type: 'completion' | 'checkin' | 'task' | 'redemption' | 'harvest' | 'capture' | 'mistake';
   payload: Record<string, any>;
   timestamp: number;
   retries: number;
@@ -235,7 +239,8 @@ interface UIState {
 let toastId = 0;
 export const useUIStore = create<UIState>((set) => ({
   globalLoading: 0,
-  showGlobalLoading: (show) => set((s) => ({ globalLoading: show ? s.globalLoading + 1 : Math.max(0, s.globalLoading - 1) })),
+  showGlobalLoading: (show) =>
+    set((s) => ({ globalLoading: show ? s.globalLoading + 1 : Math.max(0, s.globalLoading - 1) })),
 
   toasts: [],
   showToast: (message, type = 'info') => {

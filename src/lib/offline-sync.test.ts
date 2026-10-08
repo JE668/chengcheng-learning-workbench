@@ -23,6 +23,23 @@ describe('offline-sync flushOfflineQueue', () => {
     );
   });
 
+  it('⚠️ mistake 动作会被重放到 /api/mistakes（此前队列里根本没人重放它）', async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200 }) as any;
+    useOfflineStore.getState().addAction({
+      type: 'mistake',
+      payload: { subject: '语文', kind: '听写', prompt: '天', answer: '天', wrong: '夫' },
+    });
+
+    const flushed = await flushOfflineQueue();
+
+    expect(flushed).toBe(1);
+    expect(useOfflineStore.getState().queue.length).toBe(0);
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/mistakes',
+      expect.objectContaining({ method: 'POST' })
+    );
+  });
+
   it('网络异常时保留动作并计入重试，不在本轮丢弃', async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('offline')) as any;
     useOfflineStore.getState().addAction({ type: 'checkin', payload: { answers: [0] } });
