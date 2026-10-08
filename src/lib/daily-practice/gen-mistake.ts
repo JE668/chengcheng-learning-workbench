@@ -7,7 +7,7 @@ import { shuffle } from './types';
 /** 粗略判断答案「形状」，只有同形状的选项混在一起才不别扭（数字 / 英文 / N 个汉字 / emoji…） */
 export function shapeOf(s: string): string {
   if (/^-?\d+$/.test(s)) return 'num';
-  // eslint-disable-next-line no-control-regex
+
   if (/^[\u0000-\u007F]+$/.test(s)) return 'ascii';
   if (/^[\u4e00-\u9fa5]+$/.test(s)) return `han${Array.from(s).length}`;
   return 'other';
@@ -41,10 +41,15 @@ export function buildMistakeOptions(m: MistakeRow, pool: MistakeRow[]): string[]
   return shuffle(opts);
 }
 
-export function genMistakeQ(m: MistakeRow, pool: MistakeRow[]): import('./types').PracticeQuestion | null {
+export function genMistakeQ(
+  m: MistakeRow,
+  pool: MistakeRow[]
+): import('./types').PracticeQuestion | null {
   const options = buildMistakeOptions(m, pool);
   if (options.length < 2) return null; // 连一个干扰项都凑不出来就跳过
-  const subject: import('../types').Subject = (['语文', '数学', '英语'] as string[]).includes(m.subject)
+  const subject: import('../types').Subject = (['语文', '数学', '英语'] as string[]).includes(
+    m.subject
+  )
     ? (m.subject as import('../types').Subject)
     : '语文';
   return {

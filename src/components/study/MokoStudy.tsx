@@ -178,7 +178,6 @@ export function SplitModule() {
   useEffect(() => {
     setQ(makeSplitQ(num));
     setPicked(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [num]);
 
   function choose(o: number) {

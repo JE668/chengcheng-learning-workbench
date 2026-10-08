@@ -63,7 +63,6 @@ export default function StoryPage() {
   useEffect(() => {
     load();
     loadModuleProgress();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /** 模块绑定章节的解锁判定 + 展示用模块名 */

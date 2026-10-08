@@ -159,7 +159,7 @@ export function shuffle<T>(arr: T[]): T[] {
 /** 粗略判断答案「形状」，只有同形状的选项混在一起才不别扭（数字 / 英文 / N 个汉字 / emoji…） */
 export function shapeOf(s: string): string {
   if (/^-?\d+$/.test(s)) return 'num';
-  // eslint-disable-next-line no-control-regex
+
   if (/^[\u0000-\u007F]+$/.test(s)) return 'ascii';
   if (/^[\u4e00-\u9fa5]+$/.test(s)) return `han${Array.from(s).length}`;
   return 'other';
@@ -174,7 +174,7 @@ export async function computePracticeStreak(childId: number, today: string): Pro
     sql: 'SELECT day FROM daily_practice WHERE child_id = ? AND completed = 1 AND day >= ? AND day <= ? ORDER BY day DESC',
     args: [childId, start, today],
   });
-  const completedDays = new Set(res.rows.map(r => String(r.day)));
+  const completedDays = new Set(res.rows.map((r) => String(r.day)));
   let streak = 0;
   let d = today;
   while (completedDays.has(d)) {

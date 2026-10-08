@@ -300,7 +300,7 @@ function PoemCard({ item }: { item: PoemItem }) {
       {audioUrl && (
         <div className="mt-2 rounded-xl bg-white/60 p-2">
           <p className="text-xs text-gray-500 mb-1">▶ 回放我的背诵：</p>
-          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+          {}
           <audio controls src={audioUrl} className="w-full" />
         </div>
       )}
@@ -593,7 +593,6 @@ export function CharacterQuizModule() {
     } else {
       speakZh(`哪个字的意思是「${q.target.meaning}」？`);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q.mode, q.target.char, q.target.meaning]);
 
   function choose(opt: string) {

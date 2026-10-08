@@ -357,7 +357,6 @@ function EnListenQuiz() {
       setLevel(saved);
       setQ(buildQuestion(saved));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

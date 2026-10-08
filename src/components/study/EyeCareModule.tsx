@@ -69,7 +69,6 @@ export default function EyeCareModule() {
     return () => {
       if (timer.current) clearInterval(timer.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running, step]);
 
   function start() {
@@ -107,7 +106,10 @@ export default function EyeCareModule() {
           <div className="text-6xl mb-3">🌟</div>
           <h3 className="text-2xl font-black text-moko-violet mb-2">四节都做完啦！</h3>
           <p className="text-gray-600 mb-5">眼睛放松一下，看看远处绿绿的树吧～</p>
-          <button onClick={restart} className="rounded-2xl px-6 py-3 bg-moko-mint text-white font-black shadow hover:scale-105 transition">
+          <button
+            onClick={restart}
+            className="rounded-2xl px-6 py-3 bg-moko-mint text-white font-black shadow hover:scale-105 transition"
+          >
             🔄 再做一次
           </button>
         </div>
@@ -123,27 +125,40 @@ export default function EyeCareModule() {
           {/* 倒计时进度 */}
           <div className="max-w-xs mx-auto mb-4">
             <div className="flex items-center justify-between text-sm text-gray-500 mb-1">
-              <span>第 {step + 1} / {SECTIONS.length} 节</span>
+              <span>
+                第 {step + 1} / {SECTIONS.length} 节
+              </span>
               <span>{running ? `${secs} 秒` : '准备好了吗？'}</span>
             </div>
             <div className="h-3 rounded-full bg-gray-100 overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-moko-mint to-moko-cyan transition-all" style={{ width: `${running ? progress : 0}%` }} />
+              <div
+                className="h-full bg-gradient-to-r from-moko-mint to-moko-cyan transition-all"
+                style={{ width: `${running ? progress : 0}%` }}
+              />
             </div>
           </div>
 
           <div className="flex justify-center">
             {!running ? (
-              <button onClick={start} className="rounded-2xl px-8 py-3 bg-moko-violet text-white font-black shadow hover:scale-105 transition">
+              <button
+                onClick={start}
+                className="rounded-2xl px-8 py-3 bg-moko-violet text-white font-black shadow hover:scale-105 transition"
+              >
                 ▶️ 开始做眼保健操
               </button>
             ) : (
-              <button onClick={() => setRunning(false)} className="rounded-2xl px-8 py-3 bg-gray-300 text-gray-700 font-black shadow hover:scale-105 transition">
+              <button
+                onClick={() => setRunning(false)}
+                className="rounded-2xl px-8 py-3 bg-gray-300 text-gray-700 font-black shadow hover:scale-105 transition"
+              >
                 ⏸ 暂停
               </button>
             )}
           </div>
           {running && (
-            <p className="text-center text-xs text-gray-400 mt-3">闭眼放松，跟着节奏轻轻按揉，做完这一节自动进入下一节 💆</p>
+            <p className="text-center text-xs text-gray-400 mt-3">
+              闭眼放松，跟着节奏轻轻按揉，做完这一节自动进入下一节 💆
+            </p>
           )}
         </>
       )}
