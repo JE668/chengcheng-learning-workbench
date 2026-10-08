@@ -21,6 +21,10 @@ export function isSafePushEndpoint(endpoint: string): boolean {
   if (url.protocol !== 'https:') return false;
   const host = url.hostname.toLowerCase();
   if (!host || !host.includes('.')) return false; // 必须是带点的域名，排除 localhost
+  // ⚠️ `https://.` 能被 new URL 解析且 hostname 为 "." —— 它含点、能过上面那关，
+  // 但并不是合法主机名。域名至少要含一个非点的字符，否则会被存进库、
+  // 之后由 web-push 向它 POST。
+  if (!/[a-z0-9]/.test(host)) return false;
   // 排除 IP 字面量：IPv4 点分十进制，或任何含冒号的 IPv6
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(':')) return false;
   // 排除内网/本地后缀
