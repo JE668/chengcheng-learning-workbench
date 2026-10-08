@@ -76,3 +76,21 @@ export function parseBackfillDateFromWish(text: string, today: string = dateStr(
   const year = today.slice(0, 4);
   return year + '-' + m[1] + '-' + m[2];
 }
+
+/**
+ * 把 `YYYY-MM-DD` 格式化成给孩子/家长看的「MM月DD日」。
+ *
+ * ⚠️ 抽出来是因为这里踩过一次：原先是就地拼字符串，
+ *
+ *   day.slice(5).replace('-', '月') + '月' + day.slice(8) + '日'
+ *
+ * 而 `day.slice(5).replace('-','月')` 本身**已经是**「09月26」，后面又拼了一次
+ * 「月 + day.slice(8) + 日」，于是批准时光沙漏后家长端显示成
+ *
+ *   ✅ 已批准！**09月26月26日** 补打卡成功…
+ *
+ * 用固定下标取值（5,7 与 8,10）而不是 replace，语义明确也不受分隔符变化影响。
+ */
+export function formatBackfillDayLabel(day: string): string {
+  return `${day.slice(5, 7)}月${day.slice(8, 10)}日`;
+}

@@ -10,6 +10,7 @@ vi.mock('@/lib/auth', () => ({
 
 import { POST } from '@/app/api/castle/approve-timeglass/route';
 import { getDb, ensureSchema } from '@/lib/db';
+import { addDays, dateStr } from '@/lib/date';
 
 function req(body: unknown): NextRequest {
   return new Request('http://l/api/castle/approve-timeglass', {
@@ -64,5 +65,29 @@ describe('approve-timeglass · 孩子可控文案不得直接用于补卡', () =
     const body = await res.json();
     console.log('  no-date -> status=' + res.status + ' ' + JSON.stringify(body).slice(0, 140));
     expect(res.status).toBe(200);
+  });
+
+  it('⚠️ 批准成功的文案里日期不得重复拼接、也不得出现两次', async () => {
+    // 真实缺陷（家长端反馈）：原实现是
+    //   day.slice(5).replace('-','月') + '月' + day.slice(8) + '日'
+    // 而 slice(5).replace 本身已是「09月26」，于是显示成
+    //   ✅ 已批准！09月26月26日 补打卡成功，09月26月26日 语文、数学、英语 已补打卡…
+    // 既错（月26月26）又重复（日期出现两遍）。
+    const day = addDays(dateStr(), -1); // 昨天，必定落在 30 天窗口内
+    const mm = day.slice(5, 7);
+    const dd = day.slice(8, 10);
+    const label = `${mm}月${dd}日`;
+
+    const wishId = await seedWish(`⏳ 申请时光沙漏（补 ${label}）`);
+    const res = await POST(req({ wishId, action: 'approve' }));
+    const body = await res.json();
+    console.log('  approve -> status=' + res.status + ' ' + String(body.message).slice(0, 120));
+
+    expect(res.status).toBe(200);
+    const msg = String(body.message);
+    expect(msg).toContain(label);
+    expect(msg, '月份被重复拼接').not.toContain(`${mm}月${dd}月`);
+    // 日期只应出现一次（原先句首一次、科目列表前又一次）
+    expect(msg.split(label).length - 1, `日期出现了多次：${msg}`).toBe(1);
   });
 });

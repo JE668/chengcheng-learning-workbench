@@ -1,5 +1,6 @@
 import { getDb, withWriteLock } from './db';
 import { dateStr, addDays } from './date';
+import { formatBackfillDayLabel } from './backfill-date';
 import { mokoCollection } from './moko-collection';
 import {
   mokoChars,
@@ -393,7 +394,7 @@ export async function applyTimeGlass(
   const doneSet = new Set(existing.rows.map((r) => String(r.subject)));
   const missing = SUBJECTS.filter((s) => !doneSet.has(s));
   if (missing.length === 0) {
-    return { ok: false, message: day + ' 三科都已经打卡过了，不用补～' };
+    return { ok: false, message: formatBackfillDayLabel(day) + ' 三科都已经打卡过了，不用补～' };
   }
   // 原子扣减：UPDATE ... AND qty > 0 保证并发下只扣一次（qty=0 时第二个请求 rowsAffected=0）。
   // 不再用 SELECT 后再 UPDATE，避免两个并发请求都通过 qty>0 检查导致 qty 变负。
@@ -415,11 +416,13 @@ export async function applyTimeGlass(
       return { ok: false, message: restored.message };
     }
     const extraMsg = restored.coinsReturned > 0 ? '，还找回了被藏起来的星星币！' : '！';
+    // 用「09月26日」而不是原始 ISO「2026-09-26」：家长端批准后的文案已是中文日期，
+    // 同一件事在两处显示不同格式会让人以为是不同的日子。
     return {
       ok: true,
       message:
         '⏳ 时光沙漏生效！' +
-        day +
+        formatBackfillDayLabel(day) +
         ' 的 ' +
         restored.restored.join('、') +
         ' 补打卡成功，连续天数已恢复' +

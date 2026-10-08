@@ -15,10 +15,26 @@
 import { describe, expect, it } from 'vitest';
 import {
   MAX_BACKFILL_DAYS,
+  formatBackfillDayLabel,
   parseBackfillDateFromWish,
   validateBackfillDay,
 } from '@/lib/backfill-date';
 import { addDays, dateStr } from '@/lib/date';
+
+describe('formatBackfillDayLabel · 中文日期标签', () => {
+  it('⚠️ 不得把月份重复拼错（曾输出「09月26月26日」）', () => {
+    // 原实现：day.slice(5).replace('-','月') + '月' + day.slice(8) + '日'
+    // slice(5).replace 已经是「09月26」，后面又拼了一次「月+26+日」。
+    const label = formatBackfillDayLabel('2026-09-26');
+    expect(label, '月份被重复拼接').toBe('09月26日');
+    expect(label).not.toContain('月26月');
+  });
+
+  it('个位数月/日补零，且不带年份', () => {
+    expect(formatBackfillDayLabel('2026-01-05')).toBe('01月05日');
+    expect(formatBackfillDayLabel('2026-12-31')).toBe('12月31日');
+  });
+});
 
 const today = dateStr();
 

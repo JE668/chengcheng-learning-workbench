@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import { restoreDay } from '@/lib/castle';
-import { parseBackfillDateFromWish, validateBackfillDay } from '@/lib/backfill-date';
+import {
+  formatBackfillDayLabel,
+  parseBackfillDateFromWish,
+  validateBackfillDay,
+} from '@/lib/backfill-date';
 
 /**
  * 家长审批时光沙漏申请。
@@ -61,9 +65,10 @@ export async function POST(req: Request) {
       if (!result.ok) {
         return NextResponse.json({ ok: false, message: result.message }, { status: 400 });
       }
-      const dayLabel = day.slice(5).replace('-', '月') + '月' + day.slice(8) + '日';
-      const subjectMsg =
-        result.restored.length > 0 ? `，${dayLabel} ${result.restored.join('、')} 已补打卡` : '';
+      const dayLabel = formatBackfillDayLabel(day);
+      // 日期只在句首出现一次：原先 subjectMsg 里又带了一遍 dayLabel，
+      // 家长会看到「09月26月26日 补打卡成功，09月26月26日 语文…已补打卡」这种重复。
+      const subjectMsg = result.restored.length > 0 ? `：${result.restored.join('、')}` : '';
       const coinMsg = result.coinsReturned > 0 ? `，找回被藏星星币 ${result.coinsReturned} 颗` : '';
       await db.execute({
         sql: "UPDATE wishes SET status = 'fulfilled' WHERE id = ?",
