@@ -1,169 +1,12 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { User } from '@/lib/types';
 
-/** 认证状态 Store */
-interface AuthState {
-  user: User | null;
-  setUser: (user: User | null) => void;
-  logout: () => void;
-  isHydrated: boolean;
-  setHydrated: (v: boolean) => void;
-}
-
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      setUser: (user) => set({ user }),
-      logout: () => set({ user: null }),
-      isHydrated: false,
-      setHydrated: (v) => set({ isHydrated: v }),
-    }),
-    {
-      name: 'auth-store',
-      storage: createJSONStorage(() => localStorage),
-      onRehydrateStorage: () => (state) => {
-        state?.setHydrated(true);
-      },
-      partialize: (state) => ({ user: state.user }), // 只持久化 user
-    }
-  )
-);
-
-/** 孩子学习偏好 Store */
-export interface ChildPreferencesState {
-  // 数学难度
-  mathDiffLevel: 'easy' | 'medium' | 'hard';
-  setMathDiffLevel: (level: 'easy' | 'medium' | 'hard') => void;
-
-  // 语音设置
-  ttsRate: number;
-  setTtsRate: (rate: number) => void;
-  ttsVoice: 'strict' | 'loose' | 'server';
-  setTtsVoice: (v: 'strict' | 'loose' | 'server') => void;
-
-  // 显示设置
-  showPinyin: boolean;
-  togglePinyin: () => void;
-  reducedMotion: boolean;
-  setReducedMotion: (v: boolean) => void;
-
-  // 游戏设置
-  gameDifficulty: 'easy' | 'normal' | 'hard';
-  setGameDifficulty: (d: 'easy' | 'normal' | 'hard') => void;
-
-  // 最后访问的页面
-  lastVisitedPage: string;
-  setLastVisitedPage: (page: string) => void;
-}
-
-export const useChildPreferencesStore = create<ChildPreferencesState>()(
-  persist(
-    (set) => ({
-      mathDiffLevel: 'easy',
-      setMathDiffLevel: (level) => set({ mathDiffLevel: level }),
-
-      ttsRate: 0.55,
-      setTtsRate: (rate) => set({ ttsRate: rate }),
-      ttsVoice: 'strict',
-      setTtsVoice: (v) => set({ ttsVoice: v }),
-
-      showPinyin: true,
-      togglePinyin: () => set((s) => ({ showPinyin: !s.showPinyin })),
-      reducedMotion: false,
-      setReducedMotion: (v) => set({ reducedMotion: v }),
-
-      gameDifficulty: 'normal',
-      setGameDifficulty: (d) => set({ gameDifficulty: d }),
-
-      lastVisitedPage: '/home',
-      setLastVisitedPage: (page) => set({ lastVisitedPage: page }),
-    }),
-    {
-      name: 'child-prefs',
-      storage: createJSONStorage(() => localStorage),
-    }
-  )
-);
-
-/** TTS 播放队列 Store */
-interface TTSQueueItem {
-  id: string;
-  text: string;
-  lang: 'zh' | 'en';
-  opts: { rate?: number; pitch?: number; pauseMs?: number; priority?: 'normal' | 'high' };
-  resolve: (v: boolean) => void;
-}
-
-interface TTSState {
-  queue: TTSQueueItem[];
-  isPlaying: boolean;
-  currentItem: TTSQueueItem | null;
-
-  enqueue: (item: Omit<TTSQueueItem, 'id'>) => string;
-  dequeue: () => TTSQueueItem | undefined;
-  // item 允许显式传 null（调用方用 setPlaying(false, null) 表示当前没有在播放），
-  // 实现里也只是 item ?? null，类型此前定义窄了。
-  setPlaying: (playing: boolean, item?: TTSQueueItem | null) => void;
-  clear: () => void;
-  interrupt: () => void;
-}
-
-let ttsId = 0;
-export const useTTSStore = create<TTSState>((set, get) => ({
-  queue: [],
-  isPlaying: false,
-  currentItem: null,
-
-  enqueue: (item) => {
-    const id = `tts-${Date.now()}-${++ttsId}`;
-    const newItem = { ...item, id };
-    const priorityValue = (p?: 'normal' | 'high') => (p === 'high' ? 1 : 0);
-    set((s) => ({
-      queue: [...s.queue, newItem].sort(
-        (a, b) => priorityValue(b.opts.priority) - priorityValue(a.opts.priority)
-      ),
-    }));
-    return id;
-  },
-
-  dequeue: () => {
-    const item = get().queue[0];
-    if (item) set((s) => ({ queue: s.queue.slice(1) }));
-    return item;
-  },
-
-  setPlaying: (playing, item) => set({ isPlaying: playing, currentItem: item ?? null }),
-
-  clear: () => set({ queue: [], isPlaying: false, currentItem: null }),
-
-  interrupt: () => {
-    set({ queue: [], isPlaying: false, currentItem: null });
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-  },
-}));
-
-/** 萌可收集动画状态 Store */
-interface CaptureState {
-  pendingCapture: { mokoKey: string; name: string; img: string } | null;
-  showCaptureModal: boolean;
-
-  triggerCapture: (moko: { mokoKey: string; name: string; img: string }) => void;
-  dismissCapture: () => void;
-  setModalVisible: (visible: boolean) => void;
-}
-
-export const useCaptureStore = create<CaptureState>((set) => ({
-  pendingCapture: null,
-  showCaptureModal: false,
-
-  triggerCapture: (moko) => set({ pendingCapture: moko, showCaptureModal: true }),
-  dismissCapture: () => set({ pendingCapture: null, showCaptureModal: false }),
-  setModalVisible: (visible) => set({ showCaptureModal: visible }),
-}));
+// 说明：本文件此前还有 useAuthStore / useChildPreferencesStore / useTTSStore /
+// useCaptureStore 四个 store，经全仓检索确认**零引用**（src 与 tests 里都没有 import），
+// 已删除。认证与偏好实际由服务端 session + 各处局部 state 承担；TTS 队列与萌可收集
+// 动画也已有各自的实现，不再走这里。
+//
+// 如果将来要恢复它们，请先确认真的会用 —— 曾经「定义了但没人用」正是它们变成死代码的原因。
 
 /** 离线队列 Store（用于 PWA 离线同步） */
 interface OfflineAction {
@@ -189,7 +32,7 @@ interface OfflineState {
 
 export const useOfflineStore = create<OfflineState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       queue: [],
       isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
       lastSync: null,
