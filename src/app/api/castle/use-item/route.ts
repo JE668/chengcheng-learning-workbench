@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { safeJson } from '@/lib/safe-json';
 import { castSpray, applyTimeGlass } from '@/lib/castle';
-import type { Subject } from '@/lib/types';
 import { validateBackfillDay } from '@/lib/backfill-date';
 
 export async function POST(req: Request) {

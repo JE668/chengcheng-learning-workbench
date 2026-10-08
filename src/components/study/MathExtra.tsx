@@ -9,7 +9,6 @@ import {
   SOLID_SHAPES,
   type ClockItem,
   type PositionItem,
-  type SolidShapeItem,
 } from '@/lib/study-data/math';
 
 import { speakZh } from '@/lib/speak';

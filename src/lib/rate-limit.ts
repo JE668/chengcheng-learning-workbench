@@ -9,9 +9,12 @@ export interface RateLimitRule {
   maxRequests: number;
 }
 
-/** 登录限流默认配置（可通过环境变量覆盖） */
-const LOGIN_RATE_LIMIT_WINDOW = Number(process.env.LOGIN_RATE_LIMIT_WINDOW) || 300; // 5 分钟
-const LOGIN_RATE_LIMIT_MAX = Number(process.env.LOGIN_RATE_LIMIT_MAX) || 10; // 10 次
+/**
+ * 注：登录限流的窗口/上限在 `api/auth/login/route.ts` 里就地定义（LOGIN_LIMIT），
+ * 读同一组环境变量 LOGIN_RATE_LIMIT_WINDOW / LOGIN_RATE_LIMIT_MAX。
+ * 此前这里还留了一份同名的私有常量，从未被引用 —— 调参的人改这里不会有任何效果，
+ * 属于会误导人的重复配置，已删除。
+ */
 
 interface Bucket {
   count: number;

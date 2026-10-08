@@ -15,9 +15,6 @@ import {
   CAT_TITLE,
 } from '@/lib/story';
 import { mokoCollectionByName } from '@/lib/moko-collection';
-import { mokoChars } from '@/lib/moko';
-import type { MokoChar } from '@/lib/types';
-
 describe('StoryChapter types', () => {
   it('StoryChapter should have required fields', () => {
     const chapter: StoryChapter = {

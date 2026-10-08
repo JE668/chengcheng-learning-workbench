@@ -29,13 +29,7 @@ vi.mock('@/lib/auth', () => ({
 }));
 
 import { getDb, ensureSchema } from '@/lib/db';
-import {
-  parseUsername,
-  parseDisplayName,
-  parsePassword,
-  MIN_CHILD_PASSWORD,
-  MAX_CHILD_PASSWORD,
-} from '@/lib/children-validation';
+import { parseUsername, parseDisplayName, parsePassword } from '@/lib/children-validation';
 import { POST as childrenPOST } from '@/app/api/children/route';
 import { __resetRateLimitsForTests } from '@/lib/rate-limit';
 

@@ -1,9 +1,11 @@
 import { ALL_EN_WORDS } from '../study-data';
 import type { PracticeQuestion, WordItem } from './types';
-import { randInt, shuffle } from './types';
+import { shuffle } from './types';
 
 /* —— 听音选词题 —— */
-export function genEnglishQ(w: WordItem = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)]): PracticeQuestion {
+export function genEnglishQ(
+  w: WordItem = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)]
+): PracticeQuestion {
   const distractors = shuffle(ALL_EN_WORDS.filter((x) => x.word !== w.word)).slice(0, 3);
   const options = shuffle([w, ...distractors]);
   const answer = options.indexOf(w);
@@ -22,7 +24,9 @@ export function genEnglishQ(w: WordItem = ALL_EN_WORDS[Math.floor(Math.random() 
 }
 
 /* 英语看图选词题（看 emoji 选对应单词） */
-export function genEnPicQ(w: WordItem = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)]): PracticeQuestion {
+export function genEnPicQ(
+  w: WordItem = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)]
+): PracticeQuestion {
   const distractors = shuffle(ALL_EN_WORDS.filter((x) => x.word !== w.word)).slice(0, 3);
   const options = shuffle([w, ...distractors]);
   const answer = options.indexOf(w);
@@ -44,7 +48,10 @@ export function genEnPicQ(w: WordItem = ALL_EN_WORDS[Math.floor(Math.random() * 
 export function genEnInitialQ(): Extract<PracticeQuestion, { kind: 'english' }> {
   const w = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)];
   const first = w.word[0].toUpperCase();
-  const distractors = shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.replace(first, '').split('')).slice(0, 3);
+  const distractors = shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.replace(first, '').split('')).slice(
+    0,
+    3
+  );
   const options = shuffle([first, ...distractors]);
   // 返回字母本身作为答案，而不是索引
   const answer = options.indexOf(first);
@@ -67,7 +74,8 @@ export function genEnInitialQ(): Extract<PracticeQuestion, { kind: 'english' }> 
 export function genUniqueEnglishQ(usedEn: Set<string>): PracticeQuestion {
   let w = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)];
   let g = 0;
-  while (usedEn.has(w.word) && g++ < 20) w = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)];
+  while (usedEn.has(w.word) && g++ < 20)
+    w = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)];
   usedEn.add(w.word);
   return genEnglishQ(w);
 }
@@ -75,7 +83,8 @@ export function genUniqueEnglishQ(usedEn: Set<string>): PracticeQuestion {
 export function genUniqueEnPicQ(usedEn: Set<string>): PracticeQuestion {
   let w = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)];
   let g = 0;
-  while (usedEn.has(w.word) && g++ < 20) w = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)];
+  while (usedEn.has(w.word) && g++ < 20)
+    w = ALL_EN_WORDS[Math.floor(Math.random() * ALL_EN_WORDS.length)];
   usedEn.add(w.word);
   return genEnPicQ(w);
 }

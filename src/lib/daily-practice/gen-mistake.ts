@@ -1,5 +1,4 @@
 import type { MistakeRow } from '../mistakes';
-import type { PracticeQuestion } from './types';
 import { shuffle } from './types';
 
 /* —— 错题复习题：从到期错题生成，放在一练最前面 —— */

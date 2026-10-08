@@ -7,10 +7,12 @@ import { EmptyState } from '@/components/EmptyState';
 import { ClockFace } from '@/components/study/ClockFace';
 import { playTts } from '@/lib/speak';
 import { useOfflineStore } from '@/lib/stores';
-import type { PracticeDayRecord, PracticeQuestion, PracticeSubmitResult } from '@/lib/daily-practice';
+import type {
+  PracticeDayRecord,
+  PracticeQuestion,
+  PracticeSubmitResult,
+} from '@/lib/daily-practice';
 import { sfxComplete, sfxWrong } from '@/lib/sfx';
-import { PROSPERITY_BONUS } from '@/lib/moko';
-
 const KIND_META: Record<string, { label: string; grad: string; icon: string }> = {
   pinyin: { label: '语文 · 拼音', grad: 'from-moko-pink to-moko-rose', icon: '🔤' },
   dictation: { label: '语文 · 听写', grad: 'from-moko-pink to-moko-rose', icon: '✍️' },
@@ -69,11 +71,14 @@ export default function DailyPracticePage() {
         const r = await fetch('/api/castle/state');
         const j = await r.json();
         setHasTimeGlass(Number(j.inventory?.timeglass ?? 0) > 0);
-      } catch { /* */ }
+      } catch {
+        /* */
+      }
     })();
   }, []);
 
-  const allAnswered = !!data && selected.length === data.questions.length && selected.every((s) => s !== -1);
+  const allAnswered =
+    !!data && selected.length === data.questions.length && selected.every((s) => s !== -1);
 
   const choose = useCallback(
     (optionIndex: number) => {
@@ -85,7 +90,7 @@ export default function DailyPracticePage() {
       });
     },
     // selected 走函数式更新，无需列入依赖
-    [q, idx],
+    [q, idx]
   );
 
   const retry = useCallback(() => {
@@ -95,7 +100,7 @@ export default function DailyPracticePage() {
       data.questions.map((qq) => {
         const st = result.subjects.find((x) => x.subject === qq.subject)?.status;
         return st === 'failed' ? -1 : qq.answer;
-      }),
+      })
     );
     setResult(null);
   }, [data, result]);
@@ -115,7 +120,9 @@ export default function DailyPracticePage() {
       try {
         if (j?.completed) sfxComplete();
         else sfxWrong();
-      } catch { /* 忽略音效异常 */ }
+      } catch {
+        /* 忽略音效异常 */
+      }
     } catch {
       // 离线/网络异常 → 本地暂存打卡。服务端提交是幂等的，联网后 OfflineSync 重放不会重复发奖。
       useOfflineStore.getState().addAction({ type: 'checkin', payload: { answers: selected } });
@@ -128,7 +135,11 @@ export default function DailyPracticePage() {
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto p-10 flex flex-col items-center gap-3 text-moko-violet font-bold">
-        <span className="moko-loader"><span></span><span></span><span></span></span>
+        <span className="moko-loader">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
         <span>萌可正在准备今天的练习…</span>
       </div>
     );
@@ -141,9 +152,16 @@ export default function DailyPracticePage() {
         <div className="card-moko text-center p-8 bg-gradient-to-br from-moko-violet to-moko-purple text-white">
           <div className="text-6xl mb-3">📡</div>
           <h1 className="text-3xl font-black mb-2">打卡已离线保存</h1>
-          <p className="text-lg opacity-90">现在是离线状态，你的打卡已安全保存在本机，联网后会自动提交、不影响连续天数～</p>
+          <p className="text-lg opacity-90">
+            现在是离线状态，你的打卡已安全保存在本机，联网后会自动提交、不影响连续天数～
+          </p>
           <div className="flex gap-3 justify-center mt-6">
-            <Link href="/home" className="px-6 py-3 rounded-full bg-white text-moko-violet font-black">返回首页</Link>
+            <Link
+              href="/home"
+              className="px-6 py-3 rounded-full bg-white text-moko-violet font-black"
+            >
+              返回首页
+            </Link>
           </div>
         </div>
       </div>
@@ -159,17 +177,32 @@ export default function DailyPracticePage() {
           <div className="text-6xl mb-3">🌟</div>
           <h1 className="text-3xl font-black mb-2">今天的一练完成啦！</h1>
           <p className="text-lg opacity-90">三科打卡已自动完成，萌可们超开心～</p>
-          <p className="mt-4 text-sm">已连续完成 <b className="text-xl">{data.practiceStreak}</b> 天 · 再坚持 <b>{data.nextMilestone}</b> 天解锁新萌可 🧸</p>
+          <p className="mt-4 text-sm">
+            已连续完成 <b className="text-xl">{data.practiceStreak}</b> 天 · 再坚持{' '}
+            <b>{data.nextMilestone}</b> 天解锁新萌可 🧸
+          </p>
           <div className="flex gap-3 justify-center mt-6">
-            <Link href="/home" className="px-6 py-3 rounded-full bg-white text-moko-violet font-black">返回首页</Link>
-            <Link href="/castle" className="px-6 py-3 rounded-full bg-moko-rose text-white font-black">去看城堡</Link>
+            <Link
+              href="/home"
+              className="px-6 py-3 rounded-full bg-white text-moko-violet font-black"
+            >
+              返回首页
+            </Link>
+            <Link
+              href="/castle"
+              className="px-6 py-3 rounded-full bg-moko-rose text-white font-black"
+            >
+              去看城堡
+            </Link>
           </div>
         </div>
         {/* 使用时光沙漏再做一次 */}
         {hasTimeGlass && (
           <div className="mt-4 rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-violet/20 text-center">
             <div className="text-4xl mb-2">⏳</div>
-            <p className="text-sm text-gray-600 mb-3">你有时光沙漏！可以用它再做一次今天的每日一练（不影响已得的奖励）</p>
+            <p className="text-sm text-gray-600 mb-3">
+              你有时光沙漏！可以用它再做一次今天的每日一练（不影响已得的奖励）
+            </p>
             <button
               onClick={async () => {
                 const r = await fetch('/api/daily-practice/reset', { method: 'POST' });
@@ -194,7 +227,13 @@ export default function DailyPracticePage() {
           </div>
         )}
         <div className="mt-4 text-center">
-          <GuideModal trigger={<span className="inline-block px-4 py-2 rounded-full bg-white shadow text-moko-violet font-bold cursor-pointer">📖 查看攻略说明</span>} />
+          <GuideModal
+            trigger={
+              <span className="inline-block px-4 py-2 rounded-full bg-white shadow text-moko-violet font-bold cursor-pointer">
+                📖 查看攻略说明
+              </span>
+            }
+          />
         </div>
       </div>
     );
@@ -225,12 +264,21 @@ export default function DailyPracticePage() {
                     <span className="w-16 text-sm font-bold text-gray-700">{s.subject}</span>
                     <div className="flex-1 h-5 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className={'h-full rounded-full transition-all ' + ((s.status === 'passed' || s.status === 'already') ? 'bg-moko-mint' : 'bg-moko-yellow')}
-                        style={{ width: ((s.correct ?? s.total) / Math.max(1, s.total) * 100) + '%' }}
+                        className={
+                          'h-full rounded-full transition-all ' +
+                          (s.status === 'passed' || s.status === 'already'
+                            ? 'bg-moko-mint'
+                            : 'bg-moko-yellow')
+                        }
+                        style={{
+                          width: ((s.correct ?? s.total) / Math.max(1, s.total)) * 100 + '%',
+                        }}
                       />
                     </div>
                     <span className="w-20 text-right text-sm font-bold">
-                      {s.status === 'passed' || s.status === 'already' ? '✅ 通过' : `${s.correct ?? 0}/${s.total}`}
+                      {s.status === 'passed' || s.status === 'already'
+                        ? '✅ 通过'
+                        : `${s.correct ?? 0}/${s.total}`}
                     </span>
                   </div>
                 ))}
@@ -251,7 +299,9 @@ export default function DailyPracticePage() {
                     </div>
                     <div className="bg-moko-violet/10 rounded-2xl p-3">
                       <div className="text-2xl">🔥</div>
-                      <div className="text-sm font-bold text-moko-violet">{result.practiceStreak}天</div>
+                      <div className="text-sm font-bold text-moko-violet">
+                        {result.practiceStreak}天
+                      </div>
                       <div className="text-[11px] text-gray-400">连续打卡</div>
                     </div>
                   </>
@@ -265,20 +315,36 @@ export default function DailyPracticePage() {
               )}
               {(result.tickets ?? 0) > 0 && (
                 <div className="mt-2 bg-moko-mint/10 rounded-2xl p-3 text-center">
-                  <span className="text-sm">🎟️ 捕捉券 +{result.tickets}（去「萌可闯关」捉萌可吧！）</span>
+                  <span className="text-sm">
+                    🎟️ 捕捉券 +{result.tickets}（去「萌可闯关」捉萌可吧！）
+                  </span>
                 </div>
               )}
               {result.milestone && (
                 <div className="mt-3 bg-moko-gold/20 rounded-2xl p-4 text-center">
-                  <div className="text-2xl font-black text-moko-gold">🌟 连续 {result.practiceStreak} 天达成！</div>
-                  <div className="text-sm mt-1">解锁新萌可「{result.milestone.mokoName}」+ 10 ⭐ 星星币</div>
+                  <div className="text-2xl font-black text-moko-gold">
+                    🌟 连续 {result.practiceStreak} 天达成！
+                  </div>
+                  <div className="text-sm mt-1">
+                    解锁新萌可「{result.milestone.mokoName}」+ 10 ⭐ 星星币
+                  </div>
                 </div>
               )}
             </div>
           </div>
           <div className="flex gap-3 justify-center mt-5">
-            <Link href="/home" className="px-6 py-3 rounded-full bg-white text-moko-rose font-black shadow border-2 border-moko-rose/20">返回首页</Link>
-            <Link href="/castle" className="px-6 py-3 rounded-full bg-moko-gold text-white font-black shadow">去看城堡</Link>
+            <Link
+              href="/home"
+              className="px-6 py-3 rounded-full bg-white text-moko-rose font-black shadow border-2 border-moko-rose/20"
+            >
+              返回首页
+            </Link>
+            <Link
+              href="/castle"
+              className="px-6 py-3 rounded-full bg-moko-gold text-white font-black shadow"
+            >
+              去看城堡
+            </Link>
           </div>
         </div>
       );
@@ -295,7 +361,9 @@ export default function DailyPracticePage() {
               <div key={s.subject} className="flex items-center justify-between">
                 <span className="font-bold">{s.subject}</span>
                 <span>
-                  {s.status === 'passed' || s.status === 'already' ? '✅ 已完成' : `❌ ${s.correct}/${s.total} 再练一次`}
+                  {s.status === 'passed' || s.status === 'already'
+                    ? '✅ 已完成'
+                    : `❌ ${s.correct}/${s.total} 再练一次`}
                 </span>
               </div>
             ))}
@@ -311,11 +379,16 @@ export default function DailyPracticePage() {
               <div>🎟️ 捕捉券 +{result.tickets}（去「萌可闯关」读故事、捉萌可吧！）</div>
             </div>
           )}
-          <button onClick={retry} className="mt-6 px-8 py-3 rounded-full bg-white text-moko-rose font-black hover:scale-105 transition">
+          <button
+            onClick={retry}
+            className="mt-6 px-8 py-3 rounded-full bg-white text-moko-rose font-black hover:scale-105 transition"
+          >
             继续练习没完成的科目
           </button>
           <div className="mt-3">
-            <Link href="/home" className="text-sm font-bold text-white/90 underline">先回首页逛逛 ›</Link>
+            <Link href="/home" className="text-sm font-bold text-white/90 underline">
+              先回首页逛逛 ›
+            </Link>
           </div>
         </div>
       </div>
@@ -325,7 +398,11 @@ export default function DailyPracticePage() {
   if (!q) {
     return (
       <div className="max-w-2xl mx-auto p-10">
-        <EmptyState emoji="🌙" title="今天暂时没有练习哦～" desc="去「萌可剧情」读个故事，或到城堡看看萌可吧！" />
+        <EmptyState
+          emoji="🌙"
+          title="今天暂时没有练习哦～"
+          desc="去「萌可剧情」读个故事，或到城堡看看萌可吧！"
+        />
       </div>
     );
   }
@@ -340,21 +417,36 @@ export default function DailyPracticePage() {
     <div className="max-w-2xl mx-auto p-6">
       {/* 头部 */}
       <div className="flex items-center justify-between mb-4">
-        <Link href="/home" className="text-sm text-gray-500">‹ 返回</Link>
-        <GuideModal trigger={<span className="text-sm text-moko-violet font-bold cursor-pointer">📖 攻略</span>} />
+        <Link href="/home" className="text-sm text-gray-500">
+          ‹ 返回
+        </Link>
+        <GuideModal
+          trigger={
+            <span className="text-sm text-moko-violet font-bold cursor-pointer">📖 攻略</span>
+          }
+        />
       </div>
 
       {/* 进度 */}
       <div className="mb-3">
         <div className="flex justify-between text-sm text-gray-500 mb-1">
-          <span className={`font-bold bg-gradient-to-r ${meta.grad} bg-clip-text text-transparent`}>{meta.icon} {meta.label}</span>
-          <span>第 {idx + 1} / {data?.questions.length} 题</span>
+          <span className={`font-bold bg-gradient-to-r ${meta.grad} bg-clip-text text-transparent`}>
+            {meta.icon} {meta.label}
+          </span>
+          <span>
+            第 {idx + 1} / {data?.questions.length} 题
+          </span>
         </div>
         <div className="h-3 rounded-full bg-gray-100 overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-moko-pink to-moko-rose transition-all" style={{ width: `${((idx + 1) / (data?.questions.length ?? 1)) * 100}%` }} />
+          <div
+            className="h-full bg-gradient-to-r from-moko-pink to-moko-rose transition-all"
+            style={{ width: `${((idx + 1) / (data?.questions.length ?? 1)) * 100}%` }}
+          />
         </div>
         {/* 通过门槛提示 */}
-        <p className="text-xs text-gray-400 mt-1 text-center">💡 答对 80% 以上就算通过（允许错 1~2 题），做错可以重选哦～</p>
+        <p className="text-xs text-gray-400 mt-1 text-center">
+          💡 答对 80% 以上就算通过（允许错 1~2 题），做错可以重选哦～
+        </p>
       </div>
 
       {data && 'textbookHint' in data && data.textbookHint && (
@@ -369,23 +461,38 @@ export default function DailyPracticePage() {
           {q.kind === 'pinyin' && (
             <>
               <div className="text-6xl font-black mb-2">{q.han}</div>
-              <button onClick={() => playTts(q.audioText, 'zh', { wsRate: 0.6, pauseMs: 300 })} className="text-sm bg-white/30 rounded-full px-3 py-1">🔊 听一听</button>
+              <button
+                onClick={() => playTts(q.audioText, 'zh', { wsRate: 0.6, pauseMs: 300 })}
+                className="text-sm bg-white/30 rounded-full px-3 py-1"
+              >
+                🔊 听一听
+              </button>
             </>
           )}
           {q.kind === 'dictation' && (
             <>
               <div className="text-6xl font-black mb-2">✍️</div>
-              <button onClick={() => playTts(q.han, 'zh', { wsRate: 0.6, pauseMs: 300 })} className="text-sm bg-white/30 rounded-full px-4 py-1.5">🔊 听写 · 再听一遍</button>
+              <button
+                onClick={() => playTts(q.han, 'zh', { wsRate: 0.6, pauseMs: 300 })}
+                className="text-sm bg-white/30 rounded-full px-4 py-1.5"
+              >
+                🔊 听写 · 再听一遍
+              </button>
             </>
           )}
           {q.kind === 'math' && (
             <>
-              {q.clockHour !== undefined && <ClockFace hour={q.clockHour} half={q.clockHalf ?? false} />}
+              {q.clockHour !== undefined && (
+                <ClockFace hour={q.clockHour} half={q.clockHalf ?? false} />
+              )}
               {/* 序数题：显示 emoji 行（不加序号，让孩子自己数） */}
               {q.emojiRow && (
                 <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
                   {q.emojiRow.map((e, i) => (
-                    <span key={i} className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white/20 text-3xl shadow-sm">
+                    <span
+                      key={i}
+                      className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white/20 text-3xl shadow-sm"
+                    >
                       {e}
                     </span>
                   ))}
@@ -394,14 +501,28 @@ export default function DailyPracticePage() {
               <div className="text-5xl font-black">{q.prompt}</div>
             </>
           )}
-          {q.kind === 'poem' && <div className="text-2xl font-black leading-relaxed">{q.prompt}</div>}
+          {q.kind === 'poem' && (
+            <div className="text-2xl font-black leading-relaxed">{q.prompt}</div>
+          )}
           {q.kind === 'english' && (
             <>
               <div className="text-6xl mb-2">{q.emoji}</div>
-              {q.subtype !== 'initial' && q.cn && <div className="text-sm opacity-80 mb-1">{q.cn}</div>}
+              {q.subtype !== 'initial' && q.cn && (
+                <div className="text-sm opacity-80 mb-1">{q.cn}</div>
+              )}
               <div className="flex gap-2 justify-center">
-                <button onClick={() => playTts(q.word, 'en')} className="text-sm bg-white/30 rounded-full px-3 py-1">🔊 听一听</button>
-                <button onClick={() => playTts(q.word, 'en')} className="text-sm bg-moko-pink/30 rounded-full px-3 py-1">🎙️ 跟读</button>
+                <button
+                  onClick={() => playTts(q.word, 'en')}
+                  className="text-sm bg-white/30 rounded-full px-3 py-1"
+                >
+                  🔊 听一听
+                </button>
+                <button
+                  onClick={() => playTts(q.word, 'en')}
+                  className="text-sm bg-moko-pink/30 rounded-full px-3 py-1"
+                >
+                  🎙️ 跟读
+                </button>
               </div>
             </>
           )}
@@ -431,9 +552,12 @@ export default function DailyPracticePage() {
             const correct = i === q.answer;
             const picked = selected[idx] === i;
             let cls = 'bg-white/90 text-moko-violet hover:scale-105';
-            if (picked && correct) cls = 'bg-white text-green-600 font-black scale-105 ring-4 ring-green-300';
-            else if (picked && !correct) cls = 'bg-red-100 text-red-600 font-black ring-4 ring-red-300';
-            else if (isCorrect && correct) cls = 'bg-white text-green-600 font-black ring-4 ring-green-300';
+            if (picked && correct)
+              cls = 'bg-white text-green-600 font-black scale-105 ring-4 ring-green-300';
+            else if (picked && !correct)
+              cls = 'bg-red-100 text-red-600 font-black ring-4 ring-red-300';
+            else if (isCorrect && correct)
+              cls = 'bg-white text-green-600 font-black ring-4 ring-green-300';
             return (
               <button
                 key={i}
@@ -447,8 +571,16 @@ export default function DailyPracticePage() {
           })}
         </div>
 
-        {isWrong && <p className="text-center text-sm mt-3 bg-moko-yellow/80 text-moko-violet rounded-full py-1">没关系，再想想，点一下正确的选项吧～答错可以重选哦！</p>}
-        {isCorrect && <p className="text-center text-sm mt-3 bg-green-500/80 rounded-full py-1">答对啦！{q.explain}</p>}
+        {isWrong && (
+          <p className="text-center text-sm mt-3 bg-moko-yellow/80 text-moko-violet rounded-full py-1">
+            没关系，再想想，点一下正确的选项吧～答错可以重选哦！
+          </p>
+        )}
+        {isCorrect && (
+          <p className="text-center text-sm mt-3 bg-green-500/80 rounded-full py-1">
+            答对啦！{q.explain}
+          </p>
+        )}
       </div>
 
       {/* 导航 */}

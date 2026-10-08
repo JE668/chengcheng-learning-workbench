@@ -8,14 +8,6 @@
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-interface LogEntry {
-  level: LogLevel;
-  message: string;
-  timestamp: string;
-  context?: Record<string, unknown>;
-  error?: Error;
-}
-
 class Logger {
   private minLevel: LogLevel;
   private isDevelopment: boolean;
@@ -31,31 +23,41 @@ class Logger {
     return levels[level] >= levels[this.minLevel];
   }
 
-  private formatMessage(level: LogLevel, message: string, context?: Record<string, unknown>, error?: Error): string {
+  private formatMessage(
+    level: LogLevel,
+    message: string,
+    context?: Record<string, unknown>,
+    error?: Error
+  ): string {
     const timestamp = new Date().toISOString();
     const prefix = `[${timestamp}] [${level.toUpperCase()}]`;
-    
+
     let formatted = `${prefix} ${message}`;
-    
+
     if (context && Object.keys(context).length > 0) {
       formatted += ` ${JSON.stringify(context)}`;
     }
-    
+
     if (error) {
       formatted += ` | Error: ${error.message}`;
       if (error.stack && this.isDevelopment) {
         formatted += `\n${error.stack}`;
       }
     }
-    
+
     return formatted;
   }
 
-  private log(level: LogLevel, message: string, context?: Record<string, unknown>, error?: Error): void {
+  private log(
+    level: LogLevel,
+    message: string,
+    context?: Record<string, unknown>,
+    error?: Error
+  ): void {
     if (!this.shouldLog(level)) return;
-    
+
     const formatted = this.formatMessage(level, message, context, error);
-    
+
     // 使用对应的 console 方法，便于浏览器 DevTools 过滤
     switch (level) {
       case 'debug':
@@ -117,13 +119,13 @@ export const consoleShim = {
   log: (...args: unknown[]) => logger.info(args.map(String).join(' ')),
   info: (...args: unknown[]) => logger.info(args.map(String).join(' ')),
   warn: (...args: unknown[]) => {
-    const error = args.find(a => a instanceof Error);
-    const rest = args.filter(a => !(a instanceof Error));
+    const error = args.find((a) => a instanceof Error);
+    const rest = args.filter((a) => !(a instanceof Error));
     logger.warn(rest.map(String).join(' '), undefined, error);
   },
   error: (...args: unknown[]) => {
-    const error = args.find(a => a instanceof Error);
-    const rest = args.filter(a => !(a instanceof Error));
+    const error = args.find((a) => a instanceof Error);
+    const rest = args.filter((a) => !(a instanceof Error));
     logger.error(rest.map(String).join(' '), undefined, error);
   },
   debug: (...args: unknown[]) => logger.debug(args.map(String).join(' ')),

@@ -38,7 +38,7 @@ vi.mock('@/lib/auth', async () => {
   };
 });
 
-import { getDb, ensureSchema } from '@/lib/db';
+import { getDb } from '@/lib/db';
 import { dateStr, addDays } from '@/lib/date';
 import { POST } from '@/app/api/castle/use-item/route';
 import { seedChild } from '@/lib/test-child-fixtures';

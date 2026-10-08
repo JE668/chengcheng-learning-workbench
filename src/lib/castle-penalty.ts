@@ -1,9 +1,7 @@
 import { getDb, withWriteLock } from './db';
-import { dateStr, addDays } from './date';
+import { addDays } from './date';
 import { mokoChars, troubleMokoKeys } from './moko';
-import { getRow, ensureCastle, logGrowthEvent, shuffle } from './castle-core';
-import type { MokoStage } from './castle-types';
-
+import { getRow, logGrowthEvent, shuffle } from './castle-core';
 /**
  * 连续漏打卡逐级惩罚。consecutiveMissed = 连续多少天未三科全勤。
  * 惩罚阶梯：

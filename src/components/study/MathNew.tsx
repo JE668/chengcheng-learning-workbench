@@ -1,22 +1,15 @@
 'use client';
 
-import { useRef, useState } from 'react';
-
 import {
   CLOCK_HALF,
   COMPARE_MORE,
   ORDINALS,
   WEEK_CALENDAR,
   WORD_PROBLEMS,
-  type ClockHalfItem,
   type OrdinalItem,
 } from '@/lib/study-data/math';
 
-import { speakZh } from '@/lib/speak';
-import { useMistakeLogger } from '@/lib/mistake-logger';
 import { StudyQuiz, type QuizItem } from './StudyQuiz';
-import { useModuleProgress } from '@/lib/module-progress';
-
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {

@@ -13,8 +13,6 @@ import {
   starShop,
   REWARD_TEMPLATES,
 } from '@/lib/moko';
-import type { MokoChar, Subject } from '@/lib/types';
-
 describe('MokoCategories', () => {
   it('should have all expected categories', () => {
     const expectedKeys = [

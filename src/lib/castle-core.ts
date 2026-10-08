@@ -1,25 +1,19 @@
 import { getDb } from './db';
 import { dateStr, addDays } from './date';
-import { mokoCollection, COLLECTIBLE_MOKO_NAMES } from './moko-collection';
-import { mokoChars, STAR_PER_FRIEND, GROWTH_MIN } from './moko';
-import { SHIELD_STREAK_REQ } from './economy';
+import { COLLECTIBLE_MOKO_NAMES } from './moko-collection';
+import { mokoChars, GROWTH_MIN } from './moko';
 import type { Subject } from './types';
-import {
-  type MokoStage,
-  type GrowthEvent,
-  type ResidentMoko,
-  type CastleStateView,
-  type BadgeItem,
-  STAGE_ORDER,
-  STAGE_LABEL,
-} from './castle-types';
+import { type MokoStage, type GrowthEvent, STAGE_ORDER, STAGE_LABEL } from './castle-types';
 
 const SUBJECTS: Subject[] = ['语文', '数学', '英语'];
 
 /* ----------------------------- 基础读写 ----------------------------- */
 export async function getRow(childId: number) {
   const db = getDb();
-  const res = await db.execute({ sql: 'SELECT * FROM castle_state WHERE child_id = ?', args: [childId] });
+  const res = await db.execute({
+    sql: 'SELECT * FROM castle_state WHERE child_id = ?',
+    args: [childId],
+  });
   return res.rows[0];
 }
 
@@ -69,7 +63,10 @@ export function durMinForStage(stage: MokoStage): number {
 export async function refreshStages(childId: number) {
   const db = getDb();
   const now = Date.now();
-  const res = await db.execute({ sql: 'SELECT * FROM moko_owned WHERE child_id = ?', args: [childId] });
+  const res = await db.execute({
+    sql: 'SELECT * FROM moko_owned WHERE child_id = ?',
+    args: [childId],
+  });
   for (const r of res.rows) {
     let stage = r.stage as MokoStage;
     let stageAt = new Date(String(r.stage_at)).getTime();
@@ -97,7 +94,7 @@ export async function logGrowthEvent(
   type: string,
   emoji: string,
   title: string,
-  desc: string,
+  desc: string
 ): Promise<void> {
   const db = getDb();
   await db.execute({
@@ -124,11 +121,16 @@ export async function getGrowthDiary(childId: number, limit = 24): Promise<Growt
 }
 
 /* ----------------------------- 图鉴进度 ----------------------------- */
-export async function getMokoProgress(childId: number): Promise<{ owned: number; total: number; percent: number }> {
+export async function getMokoProgress(
+  childId: number
+): Promise<{ owned: number; total: number; percent: number }> {
   const db = getDb();
-  const res = await db.execute({ sql: 'SELECT moko_key FROM moko_owned WHERE child_id = ?', args: [childId] });
+  const res = await db.execute({
+    sql: 'SELECT moko_key FROM moko_owned WHERE child_id = ?',
+    args: [childId],
+  });
   const ownedNames = new Set(
-    res.rows.map((r) => mokoChars[String(r.moko_key)]?.name).filter((n): n is string => !!n),
+    res.rows.map((r) => mokoChars[String(r.moko_key)]?.name).filter((n): n is string => !!n)
   );
   const owned = ownedNames.size;
   const total = COLLECTIBLE_MOKO_NAMES.length;

@@ -46,8 +46,12 @@ export default function PwaRegister() {
     const onOnline = () => {
       showToast('网络已恢复', 'success');
       if (registration && 'sync' in registration) {
-        (registration as ServiceWorkerRegistration & { sync?: { register: (t: string) => Promise<void> } })
-          .sync?.register('sync-offline-actions')
+        (
+          registration as ServiceWorkerRegistration & {
+            sync?: { register: (t: string) => Promise<void> };
+          }
+        ).sync
+          ?.register('sync-offline-actions')
           .catch(() => {});
       }
     };
@@ -101,42 +105,6 @@ export default function PwaRegister() {
   }, [showToast]);
 
   // 请求推送通知权限并订阅
-  const subscribeToPush = async () => {
-    if (!('serviceWorker' in navigator) || !('pushManager' in navigator.serviceWorker)) {
-      return;
-    }
-
-    try {
-      // 公钥由服务端下发（不再硬编码：仓库是 public，任何密钥都不该进源码；
-      // 服务端未配置 VAPID 时会返回 enabled:false，此时直接跳过订阅）。
-      const keyRes = await fetch('/api/push/subscribe');
-      const keyData = (await keyRes.json().catch(() => null)) as
-        | { enabled?: boolean; publicKey?: string }
-        | null;
-      if (!keyRes.ok || !keyData?.enabled || !keyData.publicKey) {
-        console.info('Web Push 未配置，跳过订阅');
-        return;
-      }
-
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
-      });
-
-      // 发送订阅到服务器
-      await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscription: subscription.toJSON() }),
-      });
-
-      console.log('Push subscription successful');
-    } catch (error) {
-      console.warn('Push subscription failed:', error);
-    }
-  };
-
   // 将 base64 字符串转换为 Uint8Array
   function urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);

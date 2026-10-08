@@ -384,27 +384,6 @@ export function getSmartReviewSuggestion(
 }
 
 /**
- * 计算最佳复习时间窗口
- * 基于用户历史复习时间分布
- */
-export function calculateOptimalReviewWindow(reviewHistory: Map<string, ReviewRecord[]>): {
-  startHour: number;
-  endHour: number;
-} {
-  const hourCounts = new Array(24).fill(0);
-
-  for (const [, history] of reviewHistory) {
-    for (const record of history) {
-      // 从日期字符串无法直接获取小时，这里简化处理
-      // 实际应用中需要存储完整的时间戳
-    }
-  }
-
-  // 默认返回晚上 7-9 点
-  return { startHour: 19, endHour: 21 };
-}
-
-/**
  * 获取卡片的下次复习建议（用于 UI 展示）
  */
 export function getNextReviewInfo(state: SM2State): {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 function makeRound() {
   const targets = [30, 45, 60, 90, 120, 135, 150];
@@ -15,7 +15,13 @@ const TOL: Record<number, { great: number; good: number; ok: number }> = {
   3: { great: 3, good: 6, ok: 12 },
 };
 
-export default function AngleMagic({ onFinish, level = 1 }: { onFinish: (score: number) => void; level?: number }) {
+export default function AngleMagic({
+  onFinish,
+  level = 1,
+}: {
+  onFinish: (score: number) => void;
+  level?: number;
+}) {
   const lv = Math.min(3, Math.max(1, level));
   const total = ROUNDS[lv];
   const tol = TOL[lv];
@@ -49,7 +55,9 @@ export default function AngleMagic({ onFinish, level = 1 }: { onFinish: (score: 
     <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
       <div className="mb-4 flex justify-between">
         <span className="font-bold text-moko-violet">目标角度：{target}°</span>
-        <span className="font-bold text-moko-rose">{idx + 1}/{rounds.length}</span>
+        <span className="font-bold text-moko-rose">
+          {idx + 1}/{rounds.length}
+        </span>
       </div>
       <div className="relative w-48 h-48 mx-auto mb-6">
         <div className="absolute inset-0 rounded-full border-4 border-moko-cyan"></div>

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
@@ -21,10 +21,10 @@ export async function POST(req: Request) {
     }
 
     if (!process.env.NVIDIA_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: 'NVIDIA_API_KEY not configured' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'NVIDIA_API_KEY not configured' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const body = await req.json();
@@ -52,23 +52,25 @@ export async function POST(req: Request) {
 
     const result = await generateObject({
       model: nvidiaOpenAI('meta/llama-3.1-8b-instruct'),
-      schema: z.array(z.object({
-        id: z.string(),
-        kind: z.string(),
-        subject: z.string(),
-        prompt: z.string(),
-        speak: z.string().optional(),
-        speakEn: z.string().optional(),
-        options: z.array(z.string()),
-        answer: z.string(),
-        chapter: z.string().optional(),
-      })),
+      schema: z.array(
+        z.object({
+          id: z.string(),
+          kind: z.string(),
+          subject: z.string(),
+          prompt: z.string(),
+          speak: z.string().optional(),
+          speakEn: z.string().optional(),
+          options: z.array(z.string()),
+          answer: z.string(),
+          chapter: z.string().optional(),
+        })
+      ),
       system: `你是专业的小学教学专家。生成题目时请遵循：
 1. 题目清晰，选项有迷惑性（常见错误答案）
 2. 解释要包含核心知识点，通俗易懂
 3. 输出JSON格式，包含id、kind、subject、prompt、speak、options、answer、chapter
 4. options数组包含4个选项，answer是正确选项的文本
-5. id格式：${kind}-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+5. id格式：${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       prompt: `生成 ${questionCount} 道${kind === 'pinyin' ? '拼音' : kind === 'math' ? '数学' : kind === 'english' ? '英语' : '语文'}题目，难度：${difficulty || 'medium'}，年级：${grade || 1}年级。${context ? `额外要求：${context}` : ''}`,
       temperature: 0.7,
       // 外部付费调用兜底超时，避免请求挂起、占用连接与成本
