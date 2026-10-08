@@ -33,8 +33,12 @@ export default function StoryPage() {
   const abortRef = useRef(false);
   const quizAbortRef = useRef(false);
   const [quizSpeaking, setQuizSpeaking] = useState(false);
-  const [quizWrong, setQuizWrong] = useState(false);
-  const [quizRight, setQuizRight] = useState(false);
+  // 答题反馈必须**按章节**存，不能用单一 boolean：storyChapters.map 一次渲染全部章节，
+  // 一个全局标志会在孩子切换到下一集时串味（上一集答错的红字飘到新章节）。
+  // quizRight 此前完全没被读取 —— 「答对啦」那一块只判了 open && isQuiz，
+  // 等于没有用「答对」这个事实。
+  const [quizWrongFor, setQuizWrongFor] = useState<string | null>(null);
+  const [quizRightFor, setQuizRightFor] = useState<string | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   /** 有模块锁定剧情的章节是否已达成（moduleKey → 是否 ≥1 星） */
   const [moduleDone, setModuleDone] = useState<Record<string, boolean>>({});
@@ -202,8 +206,12 @@ export default function StoryPage() {
   function toggleOpen(c: (typeof storyChapters)[number]) {
     stopNarration();
     stopQuiz();
-    setQuizWrong(false);
-    setQuizRight(false);
+    // 只在**收起**当前章节时清掉它的答题反馈：展开别的一集不该把这一集的结果抹掉
+    // （此前是全局 boolean，收起任意一集都会清掉所有反馈）。
+    if (active === c.id) {
+      setQuizWrongFor(null);
+      setQuizRightFor(null);
+    }
     if (active === c.id) {
       setActive(null);
     } else {
@@ -219,8 +227,8 @@ export default function StoryPage() {
   /** 提交小问题答案：答对才解锁捕捉 */
   async function answerQuiz(c: (typeof storyChapters)[number], idx: number) {
     stopQuiz();
-    setQuizWrong(false);
-    setQuizRight(false);
+    setQuizWrongFor(null);
+    setQuizRightFor(null);
     try {
       const r = await fetch('/api/story/quiz', {
         method: 'POST',
@@ -230,17 +238,17 @@ export default function StoryPage() {
       const j = await r.json();
       if (j.ok) {
         setQuizSet((s) => new Set(s).add(c.id));
-        setQuizRight(true);
+        setQuizRightFor(c.id);
         playTtsEnd('答对啦！真棒！', 'zh', { wsRate: 0.85, pauseMs: 120 });
       } else if (j.code === 'wrong') {
-        setQuizWrong(true);
+        setQuizWrongFor(c.id);
         playTtsEnd('再想想看，选另一个试试吧～', 'zh', { wsRate: 0.85, pauseMs: 120 });
       } else {
-        setQuizWrong(true);
+        setQuizWrongFor(c.id);
         if (j.error) setToast(j.error);
       }
     } catch {
-      setQuizWrong(true);
+      setQuizWrongFor(c.id);
       setToast('网络好像走神了，再试一次吧');
     }
   }
@@ -507,7 +515,7 @@ export default function StoryPage() {
                           </div>
                         ))}
                       </div>
-                      {quizWrong && (
+                      {quizWrongFor === c.id && (
                         <p className="mt-3 text-sm font-bold text-moko-rose">
                           😊 再想想看，选另一个试试吧～
                         </p>
@@ -515,8 +523,9 @@ export default function StoryPage() {
                     </div>
                   )}
 
-                  {/* 已读且已答对 */}
-                  {open && isQuiz && (
+                  {/* 答对：quizRightFor 才代表「刚刚这道题答对了」；isQuiz 只是「这一集已解锁过」，
+                      答题框靠它切换是对的，但鼓励语应只在刚答对的那一刻出现。 */}
+                  {open && isQuiz && quizRightFor === c.id && (
                     <div className="mt-4 mb-1 inline-flex items-center gap-2 rounded-full bg-moko-rose/10 text-moko-rose font-bold px-3 py-1 text-sm">
                       ✅ 小问题答对啦，可以捕捉咯！
                     </div>
