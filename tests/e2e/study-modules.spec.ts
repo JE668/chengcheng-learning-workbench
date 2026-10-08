@@ -28,9 +28,20 @@ test.describe('学习模块完整流程', () => {
       const wordButtons = page.locator('.grid.grid-cols-3 button:not(:disabled)');
       await expect(wordButtons.first()).toBeVisible({ timeout: 10000 });
 
-      // 验证交互：点击词语后检查按钮启用
-      await wordButtons.first().click();
-      await expect(page.locator('button:has-text("检查")')).toBeEnabled();
+      // 验证交互：点击词语后检查按钮启用。
+      //
+      // ⚠️ 原写法是「click 一次 → 断言启用」，在 CI 上偶发失败：检查按钮一直是 disabled。
+      // 原因是**点击可能落在 hydration 之前** —— SSR 出来的按钮已可见，但 React 还没挂上
+      // 事件处理器，这一下点击等于没点，selected 仍为空（检查按钮 `disabled={selected.length===0}`）。
+      // toBeVisible 能过、click 能过，但状态没变；CI 上表现为「三次重试全挂」。
+      //
+      // 改用 toPass 重试「补一次点击 + 断言」直到真的产生选中状态。
+      // 安全性：tapWord 里有 `if (selected.includes(i)) return`，重复点同一个词是幂等的。
+      await expect(async () => {
+        const btn = wordButtons.first();
+        if (await btn.isEnabled()) await btn.click();
+        await expect(page.locator('button:has-text("检查")')).toBeEnabled({ timeout: 1500 });
+      }).toPass({ timeout: 15000 });
 
       // 验证重排按钮存在
       await expect(page.locator('button:has-text("重排")')).toBeVisible();
@@ -95,15 +106,25 @@ test.describe('学习模块完整流程', () => {
       const optionButtons = page.locator('button:has-text("第")');
       await expect(optionButtons.first()).toBeVisible({ timeout: 10000 });
 
-      // 验证基本交互：点击第一个选项
-      // 点击后断言**可观测的状态变化**：StudyQuiz 在选中任一选项后会给
-      // 正确项加 bg-green-100、选错的加 bg-red-100。
-      // 原实现只有 waitForTimeout(500)，零断言 —— 无论点对点错都算通过，
-      // 等于没测。这里改为断言「确实产生了选中反馈」。
-      await optionButtons.first().click();
-      await expect(page.locator('button.bg-green-100, button.bg-red-100').first()).toBeVisible({
-        timeout: 10000,
-      });
+      // 验证基本交互：点击第一个选项后，断言**可观测的状态变化** ——
+      // StudyQuiz 在选中后会给正确项加 bg-green-100、选错的加 bg-red-100。
+      // （更早的实现只有 waitForTimeout(500) 且零断言，点对点错都算通过，等于没测。）
+      //
+      // ⚠️ 但「click 一次 → 断言」在 CI 上偶发失败（三次重试全挂），
+      // 与连词成句同源：点击可能落在 hydration 之前 —— SSR 出来的按钮已可见，
+      // React 却还没挂上事件处理器，这一下点击等于没点，setPicked 从未发生，
+      // 那两类 class 自然一直等不到。
+      //
+      // 改用 toPass 重试「补一次点击 + 断言」，直到真的产生选中反馈。
+      // 安全性：选项在 picked 之后是 `disabled={!!picked}`，已选中时跳过点击，
+      // 既不会误点到下一题，也不会因点 disabled 元素而卡住。
+      await expect(async () => {
+        const btn = optionButtons.first();
+        if (await btn.isEnabled()) await btn.click();
+        await expect(page.locator('button.bg-green-100, button.bg-red-100').first()).toBeVisible({
+          timeout: 1500,
+        });
+      }).toPass({ timeout: 15000 });
     });
   });
 
