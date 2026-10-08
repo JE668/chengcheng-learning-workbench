@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 function makeRound() {
   const targets = [30, 45, 60, 90, 120, 135, 150];
@@ -25,12 +25,36 @@ export default function AngleMagic({
   const lv = Math.min(3, Math.max(1, level));
   const total = ROUNDS[lv];
   const tol = TOL[lv];
-  const [rounds] = useState(() => Array.from({ length: total }, makeRound));
+  const [rounds, setRounds] = useState(() => Array.from({ length: total }, makeRound));
   const [idx, setIdx] = useState(0);
   const [angle, setAngle] = useState(90);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const target = rounds[idx].target;
+
+  /**
+   * 重开一局（并在 total 变化时由下面的 effect 调用）。
+   *
+   * 原先写作 `const [rounds] = useState(() => ...)` —— 连 setter 都没有，惰性初始化
+   * 只在挂载时跑一次。若本组件在挂载后被换成另一个 level，`total` 从 ROUNDS[1]=5
+   * 变成 ROUNDS[3]=10，而 `rounds` 仍是 5 个 → 界面显示第 3 关却只出 5 题，
+   * 关卡进度形同虚设。
+   *
+   * 与 Schulte 同源。同样地：**这条路径当前不可达**（GameShell 只在 started=true 时
+   * 渲染关卡组件，level 在那之前已定；结束时先卸载再重挂载）。这里是为了让组件
+   * 对自己的 props 负责，不是在修线上故障 —— 实测见 schulte-gameshell.test.tsx。
+   */
+  const restart = useCallback(() => {
+    setRounds(Array.from({ length: total }, makeRound));
+    setIdx(0);
+    setAngle(90);
+    setScore(0);
+    setDone(false);
+  }, [total]);
+
+  useEffect(() => {
+    restart();
+  }, [restart]);
 
   function submit() {
     if (done) return;

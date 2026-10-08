@@ -87,7 +87,6 @@ export default [
       'src/components/study/ChineseModules.tsx', // reciteText
       'src/components/study/StudyQuiz.tsx', // displayStars / initialRounds / initialLastPlayed
       'src/lib/module-progress.ts', // loaded
-      'src/components/games/Schulte.tsx', // setGrid（暂无「换一批」按钮）
       'src/app/api/tts-edge/route.ts', // pause
       'src/app/tts-diag/page.tsx', // isMobile
       'src/app/(child)/home/page.tsx', // ownedCount
