@@ -58,7 +58,9 @@ export function AlgorithmTopicClient({
 
       {/* 头部 */}
       <div className="mb-6 flex items-center text-sm">
-        <Link href="/algorithm" className="text-moko-violet font-bold hover:underline">‹ 萌可算法学院</Link>
+        <Link href="/algorithm" className="text-moko-violet font-bold hover:underline">
+          ‹ 萌可算法学院
+        </Link>
         <span className="mx-2 text-gray-400">/</span>
         <span className="text-gray-700 font-black">{topic.name}</span>
       </div>
@@ -122,13 +124,17 @@ export function AlgorithmTopicClient({
           title={`${topic.name} 的原理`}
           principle={topic.principle}
           keyPoints={topic.keyPoints}
+          signals={topic.signals}
+          pitfalls={topic.pitfalls}
           mokoName={topic.moko.name}
           mokoImg={topic.moko.img}
         />
       </div>
 
       {/* 练习关卡列表 */}
-      <h2 id="practice" className="section-title mb-4">🎯 开始练习（10 个关卡）</h2>
+      <h2 id="practice" className="section-title mb-4">
+        🎯 开始练习（10 个关卡）
+      </h2>
       <div className="grid grid-cols-2 gap-3">
         {practiceSets.map((set) => {
           const p = progress[set.level];
@@ -148,7 +154,10 @@ export function AlgorithmTopicClient({
               <div className="font-black text-gray-800">{set.title}</div>
               <div className="mt-2 flex justify-center gap-0.5">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <span key={i} className={`text-lg ${i < starCount ? 'text-yellow-400' : 'text-gray-200'}`}>
+                  <span
+                    key={i}
+                    className={`text-lg ${i < starCount ? 'text-yellow-400' : 'text-gray-200'}`}
+                  >
                     ★
                   </span>
                 ))}

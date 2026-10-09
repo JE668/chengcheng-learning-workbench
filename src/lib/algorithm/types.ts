@@ -108,7 +108,12 @@ export type ExampleVisual =
   /** 交换位置：两张数字卡带着 ⇄ 箭头对调（交换律） */
   | { kind: 'swap-pair'; a: number; b: number }
   /** 好朋友抱团：三数中两个好朋友隔空拥抱 / 添上括号抱在一起（结合律/添括号） */
-  | { kind: 'brace-group'; nums: [number, number, number]; group: [number, number]; mode: 'heart' | 'bracket' }
+  | {
+      kind: 'brace-group';
+      nums: [number, number, number];
+      group: [number, number];
+      mode: 'heart' | 'bracket';
+    }
   /** 开括号：tokens 变换，flip=减号前要变号 / flip=false 加号前不变号（去括号） */
   | { kind: 'paren-flip'; before: string[]; after: string[]; flip: boolean }
   /** 好朋友数凑百：十位找十位、个位找个位（凑整法） */
@@ -160,6 +165,10 @@ export interface AlgorithmTopic {
   principle: string;
   /** 关键应用点（什么时候用这个方法） */
   keyPoints: string[];
+  /** 识别信号：什么时候该想到用这个方法（比步骤更可迁移） */
+  signals: string[];
+  /** 常见错误：孩子最容易踩的坑 */
+  pitfalls: string[];
   /** 一个典型示例：题目 + 分幕思维可视化演示 */
   example: {
     /** 题目文本（如 "9 + 5 = ?"） */

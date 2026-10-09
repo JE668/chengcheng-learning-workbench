@@ -33,6 +33,12 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
       '6 要找 4 凑成 10',
       '5 要找 5 凑成 10',
     ],
+    signals: ['看到 9、8、7 要加几', '两个数加起来会超过 10', '题目里的十位只有个位'],
+    pitfalls: [
+      '拆错了：9 要 1，却从后一个数里拆了 2 出来',
+      '把数拆开后，忘了把剩下的加回去',
+      '先用 10 加完之后，忘了再加「小尾巴」',
+    ],
     example: {
       problem: '9 + 5 = ?',
       scenes: [
@@ -98,6 +104,12 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
       '先用 10 减去减数',
       '再加上拆出来的那个几',
       '记住：10 - 9 = 1, 10 - 8 = 2, 10 - 7 = 3...',
+    ],
+    signals: ['十几减几，个位不够减（要退位）', '看到 15 − 8 这类式子'],
+    pitfalls: [
+      '减 10 的时候减反了（写成 8 − 10）',
+      '拆出来的「小尾巴」忘了加回来',
+      '把 15 拆成 10 和 5 之后，用 5 去减减数',
     ],
     example: {
       problem: '15 - 8 = ?',
@@ -165,6 +177,12 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
       '再减去剩下的数',
       '确保最终答案 > 0',
     ],
+    signals: ['减数比被减数的个位大', '想一步一步减、不愿意借位'],
+    pitfalls: [
+      '拆减数时没按个位拆（个位是 7 却拆了 6）',
+      '先减到 10 之后，剩下的忘了减',
+      '两次减法的顺序反了',
+    ],
     example: {
       problem: '17 - 9 = ?',
       scenes: [
@@ -231,6 +249,8 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
       '小数加在两位数前面别扭？交换成大数在前',
       '记住：交换只改变顺序，不改变结果',
     ],
+    signals: ['小数站在大数前面', '一位数加两位数看着别扭'],
+    pitfalls: ['以为交换位置答案会变', '把减法也随便交换（减法不能）', '交换时把数字带错了'],
     example: {
       problem: '7 + 58 = ?',
       scenes: [
@@ -297,6 +317,8 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
       '再加上第三个数',
       '常见的好朋友：1↔9, 2↔8, 3↔7, 4↔6, 5↔5',
     ],
+    signals: ['三个数相加', '其中两个数加起来正好是整十或整百'],
+    pitfalls: ['把不能凑整的两个先加了', '凑整之后漏掉第三个数', '能凑整的两个隔得远，就没看出来'],
     example: {
       problem: '27 + 36 + 13 = ?',
       scenes: [
@@ -357,6 +379,8 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
       'a - (b + c) = a - b - c',
       'a - (b - c) = a - b + c（关键！）',
     ],
+    signals: ['括号前面站着减号', '括号里面还有加减法'],
+    pitfalls: ['里面忘记变号', '只把第一个数变了号，后面的没变', '变号之后自己又算错'],
     example: {
       problem: '33 - (22 - 18) = ?',
       scenes: [
@@ -433,6 +457,8 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
       'a + (b + c) = a + b + c',
       'a + (b - c) = a + b - c',
     ],
+    signals: ['括号前面是加号', '括号里还挂着好几个数', '想省一步心算，直接把括号拆掉'],
+    pitfalls: ['以为加号前面也要变号（受减号影响）', '直接拆掉括号后按顺序算错'],
     example: {
       problem: '25 + (15 + 12) = ?',
       scenes: [
@@ -509,6 +535,12 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
       '但我们改变了计算的先后顺序',
       '目标：让括号里能凑成整十',
     ],
+    signals: ['想先算某两个数', '有两个数加起来正好是整十、整百'],
+    pitfalls: [
+      '括号圈错了对象：圈了两个不好算的',
+      '添了括号却忘了先算括号里',
+      '以为添括号会改变结果',
+    ],
     example: {
       problem: '38 + 62 + 47 = ?',
       scenes: [
@@ -570,6 +602,12 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
       '验一验 63 和 37：十位 6+3=9，个位 3+7=10 → 90 + 10 = 100',
       '**整十数**也有一对（如 10↔90、20↔80、30↔70）：十位凑 10，个位都是 0',
       '⚠️ 所以「十位凑 9，个位凑 10」只适用于两个数都有个位的情况，别拿它去套 10 和 90',
+    ],
+    signals: ['两个数加起来正好是一百', '看到 63 和 37、28 和 72 这种配对'],
+    pitfalls: [
+      '把「十位凑 9、个位凑 10」错用到整十数上（10 和 90 其实是十位凑 10）',
+      '个位相加满十忘了进位',
+      '把不是好朋友的两个数硬凑成一百',
     ],
     example: {
       problem: '63 + 37 = ?',
@@ -636,6 +674,12 @@ export const ALGORITHM_TOPICS: Omit<import('./types').AlgorithmTopic, 'questions
       'a - b + c = a + c - b',
       '符号跟着数字一起搬',
       '目标：让能凑整的先算',
+    ],
+    signals: ['加减混合运算', '有个带减号的数挡在中间，妨碍先凑整'],
+    pitfalls: [
+      '搬家时把符号丢了（−18 搬成 18）',
+      '只有减号后面的数才带着减号一起搬',
+      '搬完家之后把顺序算错',
     ],
     example: {
       problem: '56 - 18 + 24 = ?',

@@ -49,6 +49,8 @@ export default function PracticeLevelPage() {
   const [allDone, setAllDone] = useState(false);
   const [saved, setSaved] = useState(false);
   const [stars, setStars] = useState(0);
+  // 练题时的「口诀 + 识别信号」回看面板（默认收起）
+  const [hintOpen, setHintOpen] = useState(false);
 
   const currentQuestion = questions[idx];
 
@@ -172,6 +174,43 @@ export default function PracticeLevelPage() {
           className="h-full bg-gradient-to-r from-moko-violet to-moko-purple"
           style={{ width: `${((idx + 1) / totalQuestions) * 100}%` }}
         />
+      </div>
+
+      {/* 口诀 + 识别信号：练题时随时能回看「什么时候用这招」 */}
+      <div className="mb-4 rounded-2xl border-2 border-moko-purple/20 bg-white/90 overflow-hidden shadow">
+        <button
+          onClick={() => setHintOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-4 py-2 text-sm font-black text-moko-violet"
+        >
+          <span>💡 忘了怎么做？点我看口诀</span>
+          <span>{hintOpen ? '收起 ▲' : '展开 ▼'}</span>
+        </button>
+        {hintOpen && (
+          <div className="px-4 pb-3 text-sm text-gray-700 space-y-2">
+            <p className="font-bold text-moko-violet">
+              {topic.mantraEmoji} {topic.mantra}
+            </p>
+            {topic.signals.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {topic.signals.map((sg, i) => (
+                  <span
+                    key={i}
+                    className="text-xs bg-moko-purple/10 text-gray-700 rounded-full px-2.5 py-1"
+                  >
+                    {sg}
+                  </span>
+                ))}
+              </div>
+            )}
+            {topic.pitfalls.length > 0 && (
+              <ul className="text-xs text-amber-700 space-y-0.5">
+                {topic.pitfalls.map((pf, i) => (
+                  <li key={i}>⚠️ {pf}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 题目 */}
