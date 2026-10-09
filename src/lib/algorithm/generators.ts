@@ -57,8 +57,12 @@ export function genMakingTenQ(level: number): AlgorithmQuestion {
   // 10 个关卡：a 从 9 逐渐扩展到 5，b 从 1-9 到全范围
   const patterns: [number, number][] = [];
   if (level <= 2) {
-    // 关 1-2：9 加几
+    // 关 1-2：9 加几 / 8 加几
+    // ⚠️ 只写「9 加几」的话只有 8 种组合（9+2 … 9+9），一关要 10 道互不重复的题
+    // 就凑不满 —— genPracticeSet 会因去重而少出（实测只出 8 题）。
+    // 并入「8 加几」后共 8 + 7 = 15 种，既够一关，也仍在「凑十法」范围内。
     patterns.push([9, randInt(2, 9)]);
+    patterns.push([8, randInt(3, 9)]);
   } else if (level <= 4) {
     // 关 3-4：8/9 加几
     patterns.push([randInt(8, 9), randInt(2, 9)]);
@@ -248,8 +252,11 @@ export function genLevelingTenQ(level: number): AlgorithmQuestion {
   let a: number; // 十几
   let b: number; // 要拆成两段的减数
   if (level <= 2) {
-    a = randInt(11, 13);
-    b = randInt(2, 5);
+    // ⚠️ 原为 a∈{11,12,13} × b∈{2..5}，但经下面「b 必须大于个位」的修正后
+    // 实际只剩 9 种组合，一关 10 道题凑不满（实测只出 9 题）。
+    // 放宽为 a∈{11..15} × b∈{2..6}，共 15 种。
+    a = randInt(11, 15);
+    b = randInt(2, 6);
   } else if (level <= 4) {
     a = randInt(11, 15);
     b = randInt(4, 8);
@@ -715,6 +722,66 @@ export function genMiscQ(level: number): AlgorithmQuestion {
 // 统一入口
 // ============================================================================
 
+/**
+ * 添括号：想把哪两个先算，就用括号把它们圈起来（结合律的逆向）。
+ *
+ * ⚠️ 本生成器是补上的。此前 ALGORITHM_TOPICS 有 'adding-parens'，
+ * 但 ALGORITHM_GENERATORS 里**没有**它 —— 于是 genPracticeSet('adding-parens')
+ * 返回空数组，孩子在「添括号」主题里**一道题都拿不到**（10 个主题坏 1 个）。
+ * 每日一练那边也因为同样原因只能把它跳过。
+ */
+export function genAddingParensQ(level: number): AlgorithmQuestion {
+  // 先选一对「好朋友数」（相加为整百），再配第三个数
+  const friendly: [number, number][] = [
+    [38, 62],
+    [27, 73],
+    [45, 55],
+    [19, 81],
+    [36, 64],
+    [52, 48],
+    [66, 34],
+    [25, 75],
+    [41, 59],
+    [58, 42],
+    [17, 83],
+    [29, 71],
+  ];
+  const [a, b] = shuffle(friendly)[0];
+  const c = randInt(21, 68) | 1; // 取奇数，避免第三个数也凑整而看不出括号作用
+  const bracket = a + b;
+  const answer = bracket + c;
+
+  const s1: StepField = makeStep(
+    'step1',
+    '括号里先算',
+    `${a} 和 ${b} 是好朋友，加起来正好是整百。把它们用括号圈起来，先算括号里面的！`,
+    `(${a} + ${b}) = ?`,
+    [{ id: inp('step1', 0), expectedValue: bracket, placeholder: '?' }],
+    `${a} + ${b} = ${bracket}`
+  );
+
+  const s2: StepField = makeStep(
+    'step2',
+    '再加上剩下的数',
+    `括号里算完了，再加上 ${c}`,
+    `${bracket} + ${c} = ?`,
+    [{ id: inp('step2', 0), expectedValue: answer, placeholder: '?' }],
+    `${bracket} + ${c} = ${answer}`
+  );
+
+  return {
+    id: `adding-parens-${a}-${b}-${c}-${level}`,
+    topicId: 'adding-parens',
+    prompt: `${a} + ${b} + ${c} = ?`,
+    digits: [a, b, c],
+    operator: '+',
+    answer,
+    stepFields: [s1, s2],
+    explain: `给 ${a} 和 ${b} 添上括号：(${a} + ${b}) = ${bracket}，再算 ${bracket} + ${c} = ${answer}。括号没改变结果，只是让我们先算好算的那两个`,
+    mantra: '想先算哪两个，就用括号把它们抱在一起',
+  };
+}
+
 /** 主题 ID → 生成器 */
 export const ALGORITHM_GENERATORS: Record<string, (level: number) => AlgorithmQuestion> = {
   'making-ten': genMakingTenQ,
@@ -726,7 +793,7 @@ export const ALGORITHM_GENERATORS: Record<string, (level: number) => AlgorithmQu
   'addition-parens': genAdditionParensQ,
   rounding: genRoundingQ,
   'symbol-move': genSymbolMoveQ,
-  misc: genMiscQ,
+  'adding-parens': genAddingParensQ,
 };
 
 /** 为一关生成 10 道题 */
