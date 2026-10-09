@@ -6,18 +6,77 @@ import { useMistakeLogger } from '@/lib/mistake-logger';
 
 type Prob = { seq: string[]; options: string[]; answer: number; say: string };
 
+// ⚠️ 正确答案**不能全写在 options[0]**。原先 12 道题的 answer 全是 0，
+// 而下面按原顺序渲染选项 —— 孩子只要「永远点第一个」就能全对，题就白做了。
+// 已把答案打散到 0/1/2（各 4 道），并有测试守着不再退化。
+
 const PROBS: Prob[] = [
-  { seq: ['🔴', '⭐', '🔴', '⭐', '🔴', '❓'], options: ['⭐', '🔴', '🔵'], answer: 0, say: '红星星红星星红，下一个是？' },
-  { seq: ['🔵', '🔵', '🟡', '🟡', '🔵', '🔵', '❓'], options: ['🟡', '🔵', '⭐'], answer: 0, say: '蓝蓝黄黄蓝蓝，下一个是？' },
-  { seq: ['🍎', '🍌', '🍎', '🍌', '🍎', '❓'], options: ['🍌', '🍎', '🍊'], answer: 0, say: '苹果香蕉苹果香蕉苹果，下一个？' },
-  { seq: ['🌞', '🌙', '🌞', '🌙', '❓'], options: ['🌞', '🌙', '⭐'], answer: 0, say: '太阳月亮太阳月亮，下一个？' },
-  { seq: ['2', '4', '6', '8', '❓'], options: ['10', '9', '12'], answer: 0, say: '二四六八，接下来是？' },
-  { seq: ['5', '10', '15', '❓'], options: ['20', '25', '18'], answer: 0, say: '五、十、十五，接下来是？' },
-  { seq: ['1', '3', '5', '7', '❓'], options: ['9', '8', '11'], answer: 0, say: '一三五七，接下来是？' },
-  { seq: ['10', '20', '30', '❓'], options: ['40', '35', '50'], answer: 0, say: '十、二十、三十，接下来是？' },
-  { seq: ['A', 'C', 'E', 'G', '❓'], options: ['I', 'H', 'J'], answer: 0, say: 'A C E G，接下来是？' },
-  { seq: ['🐱', '🐶', '🐱', '🐶', '🐱', '❓'], options: ['🐶', '🐱', '🐰'], answer: 0, say: '猫狗猫狗猫，下一个？' },
-  { seq: ['🌸', '🌸', '🌿', '🌸', '🌸', '❓'], options: ['🌿', '🌸', '🌞'], answer: 0, say: '花花草花花，下一个是？' },
+  {
+    seq: ['🔴', '⭐', '🔴', '⭐', '🔴', '❓'],
+    options: ['⭐', '🔴', '🔵'],
+    answer: 0,
+    say: '红星星红星星红，下一个是？',
+  },
+  {
+    seq: ['🔵', '🔵', '🟡', '🟡', '🔵', '🔵', '❓'],
+    options: ['🔵', '⭐', '🟡'],
+    answer: 2,
+    say: '蓝蓝黄黄蓝蓝，下一个是？',
+  },
+  {
+    seq: ['🍎', '🍌', '🍎', '🍌', '🍎', '❓'],
+    options: ['🍎', '🍌', '🍊'],
+    answer: 1,
+    say: '苹果香蕉苹果香蕉苹果，下一个？',
+  },
+  {
+    seq: ['🌞', '🌙', '🌞', '🌙', '❓'],
+    options: ['🌞', '🌙', '⭐'],
+    answer: 0,
+    say: '太阳月亮太阳月亮，下一个？',
+  },
+  {
+    seq: ['2', '4', '6', '8', '❓'],
+    options: ['9', '10', '12'],
+    answer: 1,
+    say: '二四六八，接下来是？',
+  },
+  {
+    seq: ['5', '10', '15', '❓'],
+    options: ['25', '18', '20'],
+    answer: 2,
+    say: '五、十、十五，接下来是？',
+  },
+  {
+    seq: ['1', '3', '5', '7', '❓'],
+    options: ['8', '9', '11'],
+    answer: 1,
+    say: '一三五七，接下来是？',
+  },
+  {
+    seq: ['10', '20', '30', '❓'],
+    options: ['35', '50', '40'],
+    answer: 2,
+    say: '十、二十、三十，接下来是？',
+  },
+  {
+    seq: ['A', 'C', 'E', 'G', '❓'],
+    options: ['I', 'H', 'J'],
+    answer: 0,
+    say: 'A C E G，接下来是？',
+  },
+  {
+    seq: ['🐱', '🐶', '🐱', '🐶', '🐱', '❓'],
+    options: ['🐱', '🐶', '🐰'],
+    answer: 1,
+    say: '猫狗猫狗猫，下一个？',
+  },
+  {
+    seq: ['🌸', '🌸', '🌿', '🌸', '🌸', '❓'],
+    options: ['🌸', '🌞', '🌿'],
+    answer: 2,
+    say: '花花草花花，下一个是？',
+  },
   { seq: ['3', '6', '9', '❓'], options: ['12', '10', '15'], answer: 0, say: '三六九，接下来是？' },
 ];
 
@@ -41,7 +100,13 @@ export function FindPatternModule() {
         setIdx((k) => (k + 1) % PROBS.length);
       }, 1400);
     } else {
-      logM({ subject: '数学', kind: '找规律', prompt: p.say, answer: p.options[p.answer], wrong: p.options[i] });
+      logM({
+        subject: '数学',
+        kind: '找规律',
+        prompt: p.say,
+        answer: p.options[p.answer],
+        wrong: p.options[i],
+      });
       setTimeout(() => {
         setResult('idle');
         setPicked(null);
@@ -51,13 +116,17 @@ export function FindPatternModule() {
 
   return (
     <div className="rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-blue/20">
-      <p className="text-gray-600 mb-3">🔍 看清楚前面排好的顺序，找出规律，把「❓」换成正确的那一个吧！</p>
+      <p className="text-gray-600 mb-3">
+        🔍 看清楚前面排好的顺序，找出规律，把「❓」换成正确的那一个吧！
+      </p>
       <div className="flex flex-wrap items-center justify-center gap-2 mb-5">
         {p.seq.map((s, i) => (
           <span
             key={i}
             className={`w-14 h-14 flex items-center justify-center rounded-2xl text-3xl font-black ${
-              s === '❓' ? 'bg-moko-yellow/30 border-2 border-dashed border-moko-yellow' : 'bg-moko-blue/10'
+              s === '❓'
+                ? 'bg-moko-yellow/30 border-2 border-dashed border-moko-yellow'
+                : 'bg-moko-blue/10'
             }`}
           >
             {s}
@@ -74,8 +143,8 @@ export function FindPatternModule() {
               result !== 'idle' && i === p.answer
                 ? 'bg-green-500 text-white'
                 : result === 'wrong' && i === picked
-                ? 'bg-red-400 text-white'
-                : 'bg-moko-blue text-white'
+                  ? 'bg-red-400 text-white'
+                  : 'bg-moko-blue text-white'
             }`}
           >
             {o}
@@ -83,7 +152,9 @@ export function FindPatternModule() {
         ))}
       </div>
       {result !== 'idle' && (
-        <p className={`text-center mt-4 font-bold ${result === 'right' ? 'text-green-600' : 'text-red-500'}`}>
+        <p
+          className={`text-center mt-4 font-bold ${result === 'right' ? 'text-green-600' : 'text-red-500'}`}
+        >
           {result === 'right' ? '🎉 你找到规律啦！' : '💡 看看前面的顺序，再试一次～'}
         </p>
       )}
