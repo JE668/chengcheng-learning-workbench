@@ -140,10 +140,21 @@ export function genProverbQ(): PracticeQuestion {
 export function genRiddleQ(): PracticeQuestion {
   const r = RIDDLES[Math.floor(Math.random() * RIDDLES.length)];
   const options = shuffle([...r.options]);
-  // 确保至少有 4 个选项，使用通用干扰项而非「选项X」填充
-  while (options.length < 4) {
-    const filler = `都不对`;
-    if (!options.includes(filler)) options.push(filler);
+  // 补足到 4 个选项。
+  //
+  // ⚠️ 原先硬编码填「都不对」——但谜底**一定**在前 3 个选项里，
+  // 所以「都不对」按构造永远不可能是答案，等于白送孩子一个排除项。
+  // 现改为从**其它谜语的谜底**取真实干扰项：它们同样是「能被猜的东西」，
+  // 既保持迷惑性、也不泄漏答案，还免去为 29 条谜语各手写一个干扰项。
+  if (options.length < 4) {
+    const pool = shuffle(
+      RIDDLES.map((x) => x.answer).filter((a) => a !== r.answer && !options.includes(a))
+    );
+    while (options.length < 4 && pool.length > 0) options.push(pool.pop() as string);
+    // 补进来的项原本都排在末尾，再打散一次，避免「第 4 个总是补的」这种位置规律
+    const reshuffled = shuffle(options);
+    options.length = 0;
+    options.push(...reshuffled);
   }
   const answer = options.indexOf(r.answer);
   return {
