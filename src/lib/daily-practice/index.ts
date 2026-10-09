@@ -125,8 +125,16 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
     () => genCompareQ(), // 比大小（老文件题型保留）
     () => genOrdinalQ(), // 序数（老文件题型保留）
     () => genClockQ(), // 钟表（老文件题型保留）
-    // 算法题：每天随机抽 2 道，从已掌握的算法主题中出题
-    ...ALGORITHM_TOPICS.map((topic) => () => {
+    // 算法题：每天随机抽 2 道，从**有生成器**的算法主题中出题
+    //
+    // ⚠️ 必须过滤掉没有生成器的主题。ALGORITHM_TOPICS 与 ALGORITHM_GENERATORS
+    // 是两个各自维护的清单，目前 `adding-parens` 只在主题表里（生成器表里多的是 misc）。
+    // 不过滤就会 `gen(1)` 抛 TypeError: gen is not a function，让整个
+    // GET /api/daily-practice 500；**症状是偶发** —— 数学题池 shuffle 后
+    // slice(0,10)，只有抽中那个坏主题才炸（CI 上因此红了三次重试）。
+    // 同一份数据在 src/lib/algorithm/generators.ts 的 genPracticeSet() 里
+    // 本来就有判空（`if (!gen) return []`），这里是漏了。
+    ...ALGORITHM_TOPICS.filter((topic) => ALGORITHM_GENERATORS[topic.id]).map((topic) => () => {
       const gen = ALGORITHM_GENERATORS[topic.id];
       const algoQ = gen(1); // 使用第 1 关难度
       return genAlgorithmQ(algoQ);
