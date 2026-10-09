@@ -54,6 +54,7 @@ export const SHAPES: ShapeItem[] = [
   { name: '三角形', emoji: '🔺', sides: 3, desc: '三个尖尖的角' },
   { name: '椭圆形', emoji: '⬭', sides: 0, desc: '竖起来的圆，像鸡蛋' },
   { name: '半圆形', emoji: '🌓', sides: 0, desc: '圆的一半，像月亮船' },
+  // 五角星：sides 记的是**角数**（5 个角；轮廓其实有 10 条边）
   { name: '五角星', emoji: '⭐', sides: 5, desc: '五个角，闪亮亮' },
 ];
 
@@ -150,8 +151,11 @@ export interface Number1120Item {
 }
 export const NUMBERS_1120: Number1120Item[] = Array.from({ length: 10 }, (_, i) => {
   const num = i + 11;
+  // ⚠️ tens 不能写死成 1。这一组是 11~20，其中 **20 是「2 个十」**：
+  // 写死 tens: 1 会让 20 显示成「十位 1、个位 0」，compose 也变成不成立的「10 + 0」。
+  const tens = Math.floor(num / 10);
   const ones = num % 10;
-  return { num, tens: 1, ones, compose: `10 + ${ones}` };
+  return { num, tens, ones, compose: ones === 0 ? '10 + 10' : `10 + ${ones}` };
 });
 
 /* -------------------- 数学 · 认识钟表（整时） -------------------- */
@@ -286,7 +290,7 @@ export const ORDINALS: OrdinalItem[] = [
   { row: ['🌈', '☔', '⛄', '☀️', '🌪️'], ask: 0, question: '从左边数，🌈排第几？', answer: '第1' },
   { row: ['🎃', '👻', '🧛', '🧟', '🧙'], ask: 3, question: '从左边数，🧟排第几？', answer: '第4' },
   { row: ['🎁', '🎀', '🎈', '🎊', '🎉'], ask: 2, question: '从左边数，🎈排第几？', answer: '第3' },
-  { row: ['🧱', '🧲', '🔧', '🔨', '⚙️'], ask: 1, question: '从左边数，🔧排第几？', answer: '第2' },
+  { row: ['🧱', '🧲', '🔧', '🔨', '⚙️'], ask: 1, question: '从左边数，🧲排第几？', answer: '第2' },
   { row: ['🥕', '🥔', '🥦', '🌽', '🍅'], ask: 4, question: '从左边数，🍅排第几？', answer: '第5' },
 ];
 
