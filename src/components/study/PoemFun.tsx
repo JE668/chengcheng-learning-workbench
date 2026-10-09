@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { POEMS, POEM_PICTURE_Q, type PoemItem } from '@/lib/study-data/poems';
 
@@ -64,10 +64,18 @@ function buildFeihuaItems(): QuizItem[] {
 function LineOrder() {
   const { record } = useModuleProgress('chinese', 'poem-fun');
   const correctRef = useRef(0);
-  const [poem, setPoem] = useState<PoemItem>(() => POEMS[Math.floor(Math.random() * POEMS.length)]);
+  // ⚠️ 首帧必须**确定**：这个组件会被 SSR，若初始化器里就 Math.random()，
+  // 服务端 HTML 与客户端首帧会选中不同的诗，React 会报 hydration 不匹配并丢弃子树重渲染。
+  // 按项目既有约定：首帧取固定值，挂载后再随机换一首。
+  const [poem, setPoem] = useState<PoemItem>(() => POEMS[0]);
   const [selected, setSelected] = useState<number[]>([]);
   const [result, setResult] = useState<'idle' | 'right' | 'wrong'>('idle');
   const scrambled = useMemo(() => shuffle(poem.lines.map((_, i) => i)), [poem]);
+
+  // 挂载后换一首随机的（此时已不参与 SSR，不会造成 hydration 不一致）
+  useEffect(() => {
+    setPoem(POEMS[Math.floor(Math.random() * POEMS.length)]);
+  }, []);
 
   function tapLine(origIdx: number) {
     if (result !== 'idle') return;
