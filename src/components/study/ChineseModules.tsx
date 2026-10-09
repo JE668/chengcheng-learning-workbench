@@ -507,7 +507,7 @@ const LEVEL_ORDER: DiffLevel[] = ['easy', 'medium', 'hard'];
  * 题库跟着课本生字表走（与识字课文、家长听写同源）：
  * 入门只考前两单元（天地人 / 数字 / 自然 / 人体），进阶到第七单元，挑战覆盖全册。
  */
-const LEVEL_POOL: Record<DiffLevel, TextbookChar[]> = {
+export const LEVEL_POOL: Record<DiffLevel, TextbookChar[]> = {
   easy: textbookCharsUpTo(2),
   medium: textbookCharsUpTo(7),
   hard: TEXTBOOK_CHARACTERS,
@@ -522,7 +522,7 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-interface CharQ {
+export interface CharQ {
   mode: 'char2mean' | 'mean2char';
   target: TextbookChar;
   options: string[];
@@ -536,7 +536,7 @@ interface CharQ {
  *   专供组件首帧使用：客户端组件会被 SSR，首帧若就随机，服务端 HTML 与客户端必然不一致
  *   （React 会报 hydration 错误并丢弃子树重渲染）。挂载后再用默认的随机路径换题。
  */
-function buildQuestion(level: DiffLevel, opts: { shuffle?: boolean } = {}): CharQ {
+export function buildQuestion(level: DiffLevel, opts: { shuffle?: boolean } = {}): CharQ {
   const random = opts.shuffle !== false;
   const pick = <T,>(arr: T[]): T => (random ? arr[Math.floor(Math.random() * arr.length)] : arr[0]);
   const arrange = <T,>(arr: T[]): T[] => (random ? shuffle(arr) : arr);
@@ -557,10 +557,18 @@ function buildQuestion(level: DiffLevel, opts: { shuffle?: boolean } = {}): Char
       answer: safeTarget.char,
     };
   }
-  // 释义可能撞车（比如两个字都写「小孩」），撞车的选项会让孩子答对被判错，先过滤掉
-  const distractors = arrange(pool.filter((c) => c.meaning !== target.meaning))
-    .slice(0, 3)
-    .map((c) => c.meaning);
+  // ⚠️ 释义会撞车：比如「站」和「立」都写「站立」、「天」和「空」都写「天空」。
+  // 原实现只过滤了「与目标释义相同」的，于是**两个干扰项彼此相同**时，
+  // 选项里会出现两个一模一样的内容 —— 孩子选对了那个却被判错。
+  // 现在按释义整体去重地收集干扰项。
+  const seenMeaning = new Set<string>([target.meaning]);
+  const distractors: string[] = [];
+  for (const c of arrange(pool)) {
+    if (distractors.length >= 3) break;
+    if (seenMeaning.has(c.meaning)) continue;
+    seenMeaning.add(c.meaning);
+    distractors.push(c.meaning);
+  }
   return {
     mode: 'char2mean',
     target,
