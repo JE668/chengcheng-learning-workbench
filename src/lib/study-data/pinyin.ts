@@ -249,8 +249,8 @@ export const PINYIN_TIPS: PinyinTip[] = [
   { title: '声母 j q x', tip: 'j（母鸡）：母鸡母鸡 j j j；q（气球）：气球气球 q q q；x（西瓜）：西瓜西瓜 x x x', emoji: '🅵️' },
   { title: '声母 z c s', tip: 'z（写字）：写写字写 z z z；c（刺猬）：刺猬刺猬 c c c；s（蚕虫）：蚕虫吐丝 s s s', emoji: '🅶️' },
   { title: '声母 zh ch sh r', tip: 'zh（蜘蛛）：织毛衣织毛衣 zh zh zh；ch（吃苹果）：吃苹果吃苹果 ch ch ch；sh（狮子）：狮子狮子 sh sh sh；r（日出）：日出日出 r r r', emoji: '🅷️' },
-  { title: '整体认读', tip: 'zhi chi shi ri、yi wu yu 这 8 个音节不用拼读，看到就直接认读', emoji: '🔤' },
-  { title: '书写规则', tip: '四线格里拼音字母占位：a o e 占中格；i u ü 占中上格；b p 占中下格；d t 占中上格；f 占上中格；m n l 占中格', emoji: '✍️' },
+  { title: '整体认读', tip: 'zhi chi shi ri、zi ci si、yi wu yu、ye yue yuan、yin yun ying —— 这 16 个音节不用拼读，看到就直接认出它', emoji: '🔤' },
+  { title: '书写规则', tip: '四线格里字母占位：a o e u m n x z c s r w 占中格；i ü b d t f k h l 占上中格；p g q y 占中下格；j 占上中下格', emoji: '✍️' },
 ];
 
 /* -------------------- 语文 · 声调表（一课一贴练习册） -------------------- */
