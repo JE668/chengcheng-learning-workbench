@@ -246,8 +246,16 @@ export function ClockModule() {
   const [picked, setPicked] = useState<string | null>(null);
   const logM = useMistakeLogger();
   const current: ClockItem = CLOCKS[idx % CLOCKS.length];
-  const choices = shuffle(CLOCKS.map((c) => c.label)).slice(0, 4);
-  if (!choices.includes(current.label)) choices[0] = current.label;
+  // ⚠️ 选项必须**每题只生成一次**。原实现在渲染函数体里直接 shuffle，
+  // 于是 choose() → setPicked → 重渲染 → 选项重排 ——
+  // 孩子点击的瞬间四个选项会跳到别的位置（实测点击前后
+  // ['1时','6时','8时','2时'] 变成 ['7时','2时','1时','12时']）。
+  // 按项目既有约定用 useMemo 缓存（见 quiz-options-stability.test.tsx）。
+  const choices = useMemo(() => {
+    const c = shuffle(CLOCKS.map((x) => x.label)).slice(0, 4);
+    if (!c.includes(current.label)) c[0] = current.label;
+    return c;
+  }, [current.label]);
 
   function choose(label: string) {
     if (picked) return;
