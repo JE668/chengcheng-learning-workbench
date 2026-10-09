@@ -31,12 +31,12 @@ export interface SimilarCharGroup {
 }
 export const SIMILAR_CHARS: SimilarCharGroup[] = [
   { a: '地', b: '他', aMean: '土地、地球', bMean: '他们、他的', tip: '土+也=地（和土地有关），亻+也=他（指人）', emoji: '🌍' },
-  { a: '日', b: '目', aMean: '日子、太阳', bMean: '眼睛、目光', tip: '日中间一点，目中间一横', emoji: '🌞' },
+  { a: '日', b: '目', aMean: '日子、太阳', bMean: '眼睛、目光', tip: '日中间一横，目中间两横', emoji: '🌞' },
   { a: '田', b: '四', aMean: '田野、田地', bMean: '四周、四月', tip: '田中间十字，四中间儿字', emoji: '🌾' },
   { a: '禾', b: '木', aMean: '禾苗、禾田', bMean: '木头、树木', tip: '禾多一撇，木是一棵树', emoji: '🌱' },
   { a: '人', b: '入', aMean: '人们、大人', bMean: '进入、出入', tip: '人撇低捺高，入撇高捺低', emoji: '🚶' },
   { a: '天', b: '夫', aMean: '天空、天上', bMean: '丈夫、大夫', tip: '天是天上，夫是大夫', emoji: '🌤️' },
-  { a: '月', b: '用', aMean: '月亮、月份', bMean: '使用、用来', tip: '月里面两横，用里面三横', emoji: '🌙' },
+  { a: '月', b: '用', aMean: '月亮、月份', bMean: '使用、用来', tip: '月里面两横，用里面两横一竖', emoji: '🌙' },
   { a: '火', b: '水', aMean: '大火、着火', bMean: '河水、水田', tip: '火是红色，水是蓝色', emoji: '🔥' },
   { a: '己', b: '已', aMean: '自己、自我', bMean: '已经、早已', tip: '己右边开口，已右边封口', emoji: '🙋' },
   { a: '又', b: '双', aMean: '又一个、又是', bMean: '双手、双人', tip: '又加又就是双', emoji: '✌️' },
@@ -52,18 +52,13 @@ export const ONOMATOPOEIA: OnomatopoeiaItem[] = [
   { sound: '哗哗', subject: '小溪流', emoji: '💧' },
   { sound: '沙沙', subject: '小雨点', emoji: '🌧️' },
   { sound: '咕咕', subject: '小鸽子', emoji: '🕊️' },
-  { sound: '嘎嘎', subject: '小鸭子', emoji: '🦆' },
   { sound: '喵喵', subject: '小花猫', emoji: '🐱' },
   { sound: '呱呱', subject: '小青蛙', emoji: '🐸' },
-  { sound: '汪汪', subject: '小狗', emoji: '🐶' },
-  { sound: '喵喵', subject: '小猫', emoji: '🐱' },
-  { sound: '嗡嗡', subject: '小蜜蜂', emoji: '🐝' },
   { sound: '咚咚', subject: '心跳声', emoji: '💓' },
   { sound: '哗哗', subject: '下雨声', emoji: '🌧️' },
   { sound: '沙沙', subject: '风吹树叶', emoji: '🍃' },
   { sound: '叽叽', subject: '小鸟', emoji: '🐦' },
   { sound: '咯咯', subject: '母鸡', emoji: '🐔' },
-  { sound: '呱呱', subject: '青蛙', emoji: '🐸' },
   { sound: '汪汪', subject: '小狗', emoji: '🐶' },
   { sound: '哞哞', subject: '老牛', emoji: '🐮' },
   { sound: '咩咩', subject: '小羊', emoji: '🐑' },
@@ -112,12 +107,12 @@ export interface SimilarCharRiddle {
 export const SIMILAR_CHAR_RIDDLES: SimilarCharRiddle[] = [
   { char: '地', riddle: '土加也，脚下有地，负载万物', answer: '地', emoji: '🌍' },
   { char: '他', riddle: '亻加也，指你我之外的第三个人', answer: '他', emoji: '🙋' },
-  { char: '日', riddle: '头顶有天，覆盖万物，一个圆圈中间一点', answer: '日', emoji: '🌞' },
+  { char: '日', riddle: '一个圆圈，中间一横，白天挂在天上', answer: '日', emoji: '🌞' },
   { char: '目', riddle: '日中间一横，能看东西', answer: '目', emoji: '👁️' },
   { char: '田', riddle: '口中间十，四方方，写好汉字它来帮', answer: '田', emoji: '🌾' },
   { char: '禾', riddle: '木多一撇，禾苗禾苗绿又大', answer: '禾', emoji: '🌱' },
   { char: '火', riddle: '人字加两点，点燃万物暖洋洋', answer: '火', emoji: '🔥' },
-  { char: '水', riddle: '四个小点，大自然的来源', answer: '水', emoji: '💧' },
+  { char: '水', riddle: '中间一竖钩，两边溅水花，大自然的来源', answer: '水', emoji: '💧' },
 ];
 
 /* -------------------- 语文 · 象形字（一课一贴练习册） -------------------- */
@@ -129,7 +124,7 @@ export interface PictographItem {
   emoji: string;
 }
 export const PICTOGRAPHS: PictographItem[] = [
-  { char: '日', py: 'rì', meaning: '太阳', hint: '古人画了一个圆圈，中间一点，代表太阳', emoji: '☀️' },
+  { char: '日', py: 'rì', meaning: '太阳', hint: '古人画了一个圆圈，中间一横，代表太阳', emoji: '☀️' },
   { char: '月', py: 'yuè', meaning: '月亮', hint: '古人画了一个弯弯的月牙', emoji: '🌙' },
   { char: '山', py: 'shān', meaning: '山峰', hint: '古人画了三座尖尖的山峰', emoji: '⛰️' },
   { char: '川', py: 'chuān', meaning: '河流', hint: '古人画了三条弯弯的河流', emoji: '🏞️' },
@@ -155,14 +150,14 @@ export interface IdiomItem {
   emoji: string;
 }
 export const IDIOMS: IdiomItem[] = [
-  { idiom: '耳目一新', blank: '目', position: 2, meaning: '听到的、看到的都和以前不一样，形容事物焕然一新', example: '教室里焕然一新，耳目一新', emoji: '👀' },
+  { idiom: '耳目一新', blank: '目', position: 1, meaning: '听到的、看到的都和以前不一样，形容事物焕然一新', example: '教室里焕然一新，耳目一新', emoji: '👀' },
   { idiom: '面红耳赤', blank: '赤', position: 3, meaning: '脸和耳朵都红了，形容因激动或羞愧而脸色发红', example: '他争得面红耳赤', emoji: '😡' },
-  { idiom: '目中无人', blank: '中', position: 2, meaning: '眼里没有别人，形容骄傲自大', example: '他做事目中无人', emoji: '😤' },
-  { idiom: '口是心非', blank: '是', position: 2, meaning: '嘴里说的和心里想的不一样', example: '他是个口是心非的人', emoji: '🤐' },
-  { idiom: '苦口婆心', blank: '口', position: 2, meaning: '耐心地、善意地反复劝告', example: '妈妈苦口婆心地劝我', emoji: '👵' },
-  { idiom: '心直口快', blank: '直', position: 2, meaning: '心里怎么想，嘴上就怎么说，不拐弯抹角', example: '他心直口快', emoji: '💬' },
+  { idiom: '目中无人', blank: '中', position: 1, meaning: '眼里没有别人，形容骄傲自大', example: '他做事目中无人', emoji: '😤' },
+  { idiom: '口是心非', blank: '是', position: 1, meaning: '嘴里说的和心里想的不一样', example: '他是个口是心非的人', emoji: '🤐' },
+  { idiom: '苦口婆心', blank: '口', position: 1, meaning: '耐心地、善意地反复劝告', example: '妈妈苦口婆心地劝我', emoji: '👵' },
+  { idiom: '心直口快', blank: '直', position: 1, meaning: '心里怎么想，嘴上就怎么说，不拐弯抹角', example: '他心直口快', emoji: '💬' },
   { idiom: '一目十行', blank: '十', position: 2, meaning: '一眼看十行，形容看书非常快', example: '他读书一目十行', emoji: '📖' },
-  { idiom: '手忙脚乱', blank: '脚', position: 3, meaning: '形容做事慌张，没有条理', example: '他做事手忙脚乱', emoji: '🤯' },
+  { idiom: '手忙脚乱', blank: '脚', position: 2, meaning: '形容做事慌张，没有条理', example: '他做事手忙脚乱', emoji: '🤯' },
   { idiom: '画蛇添足', blank: '足', position: 3, meaning: '比喻做了多余的事，反而不好', example: '别画蛇添足了', emoji: '🐍' },
   { idiom: '守株待兔', blank: '兔', position: 3, meaning: '比喻死守经验，不知变通', example: '做事不能守株待兔', emoji: '🐰' },
   { idiom: '掩耳盗铃', blank: '铃', position: 3, meaning: '捂住耳朵去偷铃铛，比喻自己欺骗自己', example: '别掩耳盗铃了', emoji: '🔔' },
