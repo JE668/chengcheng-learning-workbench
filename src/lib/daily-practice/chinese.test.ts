@@ -67,7 +67,7 @@ describe('genDictationQ', () => {
 describe('genChineseQuizQ', () => {
   it('should generate valid Chinese quiz questions', () => {
     const q = genChineseQuizQ();
-    expect(q.kind).toBe('dictation');
+    expect(q.kind).toBe('chinese-quiz');
     expect(q.subject).toBe('语文');
     expect(q.prompt).toContain('意思是');
     if (q.kind === 'dictation') {
@@ -89,7 +89,7 @@ describe('genChineseQuizQ', () => {
 describe('genAntonymQ', () => {
   it('should generate valid antonym questions', () => {
     const q = genAntonymQ();
-    expect(q.kind).toBe('dictation');
+    expect(q.kind).toBe('antonym');
     expect(q.subject).toBe('语文');
     expect(q.prompt).toContain('反义词');
     if (q.kind === 'dictation') {
@@ -104,7 +104,7 @@ describe('genAntonymQ', () => {
 describe('genProverbQ', () => {
   it('should generate valid proverb questions', () => {
     const q = genProverbQ();
-    expect(q.kind).toBe('dictation');
+    expect(q.kind).toBe('proverb');
     expect(q.subject).toBe('语文');
     expect(q.prompt).toContain('后半句');
     if (q.kind === 'dictation') {
@@ -119,7 +119,7 @@ describe('genProverbQ', () => {
 describe('genRiddleQ', () => {
   it('should generate valid riddle questions', () => {
     const q = genRiddleQ();
-    expect(q.kind).toBe('dictation');
+    expect(q.kind).toBe('riddle');
     expect(q.subject).toBe('语文');
     expect(q.prompt).toBeTruthy();
     if (q.kind === 'dictation') {

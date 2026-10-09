@@ -78,6 +78,16 @@ export type PracticeQuestion =
     }
   | {
       id: string;
+      kind: 'chinese-quiz' | 'antonym' | 'proverb' | 'riddle';
+      subject: Subject;
+      prompt: string;
+      han: string;
+      options: string[];
+      answer: number;
+      explain: string;
+    }
+  | {
+      id: string;
       kind: 'dictation';
       subject: Subject;
       prompt: string;

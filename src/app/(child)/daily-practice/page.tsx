@@ -20,11 +20,19 @@ const KIND_META: Record<string, { label: string; grad: string; icon: string }> =
   english: { label: '英语 · 听音', grad: 'from-moko-yellow to-amber-300', icon: '🔤' },
   mistake: { label: '错题重练', grad: 'from-moko-violet to-purple-400', icon: '🔁' },
   poem: { label: '语文 · 古诗', grad: 'from-moko-purple to-moko-violet', icon: '🌙' },
+  'chinese-quiz': { label: '语文 · 识字', grad: 'from-moko-pink to-moko-rose', icon: '💡' },
+  antonym: { label: '语文 · 反义词', grad: 'from-moko-pink to-moko-rose', icon: '🔄' },
+  proverb: { label: '语文 · 谚语', grad: 'from-moko-pink to-moko-rose', icon: '📜' },
+  riddle: { label: '语文 · 谜语', grad: 'from-moko-pink to-moko-rose', icon: '🧩' },
 };
 const FALLBACK_META = { label: '今日练习', grad: 'from-moko-violet to-moko-purple', icon: '📝' };
 
 async function autoPlay(q?: PracticeQuestion) {
   if (!q) return;
+  // ⚠️ 只有**真听写**才朗读 han。识字题（chinese-quiz）与谜语题（riddle）的 han
+  // 就是**正确答案本身**（han === options[answer]），朗读等于直接把答案念给孩子听。
+  // 它们的 kind 已独立，这里刻意不给它们任何朗读分支 —— 见 gen-chinese.ts 与
+  // daily-practice-generate-guard.test.ts 里对应的护栏。
   if (q.kind === 'pinyin') void playTts(q.audioText, 'zh', { wsRate: 0.6, pauseMs: 300 });
   else if (q.kind === 'english') void playTts(q.word, 'en');
   else if (q.kind === 'dictation') void playTts(q.han, 'zh', { wsRate: 0.6, pauseMs: 300 });
@@ -522,6 +530,22 @@ export default function DailyPracticePage() {
                 🔊 听写 · 再听一遍
               </button>
             </>
+          )}
+          {/* 识字 / 反义词 / 谚语 / 谜语：题干就是问题本身，头部只放图标；
+              刻意**不放朗读按钮**，因为这几类的 han 是答案或无需朗读。 */}
+          {(q.kind === 'chinese-quiz' ||
+            q.kind === 'antonym' ||
+            q.kind === 'proverb' ||
+            q.kind === 'riddle') && (
+            <div className="text-6xl font-black mb-2">
+              {q.kind === 'chinese-quiz'
+                ? '💡'
+                : q.kind === 'antonym'
+                  ? '🔄'
+                  : q.kind === 'proverb'
+                    ? '📜'
+                    : '🧩'}
+            </div>
           )}
           {q.kind === 'math' && (
             <>

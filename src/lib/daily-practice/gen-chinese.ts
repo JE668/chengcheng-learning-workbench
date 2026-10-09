@@ -86,7 +86,7 @@ export function genChineseQuizQ(): PracticeQuestion {
   const answer = options.indexOf(c.char);
   return {
     id: `qz-${c.char}`,
-    kind: 'dictation',
+    kind: 'chinese-quiz',
     subject: '语文',
     prompt: `哪个字的意思是「${c.meaning}」？`,
     han: c.char,
@@ -106,7 +106,7 @@ export function genAntonymQ(): PracticeQuestion {
   const answer = options.indexOf(a.b);
   return {
     id: `ant-${a.a}`,
-    kind: 'dictation',
+    kind: 'antonym',
     subject: '语文',
     prompt: `「${a.a}」的反义词是？`,
     han: a.a,
@@ -126,7 +126,7 @@ export function genProverbQ(): PracticeQuestion {
   const answer = options.indexOf(p.second);
   return {
     id: `pv-${p.first}`,
-    kind: 'dictation',
+    kind: 'proverb',
     subject: '语文',
     prompt: `「${p.first}」后半句是？`,
     han: p.first,
@@ -148,7 +148,7 @@ export function genRiddleQ(): PracticeQuestion {
   const answer = options.indexOf(r.answer);
   return {
     id: `rd-${r.riddle.slice(0, 4)}`,
-    kind: 'dictation',
+    kind: 'riddle',
     subject: '语文',
     prompt: r.riddle,
     han: r.answer,
