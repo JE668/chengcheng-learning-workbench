@@ -59,7 +59,7 @@ export const POEM_PICTURE_Q: PoemPictureQ[] = [
   { poem: '敕勒歌', hint: '风吹草低见牛羊。', options: ['🐑', '🐟', '🦅'], answer: '🐑' },
   { poem: '敕勒歌', hint: '天似穹庐，笼盖四野。', options: ['⛺', '🏢', '🚢'], answer: '⛺' },
   { poem: '池上', hint: '小娃撑小艇，偷采白莲回。', options: ['🛶', '🚗', '🛝'], answer: '🛶' },
-  { poem: '小池', hint: '小荷才露尖尖角，早有蜻蜓立上头。', options: ['🦗', '🐱', '🌞'], answer: '🦗' },
+  { poem: '池上', hint: '不解藏踪迹，浮萍一道开。', options: ['🌿', '🪨', '🏖️'], answer: '🌿' },
   { poem: '小池', hint: '泉眼无声惜细流，树阴照水爱晴柔。', options: ['💧', '🔥', '🏔️'], answer: '💧' },
   { poem: '画', hint: '远看山有色，近听水无声。', options: ['🖼️', '📻', '🎈'], answer: '🖼️' },
   { poem: '赠汪伦', hint: '桃花潭水深千尺，不及汪伦送我情。', options: ['🌊', '🔥', '🏜️'], answer: '🌊' },

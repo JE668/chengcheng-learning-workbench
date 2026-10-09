@@ -11,7 +11,11 @@ import type { PracticeQuestion } from './types';
 import { shuffle } from './types';
 
 /* —— 拼音：可完整发四声的音节（4 个代表字都不为空） —— */
-const PINYIN_FULL = Object.keys(PINYIN_TONES).filter((b) => PINYIN_TONES[b].every((t) => t));
+// ⚠️ 还要求「四个声调的例字互不相同」：像 啊、哦 这类多音字会出现在多个声调里，
+// 于是「这个字读什么拼音？」就**同时有多个正确答案**，对孩子不公平。
+const PINYIN_FULL = Object.keys(PINYIN_TONES).filter(
+  (b) => PINYIN_TONES[b].every((t) => t) && new Set(PINYIN_TONES[b]).size === 4
+);
 
 /* —— 拼音题 —— */
 export function genPinyinQ(): PracticeQuestion {
