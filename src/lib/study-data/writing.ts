@@ -94,7 +94,7 @@ export interface WritingTip {
 }
 export const WRITING_TIPS: WritingTip[] = [
   { char: '十', rule: '先横后竖', tip: '第一笔横，第二笔竖，竖要穿过横的中间', emoji: '➕' },
-  { char: '田', rule: '先外后里再封口', tip: '先写外面的大口框，再写里面的十字，最后封口', emoji: '⊞' },
+  { char: '田', rule: '先外后内再封口', tip: '先写外面的大口框，再写里面的十字，最后封口', emoji: '⊞' },
   { char: '八', rule: '先撇后捺', tip: '先写左边的撇，再写右边的捺，撇捺对称', emoji: '八' },
   { char: '禾', rule: '先撇后捺', tip: '先写上面的撇，再写横，再写竖，最后写撇和捺', emoji: '🌱' },
   { char: '王', rule: '先横后竖', tip: '三横一竖，横要长短匀称，竖要居中', emoji: '👑' },
