@@ -336,7 +336,7 @@ export function TextComprehensionModule() {
 /* ========================================================================
  * 连词成句（造句）
  * ===================================================================== */
-const SENTENCE_BUILD: { words: string[]; answer: string }[] = [
+export const SENTENCE_BUILD: { words: string[]; answer: string }[] = [
   // 简单句（3-4 词）
   { words: ['我', '爱', '妈妈'], answer: '我爱妈妈' },
   { words: ['天上', '有', '小鸟'], answer: '天上有小鸟' },
@@ -352,7 +352,9 @@ const SENTENCE_BUILD: { words: string[]; answer: string }[] = [
   { words: ['妹妹', '正在', '画', '画'], answer: '妹妹正在画画' },
   { words: ['我们', '一起', '做', '游戏'], answer: '我们一起做游戏' },
   // 生活常用句
-  { words: ['早上', '好', '老师'], answer: '早上好老师' },
+  // ⚠️ 原为 words: ['早上','好','老师'] / answer: '早上好老师'。
+  // 中文更自然的语序是「老师早上好」—— 孩子按自然语序排反被判错。已改正。
+  { words: ['老师', '早上', '好'], answer: '老师早上好' },
   { words: ['谢谢', '你', '的', '帮助'], answer: '谢谢你的帮助' },
   { words: ['请', '借', '我', '一支', '笔'], answer: '请借我一支笔' },
   { words: ['我', '想', '喝', '水'], answer: '我想喝水' },
