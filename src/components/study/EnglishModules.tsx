@@ -329,7 +329,30 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function buildQuestion(level: DiffLevel): { target: WordItem; options: WordItem[] } {
+/**
+ * 从候选里取 k 个**单词各不相同**的项。
+ *
+ * ⚠️ 不能只按 word 过滤「目标」：同一个英文词可能**合法地**出现在两个主题里
+ * （orange 既是「橙子」又是「橙色」，在 EN_WORD_TOPICS 里出现两次）。
+ * 那样两个干扰项会拿到同一个词 → 选项出现两个一模一样的单词，
+ * 孩子一眼就能看出「重复的那个肯定不是答案」—— 等于泄题。
+ *
+ * 抽成纯函数是为了能被**对抗性输入**确定性地测试
+ * （这类 bug 靠随机抽样跑几千次也抓不住：命中概率约万分之 1.8）。
+ */
+export function pickDistinctWords(candidates: WordItem[], k: number): WordItem[] {
+  const seen = new Set<string>();
+  const out: WordItem[] = [];
+  for (const w of candidates) {
+    if (out.length >= k) break;
+    if (seen.has(w.word)) continue;
+    seen.add(w.word);
+    out.push(w);
+  }
+  return out;
+}
+
+export function buildQuestion(level: DiffLevel): { target: WordItem; options: WordItem[] } {
   const pool =
     level === 'easy'
       ? EN_EASY_WORDS
@@ -338,7 +361,7 @@ function buildQuestion(level: DiffLevel): { target: WordItem; options: WordItem[
         : ALL_EN_WORDS;
   const k = level === 'easy' ? 3 : 4;
   const target = pool[Math.floor(Math.random() * pool.length)];
-  const distractors = shuffle(pool.filter((w) => w.word !== target.word)).slice(0, k - 1);
+  const distractors = pickDistinctWords(shuffle(pool.filter((w) => w.word !== target.word)), k - 1);
   return { target, options: shuffle([target, ...distractors]) };
 }
 
