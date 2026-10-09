@@ -8,14 +8,21 @@ import type { MathQuestion } from '@/lib/study-data';
 /* ============================================================
  * 退位减法（20 以内，个位不够减，需要借位）
  * ========================================================= */
-function genBorrow(): MathQuestion[] {
+export function genBorrow(): MathQuestion[] {
   const qs: MathQuestion[] = [];
+  // ⚠️ 必须按题去重。满足「11~18 减 1~9 且真退位」的组合只有 36 种，
+  // 从 36 种里可重复地抽 10 题，约 **71%** 的回合会出现同一道题出现两次
+  // （算出 P(至少一次重复) ≈ 1 - exp(-45/36) ≈ 0.71）。孩子一轮里会做到重复题。
+  const seen = new Set<string>();
   let guard = 0;
-  while (qs.length < 10 && guard++ < 200) {
+  while (qs.length < 10 && guard++ < 500) {
     const a = Math.floor(Math.random() * 8) + 11; // 11 ~ 18
     const b = Math.floor(Math.random() * 9) + 1; // 1 ~ 9
     if (b < a && a % 10 < b) {
       // 个位不够减 → 退位
+      const key = a + '-' + b;
+      if (seen.has(key)) continue;
+      seen.add(key);
       qs.push({ a, b, op: '-' });
     }
   }
@@ -54,14 +61,22 @@ export function BorrowModule() {
       }, 1300);
     } else {
       setStreak({ right: 0, wrong: streak.wrong + 1 });
-      logM({ subject: '数学', kind: '退位减法', prompt: `${q.a} - ${q.b} = ?`, answer: String(ans), wrong: input || '' });
+      logM({
+        subject: '数学',
+        kind: '退位减法',
+        prompt: `${q.a} - ${q.b} = ?`,
+        answer: String(ans),
+        wrong: input || '',
+      });
     }
   }
 
   return (
     <div className="rounded-2xl p-5 bg-gradient-to-br from-moko-rose to-pink-300 text-white shadow-lg">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-bold bg-white/25 rounded-full px-3 py-1">退位减法 · 借一当十</span>
+        <span className="text-sm font-bold bg-white/25 rounded-full px-3 py-1">
+          退位减法 · 借一当十
+        </span>
         <span className="text-xs opacity-90">连对 {streak.right} · 越练越熟</span>
       </div>
       <div className="text-center text-5xl font-black mb-4">
@@ -76,12 +91,17 @@ export function BorrowModule() {
           className="w-24 text-center text-3xl font-black text-moko-violet rounded-xl py-2"
           placeholder="?"
         />
-        <button onClick={check} className="px-6 py-2 rounded-xl bg-white text-moko-rose font-black text-xl shadow active:scale-95 transition">
+        <button
+          onClick={check}
+          className="px-6 py-2 rounded-xl bg-white text-moko-rose font-black text-xl shadow active:scale-95 transition"
+        >
           提交
         </button>
       </div>
       {result !== 'idle' && (
-        <p className={`text-center mt-3 font-bold ${result === 'right' ? 'text-white' : 'text-yellow-200'}`}>
+        <p
+          className={`text-center mt-3 font-bold ${result === 'right' ? 'text-white' : 'text-yellow-200'}`}
+        >
           {result === 'right' ? '🎉 答对啦！' : '💡 个位不够减，向十位借 1'}
         </p>
       )}
@@ -125,13 +145,21 @@ export function PictureEquationModule() {
         setQ(genPic());
       }, 1300);
     } else {
-      logM({ subject: '数学', kind: '看图列式', prompt: `${q.a} + ${q.b} = ?`, answer: String(ans), wrong: input || '' });
+      logM({
+        subject: '数学',
+        kind: '看图列式',
+        prompt: `${q.a} + ${q.b} = ?`,
+        answer: String(ans),
+        wrong: input || '',
+      });
     }
   }
 
   return (
     <div className="rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-blue/20">
-      <div className="text-sm font-bold text-moko-blue mb-3 text-center">🖼️ 看图列式：把两堆合起来，一共几个？</div>
+      <div className="text-sm font-bold text-moko-blue mb-3 text-center">
+        🖼️ 看图列式：把两堆合起来，一共几个？
+      </div>
       <div className="flex items-center justify-center gap-4 text-4xl mb-4 flex-wrap">
         <div className="text-center">
           <div>{q.emoji.repeat(q.a)}</div>
@@ -153,12 +181,17 @@ export function PictureEquationModule() {
         />
       </div>
       <div className="flex justify-center">
-        <button onClick={check} className="px-6 py-2 rounded-xl bg-moko-blue text-white font-black text-xl shadow active:scale-95 transition">
+        <button
+          onClick={check}
+          className="px-6 py-2 rounded-xl bg-moko-blue text-white font-black text-xl shadow active:scale-95 transition"
+        >
           算一算
         </button>
       </div>
       {result !== 'idle' && (
-        <p className={`text-center mt-3 font-bold ${result === 'right' ? 'text-green-600' : 'text-red-500'}`}>
+        <p
+          className={`text-center mt-3 font-bold ${result === 'right' ? 'text-green-600' : 'text-red-500'}`}
+        >
           {result === 'right' ? '🎉 太棒了！' : '💡 再数数看'}
         </p>
       )}
