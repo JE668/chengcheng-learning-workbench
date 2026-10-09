@@ -151,18 +151,25 @@ export default async function DashboardPage() {
         <ChildSwitcher />
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {/*
+         * ⚠️ 标签一律保持 **4 个汉字**。
+         * 卡片在 4 列布局下内宽约 68px（text-sm ≈ 14px/字），5 个字必被折成两行，
+         * 而且是「已发布任 / 务」这种**词中折断**，与相邻不折的卡片参差不齐。
+         * 原先是「已发布任务」「待审核兑换」（5 字）→ 已各去掉一个字。
+         */}
         {[
           { label: '孩子积分', value: points, color: 'bg-moko-rose' },
-          { label: '已发布任务', value: Number(tasks.rows[0]?.n || 0), color: 'bg-moko-blue' },
+          { label: '发布任务', value: Number(tasks.rows[0]?.n || 0), color: 'bg-moko-blue' },
           { label: '完成次数', value: Number(comps.rows[0]?.n || 0), color: 'bg-moko-yellow' },
-          { label: '待审核兑换', value: Number(pending.rows[0]?.n || 0), color: 'bg-moko-purple' },
+          { label: '待审兑换', value: Number(pending.rows[0]?.n || 0), color: 'bg-moko-purple' },
         ].map((s) => (
           <div
             key={s.label}
             className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}
           >
             <div className="text-4xl font-black">{s.value}</div>
-            <div className="text-sm opacity-90">{s.label}</div>
+            {/* whitespace-nowrap 是兜底：万一以后又写了长标签，宁可溢出也不要词中折断 */}
+            <div className="text-sm opacity-90 whitespace-nowrap">{s.label}</div>
           </div>
         ))}
       </div>
