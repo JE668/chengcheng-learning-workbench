@@ -329,3 +329,17 @@ jobs:
         with:
           name: playwright-report
           path: test-results/
+
+      # ⚠️ 开发服务器日志必须上传 —— 这是排查 e2e 服务端故障的唯一线索。
+      # dev server 是 `pnpm dev > dev.log 2>&1 &`，它的 stdout/stderr **不在** job 日志里；
+      # 没有这个 artifact 时，页面只表现成「接口 500」，看不到任何堆栈。
+      # 之前几次 CI 红（每日一练 /api/daily-practice 500）就卡在这里。
+      # 用 always() 而非 failure()：flaky 用例「先失败后重试通过」时整体是绿的，
+      # 但那次失败的服务端报错恰恰最值得看。
+      - name: 上传开发服务器日志
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dev-server-log
+          path: dev.log
+          if-no-files-found: warn
