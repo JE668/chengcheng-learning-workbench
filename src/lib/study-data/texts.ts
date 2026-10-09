@@ -219,9 +219,9 @@ export const TEXT_COMPREHENSION_QS: TextComprehensionQ[] = [
   { textRef: '画', question: '"远看山有色"是什么意思？', options: ['山很远', '从远处看，山是有颜色的', '山没有颜色', '山很大'], answer: 1, explain: '从远处看，山是有颜色的', emoji: '⛰️' },
   { textRef: '画', question: '"近听水无声"说明这是什么？', options: ['真的水', '画中的水', '假的水', '没有水'], answer: 1, explain: '画中的水不会发出声音', emoji: '💧' },
   { textRef: '画', question: '"春去花还在"说明这是什么？', options: ['真的花', '画中的花', '假的花', '没有花'], answer: 1, explain: '画中的花春天过去了还在开', emoji: '🌸' },
-  { textRef: '画', question: '"人来鸟不惊"说明这是什么？', options: ['真的鸟', '画中的鸟', '假の鸟', '没有鸟'], answer: 1, explain: '画中的鸟不会飞走', emoji: '🐦' },
+  { textRef: '画', question: '"人来鸟不惊"说明这是什么？', options: ['真的鸟', '画中的鸟', '假的鸟', '没有鸟'], answer: 1, explain: '画中的鸟不会飞走', emoji: '🐦' },
   // 通用
-  { textRef: '鹅', question: '这首诗描写的是什么季节？', options: ['春天', '夏天', '秋天', '冬天'], answer: 1, explain: '鹅在绿水中游，是夏天', emoji: '☀️' },
+  { textRef: '鹅', question: '"白毛浮绿水"里的水是什么颜色？', options: ['绿色', '蓝色', '黄色', '白色'], answer: 0, explain: '诗句说"浮绿水"，水是绿色的', emoji: '💚' },
   { textRef: '画', question: '这首诗写的是一幅什么？', options: ['照片', '画', '雕塑', '视频'], answer: 1, explain: '整首诗描写的是一幅画', emoji: '🎨' },
 ];
 
