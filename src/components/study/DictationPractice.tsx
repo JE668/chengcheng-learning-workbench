@@ -23,7 +23,27 @@ const PINYIN_MAP = new Map<string, string>(
   CHARACTERS.map((c) => [c.char, c.pinyin] as [string, string])
 );
 
-function wordPinyin(w: string): string {
+/**
+ * ⚠️ 多音字在**词里**的读音常常与单字主读音不同，逐字查表会读错，
+ * 于是孩子输入**正确的**拼音反而被判错（normPinyin 会去掉声调，但字母不同）。
+ *
+ * 实测出错的词：
+ *   音乐  yīn lè    → 应为 yīn yuè   （乐 = yuè）
+ *   成长  chéng cháng → 应为 chéng zhǎng（长 = zhǎng）
+ *   睡觉  shuì jué  → 应为 shuì jiào （觉 = jiào）
+ *   觉得  jué dé    → 应为 jué de    （轻声；去声调后等价，但显示不对）
+ *
+ * 新增词语时若有读音差异，必须补到这里 —— 有测试逐词盯着。
+ */
+export const WORD_PINYIN_FIX: Record<string, string> = {
+  音乐: 'yīn yuè',
+  成长: 'chéng zhǎng',
+  睡觉: 'shuì jiào',
+  觉得: 'jué de',
+};
+
+export function wordPinyin(w: string): string {
+  if (WORD_PINYIN_FIX[w]) return WORD_PINYIN_FIX[w];
   return w
     .split('')
     .map((ch) => PINYIN_MAP.get(ch) ?? ch)
