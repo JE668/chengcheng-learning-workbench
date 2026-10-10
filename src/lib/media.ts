@@ -24,8 +24,17 @@ const RAW = (process.env.NEXT_PUBLIC_MEDIA_BASE || '').trim().replace(/\/+$/, ''
 /** 把应用内的媒体相对路径（如 /raz/books/x.pdf）解析为最终 URL。 */
 export function mediaUrl(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`;
-  if (!RAW) return p; // 同源：直接走 public/ 静态直出（Range 由标准静态服务器/Next 原生处理，
-  // 比 /api/media 的流式 206 更不易被反代缓冲破坏；防盗链由 middleware 的 /raz、/textbooks 软闸负责）。
+  // 同源：改走 /api/media 路由（serve-media.ts），不再用 public/ 静态直出。
+  // ⚠️ 原因（2026-10 实测，15.5.24/15.5.27 一致）：静态直出自带 ETag/Last-Modified +
+  // max-age=0，安卓/Edge 的媒体框架缓存后会发「Range + If-None-Match」请求，
+  // 静态层在再验证命中时回 304 并完全忽略 Range —— 安卓媒体框架对 Range 强制要求 206，
+  // 空体 304 即拒播（PDF.js 走 fetch、304 无害，所以症状是「视频黑屏、PDF 正常」）。
+  // 中间层拦截不可行：Next 15.5 对静态扩展名请求跳过 middleware，
+  // beforeFiles 重写也拦不到 public/ 文件。/api/media 是 route handler：
+  // 永不回 304、Range/206 齐全、Cache-Control 由代码掌控（private, max-age=86400），
+  // 鉴权为「有效会话或同源 Referer」（9848910），应用内 <video>/PDF.js/新窗口链接均满足。
+  // 若你的反代环境下媒体异常，请分别「绕过反代直连容器端口」与「走反代」各 curl 一次对比。
+  if (!RAW) return '/api/media' + p;
   return `${RAW}${p}`;
 }
 

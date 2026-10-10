@@ -94,7 +94,12 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasSession = req.cookies.has(COOKIE_NAME);
 
-  // 媒体资源（课本 PDF / RAZ 音视频）：公开直出，不做登录软闸，避免跨设备/反代下黑屏。
+  // 媒体资源（课本 PDF / RAZ 音视频）：不做登录软闸，避免跨设备/反代下黑屏。
+  //
+  // ⚠️ Next 15.5 实测：静态扩展名（.mp4/.pdf 等）的请求会**跳过 middleware**
+  //（matcher 显式纳入 /raz/:path* 也拦不到），这个分支只对无扩展名的 /raz/* 生效。
+  // 媒体的实际供出已改由 mediaUrl 直接指向 /api/media（route handler 完全掌控响应、
+  // 永不回 304、Range/206 齐全），详见 src/lib/media.ts 的注释。
   if (MEDIA_PREFIXES.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
