@@ -20,13 +20,18 @@ export interface DifficultyRecommendation {
 /**
  * 根据近期表现推荐难度等级
  * 规则：
- * - 正确率 >= 90% 且连续答对 >= 3 题：建议升 1 级
+ * - 练习 >= 3 次且正确率 >= 90%：建议升 1 级（不超第 10 关）
  * - 正确率 >= 70%：保持当前等级
- * - 正确率 < 70%：建议降 1 级
+ * - 正确率 < 70%：建议降 1 级（不低于第 1 关）
+ *
+ * recentLevels 约定（由 computePerformance 生成）：按 completedAt 降序，最近的在前。
  */
 export function recommendDifficulty(performance: AlgorithmPerformance): DifficultyRecommendation {
   const { avgAccuracy, totalAttempts, recentLevels } = performance;
-  const currentLevel = recentLevels.length > 0 ? recentLevels[recentLevels.length - 1] : 1;
+  // ⚠️ recentLevels 是「最近的在前」（见 computePerformance 的降序排序）。
+  // 原实现取了 length-1 —— 也就是最近几条里最旧的那条：
+  // 用户依次打完第 1~5 关时，currentLevel 会算成 1 而不是 5，升降级建议就全反了。
+  const currentLevel = recentLevels.length > 0 ? recentLevels[0] : 1;
 
   // 数据不足，返回默认推荐
   if (totalAttempts < 3) {
