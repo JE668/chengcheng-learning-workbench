@@ -247,7 +247,7 @@ export const mokoCollection_02: MokoChar[] = [
   {
     "key": "col_02_淘气萌可_render",
     "name": "淘气萌可",
-    "category": "trouble",
+    "category": "mo",
     "season": "魔方萌可_第一二季",
     "img": "/moko/collection/02_魔方萌可_第一二季/淘气萌可_render.webp",
     "emoji": "🧊",
@@ -379,7 +379,7 @@ export const mokoCollection_02: MokoChar[] = [
   {
     "key": "col_02_迷糊萌可_render",
     "name": "迷糊萌可",
-    "category": "trouble",
+    "category": "mo",
     "season": "魔方萌可_第一二季",
     "img": "/moko/collection/02_魔方萌可_第一二季/迷糊萌可_render.webp",
     "emoji": "🧊",

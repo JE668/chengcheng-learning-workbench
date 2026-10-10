@@ -490,7 +490,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
   "淘气萌可": {
     "key": "col_02_淘气萌可_render",
     "name": "淘气萌可",
-    "category": "trouble",
+    "category": "mo",
     "season": "魔方萌可_第一二季",
     "img": "/moko/collection/02_魔方萌可_第一二季/淘气萌可_render.webp",
     "emoji": "🧊",
@@ -622,7 +622,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
   "迷糊萌可": {
     "key": "col_02_迷糊萌可_render",
     "name": "迷糊萌可",
-    "category": "trouble",
+    "category": "mo",
     "season": "魔方萌可_第一二季",
     "img": "/moko/collection/02_魔方萌可_第一二季/迷糊萌可_render.webp",
     "emoji": "🧊",
@@ -1579,7 +1579,7 @@ export const mokoCollectionByName: Record<string, MokoChar> = {
   "闹闹萌可": {
     "key": "col_09_闹闹萌可_render",
     "name": "闹闹萌可",
-    "category": "trouble",
+    "category": "villain",
     "season": "反派及其他",
     "img": "/moko/collection/09_反派及其他/闹闹萌可_render.webp",
     "emoji": "😈",

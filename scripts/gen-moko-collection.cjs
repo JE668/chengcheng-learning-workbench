@@ -48,12 +48,7 @@ const IMG_OVERRIDE = {
 };
 
 // 个别分类/emoji/台词覆盖（人类角色，非萌可）
-// 三只捣蛋萌可按官方身份归入 trouble 分类：castle-core 的图鉴总数
-// （COLLECTIBLE_MOKO_NAMES，其注释写明排除捣蛋萌可）靠 category !== trouble 过滤，
-// 而它们按文件夹落在了 villain / mo，导致排除逻辑空转、图鉴总数虚高 3 ——
-// 捣蛋萌可进的是 troublemakers 表、永远不进 moko_owned，
-// 孩子集齐全部萌可也到不了 100%。
-const CAT_OVERRIDE = { '乐美公主': 'guide', '闹闹萌可': 'trouble', '迷糊萌可': 'trouble', '淘气萌可': 'trouble' };
+const CAT_OVERRIDE = { '乐美公主': 'guide' };
 const EMOJI_OVERRIDE = { '乐美公主': '👑' };
 const LINE_OVERRIDE = { '乐美公主': '一起捕捉萌可吧！' };
 
