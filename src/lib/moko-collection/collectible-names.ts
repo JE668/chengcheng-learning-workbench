@@ -1,6 +1,9 @@
 // 自动生成（可收集名单）：由 scripts/gen-moko-collection.cjs 生成，请勿手改。
 
-/** 图鉴可收集角色总数（去重后的唯一角色名，排除捣蛋萌可） */
+/** 图鉴可收集角色名单（去重后的**全部**唯一角色名，含捣蛋萌可）。
+ * 捣蛋萌可也有「图鉴远征」剧情章节、可通过 story/capture 捕捉进 moko_owned，
+ * castle-core 用本名单的长度当图鉴总数 —— 排除任何一类都会让收集率超过 100%。
+ * （此前的 filter(category !== 'trouble') 是空转的死代码，且注释与事实相反，已删。） */
 export const COLLECTIBLE_MOKO_NAMES: string[] = [
   "优雅萌可",
   "信信萌可",
