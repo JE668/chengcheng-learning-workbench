@@ -322,6 +322,9 @@ const RAW_CHARACTERS: CharacterItem[] = [
   { char: '参', pinyin: 'cān', strokeCount: 8, meaning: '参加', phrase: '参考', category: '动作' },
   { char: '加', pinyin: 'jiā', strokeCount: 5, meaning: '把两组数合在一起算；也指一起做事', phrase: '加法', category: '动作' },
   { char: '洞', pinyin: 'dòng', strokeCount: 9, meaning: '物体上凹进去或穿透的孔', phrase: '山洞', category: '自然' },
+  { char: '清', pinyin: 'qīng', strokeCount: 11, meaning: '干干净净、不浑浊', phrase: '数不清', category: '自然' },
+  { char: '飘', pinyin: 'piāo', strokeCount: 15, meaning: '轻轻地在空中浮着走', phrase: '飘落', category: '自然' },
+  { char: '落', pinyin: 'luò', strokeCount: 12, meaning: '从高处慢慢往下掉', phrase: '落叶', category: '自然' },
   { char: '乌', pinyin: 'wū', strokeCount: 4, meaning: '黑色；也用在鸟名里', phrase: '乌黑', category: '动物' },
   { char: '鸦', pinyin: 'yā', strokeCount: 9, meaning: '一种黑色的鸟', phrase: '寒鸦', category: '动物' },
   { char: '处', pinyin: 'chù', strokeCount: 5, meaning: '地方', phrase: '处处', category: '方位' },
@@ -343,9 +346,13 @@ const RAW_CHARACTERS: CharacterItem[] = [
   { char: '回', pinyin: 'huí', strokeCount: 6, meaning: '从别处返程；也指转一圈', phrase: '回家', category: '动作' },
   { char: '全', pinyin: 'quán', strokeCount: 6, meaning: '所有的，一个都不少', phrase: '安全', category: '数字' },
   { char: '变', pinyin: 'biàn', strokeCount: 8, meaning: '和原来不一样了', phrase: '变大', category: '动作' },
+  // —— 比 / 答 原先只进识字课文（无释义、不进单元字表），现按 units.ts 注释指明的路径补齐 ——
+  { char: '比', pinyin: 'bǐ', strokeCount: 4, meaning: '放在一起看看谁更怎么样', phrase: '比尾巴', category: '动作' },
+  { char: '答', pinyin: 'dá', strokeCount: 12, meaning: '对别人的问题说出想法', phrase: '回答', category: '动作' },
   // —— 生字表补全中漏掉的两个字 ——
   { char: '小', pinyin: 'xiǎo', strokeCount: 3, meaning: '大小 / 小', phrase: '小猫小小', category: '动物' },
   { char: '高', pinyin: 'gāo', strokeCount: 10, meaning: '从下到上距离大', phrase: '高高大树', category: '方位' },
+  { char: '旁', pinyin: 'páng', strokeCount: 10, meaning: '靠边的那个位置', phrase: '旁边', category: '方位' },
 
 ];
 

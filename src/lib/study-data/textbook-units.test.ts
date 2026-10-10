@@ -29,7 +29,12 @@ import {
 const META = new Map(CHARACTERS.map((c) => [c.char, c]));
 
 /** 识字课文里教、但（按设计）不进单元字表的字 —— 全都没有释义 */
-const LESSON_ONLY_CHARS = ['比', '清', '飘', '落', '答', '旁'];
+/**
+ * 原有 6 个字（比/清/飘/落/答/旁）只进识字课文、不进单元字表，因为当时没有释义。
+ * 2026-10 已按 units.ts 注释指明的路径补齐（CHARACTERS 释义 + 单元字表登记），名单清空。
+ * 此后这条护栏的语义反转为：往识字课文加字，必须同步补释义并登记单元，否则用例直接失败。
+ */
+const LESSON_ONLY_CHARS: string[] = [];
 
 /** 登记在单元词语里、但不含本单元字的词（组词模块会跳过，听写保留） */
 const WORDS_WITHOUT_UNIT_CHAR = ['雪花'];

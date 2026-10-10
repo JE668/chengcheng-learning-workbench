@@ -24,6 +24,13 @@ import { storyChapters, HERO_CHAPTERS } from './story';
 const PUB = join(process.cwd(), 'public');
 
 /** 手写核心萌可里没有 artwork 的 12 个 key（渲染走 lemei.jpg 兜底，moko.ts 对 lulu 有注释说明） */
+/**
+ * 取证记录（2026-10，改不改名已查过）：
+ * starping（星星萌可，S6 闪耀流星 / category star）不等于图鉴「星光萌可」
+ * （01 皇室萌可文件夹 / category royal）—— 季与分类都不同，是两个角色，不能改名。
+ * cakeping（蛋糕萌可）在图鉴有两个候选（蛋糕妹妹萌可 / 蛋糕弟弟萌可，另有合影），
+ * 映射有歧义，不改名。若日后能确认身份，改 mokoChars 里的 name 让补图循环生效即可。
+ */
 const KNOWN_NO_ARTWORK = [
   'happyping',
   'wisejingping',
