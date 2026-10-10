@@ -16,7 +16,7 @@ export const mokoCollection_09: MokoChar[] = [
   {
     "key": "col_09_闹闹萌可_render",
     "name": "闹闹萌可",
-    "category": "villain",
+    "category": "trouble",
     "season": "反派及其他",
     "img": "/moko/collection/09_反派及其他/闹闹萌可_render.webp",
     "emoji": "😈",
