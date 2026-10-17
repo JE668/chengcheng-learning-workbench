@@ -87,6 +87,14 @@ export async function POST(req: Request) {
       // 家长会看到「09月26月26日 补打卡成功，09月26月26日 语文…已补打卡」这种重复。
       const subjectMsg = result.restored.length > 0 ? `：${result.restored.join('、')}` : '';
       const coinMsg = result.coinsReturned > 0 ? `，找回被藏星星币 ${result.coinsReturned} 颗` : '';
+      // 审批结果推送（2026-10-17 推送补全）
+      import('@/lib/push-notifications').then(({ notifyChildSubscribers }) =>
+        notifyChildSubscribers(childId, {
+          title: '⏳ 沙漏批准啦',
+          body: `${dayLabel} 的补打卡已经帮你完成啦！`,
+          data: { type: 'timeglass-result', childId, approved: true, day },
+        })
+      );
       return NextResponse.json({
         ok: true,
         message: `✅ 已批准！${dayLabel} 补打卡成功${subjectMsg}${coinMsg}，连续天数已恢复！`,
@@ -105,6 +113,14 @@ export async function POST(req: Request) {
         sql: "INSERT INTO growth_events (child_id, day, type, emoji, title, desc) VALUES (?, date('now','localtime'), 'gift', '⏳', '爸爸妈妈批准了时光沙漏申请', '收到 1 个时光沙漏，快去补打卡吧！')",
         args: [childId],
       });
+      // 审批结果推送（2026-10-17 推送补全）：孩子申请后曾无任何通知通道
+      import('@/lib/push-notifications').then(({ notifyChildSubscribers }) =>
+        notifyChildSubscribers(childId, {
+          title: '⏳ 沙漏批准啦',
+          body: '爸爸妈妈批准了你的时光沙漏，快去补打卡吧！',
+          data: { type: 'timeglass-result', childId, approved: true },
+        })
+      );
       return NextResponse.json({ ok: true, message: '已批准，时光沙漏已发放到孩子背包 ✅' });
     }
   } else {
@@ -113,6 +129,13 @@ export async function POST(req: Request) {
       sql: "UPDATE wishes SET status = 'rejected' WHERE id = ?",
       args: [wishId],
     });
+    import('@/lib/push-notifications').then(({ notifyChildSubscribers }) =>
+      notifyChildSubscribers(childId, {
+        title: '⏳ 沙漏申请未通过',
+        body: '这次没批准哦，和爸爸妈妈聊聊原因吧～',
+        data: { type: 'timeglass-result', childId, approved: false },
+      })
+    );
     return NextResponse.json({ ok: true, message: '已拒绝该申请' });
   }
 }

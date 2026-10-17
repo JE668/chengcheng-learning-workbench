@@ -77,5 +77,15 @@ export async function PATCH(req: NextRequest) {
     args: [status, id, childId],
   });
   if (Number(res.rowsAffected ?? 0) === 0) return NextResponse.json({ error: '无权限或记录不存在' }, { status: 403 });
+
+  // 审批结果推送给孩子（2026-10-17 推送补全）：此前孩子端毫无感知，
+  // 要自己刷页面才知道申请结果。写库已成功，推送失败不影响响应。
+  import('@/lib/push-notifications').then(({ notifyChildSubscribers }) =>
+    notifyChildSubscribers(childId, {
+      title: status === 'fulfilled' ? '🎉 愿望实现啦' : '✅ 愿望已同意',
+      body: '爸爸妈妈看过你的愿望了，快去看看吧！',
+      data: { type: 'wish-result', childId, status },
+    })
+  );
   return NextResponse.json({ ok: true });
 }
