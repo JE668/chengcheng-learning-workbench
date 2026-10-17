@@ -52,6 +52,11 @@ const CHILD_TABLES = [
   //    后果：还原出厂设置后孩子的推送订阅仍在，设备继续挂在已清空的孩子身上。
   //    这次同时补了护栏测试（reset-child-tables-guard.test.ts），防止第四次。
   'push_subscriptions',
+  // —— 第四次由护栏测试自动抓到（2026-10-17）：v21/v22 的两张新表——
+  //    study_sessions（学习时长）/ coop_challenge_progress（组队进度）。
+  //    护栏的价值就在这：新表漏进清单 CI 直接红，不再靠人肉发现。
+  'study_sessions',
+  'coop_challenge_progress',
 ];
 
 export async function POST(req: NextRequest) {
