@@ -7,7 +7,7 @@
 import { type DiffLevel, LEVEL_META, LEVEL_ORDER, EN_EASY_WORDS } from './shared';
 
 import { useState, useEffect } from 'react';
-import { ALL_EN_WORDS, EN_WORD_TOPICS, type WordItem } from '@/lib/study-data-en';
+import { ALL_EN_WORDS, type WordItem } from '@/lib/study-data-en';
 import { speakEn } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 

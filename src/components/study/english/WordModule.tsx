@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { ALL_EN_WORDS, EN_WORD_TOPICS, type WordItem } from '@/lib/study-data-en';
+import { EN_WORD_TOPICS, type WordItem } from '@/lib/study-data-en';
 import { speakEn } from '@/lib/speak';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { useModuleProgress } from '@/lib/module-progress';
@@ -242,33 +242,3 @@ export function WordModule() {
     </div>
   );
 }
-
-/* ---------- 听音选词（难度自适应） ---------- */
-type DiffLevel = 'easy' | 'medium' | 'hard';
-const LEVEL_META: Record<DiffLevel, { label: string; emoji: string }> = {
-  easy: { label: '入门', emoji: '🌱' },
-  medium: { label: '进阶', emoji: '🌿' },
-  hard: { label: '挑战', emoji: '🚀' },
-};
-const LEVEL_ORDER: DiffLevel[] = ['easy', 'medium', 'hard'];
-
-const EN_WORD_MAP: Record<string, WordItem> = Object.fromEntries(
-  ALL_EN_WORDS.map((w) => [w.word, w])
-);
-const EN_EASY_WORDS = [
-  'apple',
-  'dog',
-  'cat',
-  'sun',
-  'red',
-  'blue',
-  'eye',
-  'ear',
-  'book',
-  'one',
-  'two',
-  'mom',
-]
-  .map((w) => EN_WORD_MAP[w])
-  .filter(Boolean) as WordItem[];
-

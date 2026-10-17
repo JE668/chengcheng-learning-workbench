@@ -7,10 +7,7 @@ import Link from 'next/link';
 import { useRef, useState, useEffect } from 'react';
 import { CHARACTERS, CHARACTER_CATEGORIES, type CharacterItem } from '@/lib/study-data/characters';
 import { speakZh } from '@/lib/speak';
-import { useMistakeLogger } from '@/lib/mistake-logger';
 import { useModuleProgress } from '@/lib/module-progress';
-import { ModuleStars } from '@/components/study/ModuleStars';
-import { useRecorder, recognizeSpeech } from '../useRecorder';
 
 /* ---------- 识字（按类别，一屏一类） ---------- */
 function CharacterCard({
