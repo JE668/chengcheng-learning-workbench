@@ -16,6 +16,8 @@ export interface Task {
   createdBy: number;
   createdAt: string;
   completed?: boolean;
+  /** 多娃归属（迁移 v19）：null=全家任务；孩子 id=指派给该孩子 */
+  assignedTo?: number | null;
 }
 
 export type Subject = '语文' | '数学' | '英语';

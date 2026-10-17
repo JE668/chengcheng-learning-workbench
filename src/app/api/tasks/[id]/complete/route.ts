@@ -20,6 +20,13 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const task = await db.execute({ sql: 'SELECT * FROM tasks WHERE id = ?', args: [taskId] });
   if (!task.rows.length) return NextResponse.json({ error: '任务不存在' }, { status: 404 });
 
+  // 多娃归属校验（迁移 v19）：指派给别的孩子的任务不能领分。
+  // assigned_to 为 NULL 是全家任务，谁都可做（兼容存量语义）。
+  const assignedTo = task.rows[0].assigned_to;
+  if (assignedTo != null && Number(assignedTo) !== user.id) {
+    return NextResponse.json({ error: '这个任务不是指派给你的哦' }, { status: 403 });
+  }
+
   const points = Number(task.rows[0].points);
   // 防重放刷分：同一孩子同一任务只计分一次（原子 INSERT ... WHERE NOT EXISTS）。
   const res = await db.execute({

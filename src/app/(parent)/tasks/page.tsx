@@ -12,7 +12,10 @@ type PTask = {
   description: string;
   points: number;
   created_at: string;
+  assigned_to: number | null;
 };
+
+type ChildOpt = { id: number; name: string };
 
 const SUBJECTS = ['语文', '数学', '英语'];
 
@@ -21,7 +24,9 @@ export default function TasksPage() {
   const [subject, setSubject] = useState('语文');
   const [desc, setDesc] = useState('');
   const [points, setPoints] = useState(5);
+  const [assignedTo, setAssignedTo] = useState<string>(''); // '' = 全家任务
   const [msg, setMsg] = useState('');
+  const [childrenOpts, setChildrenOpts] = useState<ChildOpt[]>([]);
 
   const [tasks, setTasks] = useState<PTask[]>([]);
   const [editing, setEditing] = useState<PTask | null>(null);
@@ -30,6 +35,7 @@ export default function TasksPage() {
   const [eSubject, setESubject] = useState('语文');
   const [eDesc, setEDesc] = useState('');
   const [ePoints, setEPoints] = useState(5);
+  const [eAssignedTo, setEAssignedTo] = useState<string>('');
 
   async function load() {
     const res = await fetch('/api/tasks');
@@ -42,11 +48,19 @@ export default function TasksPage() {
         description: String(r.description ?? ''),
         points: Number(r.points ?? 0),
         created_at: String(r.created_at ?? ''),
+        assigned_to: r.assigned_to == null ? null : Number(r.assigned_to),
       })),
     );
   }
   useEffect(() => {
     load();
+    // 孩子列表：指派下拉用。多娃家庭才有意义，单娃时下拉仍可用（指派=全家一致）。
+    fetch('/api/children')
+      .then((r) => r.json())
+      .then((d: { children?: Array<{ id: number; name: string }> }) =>
+        setChildrenOpts((d.children || []).map((c) => ({ id: c.id, name: c.name })))
+      )
+      .catch(() => {});
   }, []);
 
   async function submit(e: React.FormEvent) {
@@ -54,7 +68,13 @@ export default function TasksPage() {
     const res = await fetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, subject, description: desc, points }),
+      body: JSON.stringify({
+        title,
+        subject,
+        description: desc,
+        points,
+        assignedTo: assignedTo || undefined,
+      }),
     });
     if (res.ok) {
       setMsg('任务发布成功！');
@@ -62,6 +82,7 @@ export default function TasksPage() {
       setDesc('');
       setPoints(5);
       setSubject('语文');
+      setAssignedTo('');
       await load();
     } else setMsg('发布失败，请重试');
   }
@@ -72,6 +93,7 @@ export default function TasksPage() {
     setESubject(t.subject);
     setEDesc(t.description);
     setEPoints(t.points);
+    setEAssignedTo(t.assigned_to == null ? '' : String(t.assigned_to));
     setConfirmId(null);
   }
   async function saveEdit(e: React.FormEvent) {
@@ -79,7 +101,13 @@ export default function TasksPage() {
     const res = await fetch(`/api/tasks/${editing!.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: eTitle, subject: eSubject, description: eDesc, points: ePoints }),
+      body: JSON.stringify({
+        title: eTitle,
+        subject: eSubject,
+        description: eDesc,
+        points: ePoints,
+        assignedTo: eAssignedTo || undefined,
+      }),
     });
     if (res.ok) {
       setEditing(null);
@@ -135,6 +163,23 @@ export default function TasksPage() {
                 className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
               />
             </div>
+            {childrenOpts.length > 0 && (
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">指派给孩子</label>
+                <select
+                  value={eAssignedTo}
+                  onChange={(e) => setEAssignedTo(e.target.value)}
+                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
+                >
+                  <option value="">👨‍👩‍👧 全家（谁都能做）</option>
+                  {childrenOpts.map((c) => (
+                    <option key={c.id} value={String(c.id)}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="flex gap-2">
               <button className="flex-1 py-3 bg-gradient-to-r from-moko-rose to-moko-pink text-white text-lg font-extrabold rounded-2xl shadow hover:scale-[1.02] transition">
                 保存修改
@@ -192,6 +237,23 @@ export default function TasksPage() {
                 className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
               />
             </div>
+            {childrenOpts.length > 0 && (
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">指派给孩子</label>
+                <select
+                  value={assignedTo}
+                  onChange={(e) => setAssignedTo(e.target.value)}
+                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
+                >
+                  <option value="">👨‍👩‍👧 全家（谁都能做）</option>
+                  {childrenOpts.map((c) => (
+                    <option key={c.id} value={String(c.id)}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <button className="w-full py-3 bg-gradient-to-r from-moko-rose to-moko-pink text-white text-xl font-extrabold rounded-2xl shadow hover:scale-[1.02] transition">
               发布任务
             </button>
@@ -220,7 +282,12 @@ export default function TasksPage() {
           <div key={t.id} className="card-moko flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="font-bold text-moko-violet truncate">
-                {t.title} <span className="text-xs text-gray-400 font-normal">· {t.subject} · {t.points}分</span>
+                {t.title}{' '}
+                <span className="text-xs text-gray-400 font-normal">
+                  · {t.subject} · {t.points}分
+                  {t.assigned_to != null &&
+                    ` · 🎯 指派给${childrenOpts.find((c) => c.id === t.assigned_to)?.name ?? '孩子'}`}
+                </span>
               </div>
               {t.description && <div className="text-sm text-gray-500 truncate">{t.description}</div>}
             </div>

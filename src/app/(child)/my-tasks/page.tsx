@@ -8,7 +8,12 @@ export default async function MyTasksPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== 'child') return null;
   const db = getDb();
-  const tasksRes = await db.execute({ sql: 'SELECT * FROM tasks ORDER BY created_at DESC', args: [] });
+  // 多娃归属过滤（与 /api/tasks GET 孩子分支同一口径）：
+  // 只看「全家任务（assigned_to IS NULL）+ 指派给自己的」。
+  const tasksRes = await db.execute({
+    sql: 'SELECT * FROM tasks WHERE assigned_to IS NULL OR assigned_to = ? ORDER BY created_at DESC',
+    args: [user.id],
+  });
   const compRes = await db.execute({ sql: 'SELECT task_id FROM completions WHERE child_id = ?', args: [user.id] });
   const done = new Set(compRes.rows.map((r) => Number(r.task_id)));
   const points = await getChildPoints(user.id);
@@ -21,6 +26,7 @@ export default async function MyTasksPage() {
     createdBy: Number(r.created_by),
     createdAt: String(r.created_at),
     completed: done.has(Number(r.id)),
+    assignedTo: r.assigned_to == null ? null : Number(r.assigned_to),
   }));
 
   return (

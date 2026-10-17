@@ -564,6 +564,36 @@ export const MIGRATIONS: Migration[] = [
       await db.execute({ sql: 'DROP INDEX IF EXISTS idx_mistakes_due_order', args: [] });
     },
   },
+  {
+    version: 19,
+    name: 'tasks_assigned_to',
+    description: 'tasks 加 assigned_to 列：多娃家庭任务指派（NULL=全家共享，兼容存量）',
+    up: async (db) => {
+      // 多娃归属：assigned_to 指向 users.id（孩子），NULL 表示全家任务。
+      // 存量任务不迁移值——保持「谁都能做」的原语义，家长可事后指派。
+      // 不加外键：users 删除路径没有级联清理 tasks，强外键会卡死删孩子
+      //（本仓外键全部 NO ACTION，见 2026-10-17 审查报告「明确不是问题」节）。
+      await db.execute({
+        sql: 'ALTER TABLE tasks ADD COLUMN assigned_to INTEGER',
+        args: [],
+      });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_tasks_assigned ON tasks(assigned_to)',
+        args: [],
+      });
+    },
+    down: async (db) => {
+      // SQLite 的 DROP COLUMN 在 3.35+ 才有，libSQL 虽支持但历史库版本不一，
+      // 统一走「建回滚表 → 删原表 → 改名」的稳妥路径（与既有迁移同款做法）。
+      await db.execute({ sql: 'DROP INDEX IF EXISTS idx_tasks_assigned', args: [] });
+      await db.execute({
+        sql: 'CREATE TABLE tasks_rollback AS SELECT id, title, subject, description, points, created_by, created_at FROM tasks',
+        args: [],
+      });
+      await db.execute({ sql: 'DROP TABLE tasks', args: [] });
+      await db.execute({ sql: 'ALTER TABLE tasks_rollback RENAME TO tasks', args: [] });
+    },
+  },
 ];
 
 export async function ensureMigrationTable(db: Client): Promise<void> {
