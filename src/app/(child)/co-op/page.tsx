@@ -37,6 +37,10 @@ export default function CoOpPage() {
     children: ChallengeChild[];
   }
   const [challenge, setChallenge] = useState<Challenge | null>(null);
+  // 🎁 星星币互赠弹层状态
+  const [giftTo, setGiftTo] = useState<{ id: string; name: string } | null>(null);
+  const [giftAmount, setGiftAmount] = useState(5);
+  const [giftBusy, setGiftBusy] = useState(false);
 
   const loadChallenge = () =>
     fetch('/api/coop-challenge')
@@ -118,8 +122,65 @@ export default function CoOpPage() {
               >
                 👏 加油
               </button>
+              {/* ⭐ 星星币互赠：给自己的兄弟姐妹送礼物（不是自己才显示） */}
+              {!c.selected && (
+                <button
+                  onClick={() => setGiftTo({ id: c.id, name: c.name })}
+                  className="mt-1 block w-full px-3 py-1.5 rounded-full bg-moko-purple text-white font-bold text-xs active:scale-95 transition"
+                >
+                  🎁 送星星币
+                </button>
+              )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* 🎁 送星星币弹层 */}
+      {giftTo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setGiftTo(null)}>
+          <div className="card-moko max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-black text-moko-violet mb-1">🎁 送星星币给 {giftTo.name}</h3>
+            <p className="text-xs text-gray-500 mb-3">用自己的星星币给家人买份小礼物，分享最快乐～</p>
+            <div className="flex gap-2 flex-wrap mb-3">
+              {[5, 10, 20].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setGiftAmount(n)}
+                  className={`px-4 py-2 rounded-2xl font-black text-sm transition ${
+                    giftAmount === n
+                      ? 'bg-moko-rose text-white'
+                      : 'bg-white border-2 border-moko-purple/20 text-moko-violet'
+                  }`}
+                >
+                  {n} ⭐
+                </button>
+              ))}
+            </div>
+            <button
+              disabled={giftBusy}
+              onClick={async () => {
+                setGiftBusy(true);
+                try {
+                  const r = await fetch('/api/gift-stars', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ toChildId: Number(giftTo.id), amount: giftAmount }),
+                  });
+                  const j = await r.json();
+                  speakZh(r.ok ? `已经送给${giftTo.name}${giftAmount}颗星星币啦！` : j.error || '赠送失败，再试一次', 0.9);
+                  if (r.ok) setGiftTo(null);
+                } catch {
+                  speakZh('网络开小差了，再试一次', 0.9);
+                } finally {
+                  setGiftBusy(false);
+                }
+              }}
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-moko-rose to-moko-pink text-white font-black shadow hover:scale-105 transition disabled:opacity-50"
+            >
+              {giftBusy ? '送出中…' : `送出 ${giftAmount} ⭐`}
+            </button>
+          </div>
         </div>
       )}
 
