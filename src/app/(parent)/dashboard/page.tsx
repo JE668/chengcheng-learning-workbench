@@ -13,7 +13,14 @@ export default async function DashboardPage() {
   const childId = await getChildId(user);
   const db = getDb();
   // 多娃对比数据：取该家长名下所有孩子（按 parent_id 隔离，避免读到他人家孩子）
-  let allChildren: { name: string; points: number; streak: number; mokoCount: number }[] = [];
+  let allChildren: {
+    name: string;
+    points: number;
+    streak: number;
+    mokoCount: number;
+    tasksDone: number;
+    tasksTotal: number;
+  }[] = [];
   try {
     const childrenList = await getChildrenOfParent(user.id);
     if (childrenList.length > 1) {
@@ -34,7 +41,32 @@ export default async function DashboardPage() {
             });
             mokos = Number(owned.rows[0]?.n || 0);
           } catch {}
-          return { name: ch.displayName, points: pts, streak, mokoCount: mokos };
+          // 任务反馈（多娃看板增强，2026-10-17）：该孩子可见的任务
+          //（全家 NULL + 指派给自己的，与孩子端 GET /api/tasks 同口径）
+          // 里完成了几个。completions 无日期列（任务终身一次），
+          // 展示语义是「这些任务做完了几个」，非「今天做的」。
+          let tasksDone = 0;
+          let tasksTotal = 0;
+          try {
+            const t = await db.execute({
+              sql: `SELECT COUNT(*) AS n,
+                      SUM(CASE WHEN EXISTS (
+                        SELECT 1 FROM completions c WHERE c.task_id = tasks.id AND c.child_id = ?
+                      ) THEN 1 ELSE 0 END) AS done
+                    FROM tasks WHERE assigned_to IS NULL OR assigned_to = ?`,
+              args: [cid, cid],
+            });
+            tasksTotal = Number(t.rows[0]?.n ?? 0);
+            tasksDone = Number(t.rows[0]?.done ?? 0);
+          } catch {}
+          return {
+            name: ch.displayName,
+            points: pts,
+            streak,
+            mokoCount: mokos,
+            tasksDone,
+            tasksTotal,
+          };
         })
       );
       allChildren = results;
@@ -200,7 +232,7 @@ export default async function DashboardPage() {
                         </span>
                         <span className="text-xs text-gray-500">🔥 {ch.streak} 天</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <div>
                           <div className="flex justify-between text-[11px] text-gray-500 mb-0.5">
                             <span>积分</span>
@@ -222,6 +254,24 @@ export default async function DashboardPage() {
                             <div
                               className="h-full bg-moko-gold rounded-full"
                               style={{ width: `${(ch.mokoCount / maxMokos) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-[11px] text-gray-500 mb-0.5">
+                            <span>任务</span>
+                            <span className="font-bold">
+                              {ch.tasksDone}/{ch.tasksTotal}
+                            </span>
+                          </div>
+                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-moko-mint rounded-full"
+                              style={{
+                                width: ch.tasksTotal
+                                  ? `${(ch.tasksDone / ch.tasksTotal) * 100}%`
+                                  : '0%',
+                              }}
                             />
                           </div>
                         </div>
