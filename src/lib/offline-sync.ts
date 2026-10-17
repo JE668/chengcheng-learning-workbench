@@ -22,19 +22,29 @@ import { useOfflineStore } from './stores';
 const MAX_RETRIES = 5;
 
 /**
- * 重放离线队列。返回本轮成功同步的动作数。
+ * 重放离线队列。返回本轮同步详情：成功数与**丢弃数**。
+ * 丢弃 = 超过最大重试次数的动作（永久失败）+ 一次性客户端错误（4xx）。
+ * 调用方据此展示「有 X 条没同步上」——静默丢弃会让孩子以为已打卡而
+ * 实际没有，是最伤信任的失败形态（2026-10-17 补提示）。
  * 网络仍不可用时在首个失败处停止（后续动作留到下次），避免徒劳重试。
  */
-export async function flushOfflineQueue(): Promise<number> {
+export interface FlushResult {
+  flushed: number;
+  dropped: number;
+}
+
+export async function flushOfflineQueue(): Promise<FlushResult> {
   const { queue, removeAction, incrementRetry, setLastSync } = useOfflineStore.getState();
-  if (queue.length === 0) return 0;
+  if (queue.length === 0) return { flushed: 0, dropped: 0 };
 
   let flushed = 0;
+  let dropped = 0;
   // 快照一份；移除/重试计数基于快照，避免遍历中 store 变化
   for (const action of [...queue]) {
     // 超过最大重试次数的动作直接丢弃，避免永久卡在队列
     if (action.retries >= MAX_RETRIES) {
       removeAction(action.id);
+      dropped += 1;
       continue;
     }
 
@@ -63,6 +73,7 @@ export async function flushOfflineQueue(): Promise<number> {
       } else if (res.status >= 400 && res.status < 500) {
         // 一次性客户端错误（参数非法等）：重放也不会变好，丢弃
         removeAction(action.id);
+        dropped += 1;
       } else {
         // 服务端瞬时错误：计入重试，继续处理后续动作
         incrementRetry(action.id);
@@ -75,5 +86,5 @@ export async function flushOfflineQueue(): Promise<number> {
   }
 
   setLastSync(Date.now());
-  return flushed;
+  return { flushed, dropped };
 }

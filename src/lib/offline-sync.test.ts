@@ -9,13 +9,13 @@ describe('offline-sync flushOfflineQueue', () => {
     global.fetch = vi.fn() as any;
   });
 
-  it('重放成功的 checkin 动作从队列移除并返回值', async () => {
+  it('重放成功的 checkin 动作从队列移除并返回 { flushed, dropped }', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200 }) as any;
     useOfflineStore.getState().addAction({ type: 'checkin', payload: { answers: [0, 1, 2] } });
 
-    const flushed = await flushOfflineQueue();
+    const r = await flushOfflineQueue();
 
-    expect(flushed).toBe(1);
+    expect(r).toEqual({ flushed: 1, dropped: 0 });
     expect(useOfflineStore.getState().queue.length).toBe(0);
     expect(global.fetch).toHaveBeenCalledWith(
       '/api/daily-practice',
@@ -30,9 +30,9 @@ describe('offline-sync flushOfflineQueue', () => {
       payload: { subject: '语文', kind: '听写', prompt: '天', answer: '天', wrong: '夫' },
     });
 
-    const flushed = await flushOfflineQueue();
+    const r = await flushOfflineQueue();
 
-    expect(flushed).toBe(1);
+    expect(r.flushed).toBe(1);
     expect(useOfflineStore.getState().queue.length).toBe(0);
     expect(global.fetch).toHaveBeenCalledWith(
       '/api/mistakes',
@@ -44,29 +44,33 @@ describe('offline-sync flushOfflineQueue', () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('offline')) as any;
     useOfflineStore.getState().addAction({ type: 'checkin', payload: { answers: [0] } });
 
-    await flushOfflineQueue();
+    const r = await flushOfflineQueue();
 
     const q = useOfflineStore.getState().queue;
     expect(q.length).toBe(1);
     expect(q[0].retries).toBe(1);
+    // 本轮没有真正丢弃（会重试），不该触发丢弃提示
+    expect(r.dropped).toBe(0);
   });
 
-  it('服务端 4xx 错误视为不可修复，直接丢弃', async () => {
+  it('服务端 4xx 错误视为不可修复，直接丢弃并计入 dropped（提示横幅的数据源）', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 400 }) as any;
     useOfflineStore.getState().addAction({ type: 'checkin', payload: { answers: [] } });
 
-    await flushOfflineQueue();
+    const r = await flushOfflineQueue();
 
     expect(useOfflineStore.getState().queue.length).toBe(0);
+    expect(r).toEqual({ flushed: 0, dropped: 1 });
   });
 
-  it('超过最大重试次数的动作被丢弃', async () => {
+  it('超过最大重试次数的动作被丢弃并计入 dropped', async () => {
     useOfflineStore.setState({
       queue: [{ id: 'x', type: 'checkin', payload: { answers: [] }, timestamp: 0, retries: 5 }],
     });
 
-    await flushOfflineQueue();
+    const r = await flushOfflineQueue();
 
     expect(useOfflineStore.getState().queue.length).toBe(0);
+    expect(r.dropped).toBe(1);
   });
 });
