@@ -15,7 +15,7 @@
  * （如「乌」原写「乌鸦」——那是词的意思，不是这个字的意思）。
  */
 import { describe, expect, it } from 'vitest';
-import { buildQuestion, LEVEL_POOL } from './ChineseModules';
+import { buildQuestion, LEVEL_POOL } from './chinese/CharacterQuizModule';
 
 const LEVELS = ['easy', 'medium', 'hard'] as const;
 const RUNS = 300;

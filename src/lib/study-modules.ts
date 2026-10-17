@@ -21,10 +21,10 @@ function lazy<C extends ComponentType<Record<string, never>>>(
 }
 
 const PinyinModule = lazy(() => import('@/components/study/PinyinModule'));
-const CharacterModule = lazy(() => import('@/components/study/ChineseModules').then((m) => ({ default: m.CharacterModule })));
-const PoemModule = lazy(() => import('@/components/study/ChineseModules').then((m) => ({ default: m.PoemModule })));
-const TraceModule = lazy(() => import('@/components/study/ChineseModules').then((m) => ({ default: m.TraceModule })));
-const CharacterQuizModule = lazy(() => import('@/components/study/ChineseModules').then((m) => ({ default: m.CharacterQuizModule })));
+const CharacterModule = lazy(() => import('@/components/study/chinese/CharacterModule').then((m) => ({ default: m.CharacterModule })));
+const PoemModule = lazy(() => import('@/components/study/chinese/PoemModule').then((m) => ({ default: m.PoemModule })));
+const TraceModule = lazy(() => import('@/components/study/chinese/TraceModule').then((m) => ({ default: m.TraceModule })));
+const CharacterQuizModule = lazy(() => import('@/components/study/chinese/CharacterQuizModule').then((m) => ({ default: m.CharacterQuizModule })));
 const CharacterLessonModule = lazy(() => import('@/components/study/ChineseExtra').then((m) => ({ default: m.CharacterLessonModule })));
 const TextModule = lazy(() => import('@/components/study/ChineseExtra').then((m) => ({ default: m.TextModule })));
 const StrokeRadicalModule = lazy(() => import('@/components/study/MokoStudy').then((m) => ({ default: m.StrokeRadicalModule })));
@@ -41,16 +41,16 @@ const SolidShapeModule = lazy(() => import('@/components/study/MathExtra').then(
 const Numbers1120Module = lazy(() => import('@/components/study/MathExtra').then((m) => ({ default: m.Numbers1120Module })));
 const ClockModule = lazy(() => import('@/components/study/MathExtra').then((m) => ({ default: m.ClockModule })));
 const FindPatternModule = lazy(() => import('@/components/study/PatternModule').then((m) => ({ default: m.FindPatternModule })));
-const LetterModule = lazy(() => import('@/components/study/EnglishModules').then((m) => ({ default: m.LetterModule })));
-const WordModule = lazy(() => import('@/components/study/EnglishModules').then((m) => ({ default: m.WordModule })));
-const EnListenModule = lazy(() => import('@/components/study/EnglishModules').then((m) => ({ default: m.EnListenModule })));
-const EnSpeakModule = lazy(() => import('@/components/study/EnglishModules').then((m) => ({ default: m.EnSpeakModule })));
-const UnitModule = lazy(() => import('@/components/study/EnglishModules').then((m) => ({ default: m.UnitModule })));
-const PinyinBlendModule = lazy(() => import('@/components/study/ChineseNew').then((m) => ({ default: m.PinyinBlendModule })));
-const StrokeOrderModule = lazy(() => import('@/components/study/ChineseNew').then((m) => ({ default: m.StrokeOrderModule })));
-const TextComprehensionModule = lazy(() => import('@/components/study/ChineseNew').then((m) => ({ default: m.TextComprehensionModule })));
-const SentenceBuildModule = lazy(() => import('@/components/study/ChineseNew').then((m) => ({ default: m.SentenceBuildModule })));
-const SchoolPrepModule = lazy(() => import('@/components/study/ChineseNew').then((m) => ({ default: m.SchoolPrepModule })));
+const LetterModule = lazy(() => import('@/components/study/english/LetterModule').then((m) => ({ default: m.LetterModule })));
+const WordModule = lazy(() => import('@/components/study/english/WordModule').then((m) => ({ default: m.WordModule })));
+const EnListenModule = lazy(() => import('@/components/study/english/EnListenModule').then((m) => ({ default: m.EnListenModule })));
+const EnSpeakModule = lazy(() => import('@/components/study/english/EnSpeakModule').then((m) => ({ default: m.EnSpeakModule })));
+const UnitModule = lazy(() => import('@/components/study/english/UnitModule').then((m) => ({ default: m.UnitModule })));
+const PinyinBlendModule = lazy(() => import('@/components/study/chinesenew/PinyinBlendModule').then((m) => ({ default: m.PinyinBlendModule })));
+const StrokeOrderModule = lazy(() => import('@/components/study/chinesenew/StrokeOrderModule').then((m) => ({ default: m.StrokeOrderModule })));
+const TextComprehensionModule = lazy(() => import('@/components/study/chinesenew/TextComprehensionModule').then((m) => ({ default: m.TextComprehensionModule })));
+const SentenceBuildModule = lazy(() => import('@/components/study/chinesenew/SentenceBuildModule').then((m) => ({ default: m.SentenceBuildModule })));
+const SchoolPrepModule = lazy(() => import('@/components/study/chinesenew/SchoolPrepModule').then((m) => ({ default: m.SchoolPrepModule })));
 const MathWordProblemModule = lazy(() => import('@/components/study/MathNew').then((m) => ({ default: m.MathWordProblemModule })));
 const OrdinalModule = lazy(() => import('@/components/study/MathNew').then((m) => ({ default: m.OrdinalModule })));
 const ClockHalfModule = lazy(() => import('@/components/study/MathNew').then((m) => ({ default: m.ClockHalfModule })));

@@ -19,7 +19,7 @@
  * 现在改成对去重逻辑喂**对抗性输入**：确定、必现、不依赖运气。
  */
 import { describe, expect, it } from 'vitest';
-import { pickDistinctWords } from './EnglishModules';
+import { pickDistinctWords } from './english/EnListenModule';
 import type { WordItem } from '@/lib/study-data-en';
 
 const W = (word: string, cn = '') => ({ word, cn, emoji: '', sentence: '' }) as unknown as WordItem;

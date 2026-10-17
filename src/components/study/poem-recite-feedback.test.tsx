@@ -38,7 +38,7 @@ vi.mock('./useRecorder', () => ({
   recognizeSpeech: async () => '完全不相干的咕噜咕噜',
 }));
 
-import { PoemModule } from '@/components/study/ChineseModules';
+import { PoemModule } from '@/components/study/chinese/PoemModule';
 
 afterEach(cleanup);
 

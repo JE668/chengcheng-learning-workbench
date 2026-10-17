@@ -12,7 +12,7 @@
  * 已改为 words: ['老师','早上','好'] / answer: '老师早上好'。
  */
 import { describe, expect, it } from 'vitest';
-import { SENTENCE_BUILD } from './ChineseNew';
+import { SENTENCE_BUILD } from './chinesenew/SentenceBuildModule';
 
 describe('连词成句', () => {
   it('⚠️ 所有词按顺序拼起来必须正好等于答案', () => {
