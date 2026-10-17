@@ -1,7 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
+
+interface Exemption {
+  day: string;
+  note: string;
+}
 
 export default function SettingsPage() {
   const [childUsername, setChildUsername] = useState('cara');
@@ -13,6 +18,24 @@ export default function SettingsPage() {
   const [resetting, setResetting] = useState(false);
   const backupFileRef = useRef<HTMLInputElement>(null);
   const [restoring, setRestoring] = useState(false);
+
+  // 🌴 节假日豁免（出游/请假日不结算惩罚）
+  const [exemptions, setExemptions] = useState<Exemption[]>([]);
+  const [exDay, setExDay] = useState('');
+  const [exNote, setExNote] = useState('');
+
+  async function loadExemptions() {
+    try {
+      const r = await fetch('/api/holiday-exemptions');
+      const j = await r.json();
+      if (Array.isArray(j.exemptions)) setExemptions(j.exemptions);
+    } catch {
+      /* 静默：卡片里展示空列表即可 */
+    }
+  }
+  useEffect(() => {
+    void loadExemptions();
+  }, []);
 
   async function save() {
     const res = await fetch('/api/child/password', {
@@ -249,6 +272,88 @@ export default function SettingsPage() {
         >
           📥 下载 CSV 学习数据
         </button>
+      </div>
+
+      {/* 🌴 节假日豁免 */}
+      <div className="card-moko mt-6">
+        <h2 className="text-xl font-bold text-moko-violet mb-2">🌴 节假日豁免</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          出游、生病、走亲戚的日子加进豁免表，当天不会结算惩罚（捣蛋萌可不进城堡，连胜和冰冻徽章也不受影响）。
+          注意：只对未来结算生效，已经结算过的日期补加不会追溯。
+        </p>
+        <div className="flex gap-2 flex-wrap items-end mb-4">
+          <label className="flex-1 min-w-[150px]">
+            <span className="text-sm font-bold text-moko-violet">日期</span>
+            <input
+              type="date"
+              value={exDay}
+              onChange={(e) => setExDay(e.target.value)}
+              className="w-full mt-1 rounded-2xl border-2 border-moko-purple/20 p-2.5 text-moko-violet font-bold"
+            />
+          </label>
+          <label className="flex-1 min-w-[150px]">
+            <span className="text-sm font-bold text-moko-violet">备注（可不填）</span>
+            <input
+              value={exNote}
+              onChange={(e) => setExNote(e.target.value)}
+              placeholder="如：三亚旅行"
+              className="w-full mt-1 rounded-2xl border-2 border-moko-purple/20 p-2.5 text-moko-violet font-bold"
+            />
+          </label>
+          <button
+            onClick={async () => {
+              if (!exDay) {
+                setMsg('先选一个日期哦');
+                return;
+              }
+              const r = await fetch('/api/holiday-exemptions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ day: exDay, note: exNote }),
+              });
+              if (r.ok) {
+                setExDay('');
+                setExNote('');
+                setMsg('已添加豁免日 ✅');
+                await loadExemptions();
+              } else setMsg('添加失败，请重试');
+            }}
+            className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-moko-mint to-emerald-400 text-white font-black shadow hover:scale-105 transition"
+          >
+            ➕ 添加豁免日
+          </button>
+        </div>
+        {exemptions.length === 0 ? (
+          <p className="text-sm text-gray-400">还没有豁免日。有出游计划时提前加上～</p>
+        ) : (
+          <ul className="space-y-2">
+            {exemptions.map((ex) => (
+              <li
+                key={ex.day}
+                className="flex items-center justify-between gap-3 rounded-xl bg-white border-2 border-moko-purple/10 px-3 py-2"
+              >
+                <span className="font-bold text-moko-violet">
+                  {ex.day}
+                  {ex.note && <span className="text-gray-400 font-normal text-sm"> · {ex.note}</span>}
+                </span>
+                <button
+                  onClick={async () => {
+                    const r = await fetch(`/api/holiday-exemptions?day=${ex.day}`, {
+                      method: 'DELETE',
+                    });
+                    if (r.ok) {
+                      setMsg('已移除');
+                      await loadExemptions();
+                    } else setMsg('移除失败');
+                  }}
+                  className="px-3 py-1 rounded-xl bg-red-100 text-red-500 font-bold text-sm hover:bg-red-200 transition"
+                >
+                  移除
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="card-moko border-2 border-red-300 mt-6">

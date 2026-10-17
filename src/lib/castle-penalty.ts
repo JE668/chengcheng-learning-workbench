@@ -184,6 +184,17 @@ async function settleLocked(
   const confirmedByDay = new Map<string, number>();
   for (const r of res.rows) confirmedByDay.set(String(r.day), Number(r.n));
 
+  // 🌴 节假日豁免（迁移 v20）：出游/请假日整段跳过——不加惩罚、不加连胜、
+  // 不消耗冰冻徽章（等同「这一天不存在」）。查一次豁免日集合（全家共用）。
+  // 表不存在（旧库未跑迁移）时静默跳过——豁免是增强，绝不阻塞结算主体。
+  const exemptSet = new Set<string>();
+  try {
+    const ex = await db.execute({ sql: 'SELECT day FROM holiday_exemptions', args: [] });
+    for (const r of ex.rows) exemptSet.add(String(r.day));
+  } catch {
+    /* holiday_exemptions 表不存在 */
+  }
+
   let streak = initialStreak;
   let consecutiveMissed = 0;
   let last = initialLast;
@@ -196,6 +207,12 @@ async function settleLocked(
   const catchupFloor = addDays(yesterday, -(MAX_CATCHUP_DAYS - 1));
   if (cursor < catchupFloor) cursor = catchupFloor;
   while (cursor <= yesterday) {
+    // 🌴 豁免日：游标照常推进（结算水位前进），但当天不计入任何状态
+    if (exemptSet.has(cursor)) {
+      last = cursor;
+      cursor = addDays(cursor, 1);
+      continue;
+    }
     const confirmed = confirmedByDay.get(cursor) ?? 0;
     const isFullDay = confirmed === 3;
     if (!isFullDay) {

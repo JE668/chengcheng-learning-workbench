@@ -597,6 +597,27 @@ export const MIGRATIONS: Migration[] = [
       await db.execute({ sql: 'ALTER TABLE tasks_rollback RENAME TO tasks', args: [] });
     },
   },
+  {
+    version: 20,
+    name: 'holiday_exemptions',
+    description: '节假日豁免表：出游/请假日不结算惩罚（捣蛋萌可不进城堡）',
+    up: async (db) => {
+      // 家庭场景：出游、生病、走亲戚——孩子没打卡不该被惩罚。
+      // 豁免日 settleCastle 整段跳过（等同全勤但不加连胜），家长在设置页维护。
+      // note 是家长自己看的备注（如「三亚旅行」），孩子端不展示。
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS holiday_exemptions (
+          day TEXT PRIMARY KEY,
+          note TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`,
+        args: [],
+      });
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'DROP TABLE IF EXISTS holiday_exemptions', args: [] });
+    },
+  },
 ];
 
 export async function ensureMigrationTable(db: Client): Promise<void> {
