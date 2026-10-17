@@ -3,3 +3,10 @@ allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: true
+
+# 依赖覆盖（pnpm v11 起从这里读，package.json 的 pnpm.overrides 已不再生效）。
+# postcss-selector-parser < 7.1.6 有二次复杂度 CPU 耗尽漏洞（dependabot #52，moderate，
+# 构建期工具链的传递依赖，不进运行时）。7.x 仅为 API 变更的大版本跳，仅被
+# postcss/tailwind 工具链消费，构建即验证，风险可控。
+overrides:
+  postcss-selector-parser: ^7.1.6
