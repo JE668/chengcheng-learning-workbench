@@ -38,6 +38,17 @@ export async function POST(req: NextRequest) {
     sql: 'INSERT INTO wishes (child_id, text, status) VALUES (?, ?, ?)',
     args: [childId, text.trim().slice(0, 100), 'pending'],
   });
+  // 孩子写入的新愿望 → 推送家长审批提醒（家长自己写入的不推）。
+  // 写库已成功，推送失败不影响响应（notifyChildSubscribers 内部兜底）。
+  if (user.role === 'child') {
+    import('@/lib/push-notifications').then(({ notifyChildSubscribers }) =>
+      notifyChildSubscribers(childId, {
+        title: '🎁 新的愿望请求',
+        body: `${user.displayName}许愿：「${text.trim().slice(0, 40)}」，去审批一下吧`,
+        data: { type: 'wish-request', childId },
+      })
+    );
+  }
   return NextResponse.json({ ok: true });
 }
 

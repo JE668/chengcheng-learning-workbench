@@ -40,6 +40,16 @@ export async function POST(req: Request) {
     args: [user.id, wishText, 'pending'],
   });
 
+  // 家长推送：申请已写库，通知是锦上添花——失败不影响响应（内部已兜底）。
+  // 沙漏是「异步等审批」的典型场景：家长不看板就不知道孩子申请了。
+  import('@/lib/push-notifications').then(({ notifyChildSubscribers }) =>
+    notifyChildSubscribers(user.id, {
+      title: '⏳ 时光沙漏申请',
+      body: `${user.displayName}申请了时光沙漏${day ? `（补 ${day.slice(5).replace('-', '月')}日）` : ''}，去审批一下吧`,
+      data: { type: 'timeglass-request', childId: user.id, day },
+    })
+  );
+
   const msg = day
     ? `已向爸爸妈妈申请时光沙漏，补 ${day.slice(5).replace('-', '月')}日，等他们审批吧 ⏳`
     : '已向爸爸妈妈申请时光沙漏，等他们审批吧 ⏳';
