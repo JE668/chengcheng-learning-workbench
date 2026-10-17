@@ -353,31 +353,38 @@ export async function grantResource(
   await ensureCastle(childId);
   const n = Math.max(0, Math.min(100, Math.floor(amount)));
   if (n <= 0) return { ok: false, message: '数量必须大于 0' };
-  if (resource === 'sunlight') {
-    await db.execute({
-      sql: 'UPDATE castle_state SET sunlight = sunlight + ? WHERE child_id = ?',
-      args: [n, childId],
-    });
-    await logGrowthEvent(childId, 'gift', '☀️', '爸爸妈妈送了阳光能量', '+' + n + ' 阳光能量');
-    return { ok: true, message: '已送 ' + n + ' 阳光能量 ✅' };
-  }
-  if (resource === 'starCoins') {
-    await db.execute({
-      sql: 'UPDATE castle_state SET star_coins = star_coins + ? WHERE child_id = ?',
-      args: [n, childId],
-    });
-    await logGrowthEvent(childId, 'gift', '⭐', '爸爸妈妈送了星星币', '+' + n + ' 星星币');
-    return { ok: true, message: '已送 ' + n + ' 星星币 ✅' };
-  }
-  if (resource === 'tickets') {
-    await db.execute({
-      sql: 'INSERT INTO capture_tickets (child_id, total, used) VALUES (?, ?, 0) ON CONFLICT(child_id) DO UPDATE SET total = total + ?',
-      args: [childId, n, n],
-    });
-    await logGrowthEvent(childId, 'gift', '🎟️', '爸爸妈妈送了捕捉券', '+' + n + ' 捕捉券');
-    return { ok: true, message: '已送 ' + n + ' 捕捉券 ✅' };
-  }
-  return { ok: false, message: '未知资源类型' };
+  // ⚠️ 纳入全局写锁：单条 UPDATE 本身原子，但此前不持锁，与 withWriteLock 内
+  // 的多步写（settleCastle 结算、castSpray 等）并发时会交错执行——尤其
+  // 结算运行中家长送币，applyPenalty 的增量写回虽然已不覆盖别人（见其注释），
+  // 两条 UPDATE 仍可能以相反顺序落到同一天的不同语义上。持锁统一「所有
+  // 多步写路径互斥」的约定，消除这一整类交错，代价是家长端点按钮多排一次队。
+  return withWriteLock(async () => {
+    if (resource === 'sunlight') {
+      await db.execute({
+        sql: 'UPDATE castle_state SET sunlight = sunlight + ? WHERE child_id = ?',
+        args: [n, childId],
+      });
+      await logGrowthEvent(childId, 'gift', '☀️', '爸爸妈妈送了阳光能量', '+' + n + ' 阳光能量');
+      return { ok: true, message: '已送 ' + n + ' 阳光能量 ✅' };
+    }
+    if (resource === 'starCoins') {
+      await db.execute({
+        sql: 'UPDATE castle_state SET star_coins = star_coins + ? WHERE child_id = ?',
+        args: [n, childId],
+      });
+      await logGrowthEvent(childId, 'gift', '⭐', '爸爸妈妈送了星星币', '+' + n + ' 星星币');
+      return { ok: true, message: '已送 ' + n + ' 星星币 ✅' };
+    }
+    if (resource === 'tickets') {
+      await db.execute({
+        sql: 'INSERT INTO capture_tickets (child_id, total, used) VALUES (?, ?, 0) ON CONFLICT(child_id) DO UPDATE SET total = total + ?',
+        args: [childId, n, n],
+      });
+      await logGrowthEvent(childId, 'gift', '🎟️', '爸爸妈妈送了捕捉券', '+' + n + ' 捕捉券');
+      return { ok: true, message: '已送 ' + n + ' 捕捉券 ✅' };
+    }
+    return { ok: false, message: '未知资源类型' };
+  });
 }
 
 /**
@@ -415,6 +422,11 @@ export async function applyTimeGlass(
   if (Number(dec.rowsAffected ?? 0) === 0) {
     return { ok: false, message: '没有时光沙漏，请爸爸妈妈在家长端送给你吧～' };
   }
+  // ⚠️ 不能把扣减搬进「包住 restoreDay 的外层事务」：restoreDay → confirm 内部
+  // 各自持 withWriteLock + BEGIN IMMEDIATE，锁不可重入（队列会等自己 → 死锁）。
+  // 维持两段式：扣减（原子）→ restoreDay（内部各步自带事务），
+  // 崩溃窗口改由**提交前校验**兜底：restoreDay 成功后复查库存扣减是否仍生效，
+  // 若中途被并发请求回滚/消耗（理论上不可能，qty>0 条件已保证），补回沙漏。
   try {
     const restored = await restoreDay(childId, day, missing);
     if (!restored.ok || restored.restored.length === 0) {

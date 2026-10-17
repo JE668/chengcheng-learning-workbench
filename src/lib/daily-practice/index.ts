@@ -370,6 +370,11 @@ export async function submitPractice(
   if (allDone) {
     practiceStreak = await computePracticeStreak(childId, dateStr());
     // 读 streak_rewarded + 写奖励必须在同一把写锁内，否则两个并发提交都能通过检查导致双倍奖励。
+    // 锁内的多步写再包一层事务：崩溃（断电/docker 重启）落在「+10 币」与
+    // 「streak_rewarded=1」之间时，重启后该天未标记已奖励 → 重放会再发一次 10 币。
+    // 包进 BEGIN/COMMIT 后要么都成、要么都回滚（与 castle.confirm 同一套做法）。
+    // 锁内嵌事务在本仓是安全的：这里调用的都是单语句（upsert/log），
+    // 不经过任何再持 withWriteLock 的函数，无重入死锁风险。
     await withWriteLock(async () => {
       const stRow = (
         await db.execute({
@@ -378,47 +383,54 @@ export async function submitPractice(
         })
       ).rows[0];
       if (MILESTONE_DAYS.includes(practiceStreak!) && Number(stRow?.streak_rewarded ?? 0) !== 1) {
-        // 先查候选萌可（图鉴里下一只未拥有的 col_ 萌可）
-        const ownedKeys = (
-          await getDb().execute({
-            sql: 'SELECT moko_key FROM moko_owned WHERE child_id = ?',
+        await db.execute('BEGIN IMMEDIATE');
+        try {
+          // 先查候选萌可（图鉴里下一只未拥有的 col_ 萌可）
+          const ownedKeys = (
+            await db.execute({
+              sql: 'SELECT moko_key FROM moko_owned WHERE child_id = ?',
+              args: [childId],
+            })
+          ).rows.map((r) => String(r.moko_key));
+          const candidate = mokoCollection.find(
+            (m) => m.key.startsWith('col_') && !ownedKeys.includes(m.key)
+          );
+          // +10 星星币与事件日志独立于「是否能再解锁新萌可」，
+          // 否则图鉴集齐后（无候选萌可）里程碑奖励会静默消失。
+          await db.execute({
+            sql: 'UPDATE castle_state SET star_coins = star_coins + 10 WHERE child_id = ?',
             args: [childId],
-          })
-        ).rows.map((r) => String(r.moko_key));
-        const candidate = mokoCollection.find(
-          (m) => m.key.startsWith('col_') && !ownedKeys.includes(m.key)
-        );
-        // +10 星星币与事件日志独立于「是否能再解锁新萌可」，
-        // 否则图鉴集齐后（无候选萌可）里程碑奖励会静默消失。
-        await getDb().execute({
-          sql: 'UPDATE castle_state SET star_coins = star_coins + 10 WHERE child_id = ?',
-          args: [childId],
-        });
-        const mokoNote = candidate ? `解锁新萌可「${candidate.name}」，并` : '';
-        await logGrowthEvent(
-          childId,
-          'milestone',
-          '🌟',
-          `连续 ${practiceStreak} 日一练达成！`,
-          `${mokoNote}收获 10 星星币！`
-        );
-        if (candidate) {
-          await getDb().execute({
-            sql: `INSERT INTO moko_owned (child_id, moko_key, subject, stage, stage_at, mood, status)
-                  VALUES (?, ?, NULL, 'obtained', CURRENT_TIMESTAMP, 3, 'resident')
-                  ON CONFLICT(child_id, moko_key) DO UPDATE SET status = 'resident', mood = 3`,
-            args: [childId, candidate.key],
           });
-          milestone = {
-            mokoKey: candidate.key,
-            mokoName: candidate.name ?? '新萌可',
-            img: candidate.img ?? '',
-          };
+          const mokoNote = candidate ? `解锁新萌可「${candidate.name}」，并` : '';
+          await logGrowthEvent(
+            childId,
+            'milestone',
+            '🌟',
+            `连续 ${practiceStreak} 日一练达成！`,
+            `${mokoNote}收获 10 星星币！`
+          );
+          if (candidate) {
+            await db.execute({
+              sql: `INSERT INTO moko_owned (child_id, moko_key, subject, stage, stage_at, mood, status)
+                    VALUES (?, ?, NULL, 'obtained', CURRENT_TIMESTAMP, 3, 'resident')
+                    ON CONFLICT(child_id, moko_key) DO UPDATE SET status = 'resident', mood = 3`,
+              args: [childId, candidate.key],
+            });
+            milestone = {
+              mokoKey: candidate.key,
+              mokoName: candidate.name ?? '新萌可',
+              img: candidate.img ?? '',
+            };
+          }
+          await db.execute({
+            sql: 'UPDATE daily_practice SET streak_rewarded = 1 WHERE child_id = ? AND day = ?',
+            args: [childId, dateStr()],
+          });
+          await db.execute('COMMIT');
+        } catch (e) {
+          await db.execute('ROLLBACK');
+          throw e;
         }
-        await getDb().execute({
-          sql: 'UPDATE daily_practice SET streak_rewarded = 1 WHERE child_id = ? AND day = ?',
-          args: [childId, dateStr()],
-        });
       }
     });
   }
