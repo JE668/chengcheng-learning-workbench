@@ -17,10 +17,16 @@ interface DictItem {
   prompt: string;
   answer: string;
   kind: string;
+  options?: string[];
 }
 interface DictData {
   __kind: 'dictation';
   mode: 'char' | 'math' | 'en';
+  items: DictItem[];
+}
+interface QuizData {
+  __kind: 'quiz';
+  mode: string;
   items: DictItem[];
 }
 
@@ -31,6 +37,21 @@ function parseDictation(desc: string | undefined): DictData | null {
     if (o && o.__kind === 'dictation' && Array.isArray(o.items)) return o as DictData;
   } catch {
     /* not a dictation task */
+  }
+  return null;
+}
+
+function parseQuiz(desc: string | undefined): QuizData | null {
+  if (!desc) return null;
+  try {
+    const o = JSON.parse(desc);
+    // 必须每题都带 options 才按选择题渲染，否则退回普通任务展示
+    if (o && o.__kind === 'quiz' && Array.isArray(o.items) && o.items.length > 0) {
+      const ok = (o.items as DictItem[]).every((q) => Array.isArray(q.options) && q.options.length >= 2);
+      if (ok) return o as QuizData;
+    }
+  } catch {
+    /* not a quiz task */
   }
   return null;
 }
@@ -137,6 +158,106 @@ function DictationCard({ task, data, onDone }: { task: Task; data: DictData; onD
   );
 }
 
+/**
+ * AI 智能小测验卡（家长端「🤖 AI 出题」布置的选择题任务）。
+ * 点选项作答：答对亮绿、答错亮红并自动进错题本；全部答完领任务积分。
+ */
+function QuizCard({ task, data, onDone }: { task: Task; data: QuizData; onDone: () => void }) {
+  const [idx, setIdx] = useState(0);
+  const [picked, setPicked] = useState<string | null>(null); // 本题选中的选项文本
+  const [right, setRight] = useState(0);
+  const [wrong, setWrong] = useState(0);
+  const [done, setDone] = useState(false);
+
+  const total = data.items.length;
+  const cur = data.items[idx];
+
+  const choose = (opt: string) => {
+    if (picked) return; // 已作答本题
+    setPicked(opt);
+    const ok = opt === cur.answer;
+    if (ok) setRight((n) => n + 1);
+    else {
+      setWrong((n) => n + 1);
+      // 答错 → 错题本（与 DictationCard 同一共享实现，断网入离线队列）
+      void logMistake({
+        subject: task.subject,
+        kind: cur.kind,
+        prompt: cur.prompt,
+        answer: cur.answer,
+        wrong: opt,
+        sourceModule: 'ai-quiz',
+      });
+    }
+    setTimeout(() => {
+      if (idx + 1 >= total) {
+        setDone(true);
+        onDone();
+      } else {
+        setIdx((i) => i + 1);
+        setPicked(null);
+      }
+    }, 900); // 给孩子一点看「对/错」反馈的时间
+  };
+
+  if (done) {
+    return (
+      <div className="card-moko text-center">
+        <div className="text-4xl mb-2">{right === total ? '🏆' : '🎉'}</div>
+        <h3 className="section-title">小测验完成！</h3>
+        <p className="text-gray-600 mt-1">
+          答对 {right} 题{wrong > 0 ? `，答错 ${wrong} 题（已放进错题本，记得复习哦）` : '，全对真棒！'}
+        </p>
+        <div className="text-xs text-moko-rose font-bold mt-2">🎯 获得 {task.points} 积分</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card-moko">
+      <div className="flex items-center justify-between mb-2">
+        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${SUBJECT_COLOR[task.subject]}`}>
+          {task.subject}·小测验
+        </span>
+        <span className="font-black text-moko-rose">
+          {idx + 1}/{total}
+        </span>
+      </div>
+      <div className="h-2 rounded-full bg-gray-200 overflow-hidden mb-4">
+        <div
+          className="h-full bg-gradient-to-r from-moko-rose to-moko-pink transition-all"
+          style={{ width: `${(idx / total) * 100}%` }}
+        />
+      </div>
+      <p className="font-bold text-gray-800 mb-4 leading-relaxed">{cur.prompt}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {cur.options?.map((opt, k) => {
+          const isAnswer = opt === cur.answer;
+          const isPicked = opt === picked;
+          const showState = picked != null && (isPicked || isAnswer);
+          return (
+            <button
+              key={k}
+              onClick={() => choose(opt)}
+              disabled={picked != null}
+              className={`text-left px-4 py-3 rounded-xl border-2 font-bold transition ${
+                showState
+                  ? isAnswer
+                    ? 'bg-moko-mint/20 border-moko-mint text-moko-mint'
+                    : 'bg-red-100 border-red-300 text-red-400'
+                  : 'bg-white border-moko-violet/30 text-gray-800 hover:bg-moko-violet/10'
+              }`}
+            >
+              {showState && (isAnswer ? '✓ ' : isPicked ? '✗ ' : '')}
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function ChildTaskList({
   tasks,
   initialPoints,
@@ -221,6 +342,10 @@ export default function ChildTaskList({
       ) : (
         shown.map((t) => {
           const dict = parseDictation(t.description);
+          const quiz = parseQuiz(t.description);
+          if (quiz && !t.completed) {
+            return <QuizCard key={t.id} task={t} data={quiz} onDone={() => complete(t)} />;
+          }
           if (dict && !t.completed) {
             return <DictationCard key={t.id} task={t} data={dict} onDone={() => complete(t)} />;
           }
@@ -236,7 +361,8 @@ export default function ChildTaskList({
                     </span>
                     <span className="font-black text-lg text-moko-violet truncate">{t.title}</span>
                   </div>
-                  {t.description && !dict && (
+                  {/* AI 测验/听写的 description 是 JSON 数据，不该当普通文本展示 */}
+                  {t.description && !dict && !quiz && (
                     <p className="text-sm text-gray-600 mb-2">{t.description}</p>
                   )}
                   <div className="text-xs text-moko-rose font-bold">🎯 {t.points} 积分</div>
