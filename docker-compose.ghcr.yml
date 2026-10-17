@@ -35,6 +35,12 @@ services:
       # Web Push（可选）：不配则推送功能自动禁用（见 .env.example）。
       - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
       - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
+      # AI 出题（可选）：NVIDIA NIM 的 API Key（build.nvidia.com 免费申请）。
+      # 不配则「布置听写」里的 🤖 AI 出题 不可用，其余功能不受影响。
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      # 出题模型（可选）：默认 meta/llama-3.1-8b-instruct（快、够用）；
+      # 想要更聪明的题干可换 meta/llama-3.3-70b-instruct（响应慢几秒）。
+      - AI_MODEL=${AI_MODEL:-}
       - TURSO_URL=file:/data/local.db
     volumes:
       # 数据库持久化：账号/城堡/打卡/错题 落盘，重建容器不丢
