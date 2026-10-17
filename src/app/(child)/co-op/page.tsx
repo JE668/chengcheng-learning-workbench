@@ -23,6 +23,26 @@ export default function CoOpPage() {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [cheer, setCheer] = useState<string | null>(null);
+  // 🤝 今日组队挑战（家长发起，兄妹同日完成同一模块各 +5 星星币）
+  interface ChallengeChild {
+    id: number;
+    name: string;
+    completed: boolean;
+  }
+  interface Challenge {
+    day: string;
+    moduleKey: string;
+    moduleLabel: string;
+    rewarded: boolean;
+    children: ChallengeChild[];
+  }
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+
+  const loadChallenge = () =>
+    fetch('/api/coop-challenge')
+      .then((r) => r.json())
+      .then((d) => setChallenge(d.challenge ?? null))
+      .catch(() => setChallenge(null));
 
   useEffect(() => {
     fetch('/api/children')
@@ -30,6 +50,10 @@ export default function CoOpPage() {
       .then((d) => setChildren(d.children ?? []))
       .catch(() => setChildren([]))
       .finally(() => setLoading(false));
+    void loadChallenge();
+    // 30s 轮询挑战完成态——兄妹完成时自己这边也亮起来
+    const t = setInterval(loadChallenge, 30_000);
+    return () => clearInterval(t);
   }, []);
 
   function cheerFor(name: string) {
@@ -43,6 +67,37 @@ export default function CoOpPage() {
       <Link href="/home" className="text-moko-violet font-black no-underline">‹ 返回首页</Link>
       <h1 className="page-title mt-2 mb-1">萌可帮帮忙 🤝</h1>
       <p className="text-gray-600 mb-6">和家里的兄弟姐妹一起学习、互相加油，学习更有劲！</p>
+
+      {/* 🤝 今日组队挑战 */}
+      {challenge && (
+        <div className={`card-moko mb-8 border-2 ${challenge.rewarded ? 'border-moko-mint' : 'border-moko-gold/40'}`}>
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <h2 className="section-title">🤝 今日组队挑战</h2>
+            {challenge.rewarded && (
+              <span className="rounded-full bg-moko-mint text-white text-xs font-black px-3 py-1">
+                已达成，各 +5 星星币 🎉
+              </span>
+            )}
+          </div>
+          <p className="font-bold text-moko-violet mb-3">
+            今天一起完成「{challenge.moduleLabel || challenge.moduleKey}」，全都完成就有奖励！
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {challenge.children.map((ch) => (
+              <div
+                key={ch.id}
+                className={`rounded-xl p-3 text-center border-2 ${
+                  ch.completed ? 'bg-moko-mint/10 border-moko-mint' : 'bg-gray-50 border-gray-200'
+                }`}
+              >
+                <div className="text-2xl mb-0.5">{ch.completed ? '✅' : '⏳'}</div>
+                <div className="font-bold text-moko-violet text-sm">{ch.name}</div>
+                <div className="text-xs text-gray-500">{ch.completed ? '完成啦' : '还没完成'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 家庭成员 */}
       <h2 className="section-title mb-3">👨‍👩‍👧 我的家庭成员</h2>

@@ -6,6 +6,7 @@ import { dateStr } from '@/lib/date';
 import ParentCastlePanel from '@/components/ParentCastlePanel';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
 import TimeGlassApproveList from '@/components/parent/TimeGlassApproveList';
+import CoopChallengePanel from '@/components/parent/CoopChallengePanel';
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -318,6 +319,9 @@ export default async function DashboardPage() {
             </div>
           );
         })()}
+
+      {/* 🤝 今日组队挑战：多娃家庭的联动玩法（发起/进度都在这里） */}
+      <CoopChallengePanel />
 
       <h2 className="section-title mb-3">🏰 萌可城堡（学习联动）</h2>
       <ParentCastlePanel />

@@ -646,6 +646,41 @@ export const MIGRATIONS: Migration[] = [
       await db.execute({ sql: 'DROP TABLE IF EXISTS study_sessions', args: [] });
     },
   },
+  {
+    version: 22,
+    name: 'coop_challenges',
+    description: '每日组队挑战：家长发起，兄妹同日完成同一模块各得星星币',
+    up: async (db) => {
+      // 每日一条挑战（day 唯一）；进度按 (challenge_day, child_id) 记录。
+      // module_key 对应 study-modules 的模块 key（如 make-ten）。
+      // 完成判定由孩子完成模块的路径（progress-store）顺带写入，
+      // 全员完成后由 settle 路由或查询时结算 +5 星星币/人。
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS coop_challenges (
+          day TEXT PRIMARY KEY,
+          module_key TEXT NOT NULL,
+          module_label TEXT,
+          created_by INTEGER NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          rewarded INTEGER DEFAULT 0
+        )`,
+        args: [],
+      });
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS coop_challenge_progress (
+          day TEXT NOT NULL,
+          child_id INTEGER NOT NULL,
+          completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (day, child_id)
+        )`,
+        args: [],
+      });
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'DROP TABLE IF EXISTS coop_challenge_progress', args: [] });
+      await db.execute({ sql: 'DROP TABLE IF EXISTS coop_challenges', args: [] });
+    },
+  },
 ];
 
 export async function ensureMigrationTable(db: Client): Promise<void> {

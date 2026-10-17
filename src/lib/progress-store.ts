@@ -89,6 +89,15 @@ export async function upsertModuleProgress(
             last_played = CURRENT_TIMESTAMP`,
     args: [childId, subject, moduleKey, stars],
   });
+  // 🤝 组队挑战进度（迁移 v22，2026-10-17）：今天有挑战且模块匹配 → 记完成；
+  // 全员完成后各 +5 星星币（rewarded 标志防重）。失败静默——组队奖励是
+  // 锦上添花，绝不影响模块进度主流程。动态 import 防循环依赖。
+  try {
+    const { recordCoopProgress } = await import('./coop-challenge');
+    await recordCoopProgress(childId, moduleKey);
+  } catch {
+    /* 旧库无表 / 结算失败：静默 */
+  }
   // 回读最新值作为返回（写入本身已是原子的）
   const row = await getModuleProgress(childId, subject, moduleKey);
   return row ?? { subject, moduleKey, stars, best: stars, rounds: 1, lastPlayed: Date.now() };
