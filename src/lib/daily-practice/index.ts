@@ -41,7 +41,7 @@ import {
   genClockQ,
 } from './gen-math';
 
-import { genEnPicQ, genEnInitialQ, genUniqueEnglishQ, genUniqueEnPicQ, genUniqueEnInitialQ } from './gen-english';
+import { genUniqueEnglishQ, genUniqueEnPicQ, genUniqueEnInitialQ } from './gen-english';
 
 import { genMistakeQ } from './gen-mistake';
 
