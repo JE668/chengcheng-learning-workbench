@@ -1,5 +1,6 @@
 import { getDb } from './db';
 import { calculateSM2Next } from './sm2';
+import { dateStr as libDateStr, addDays as libAddDays } from './date';
 
 /** 错题本一条记录（对应 mistakes 表） */
 export interface MistakeRow {
@@ -17,13 +18,13 @@ export interface MistakeRow {
   resolved: number;
 }
 
+/**
+ * 本地 YYYY-MM-DD（可带偏移天数）。导出名保留（mistakes.test.ts 等外部在用），
+ * 实现委托 lib/date.ts 的唯一出口，不再各自手写——历史上正是这些副本
+ * 让 UTC/本地日 bug 反复出现。
+ */
 export function localDate(offset = 0): string {
-  const d = new Date();
-  d.setDate(d.getDate() + offset);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return y + '-' + m + '-' + day;
+  return libAddDays(libDateStr(), offset);
 }
 
 export function toMistakeRow(r: Record<string, unknown>): MistakeRow {
@@ -143,11 +144,7 @@ export async function reviewMistake(
   return true;
 }
 
+/** 同 lib/date.ts 的 addDays（导出名保留，实现委托唯一出口）。 */
 export function addDaysToDate(dateStr: string, days: number): string {
-  const date = new Date(dateStr + 'T00:00:00');
-  date.setDate(date.getDate() + days);
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return y + '-' + m + '-' + day;
+  return libAddDays(dateStr, days);
 }

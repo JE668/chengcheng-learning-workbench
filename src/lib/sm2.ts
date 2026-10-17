@@ -18,6 +18,8 @@
  * 5 - Perfect response
  */
 
+import { dateStr, addDays } from './date';
+
 export interface SM2State {
   /** Easiness factor, minimum 1.3, starts at 2.5 */
   easinessFactor: number;
@@ -118,37 +120,25 @@ export function binaryToQuality(correct: boolean): 1 | 4 {
 }
 
 /**
- * Add days to a date
- */
-function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-/**
- * Format date as YYYY-MM-DD
+ * Format date as YYYY-MM-DD.
+ * 实现委托 lib/date.ts 的 dateStr（唯一出口），导出面保留。
  */
 export function formatDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return dateStr(date);
 }
 
 /**
  * Get today's date as YYYY-MM-DD
  */
 export function today(): string {
-  return formatDate(new Date());
+  return dateStr();
 }
 
 /**
  * Add days to a date string (YYYY-MM-DD)
  */
-export function addDaysToDate(dateStr: string, days: number): string {
-  const date = new Date(dateStr + 'T00:00:00');
-  return formatDate(addDays(date, days));
+export function addDaysToDate(day: string, days: number): string {
+  return addDays(day, days);
 }
 
 // ============================================================

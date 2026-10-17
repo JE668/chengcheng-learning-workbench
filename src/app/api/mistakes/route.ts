@@ -2,15 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { safeJson } from '@/lib/safe-json';
 import { getChildId, getDb, withWriteLock } from '@/lib/db';
+import { dateStr, addDays } from '@/lib/date';
 
-function localDate(offset = 0): string {
-  const d = new Date();
-  d.setDate(d.getDate() + offset);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+// 本地日统一走 lib/date.ts（此前这里手写 localDate 副本，正是历史时区 bug 的温床）。
 
 // 取当前孩子待复习 + 未解决总数
 export async function GET() {
@@ -21,7 +15,7 @@ export async function GET() {
   const db = getDb();
   const due = await db.execute({
     sql: 'SELECT * FROM mistakes WHERE child_id = ? AND resolved = 0 AND next_review <= ? ORDER BY next_review',
-    args: [childId, localDate(0)],
+    args: [childId, dateStr()],
   });
   const total = await db.execute({
     sql: 'SELECT COUNT(*) as n FROM mistakes WHERE child_id = ? AND resolved = 0',
@@ -71,7 +65,7 @@ export async function POST(req: NextRequest) {
           sql: 'UPDATE mistakes SET wrong = ?, next_review = ?, interval_days = 1, reps = 0, source_module = ?, chapter = ? WHERE id = ?',
           args: [
             wrong ?? null,
-            localDate(1),
+            addDays(dateStr(), 1),
             source_module ?? null,
             chapter ?? null,
             Number(exist.rows[0].id),
@@ -89,7 +83,7 @@ export async function POST(req: NextRequest) {
             wrong ?? null,
             source_module ?? null,
             chapter ?? null,
-            localDate(1),
+            addDays(dateStr(), 1),
           ],
         });
       }
