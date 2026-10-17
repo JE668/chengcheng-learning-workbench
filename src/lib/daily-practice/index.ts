@@ -41,7 +41,7 @@ import {
   genClockQ,
 } from './gen-math';
 
-import { genEnPicQ, genEnInitialQ, genUniqueEnglishQ } from './gen-english';
+import { genEnPicQ, genEnInitialQ, genUniqueEnglishQ, genUniqueEnPicQ, genUniqueEnInitialQ } from './gen-english';
 
 import { genMistakeQ } from './gen-mistake';
 
@@ -83,29 +83,36 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
   // 全局去重：当天已出现的汉字/单词不再重复出题，避免同一知识点反复出现
   const usedChars = new Set<string>();
 
-  // 语文 10 题：每天随机出不同题型组合（听写/拼音/识字/反义词/谚语/谜语），保持新鲜感
-  const zhPool: (() => PracticeQuestion)[] = [
-    () => genUniquePoemQ(), // 古诗（不涉及汉字去重，直接出题）
-    // 带去重的拼音题
-    () => genUniquePinyinQ(usedChars),
-    () => genUniquePinyinQ(usedChars),
-    // 带去重的听写题
-    () => genUniqueDictationQ(usedChars),
-    () => genUniqueDictationQ(usedChars),
-    () => genUniqueDictationQ(usedChars),
-    // 识字（看释义选字）
-    () => genUniqueChineseQuizQ(usedChars),
-    () => genUniqueAntonymQ(), // 反义词（不涉及汉字去重，是不同的词对）
-    () => genProverbQ(), // 谚语配对（不涉及汉字去重）
-    () => genRiddleQ(), // 谜语（不涉及汉字去重）
-  ];
-  const zhPick = shuffle(zhPool).slice(0, 10);
-  for (const fn of zhPick) qs.push(fn());
-
-  // 根据连续天数决定难度：天数越多，难题比例越高
+  // 根据连续天数决定难度：天数越多，难题比例越高。
+  // ⚠️ 必须在构建任何题池之前计算——语文/英语的池子构成也吃 diffLevel
+  //（此前只有数学口算接了难度，README 声明的「难度递增」对三科只兑现了一科）。
   const streak = await computePracticeStreak(childId, dateStr());
   const diffLevel = Math.min(4, Math.floor(streak / 7)); // 0~4：每7天升一级
   const useHard = (idx: number) => idx < diffLevel; // 前 diffLevel 道用难题
+
+  // 语文 10 题：每天随机出不同题型组合，保持新鲜感。
+  // 难度递增（diffLevel 0~4）：识别型题（拼音/听写）逐步让位给理解型题
+  //（反义词/谚语/谜语/古诗）。低级别以「认得出」为主，高级别以「想得通」为主——
+  // 对一年级孩子，古诗/谚语不超纲（都是已学篇目），只是从识别升级到理解运用。
+  const zhEasyPool: (() => PracticeQuestion)[] = [
+    () => genUniquePinyinQ(usedChars), // 带去重的拼音题
+    () => genUniquePinyinQ(usedChars),
+    () => genUniqueDictationQ(usedChars), // 带去重的听写题
+    () => genUniqueDictationQ(usedChars),
+    () => genUniqueDictationQ(usedChars),
+    () => genUniqueChineseQuizQ(usedChars), // 识字（看释义选字）
+    () => genUniquePoemQ(), // 古诗（识别层面）
+  ];
+  const zhHardPool: (() => PracticeQuestion)[] = [
+    () => genUniqueAntonymQ(), // 反义词（理解：词义反向）
+    () => genProverbQ(), // 谚语配对（理解：句意）
+    () => genRiddleQ(), // 谜语（推理）
+  ];
+  // diffLevel=0 → 3 道理解题（池子天然包含）；每升一级再换入 ~1 道识别题
+  const zhHardCount = 3 + diffLevel;
+  const zhPool = [...zhHardPool, ...zhEasyPool.slice(0, 10 - zhHardCount)];
+  const zhPick = shuffle(zhPool).slice(0, 10);
+  for (const fn of zhPick) qs.push(fn());
 
   // 数学 10 题：基础口算+应用题+乘法表+三位数加减+算法题等，每天随机（数字题天然不重复，无需去重）。
   // 刻意排除除法：一年级尚未学除法，避免超纲。
@@ -143,14 +150,15 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
   const mathPick = shuffle(mathPool).slice(0, 10);
   for (const fn of mathPick) qs.push(fn());
 
-  // 英语 5 题：听音选词 + 看图选词 + 首字母，每天随机组合（单词去重）
+  // 英语 5 题：听音选词 + 看图选词 + 首字母，每天随机组合（单词去重）。
+  // 难度递增：level 0 只出教材单元词；diffLevel 升级后按比例混入 Extra 拓展词。
   const usedEn = new Set<string>();
   const enPool: (() => PracticeQuestion)[] = [
-    () => genUniqueEnglishQ(usedEn),
-    () => genUniqueEnglishQ(usedEn),
-    () => genEnPicQ(),
-    () => genEnInitialQ(),
-    () => genEnPicQ(),
+    () => genUniqueEnglishQ(usedEn, diffLevel),
+    () => genUniqueEnglishQ(usedEn, diffLevel),
+    () => genUniqueEnPicQ(usedEn, diffLevel),
+    () => genUniqueEnInitialQ(diffLevel),
+    () => genUniqueEnPicQ(usedEn, diffLevel),
   ];
   for (const fn of enPool) qs.push(fn());
 
