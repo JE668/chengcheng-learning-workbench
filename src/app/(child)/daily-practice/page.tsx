@@ -202,7 +202,7 @@ export default function DailyPracticePage() {
       <div className="max-w-2xl mx-auto p-6">
         <div className="card-moko text-center p-8 bg-gradient-to-br from-moko-violet to-moko-purple text-white">
           <div className="text-6xl mb-3">📡</div>
-          <h1 className="text-3xl font-black mb-2">打卡已离线保存</h1>
+          <h2 className="text-3xl font-black mb-2">打卡已离线保存</h2>
           <p className="text-lg opacity-90">
             现在是离线状态，你的打卡已安全保存在本机，联网后会自动提交、不影响连续天数～
           </p>
@@ -226,7 +226,7 @@ export default function DailyPracticePage() {
       <div className="max-w-2xl mx-auto p-6">
         <div className="card-moko text-center p-8 bg-gradient-to-br from-moko-gold to-moko-yellow text-white">
           <div className="text-6xl mb-3">🌟</div>
-          <h1 className="text-3xl font-black mb-2">今天的一练完成啦！</h1>
+          <h2 className="text-3xl font-black mb-2">今天的一练完成啦！</h2>
           <p className="text-lg opacity-90">三科打卡已自动完成，萌可们超开心～</p>
           <p className="mt-4 text-sm">
             已连续完成 <b className="text-xl">{data.practiceStreak}</b> 天 · 再坚持{' '}
@@ -304,7 +304,7 @@ export default function DailyPracticePage() {
             {/* 头部渐变 */}
             <div className="bg-gradient-to-r from-moko-pink via-moko-rose to-moko-purple p-6 text-white text-center">
               <div className="text-5xl mb-2">🎓</div>
-              <h1 className="text-3xl font-black">今日一练报告卡</h1>
+              <h2 className="text-3xl font-black">今日一练报告卡</h2>
               <p className="text-sm opacity-80 mt-1">{dateLabel} · 全部完成</p>
             </div>
             {/* 各科成绩 */}
@@ -405,7 +405,7 @@ export default function DailyPracticePage() {
       <div className="max-w-2xl mx-auto p-6">
         <div className="card-moko text-center p-8 bg-gradient-to-br from-moko-gold to-moko-yellow text-white">
           <div className="text-6xl mb-3">💪</div>
-          <h1 className="text-3xl font-black mb-2">这一科完成啦，继续加油！</h1>
+          <h2 className="text-3xl font-black mb-2">这一科完成啦，继续加油！</h2>
           <p className="text-lg opacity-90">每做对一科，就解锁一只萌可～把没过的也补上吧！</p>
           <div className="mt-5 space-y-2 text-left bg-white/20 rounded-2xl p-4">
             {result.subjects.map((s) => (
