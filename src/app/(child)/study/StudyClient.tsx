@@ -124,17 +124,17 @@ interface StudyClientProps {
 export function StudyClient({ rec }: StudyClientProps) {
   return (
     <>
-      <div className="max-w-4xl mx-auto fade-up">
-        <h1 className="page-title mb-2">学习城堡 📚</h1>
-        <p className="text-gray-600 mb-4">选择一个学科，开启今天的萌可学习冒险！</p>
-        <MokoHelperClient
-          subject="语文"
-          tips={[
-            '欢迎来到学习城堡！今天想和爱心萌可先挑战哪一科呀？',
-            '每打开一个模块认真玩，城堡里就会多一只萌可陪你哦～',
-            '遇到难题按「换一句」，萌可随时给你打气，别怕！',
-          ]}
-        />
+      {/* 页头（h1/副标题）由外层 RSC page.tsx 持有——此前这里还有一份
+          重复的 h1 + max-w-4xl 容器，页面上「学习城堡」标题出现两次。
+          Client 组件只负责交互内容；容器也归 RSC，避免双层 max-w。 */}
+      <MokoHelperClient
+        subject="语文"
+        tips={[
+          '欢迎来到学习城堡！今天想和爱心萌可先挑战哪一科呀？',
+          '每打开一个模块认真玩，城堡里就会多一只萌可陪你哦～',
+          '遇到难题按「换一句」，萌可随时给你打气，别怕！',
+        ]}
+      />
 
         <StudyRecommendClient rec={rec} />
 
@@ -208,7 +208,6 @@ export function StudyClient({ rec }: StudyClientProps) {
             <li>英语点读和录音需要开启设备声音与麦克风权限。</li>
           </ul>
         </div>
-      </div>
     </>
   );
 }
