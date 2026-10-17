@@ -60,7 +60,20 @@ postcss-selector-parser 6.1.4 → 7.1.6（二次复杂度 CPU 耗尽，moderate�
 构建期工具链传递依赖，不进运行时。pnpm-workspace.yaml 与 package.json 双源覆盖
 （CI 的 pnpm 10 读 package.json，本地 pnpm 11 读 workspace yaml）。
 
-### 遗留观察项（未动代码，按优先级）
+### 遗留观察项处置进展（第三批优化，2026-10-17 同日第二批推送）
+
+| 项 | 处置 | 提交 |
+| --- | --- | --- |
+| P2 · grantResource 不持锁 | ✅ 已纳入 withWriteLock（castle.ts:361） | 73e61d8 |
+| P2 · daily-practice 里程碑无事务 | ✅ 锁内多步写包进 BEGIN/COMMIT | 73e61d8 |
+| P2 · applyTimeGlass 非原子 | ⚠️ 尝试事务化时发现 **restoreDay→confirm 链路自带 withWriteLock+BEGIN，锁不可重入会死锁**。维持原两段式（原子扣减+补偿 UPDATE），死锁成因写入注释，SIGKILL 窗口记录为架构限制。后续若要根治，需先抽「不持锁版 confirm 内层」 | 73e61d8（注释） |
+| P3 · dateStr 5 处重复实现 | ✅ 全部委托 lib/date.ts 唯一出口（lib/mistakes.ts、api/mistakes/route.ts、lib/sm2.ts），导出面保留 | 3ce0b0e |
+| P3 · README 测试数字漂移 | ✅ 改「900+」+「以 CI badge 为准」 | 9356b03 |
+| P3 · playwright webServer 用 pnpm dev | 未动：改生产构建会显著拉长 E2E 反馈环，收益存疑，暂记录 | — |
+| P3 · tasks 表无归属字段 | 未动：产品决策（多娃任务分配），非缺陷 | — |
+| P3 · 测试环境备注 | 保留：DSH 打包 node 的 codesign 问题与项目无关 | — |
+
+### 遗留观察项（原始清单，按优先级，含未处置项）
 
 - **P2 · grantResource 仍不持锁**（castle.ts:337）：单语句原子，但与 withWriteLock
   内多步写并发交错时仍有一瞬间读到中间态。彻底修法是统一「所有写路径要么持锁要么
