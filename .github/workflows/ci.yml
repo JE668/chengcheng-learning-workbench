@@ -129,6 +129,7 @@ jobs:
             'auth/login'
             'auth/logout'
             'cron/backup'
+            'cron/remind'
             'cron/settle'
             'media/[...path]'
             'tts'
