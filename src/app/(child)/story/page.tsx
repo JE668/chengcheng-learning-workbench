@@ -42,6 +42,27 @@ export default function StoryPage() {
   const [loadErr, setLoadErr] = useState<string | null>(null);
   /** 有模块锁定剧情的章节是否已达成（moduleKey → 是否 ≥1 星） */
   const [moduleDone, setModuleDone] = useState<Record<string, boolean>>({});
+  /**
+   * 按当前孩子取的差异化题目（chapterId → {q, options}），多娃防抄题（2026-10-17）：
+   * 远征章节每个孩子各出一版；主线章节服务端返回同一题。
+   * 取不到时渲染层回退到全局 c.quiz（旧库/接口异常都不影响答题）。
+   */
+  const [childQuiz, setChildQuiz] = useState<Record<string, { q: string; options: string[] }>>({});
+
+  /** 拉某章节「给这个孩子」的题目；失败静默回退全局题，绝不阻塞答题 */
+  async function loadChildQuiz(chapterId: string) {
+    if (childQuiz[chapterId]) return;
+    try {
+      const r = await fetch(`/api/story/quiz?chapterId=${encodeURIComponent(chapterId)}`);
+      if (!r.ok) return;
+      const j = (await r.json()) as { chapterId?: string; q?: string; options?: string[] };
+      if (j.chapterId && j.q && Array.isArray(j.options)) {
+        setChildQuiz((m) => ({ ...m, [chapterId]: { q: j.q!, options: j.options! } }));
+      }
+    } catch {
+      /* 网络失败：渲染层回退全局 quiz */
+    }
+  }
 
   async function loadModuleProgress() {
     const reqs = storyChapters
@@ -175,23 +196,24 @@ export default function StoryPage() {
     setQuizSpeaking(false);
   }
 
-  /** 顺序朗读题目 + 每个选项（照顾还不识字的孩子） */
+  /** 顺序朗读题目 + 每个选项（照顾还不识字的孩子）。优先读「给这个孩子」的题 */
   async function speakQuiz(c: (typeof storyChapters)[number]) {
-    if (!c.quiz || quizSpeaking) return;
+    const quiz = childQuiz[c.id] ?? c.quiz;
+    if (!quiz || quizSpeaking) return;
     setQuizSpeaking(true);
     quizAbortRef.current = false;
-    await playTtsEnd(c.quiz.q, 'zh', { wsRate: 0.7, pauseMs: 220 });
+    await playTtsEnd(quiz.q, 'zh', { wsRate: 0.7, pauseMs: 220 });
     if (quizAbortRef.current) {
       setQuizSpeaking(false);
       return;
     }
     const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
-    for (let k = 0; k < c.quiz.options.length; k++) {
+    for (let k = 0; k < quiz.options.length; k++) {
       if (quizAbortRef.current) {
         setQuizSpeaking(false);
         return;
       }
-      await playTtsEnd(`${letters[k]}、${c.quiz.options[k]}`, 'zh', { wsRate: 0.8, pauseMs: 260 });
+      await playTtsEnd(`${letters[k]}、${quiz.options[k]}`, 'zh', { wsRate: 0.8, pauseMs: 260 });
     }
     setQuizSpeaking(false);
   }
@@ -216,6 +238,8 @@ export default function StoryPage() {
       setActive(null);
     } else {
       setActive(c.id);
+      // 多娃差异化：展开章节即按当前孩子取题（答题校验与服务端同源）
+      if (c.quiz) loadChildQuiz(c.id);
       // 打开章节时预取所有段落 TTS blob，用户读文字时服务端已在合成
       for (const p of c.paragraphs) prefetchTts(p, 'zh', toEdgeRate(0.7));
       if (c.tip) prefetchTts(c.tip, 'zh', toEdgeRate(0.7));
@@ -476,7 +500,9 @@ export default function StoryPage() {
                   )}
 
                   {/* —— 读完故事，弹出小问题（答对才能捕捉） —— */}
-                  {open && isRead && !isQuiz && c.quiz && (
+                  {open && isRead && !isQuiz && (childQuiz[c.id] || c.quiz) && (() => {
+                    const quiz = childQuiz[c.id] ?? c.quiz!;
+                    return (
                     <div className="mt-4 rounded-2xl bg-moko-gold/10 border-2 border-moko-gold/30 p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="font-black text-moko-violet">❓ 小问题</span>
@@ -492,9 +518,9 @@ export default function StoryPage() {
                           🔊 再听一遍
                         </button>
                       </div>
-                      <p className="font-bold text-gray-800 mb-3 leading-relaxed">{c.quiz.q}</p>
+                      <p className="font-bold text-gray-800 mb-3 leading-relaxed">{quiz.q}</p>
                       <div className="grid grid-cols-1 gap-2">
-                        {c.quiz.options.map((opt, k) => (
+                        {quiz.options.map((opt, k) => (
                           <div key={k} className="flex items-center gap-2">
                             <button
                               onClick={() => answerQuiz(c, k)}
@@ -521,7 +547,8 @@ export default function StoryPage() {
                         </p>
                       )}
                     </div>
-                  )}
+                    );
+                  })()}
 
                   {/* 答对：quizRightFor 才代表「刚刚这道题答对了」；isQuiz 只是「这一集已解锁过」，
                       答题框靠它切换是对的，但鼓励语应只在刚答对的那一刻出现。 */}

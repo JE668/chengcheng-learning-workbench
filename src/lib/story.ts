@@ -368,9 +368,12 @@ function shuffleQuiz(q: StoryQuiz, seedStr: string): StoryQuiz {
   return { q: q.q, options: opts, answer: opts.indexOf(q.options[q.answer]) };
 }
 
-// 给图鉴远征章节自动出一道题：根据分类生成不同类型的题目
-function buildAutoQuiz(m: MokoChar): StoryQuiz {
-  const seed = hashStr(m.key);
+// 给图鉴远征章节自动出一道题：根据分类生成不同类型的题目。
+// childId 可选：传入时混入种子——多娃家庭里每个孩子遇到**不同的题**
+//（防止二宝照抄大宝背好的答案）；不传保持全局题（向后兼容既有调用方）。
+function buildAutoQuiz(m: MokoChar, childId?: number): StoryQuiz {
+  const seed =
+    childId != null ? ((hashStr(m.key) ^ Math.imul(childId, 0x9e3779b1)) >>> 0) : hashStr(m.key);
   const rng = seededRng(seed);
 
   // 结合萌可主题物出题，让应用题贴合当前捕捉的萌可
@@ -500,6 +503,26 @@ export function resolveChapterMokoKey(name: string): string | null {
 
 export function getChapter(id: string): StoryChapter | undefined {
   return storyChapters.find((c) => c.id === id);
+}
+
+/**
+ * 取某章节针对某个孩子的题目（多娃差异化，2026-10-17）：
+ * - 主线章节（手写题）：所有孩子同一题——题目本身设计给剧情，无差异化需求。
+ * - 图鉴远征章节（buildAutoQuiz）：childId 混入种子，每个孩子各出一版，
+ *   二宝没法照抄大宝背好的答案。
+ * 服务端 quiz 验证与客户端取题**必须同源**走这里，否则答案对不上。
+ * （子章节按 mokoKey 反查 mokoCollection 重建题目，确定性种子保证每次一致。）
+ */
+export function getChapterQuiz(id: string, childId: number): StoryQuiz | null {
+  const chapter = getChapter(id);
+  if (!chapter) return null;
+  // 主线手写题：全局一致。⚠️ 用 HERO_NAMES 判断而不是 HERO_CHAPTERS.includes——
+  // 主线章节经 HERO_CHAPTERS_Q 洗牌后是**新对象**，引用比对永远 false。
+  if (HERO_NAMES.has(chapter.mokoName)) return chapter.quiz ?? null;
+  // 远征自动题：按 childId 重算（章节 id 即 moko key，见 buildAutoChapter）
+  const m = mokoCollection.find((x) => x.key === (chapter.mokoKey ?? chapter.mokoName));
+  if (!m) return chapter.quiz ?? null; // 兜底：找不到数据时退回全局题
+  return buildAutoQuiz(m, childId);
 }
 
 export function getChapterIndex(id: string): number {
