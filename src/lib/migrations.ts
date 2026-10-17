@@ -573,10 +573,13 @@ export const MIGRATIONS: Migration[] = [
       // 存量任务不迁移值——保持「谁都能做」的原语义，家长可事后指派。
       // 不加外键：users 删除路径没有级联清理 tasks，强外键会卡死删孩子
       //（本仓外键全部 NO ACTION，见 2026-10-17 审查报告「明确不是问题」节）。
-      await db.execute({
-        sql: 'ALTER TABLE tasks ADD COLUMN assigned_to INTEGER',
-        args: [],
-      });
+      //
+      // ⚠️ 新库幂等：schema.ts 的 CREATE TABLE 已含 assigned_to（新库直接建成
+      // 完整结构），本迁移只服务**旧库升级**。裸 ALTER TABLE 在全新库会撞
+      // duplicate column（实测 CI 红了 migrations.test 全组），必须走
+      // addColumnIfMissing 的幂等路径（对 duplicate column / no such table 吞掉，
+      // 其余错误上抛——这正是它存在的意义）。
+      await addColumnIfMissing(db, 'tasks', 'assigned_to INTEGER');
       await db.execute({
         sql: 'CREATE INDEX IF NOT EXISTS idx_tasks_assigned ON tasks(assigned_to)',
         args: [],

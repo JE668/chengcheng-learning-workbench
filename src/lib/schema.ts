@@ -58,6 +58,7 @@ export async function ensureSchema() {
       points INTEGER NOT NULL DEFAULT 5,
       created_by INTEGER NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      assigned_to INTEGER,
       FOREIGN KEY(created_by) REFERENCES users(id)
     );`,
     `CREATE TABLE IF NOT EXISTS completions (
