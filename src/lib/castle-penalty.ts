@@ -140,7 +140,7 @@ export async function settleCastle(childId: number, today: string) {
     const row = await getRow(childId);
     if (!row) return;
     const initialLast = row.last_settled_day ? String(row.last_settled_day) : today;
-    let cursor = addDays(initialLast, 1);
+    const cursor = addDays(initialLast, 1);
     const yesterday = addDays(today, -1);
     if (cursor > yesterday) return;
     const db = getDb();
