@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
-import { getDb } from '@/lib/db';
+import { getDb, withWriteLock } from '@/lib/db';
 import { restoreDay } from '@/lib/castle';
 import {
   formatBackfillDayLabel,
@@ -60,8 +60,25 @@ export async function POST(req: Request) {
 
   if (action === 'approve') {
     if (day) {
-      // 新逻辑：直接补打卡，无需库存
-      const result = await restoreDay(childId, day);
+      // 新逻辑：直接补打卡，无需库存。
+      // restoreDay 已无锁化（2026-10-17）：假定调用方持锁+开事务——
+      // 这里把「补打卡 + 标记申请 fulfilled」收进同一事务，中途崩溃整体回滚，
+      // 不会出现「打卡补了但申请还挂着 pending 可重复批准」。
+      const result = await withWriteLock(async () => {
+        await db.execute('BEGIN IMMEDIATE');
+        try {
+          const r = await restoreDay(childId, day);
+          await db.execute({
+            sql: "UPDATE wishes SET status = 'fulfilled' WHERE id = ?",
+            args: [wishId],
+          });
+          await db.execute('COMMIT');
+          return r;
+        } catch (e) {
+          await db.execute('ROLLBACK');
+          throw e;
+        }
+      });
       if (!result.ok) {
         return NextResponse.json({ ok: false, message: result.message }, { status: 400 });
       }
@@ -70,10 +87,6 @@ export async function POST(req: Request) {
       // 家长会看到「09月26月26日 补打卡成功，09月26月26日 语文…已补打卡」这种重复。
       const subjectMsg = result.restored.length > 0 ? `：${result.restored.join('、')}` : '';
       const coinMsg = result.coinsReturned > 0 ? `，找回被藏星星币 ${result.coinsReturned} 颗` : '';
-      await db.execute({
-        sql: "UPDATE wishes SET status = 'fulfilled' WHERE id = ?",
-        args: [wishId],
-      });
       return NextResponse.json({
         ok: true,
         message: `✅ 已批准！${dayLabel} 补打卡成功${subjectMsg}${coinMsg}，连续天数已恢复！`,

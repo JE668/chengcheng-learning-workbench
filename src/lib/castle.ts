@@ -409,6 +409,12 @@ export async function grantResource(
 /**
  * 家长审批时光沙漏申请的入口（带库存校验）。
  * 孩子背包里必须有沙漏，扣减后调用 restoreDay 实际补打卡。
+ *
+ * 2026-10-17 重建（依赖 confirmRewardsTx 抽取）：**扣沙漏与补打卡收进
+ * 同一事务**。此前是两段式（原子扣减 → restoreDay 内部各自开事务），
+ * 两段之间的 SIGKILL/断电会「沙漏已扣但打卡没补」。锁不可重入的老约束
+ * 已随 restoreDay 无锁化解除——现在 restoreDay 假定调用方持锁+开事务。
+ * 崩溃 → ROLLBACK，沙漏和打卡状态都回到调用前，不再需要补偿 UPDATE。
  */
 export async function applyTimeGlass(
   childId: number,
@@ -432,56 +438,59 @@ export async function applyTimeGlass(
   if (missing.length === 0) {
     return { ok: false, message: formatBackfillDayLabel(day) + ' 三科都已经打卡过了，不用补～' };
   }
-  // 原子扣减：UPDATE ... AND qty > 0 保证并发下只扣一次（qty=0 时第二个请求 rowsAffected=0）。
-  // 不再用 SELECT 后再 UPDATE，避免两个并发请求都通过 qty>0 检查导致 qty 变负。
-  const dec = await db.execute({
-    sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ? AND qty > 0',
-    args: [childId, 'timeglass'],
-  });
-  if (Number(dec.rowsAffected ?? 0) === 0) {
-    return { ok: false, message: '没有时光沙漏，请爸爸妈妈在家长端送给你吧～' };
-  }
-  // ⚠️ 不能把扣减搬进「包住 restoreDay 的外层事务」：restoreDay → confirm 内部
-  // 各自持 withWriteLock + BEGIN IMMEDIATE，锁不可重入（队列会等自己 → 死锁）。
-  // 维持两段式：扣减（原子）→ restoreDay（内部各步自带事务），
-  // 崩溃窗口改由**提交前校验**兜底：restoreDay 成功后复查库存扣减是否仍生效，
-  // 若中途被并发请求回滚/消耗（理论上不可能，qty>0 条件已保证），补回沙漏。
-  try {
-    const restored = await restoreDay(childId, day, missing);
-    if (!restored.ok || restored.restored.length === 0) {
-      // confirm 都没成功，补回沙漏
-      await db.execute({
-        sql: 'UPDATE inventory SET qty = qty + 1 WHERE child_id = ? AND item_key = ?',
+  return withWriteLock(async () => {
+    await db.execute('BEGIN IMMEDIATE');
+    try {
+      // 原子扣减：UPDATE ... AND qty > 0 保证并发下只扣一次（qty=0 时第二个请求 rowsAffected=0）。
+      const dec = await db.execute({
+        sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ? AND qty > 0',
         args: [childId, 'timeglass'],
       });
-      return { ok: false, message: restored.message };
+      if (Number(dec.rowsAffected ?? 0) === 0) {
+        throw new Error('__timeglass_depleted');
+      }
+      const restored = await restoreDay(childId, day, missing);
+      if (!restored.ok || restored.restored.length === 0) {
+        // confirm 都没成功：整个事务回滚（沙漏自动回来），不需要补偿 UPDATE
+        throw new Error('__timeglass_noop');
+      }
+      await db.execute('COMMIT');
+      const extraMsg = restored.coinsReturned > 0 ? '，还找回了被藏起来的星星币！' : '！';
+      // 用「09月26日」而不是原始 ISO「2026-09-26」：家长端批准后的文案已是中文日期，
+      // 同一件事在两处显示不同格式会让人以为是不同的日子。
+      return {
+        ok: true,
+        message:
+          '⏳ 时光沙漏生效！' +
+          formatBackfillDayLabel(day) +
+          ' 的 ' +
+          restored.restored.join('、') +
+          ' 补打卡成功，连续天数已恢复' +
+          extraMsg,
+      };
+    } catch (e) {
+      await db.execute('ROLLBACK');
+      if (e instanceof Error && e.message === '__timeglass_depleted') {
+        return { ok: false, message: '没有时光沙漏，请爸爸妈妈在家长端送给你吧～' };
+      }
+      if (e instanceof Error && e.message === '__timeglass_noop') {
+        return { ok: false, message: formatBackfillDayLabel(day) + ' 三科都已经打卡过了，不用补～' };
+      }
+      throw e;
     }
-    const extraMsg = restored.coinsReturned > 0 ? '，还找回了被藏起来的星星币！' : '！';
-    // 用「09月26日」而不是原始 ISO「2026-09-26」：家长端批准后的文案已是中文日期，
-    // 同一件事在两处显示不同格式会让人以为是不同的日子。
-    return {
-      ok: true,
-      message:
-        '⏳ 时光沙漏生效！' +
-        formatBackfillDayLabel(day) +
-        ' 的 ' +
-        restored.restored.join('、') +
-        ' 补打卡成功，连续天数已恢复' +
-        extraMsg,
-    };
-  } catch (e) {
-    // restoreDay 抛异常时也补回沙漏，避免道具丢失
-    await db.execute({
-      sql: 'UPDATE inventory SET qty = qty + 1 WHERE child_id = ? AND item_key = ?',
-      args: [childId, 'timeglass'],
-    });
-    throw e;
-  }
+  });
 }
 
 /**
  * 补打卡核心逻辑（不带库存校验），供 applyTimeGlass 和家长审批共用。
  * 将指定日期缺少的科目全部确认，同时处理捣蛋萌可、逃亡萌可、被藏星星币。
+ *
+ * ⚠️ 2026-10-17 无锁化：本函数**假定调用方已持有 withWriteLock 且已 BEGIN**——
+ * 内部用幂等插卡 + confirmRewardsTx 直接在调用方的事务里写，不再自己开锁/事务
+ *（旧版内部调 confirm，锁不可重入，迫使 applyTimeGlass 保持两段式、
+ * 存在「沙漏已扣但打卡没补」的崩溃窗口）。公开调用方：
+ *   - applyTimeGlass：扣沙漏 + restoreDay 同一事务 ✅
+ *   - approve-timeglass 路由：restoreDay 持锁开事务包裹 ✅
  */
 export async function restoreDay(
   childId: number,
@@ -506,8 +515,16 @@ export async function restoreDay(
 
   const restored: Subject[] = [];
   for (const subject of missing) {
-    const res = await confirm(childId, day, subject);
-    if (res.ok) restored.push(subject);
+    // 与 confirm 相同的两步（幂等插卡 → 新确认才发奖），但**不经过**
+    // confirm 的 withWriteLock/BEGIN——restoreDayTx 版本运行在调用方的
+    // 事务里（见 applyTimeGlass：扣沙漏+补打卡同一事务，锁在外层持一次）。
+    const insertResult = await db.execute({
+      sql: "INSERT INTO daily_checkins (child_id, day, subject, status, confirmed_at) VALUES (?, ?, ?, 'confirmed', CURRENT_TIMESTAMP) ON CONFLICT(child_id, day, subject) DO NOTHING",
+      args: [childId, day, subject],
+    });
+    if (Number(insertResult.rowsAffected ?? 0) === 0) continue; // 已确认，跳过
+    await confirmRewardsTx(db, childId, day, dateStr(), subject);
+    restored.push(subject);
   }
 
   // 三科全补则标记每日一练完成
