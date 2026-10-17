@@ -618,6 +618,34 @@ export const MIGRATIONS: Migration[] = [
       await db.execute({ sql: 'DROP TABLE IF EXISTS holiday_exemptions', args: [] });
     },
   },
+  {
+    version: 21,
+    name: 'study_sessions',
+    description: '学习时长统计：孩子端心跳按分钟聚合（页面活跃即学习）',
+    up: async (db) => {
+      // 心跳设计：孩子端 layout 每 60s POST 一次（页面在前台时），服务端
+      // 把同一 (child, day) 的分钟数累加。一天最多 1440 行内 UPDATE，量极小。
+      // 家长报告页按天聚合展示「本周每日学习分钟数」。
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS study_sessions (
+          child_id INTEGER NOT NULL,
+          day TEXT NOT NULL,
+          minutes INTEGER NOT NULL DEFAULT 0,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (child_id, day)
+        )`,
+        args: [],
+      });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_study_sessions_day ON study_sessions(day)',
+        args: [],
+      });
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'DROP INDEX IF EXISTS idx_study_sessions_day', args: [] });
+      await db.execute({ sql: 'DROP TABLE IF EXISTS study_sessions', args: [] });
+    },
+  },
 ];
 
 export async function ensureMigrationTable(db: Client): Promise<void> {

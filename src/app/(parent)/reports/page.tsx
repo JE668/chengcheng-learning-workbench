@@ -55,6 +55,13 @@ export default async function ReportsPage() {
   const fullDays = checkinRows.rows.filter((r) => Number(r.n) === 3).length;
   const activeDays = checkinRows.rows.length;
 
+  // 本周学习时长（2026-10-17 心跳统计）：分钟/天。旧库无表时为 0，不阻塞报告页。
+  const studyTime = c ? await db.execute({
+    sql: `SELECT day, minutes FROM study_sessions WHERE child_id = ? AND day BETWEEN ? AND ? ORDER BY day DESC`,
+    args: [childId, ws, we],
+  }).catch(() => ({ rows: [] as { day: unknown; minutes: unknown }[] })) : { rows: [] as { day: unknown; minutes: unknown }[] };
+  const minutesWeek = studyTime.rows.reduce((s: number, r) => s + Number(r.minutes ?? 0), 0);
+
   const resolved = c ? await db.execute({
     sql: 'SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND resolved = 1',
     args: [childId],
@@ -103,11 +110,12 @@ export default async function ReportsPage() {
           <ChildSwitcher />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
           {[
             { label: '本周积分', value: pointsWeek, color: 'bg-moko-rose' },
             { label: '全勤天数', value: `${fullDays} 天`, color: 'bg-moko-blue' },
             { label: '活跃天数', value: `${activeDays} 天`, color: 'bg-moko-yellow' },
+            { label: '本周学习时长', value: minutesWeek >= 60 ? `${Math.floor(minutesWeek / 60)} 时 ${minutesWeek % 60} 分` : `${minutesWeek} 分`, color: 'bg-moko-mint' },
             { label: '累计攻克错题', value: resolvedCount, color: 'bg-moko-purple' },
           ].map((s) => (
             <div key={s.label} className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}>
@@ -130,6 +138,33 @@ export default async function ReportsPage() {
               </div>
             ))}
             {daily.rows.length === 0 && <div className="text-gray-500">本周还没有积分记录</div>}
+          </div>
+        </div>
+
+        <div className="card-moko mb-6">
+          <h2 className="text-xl font-bold text-moko-violet mb-3">近 7 天学习时长（分钟）</h2>
+          <div className="space-y-3">
+            {studyTime.rows.length > 0 ? (
+              studyTime.rows.map((r) => {
+                const m = Number(r.minutes ?? 0);
+                return (
+                  <div key={String(r.day)} className="flex items-center gap-3">
+                    <span className="w-24 text-gray-600 text-sm">{String(r.day)}</span>
+                    <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-moko-mint to-emerald-400 rounded-full"
+                        style={{ width: `${Math.min(100, (m / 120) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="w-12 text-right font-bold text-moko-mint">{m} 分</span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-gray-500">
+                还没有时长记录——孩子打开学习页保持前台，每分钟自动累计～
+              </div>
+            )}
           </div>
         </div>
 

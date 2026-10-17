@@ -5,6 +5,7 @@ import Nav from '@/components/Nav';
 import EyeRest from '@/components/EyeRest';
 import Clock from '@/components/Clock';
 import FullscreenToggle from '@/components/FullscreenToggle';
+import StudyHeartbeat from '@/components/StudyHeartbeat';
 
 export default async function ChildLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -27,6 +28,8 @@ export default async function ChildLayout({ children }: { children: React.ReactN
         <Clock />
       </div>
       <FullscreenToggle />
+      {/* 学习时长心跳：页面在前台时每分钟报一次（切后台自动停） */}
+      <StudyHeartbeat />
     </div>
   );
 }
