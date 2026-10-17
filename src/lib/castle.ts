@@ -295,38 +295,48 @@ export async function castSpray(childId: number) {
       sql: 'SELECT day FROM troublemakers WHERE child_id = ? AND resolved = 0 ORDER BY day DESC LIMIT 1',
       args: [childId],
     });
-    if (latestTrouble.rows.length) {
-      await db.execute({
-        sql: 'UPDATE troublemakers SET resolved = 1 WHERE child_id = ? AND resolved = 0 AND day = ?',
-        args: [childId, String(latestTrouble.rows[0].day)],
-      });
-    }
-    await db.execute({
-      sql: "UPDATE moko_owned SET mood = 3, status = 'resident' WHERE child_id = ?",
-      args: [childId],
-    });
     const returnCoins = Math.ceil(Number(row?.last_stolen ?? 0) * 0.5);
-    await db.execute({
-      sql: 'UPDATE castle_state SET star_coins = star_coins + ?, last_stolen = 0 WHERE child_id = ?',
-      args: [returnCoins, childId],
-    });
     const today = dateStr();
     const yesterday = addDays(today, -1);
-    await db.execute({
-      sql: 'UPDATE castle_state SET last_settled_day = ? WHERE child_id = ?',
-      args: [yesterday, childId],
-    });
-    await db.execute({
-      sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?',
-      args: [childId, 'spray'],
-    });
-    await logGrowthEvent(
-      childId,
-      'repair',
-      '🧼',
-      '捉回捣蛋萌可，城堡恢复欢乐！',
-      '和乐美一起捉回捣蛋萌可，萌可们心情全满，找回 ' + returnCoins + ' 星星币'
-    );
+    // ⚠️ 多步写包进事务：清捣蛋 → 恢复心情 → 还币 → 推游标 → 扣道具共 5 步，
+    // 只靠 withWriteLock 挡不住崩溃（断电/docker 重启）——最坏组合是
+    // 「捣蛋清了但喷雾没扣」（白嫖）或「币加了但游标没推进」（重复找回）。
+    await db.execute('BEGIN IMMEDIATE');
+    try {
+      if (latestTrouble.rows.length) {
+        await db.execute({
+          sql: 'UPDATE troublemakers SET resolved = 1 WHERE child_id = ? AND resolved = 0 AND day = ?',
+          args: [childId, String(latestTrouble.rows[0].day)],
+        });
+      }
+      await db.execute({
+        sql: "UPDATE moko_owned SET mood = 3, status = 'resident' WHERE child_id = ?",
+        args: [childId],
+      });
+      await db.execute({
+        sql: 'UPDATE castle_state SET star_coins = star_coins + ?, last_stolen = 0 WHERE child_id = ?',
+        args: [returnCoins, childId],
+      });
+      await db.execute({
+        sql: 'UPDATE castle_state SET last_settled_day = ? WHERE child_id = ?',
+        args: [yesterday, childId],
+      });
+      await db.execute({
+        sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ?',
+        args: [childId, 'spray'],
+      });
+      await logGrowthEvent(
+        childId,
+        'repair',
+        '🧼',
+        '捉回捣蛋萌可，城堡恢复欢乐！',
+        '和乐美一起捉回捣蛋萌可，萌可们心情全满，找回 ' + returnCoins + ' 星星币'
+      );
+      await db.execute('COMMIT');
+    } catch (e) {
+      await db.execute('ROLLBACK');
+      throw e;
+    }
     return {
       ok: true,
       message: '太棒了！和乐美一起捉回捣蛋萌可，找回 ' + returnCoins + ' 星星币～',
@@ -563,23 +573,32 @@ export async function harvest(childId: number) {
     ).rows;
     if (!friends.length) return { ok: true, gained: 0, message: '今天还没有可收获的星星币～' };
     const gained = friends.length * STAR_PER_FRIEND;
-    await db.execute({
-      sql: 'UPDATE castle_state SET star_coins = star_coins + ? WHERE child_id = ?',
-      args: [gained, childId],
-    });
-    for (const r of friends) {
+    // ⚠️ 加币与逐只标记 last_harvest_day 是两步写：只靠 withWriteLock 挡不住崩溃。
+    // 断电在两步之间 → 币已加、萌可未标记 → 重启后同批萌可**可重复收币**。
+    // 单条 IN(...) 合并逐只 UPDATE，既是事务需求也把 N 次写合成 1 次。
+    const ids = friends.map((r) => Number(r.id));
+    await db.execute('BEGIN IMMEDIATE');
+    try {
       await db.execute({
-        sql: 'UPDATE moko_owned SET last_harvest_day = ? WHERE id = ?',
-        args: [today, Number(r.id)],
+        sql: 'UPDATE castle_state SET star_coins = star_coins + ? WHERE child_id = ?',
+        args: [gained, childId],
       });
+      await db.execute({
+        sql: 'UPDATE moko_owned SET last_harvest_day = ? WHERE child_id = ? AND id IN (' + ids.map(() => '?').join(', ') + ')',
+        args: [today, childId, ...ids],
+      });
+      await logGrowthEvent(
+        childId,
+        'harvest',
+        '⭐',
+        '收获星星币',
+        '萌可朋友们产出了 ' + gained + ' 星星币'
+      );
+      await db.execute('COMMIT');
+    } catch (e) {
+      await db.execute('ROLLBACK');
+      throw e;
     }
-    await logGrowthEvent(
-      childId,
-      'harvest',
-      '⭐',
-      '收获星星币',
-      '萌可朋友们产出了 ' + gained + ' 星星币'
-    );
     return { ok: true, gained, message: '收获 ' + gained + ' 星星币！' };
   });
 }

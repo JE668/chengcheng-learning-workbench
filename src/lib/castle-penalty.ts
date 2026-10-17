@@ -16,17 +16,14 @@ async function applyPenalty(childId: number, day: string, consecutiveMissed: num
   if (consecutiveMissed <= 0) return;
 
   const row = await getRow(childId);
-  let shield = Number(row?.shield_equipped ?? 0);
-  let star = Number(row?.star_coins ?? 0);
-  let lastStolen = Number(row?.last_stolen ?? 0);
+  const shield = Number(row?.shield_equipped ?? 0);
+  const star = Number(row?.star_coins ?? 0);
 
   // 捣蛋萌可数量：第 1 天 0 只，之后逐天递增，上限 3 只
   const troubleCount = Math.max(0, Math.min(consecutiveMissed - 1, 3));
   let spawn = troubleCount;
-  if (shield > 0 && spawn > 0) {
-    shield -= 1;
-    spawn -= 1;
-  }
+  const shieldUsed = shield > 0 && spawn > 0;
+  if (shieldUsed) spawn -= 1;
   for (let i = 0; i < spawn; i++) {
     const key = troubleMokoKeys[i % troubleMokoKeys.length];
     await db.execute({
@@ -36,11 +33,13 @@ async function applyPenalty(childId: number, day: string, consecutiveMissed: num
   }
 
   // 藏星星币（第 3 天起）
+  // ⚠️ 用**增量 UPDATE** 写回，不用内存里的绝对值：applyPenalty 跑在 withWriteLock 内，
+  // 但 grantResource（家长送币）不走锁。旧实现读出 star_coins → 内存计算 → 绝对值写回，
+  // 结算期间家长恰好送币会被旧值覆盖丢失。增量写只动自己那一份，天然不覆盖别人。
+  let stolen = 0;
   if (consecutiveMissed >= 3 && star > 0) {
     const pct = consecutiveMissed >= 4 ? 0.5 : 0.25;
-    const stolen = Math.floor(star * pct);
-    star -= stolen;
-    lastStolen += stolen;
+    stolen = Math.floor(star * pct);
   }
 
   // 随机惩罚萌可
@@ -125,10 +124,14 @@ async function applyPenalty(childId: number, day: string, consecutiveMissed: num
     );
   }
 
-  await db.execute({
-    sql: 'UPDATE castle_state SET shield_equipped = ?, star_coins = ?, last_stolen = ? WHERE child_id = ?',
-    args: [shield, star, lastStolen, childId],
-  });
+  // 增量写回：护盾扣减仅在真正挡下捣蛋时发生；藏币扣 stolen、记入 last_stolen。
+  // 三条都只动自己的差量，不覆盖并发写入（见上面「藏星星币」处的说明）。
+  if (shieldUsed || stolen > 0) {
+    await db.execute({
+      sql: 'UPDATE castle_state SET shield_equipped = shield_equipped - 1, star_coins = star_coins - ?, last_stolen = last_stolen + ? WHERE child_id = ?',
+      args: [stolen, stolen, childId],
+    });
+  }
 }
 
 /* ----------------------------- 每日结算 ----------------------------- */
@@ -141,83 +144,115 @@ export async function settleCastle(childId: number, today: string) {
     const yesterday = addDays(today, -1);
     if (cursor > yesterday) return;
     const db = getDb();
-    const res = await db.execute({
-      sql: "SELECT day, COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND status = 'confirmed' AND day >= ? AND day <= ? GROUP BY day",
-      args: [childId, cursor, yesterday],
-    });
-    const confirmedByDay = new Map<string, number>();
-    for (const r of res.rows) confirmedByDay.set(String(r.day), Number(r.n));
-
-    let streak = Number(row.streak_days ?? 0);
-    let consecutiveMissed = 0;
-    let last = initialLast;
-    // ⚠️ 补结算上限：游标落后太多时（容器停了几天/几周），逐日重放会长时间
-    // 持有**全局写锁**（withWriteLock），把其它写接口全堵在后面；而且这些天
-    // 多半本来就没打卡，逐日结算只会一路累加惩罚事件。
-    // 这里只补最近 MAX_CATCHUP_DAYS 天，更早的部分把游标直接推到窗口起点 ——
-    // 漏卡事实仍记在 daily_checkins 里，UI 的 missedDays 展示不受影响。
-    const MAX_CATCHUP_DAYS = 30;
-    const catchupFloor = addDays(yesterday, -(MAX_CATCHUP_DAYS - 1));
-    if (cursor < catchupFloor) cursor = catchupFloor;
-    while (cursor <= yesterday) {
-      const confirmed = confirmedByDay.get(cursor) ?? 0;
-      const isFullDay = confirmed === 3;
-      if (!isFullDay) {
-        // 🧊 检查冰冻徽章：有则消耗保护一天连胜（与连胜更新在同一条 SQL 中保证一致性）
-        let frozen = false;
-        try {
-          const fr = await db.execute({
-            sql: "SELECT id, qty FROM inventory WHERE child_id = ? AND item_key = 'freeze' AND qty > 0",
-            args: [childId],
-          });
-          if (fr.rows.length > 0) {
-            const freezeId = Number(fr.rows[0].id);
-            await db.execute({
-              sql: 'UPDATE inventory SET qty = qty - 1 WHERE id = ?',
-              args: [freezeId],
-            });
-            await db.execute({
-              sql: 'DELETE FROM inventory WHERE id = ? AND qty <= 0',
-              args: [freezeId],
-            });
-            frozen = true;
-            streak = streak + 1;
-            await db.execute({
-              sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?',
-              args: [streak, childId],
-            });
-            await logGrowthEvent(
-              childId,
-              'freeze',
-              '🧊',
-              '冰冻徽章保护',
-              '🧊 冰冻徽章自动消耗，' + cursor + ' 漏卡但连胜未中断！'
-            );
-          }
-        } catch {
-          /* inventory 表可能不存在 */
-        }
-        if (!frozen) {
-          consecutiveMissed++;
-          await applyPenalty(childId, cursor, consecutiveMissed);
-          streak = 0;
-        }
-      } else {
-        consecutiveMissed = 0;
-        streak = streak + 1;
-      }
-      await db.execute({
-        sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?',
-        args: [streak, childId],
-      });
-      last = cursor;
-      cursor = addDays(cursor, 1);
-    }
-    if (last !== initialLast) {
-      await db.execute({
-        sql: 'UPDATE castle_state SET last_settled_day = ? WHERE child_id = ?',
-        args: [last, childId],
-      });
+    // ⚠️ 整个补结算循环包进事务：循环中途崩溃（NAS 断电 / docker 重启）时，
+    // 若 last_settled_day 未推进，重启后同一天会被**二次惩罚**——捣蛋萌可翻倍、
+    // 星星币重复藏、冰冻徽章重复消耗。与 castle.confirm / castle.buy 同一套做法
+    //（withWriteLock 解决并发，BEGIN/COMMIT 解决崩溃）。
+    // 逐日 UPDATE streak_days 保留：万一真崩溃，进度最多丢整段（可重放），不会半段生效。
+    await db.execute('BEGIN IMMEDIATE');
+    try {
+      await settleLocked(
+        db,
+        childId,
+        today,
+        initialLast,
+        Number(row.streak_days ?? 0),
+        cursor
+      );
+      await db.execute('COMMIT');
+    } catch (e) {
+      await db.execute('ROLLBACK');
+      throw e;
     }
   });
+}
+
+/** 事务主体（仅在 settleCastle 的 BEGIN/COMMIT 之间调用）。 */
+async function settleLocked(
+  db: ReturnType<typeof getDb>,
+  childId: number,
+  today: string,
+  initialLast: string,
+  initialStreak: number,
+  cursor: string
+) {
+  const yesterday = addDays(today, -1);
+  const res = await db.execute({
+    sql: "SELECT day, COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND status = 'confirmed' AND day >= ? AND day <= ? GROUP BY day",
+    args: [childId, cursor, yesterday],
+  });
+  const confirmedByDay = new Map<string, number>();
+  for (const r of res.rows) confirmedByDay.set(String(r.day), Number(r.n));
+
+  let streak = initialStreak;
+  let consecutiveMissed = 0;
+  let last = initialLast;
+  // ⚠️ 补结算上限：游标落后太多时（容器停了几天/几周），逐日重放会长时间
+  // 持有**全局写锁**（withWriteLock），把其它写接口全堵在后面；而且这些天
+  // 多半本来就没打卡，逐日结算只会一路累加惩罚事件。
+  // 这里只补最近 MAX_CATCHUP_DAYS 天，更早的部分把游标直接推到窗口起点 ——
+  // 漏卡事实仍记在 daily_checkins 里，UI 的 missedDays 展示不受影响。
+  const MAX_CATCHUP_DAYS = 30;
+  const catchupFloor = addDays(yesterday, -(MAX_CATCHUP_DAYS - 1));
+  if (cursor < catchupFloor) cursor = catchupFloor;
+  while (cursor <= yesterday) {
+    const confirmed = confirmedByDay.get(cursor) ?? 0;
+    const isFullDay = confirmed === 3;
+    if (!isFullDay) {
+      // 🧊 检查冰冻徽章：有则消耗保护一天连胜（与连胜更新在同一条 SQL 中保证一致性）
+      let frozen = false;
+      try {
+        const fr = await db.execute({
+          sql: "SELECT id, qty FROM inventory WHERE child_id = ? AND item_key = 'freeze' AND qty > 0",
+          args: [childId],
+        });
+        if (fr.rows.length > 0) {
+          const freezeId = Number(fr.rows[0].id);
+          await db.execute({
+            sql: 'UPDATE inventory SET qty = qty - 1 WHERE id = ?',
+            args: [freezeId],
+          });
+          await db.execute({
+            sql: 'DELETE FROM inventory WHERE id = ? AND qty <= 0',
+            args: [freezeId],
+          });
+          frozen = true;
+          streak = streak + 1;
+          await db.execute({
+            sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?',
+            args: [streak, childId],
+          });
+          await logGrowthEvent(
+            childId,
+            'freeze',
+            '🧊',
+            '冰冻徽章保护',
+            '🧊 冰冻徽章自动消耗，' + cursor + ' 漏卡但连胜未中断！'
+          );
+        }
+      } catch {
+        /* inventory 表可能不存在 */
+      }
+      if (!frozen) {
+        consecutiveMissed++;
+        await applyPenalty(childId, cursor, consecutiveMissed);
+        streak = 0;
+      }
+    } else {
+      consecutiveMissed = 0;
+      streak = streak + 1;
+    }
+    await db.execute({
+      sql: 'UPDATE castle_state SET streak_days = ? WHERE child_id = ?',
+      args: [streak, childId],
+    });
+    last = cursor;
+    cursor = addDays(cursor, 1);
+  }
+  if (last !== initialLast) {
+    await db.execute({
+      sql: 'UPDATE castle_state SET last_settled_day = ? WHERE child_id = ?',
+      args: [last, childId],
+    });
+  }
 }
