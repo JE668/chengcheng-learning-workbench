@@ -172,7 +172,7 @@ export default function MakeTen({ onFinish, level = 1 }: { onFinish: (score: num
           <button
             key={c}
             onClick={() => pick(c)}
-            className="py-4 rounded-2xl bg-gradient-to-r from-moko-yellow to-moko-gold text-white text-3xl font-black shadow hover:scale-105 transition"
+            className="py-4 rounded-2xl bg-gradient-to-r from-moko-yellow to-moko-gold text-white text-3xl font-black shadow hover:scale-105 active:scale-95 transition"
           >
             {c}
           </button>

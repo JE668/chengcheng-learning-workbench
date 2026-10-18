@@ -157,7 +157,7 @@ export default function PinyinSpell({ onFinish, level = 1 }: { onFinish: (score:
           <button
             key={f}
             onClick={() => pick(f)}
-            className="py-5 rounded-2xl bg-gradient-to-r from-moko-purple to-moko-violet text-white text-3xl font-black shadow hover:scale-105 transition"
+            className="py-5 rounded-2xl bg-gradient-to-r from-moko-purple to-moko-violet text-white text-3xl font-black shadow hover:scale-105 active:scale-95 transition"
           >
             {f}
           </button>

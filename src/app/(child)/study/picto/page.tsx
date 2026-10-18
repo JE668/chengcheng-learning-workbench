@@ -73,7 +73,7 @@ export default function PictoPage() {
       </div>
 
       <div className="text-center mt-6">
-        <button onClick={next} className="px-8 py-4 rounded-3xl bg-moko-violet text-white font-black text-lg shadow hover:scale-105 transition">➡ 下一个字</button>
+        <button onClick={next} className="px-8 py-4 rounded-3xl bg-moko-violet text-white font-black text-lg shadow hover:scale-105 active:scale-95 transition">➡ 下一个字</button>
       </div>
     </div>
   );

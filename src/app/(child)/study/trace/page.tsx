@@ -168,19 +168,19 @@ export default function TracePage() {
         <div className="flex flex-wrap gap-3 justify-center mt-5">
           <button
             onClick={read}
-            className="rounded-2xl px-5 py-3 bg-moko-violet text-white font-black shadow hover:scale-105 transition"
+            className="rounded-2xl px-5 py-3 bg-moko-violet text-white font-black shadow hover:scale-105 active:scale-95 transition"
           >
             🔊 听读音
           </button>
           <button
             onClick={readPhrase}
-            className="rounded-2xl px-5 py-3 bg-moko-cyan text-white font-black shadow hover:scale-105 transition"
+            className="rounded-2xl px-5 py-3 bg-moko-cyan text-white font-black shadow hover:scale-105 active:scale-95 transition"
           >
             📖 听词语
           </button>
           <button
             onClick={clear}
-            className="rounded-2xl px-5 py-3 bg-gray-200 text-gray-700 font-black shadow hover:scale-105 transition"
+            className="rounded-2xl px-5 py-3 bg-gray-200 text-gray-700 font-black shadow hover:scale-105 active:scale-95 transition"
           >
             🧽 重写
           </button>
@@ -189,7 +189,7 @@ export default function TracePage() {
         <div className="flex items-center gap-6 mt-6">
           <button
             onClick={prev}
-            className="rounded-full w-14 h-14 bg-moko-yellow text-white font-black shadow text-2xl hover:scale-105 transition"
+            className="rounded-full w-14 h-14 bg-moko-yellow text-white font-black shadow text-2xl hover:scale-105 active:scale-95 transition"
           >
             ‹
           </button>
@@ -198,7 +198,7 @@ export default function TracePage() {
           </span>
           <button
             onClick={next}
-            className="rounded-full w-14 h-14 bg-moko-pink text-white font-black shadow text-2xl hover:scale-105 transition"
+            className="rounded-full w-14 h-14 bg-moko-pink text-white font-black shadow text-2xl hover:scale-105 active:scale-95 transition"
           >
             ›
           </button>

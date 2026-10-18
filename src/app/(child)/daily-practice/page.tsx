@@ -490,7 +490,7 @@ export default function DailyPracticePage() {
           )}
           <button
             onClick={retry}
-            className="mt-6 px-8 py-3 rounded-full bg-white text-moko-rose font-black hover:scale-105 transition"
+            className="mt-6 px-8 py-3 rounded-full bg-white text-moko-rose font-black hover:scale-105 active:scale-95 transition"
           >
             继续练习没完成的科目
           </button>

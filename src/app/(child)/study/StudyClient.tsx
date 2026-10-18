@@ -150,7 +150,7 @@ export function StudyClient({ rec }: StudyClientProps) {
               <a
                 key={s.key}
                 href={`/study/${s.key}`}
-                className={`rounded-3xl p-5 shadow-xl border-2 ${s.border} ${s.color} text-white hover:scale-105 transition block`}
+                className={`rounded-3xl p-5 shadow-xl border-2 ${s.border} ${s.color} text-white hover:scale-105 active:scale-95 transition block`}
               >
                 <Image
                   src={s.img}
@@ -175,7 +175,7 @@ export function StudyClient({ rec }: StudyClientProps) {
             <Link
               key={t.href}
               href={t.href}
-              className="flex items-center gap-4 rounded-2xl p-4 shadow-lg border-2 border-moko-purple/20 bg-white text-center hover:scale-105 transition"
+              className="flex items-center gap-4 rounded-2xl p-4 shadow-lg border-2 border-moko-purple/20 bg-white text-center hover:scale-105 active:scale-95 transition"
             >
               <span className="text-4xl">{t.emoji}</span>
               <div className="flex-1">
