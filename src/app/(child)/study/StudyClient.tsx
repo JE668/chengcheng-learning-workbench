@@ -26,6 +26,7 @@ const cards = [
     img: '/moko/heartping.jpg',
     color: 'bg-moko-pink',
     border: 'border-moko-pink/30',
+    clay: 'clay-pink',
   },
   {
     key: 'math',
@@ -34,6 +35,7 @@ const cards = [
     img: '/moko/courageping.jpg',
     color: 'bg-moko-blue',
     border: 'border-moko-blue/30',
+    clay: 'clay-blue',
   },
   {
     key: 'english',
@@ -42,6 +44,7 @@ const cards = [
     img: '/moko/singping.jpg',
     color: 'bg-moko-yellow',
     border: 'border-moko-yellow/30',
+    clay: 'clay-gold',
   },
 ];
 
@@ -150,7 +153,7 @@ export function StudyClient({ rec }: StudyClientProps) {
               <a
                 key={s.key}
                 href={`/study/${s.key}`}
-                className={`rounded-3xl p-5 shadow-xl border-2 ${s.border} ${s.color} text-white hover:scale-105 active:scale-95 transition block`}
+                className={`clay-card clay-theme ${s.clay} rounded-3xl p-5 border-2 ${s.border} ${s.color} text-white hover:scale-105 transition block`}
               >
                 <Image
                   src={s.img}
@@ -175,7 +178,7 @@ export function StudyClient({ rec }: StudyClientProps) {
             <Link
               key={t.href}
               href={t.href}
-              className="flex items-center gap-4 rounded-2xl p-4 shadow-lg border-2 border-moko-purple/20 bg-white text-center hover:scale-105 active:scale-95 transition"
+              className="flex items-center gap-4 rounded-2xl p-4 clay-card border-2 border-moko-purple/20 bg-white text-center hover:scale-105 transition"
             >
               <span className="text-4xl">{t.emoji}</span>
               <div className="flex-1">
