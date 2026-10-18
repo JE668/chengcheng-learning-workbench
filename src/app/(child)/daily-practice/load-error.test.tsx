@@ -15,7 +15,7 @@ import React from 'react';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, cleanup, waitFor } from '@testing-library/react';
 
-vi.mock('@/lib/speak', () => ({ playTts: vi.fn(async () => {}) }));
+vi.mock('@/lib/speak', () => ({ playTts: vi.fn(async () => {}), prefetchTtsBatch: vi.fn() }));
 vi.mock('@/lib/sfx', () => ({ sfxComplete: vi.fn(), sfxWrong: vi.fn() }));
 // 不 mock @/lib/stores：页面只用 useOfflineStore.getState()，用真实 store 更省事
 // （jsdom 有 localStorage，zustand persist 能正常工作）。

@@ -18,6 +18,7 @@ import { playTtsWithResult } from '@/lib/speak';
 // mock 掉真正的朗读实现，聚焦「orchestrator 是否委派给它」
 vi.mock('@/lib/speak', () => ({
   playTtsWithResult: vi.fn(),
+  prefetchTtsBatch: vi.fn(),
 }));
 
 import { TTSOrchestrator, getTTSOrchestrator, resetTTSOrchestrator } from './orchestrator';

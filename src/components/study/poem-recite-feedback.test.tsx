@@ -13,7 +13,7 @@ import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, cleanup, fireEvent, waitFor } from '@testing-library/react';
 
-vi.mock('@/lib/speak', () => ({ speakZh: vi.fn(), speakEn: vi.fn() }));
+vi.mock('@/lib/speak', () => ({ speakZh: vi.fn(), speakEn: vi.fn(), prefetchTtsBatch: vi.fn() }));
 vi.mock('@/lib/mistake-logger', () => ({ useMistakeLogger: () => vi.fn() }));
 vi.mock('@/lib/module-progress', () => ({
   useModuleProgress: () => ({

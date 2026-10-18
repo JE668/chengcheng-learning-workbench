@@ -18,6 +18,7 @@ vi.mock('@/lib/speak', () => ({
   praise: vi.fn(),
   playTts: vi.fn(async () => {}),
   playTtsEnd: vi.fn(async () => {}),
+  prefetchTtsBatch: vi.fn(),
 }));
 vi.mock('@/lib/mistake-logger', () => ({ useMistakeLogger: () => vi.fn() }));
 
