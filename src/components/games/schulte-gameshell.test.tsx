@@ -19,6 +19,10 @@ vi.mock('next/image', () => ({
   default: (p: Record<string, unknown>) => React.createElement('img', p),
 }));
 vi.mock('@/lib/sfx', () => ({ sfxComplete: vi.fn(), sfxClick: vi.fn() }));
+// GameShell 的镇守萌可收官会念台词（playTts）——TTS 与关卡断言无关，
+// mock 掉避免测试环境走真实三层语音策略（CI 上曾因此炸出
+// 「the error was thrown after the test completed」）。
+vi.mock('@/lib/speak', () => ({ playTts: vi.fn(() => Promise.resolve()) }));
 
 const recordGameResult = vi.fn(() => 2); // 本局打完升到第 2 关
 vi.mock('@/lib/game-difficulty', () => ({

@@ -67,7 +67,10 @@ export default function GameShell({
           ? `${m.name}说：${finalScore} 分真不错，我们下次挑战更高！`
           : `${m.name}说：没关系，${m.name}陪你再玩一次！`;
     setMokoMsg(mokoMsg);
-    void playTts(mokoMsg, 'zh', { wsRate: 0.85 });
+    // ⚠️ playTts 的返回值不保证是 Promise（三层 TTS 策略里部分分支返回 void，
+    // 测试环境下 mock 也可能缺 then）——用 Promise.resolve 包一层再 void，
+    // 语音失败/未返回都不影响结算卡。
+    void Promise.resolve(playTts(mokoMsg, 'zh', { wsRate: 0.85 }));
     try {
       const res = await fetch('/api/tasks/game-complete', {
         method: 'POST',
