@@ -199,12 +199,14 @@ function emptyMetrics(): TTSMetrics {
   return {
     totalRequests: 0,
     successByEngine: {
+      'local-audio': 0,
       'web-speech-strict': 0,
       'web-speech-loose': 0,
       'edge-tts': 0,
     },
     fallbackCount: 0,
     avgLatencyByEngine: {
+      'local-audio': 0,
       'web-speech-strict': 0,
       'web-speech-loose': 0,
       'edge-tts': 0,

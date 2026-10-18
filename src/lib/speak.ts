@@ -84,6 +84,62 @@ function getCachedBlob(text: string, lang: 'zh' | 'en', rate: string): Blob | un
   return ttsBlobCache.get(`${lang}|${rate}|${text}`);
 }
 
+/* ───────────────────────────────────────────────────────────────
+ * 第 0 层：预生成本地音频（2026-10-18 B0）
+ * 静态内容的 MP3 由 scripts/gen-audio.mjs 生成于 public/audio/{zh,en}/。
+ * 文件名 = encodeURIComponent(text)（与 scripts/audio-manifest.mjs 的
+ * audioFileName 同算法）。HEAD 探测会拖慢首次播放——这里直接尝试播放，
+ * onerror 视为未命中，降级到后续层。播放成功与否由 Promise 回执。
+ * ─────────────────────────────────────────────────────────────── */
+function localAudioUrl(text: string, lang: 'zh' | 'en'): string {
+  const enc = encodeURIComponent(text).replace(/[()*!']/g, (c) =>
+    ({ '(': '%28', ')': '%29', '*': '%2A', '!': '%21', "'": '%27' }[c] || c)
+  );
+  return `/audio/${lang}/${enc}.mp3`;
+}
+
+/** 第 0 层播放器：命中返回 true；404/解码失败返回 false（降级信号）。 */
+function playLocalAudio(
+  text: string,
+  lang: 'zh' | 'en',
+  wsRate: number,
+  pauseMs: number
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !('Audio' in window)) {
+      resolve(false);
+      return;
+    }
+    // 动态文本（题干/台词/长短句）几乎必然未命中——快速长度门限，
+    // 避免「先等 404 再降级」给高频动态调用加半拍延迟。静态清单的
+    // 汉字/单词/古诗句全部 ≤ 20 字（古诗最长句 12 字 + 标点）。
+    const plain = text.replace(/[，。！？、：；,.!?\s]/g, '');
+    if (plain.length === 0 || plain.length > 20) {
+      resolve(false);
+      return;
+    }
+    try {
+      const audio = new Audio(localAudioUrl(text, lang));
+      // playbackRate 与 Web Speech 的 rate 同域（0.5~2），超界浏览器自动钳制
+      if (wsRate && wsRate > 0 && wsRate !== 1) audio.playbackRate = wsRate;
+      let settled = false;
+      const done = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        // 释放 src 让 GC 回收（本地静态文件走 HTTP 缓存，无需 ObjectURL）
+        if (!ok) audio.removeAttribute('src');
+        if (ok && pauseMs > 0) setTimeout(() => resolve(true), pauseMs);
+        else resolve(ok);
+      };
+      audio.onended = () => done(true);
+      audio.onerror = () => done(false);
+      audio.play().catch(() => done(false));
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
 function unlockAudioOnce() {
   if (audioUnlocked) return;
   audioUnlocked = true;
@@ -226,7 +282,7 @@ export async function playTtsWithResult(
   opts: { wsRate?: number; pitch?: number; pauseMs?: number } = {}
 ): Promise<{
   success: boolean;
-  engineUsed: 'web-speech-strict' | 'web-speech-loose' | 'edge-tts';
+  engineUsed: 'local-audio' | 'web-speech-strict' | 'web-speech-loose' | 'edge-tts';
   latencyMs: number;
 }> {
   const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -235,6 +291,21 @@ export async function playTtsWithResult(
   const wsRate = opts.wsRate ?? 0.8;
   const pitch = opts.pitch ?? 1.05;
   const pauseMs = opts.pauseMs ?? 0;
+
+  // ── 第 0 层：预生成本地音频（2026-10-18 B0）──────────────────
+  // 静态学习内容（汉字/拼音例字/古诗句/英语单词）已由 edge-tts 预生成 MP3
+  //（scripts/gen-audio.mjs → public/audio，与第 3 层同嗓音）。命中 = 零合成
+  // 延迟 + 音色与在线合成完全一致。排在 Web Speech 之前：Android WebView
+  // 的 Web Speech 本就不可靠，且神经嗓音在 iOS 上也比系统嗓音稳。
+  // 速率用 HTMLAudioElement.playbackRate 实现（0.5~2 与 Web Speech 域对齐）。
+  const localHit = await playLocalAudio(text, lang, wsRate, pauseMs);
+  if (localHit) {
+    return {
+      success: true,
+      engineUsed: 'local-audio',
+      latencyMs: Math.round(now() - startedAt),
+    };
+  }
 
   // ── 第 1 层：本地 Web Speech 严格匹配（零延迟，普通话）────────
   if (hasStrictVoice(lang)) {

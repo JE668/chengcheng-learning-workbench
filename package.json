@@ -37,6 +37,8 @@
     "seed": "node scripts/seed.mjs",
     "prepare-hanzi": "node scripts/prepare-hanzi-data.mjs",
     "check-media": "node scripts/check-media.mjs",
+    "check-audio": "node scripts/check-audio.mjs",
+    "gen-audio": "node scripts/gen-audio.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

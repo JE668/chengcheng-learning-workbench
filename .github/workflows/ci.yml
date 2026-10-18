@@ -93,6 +93,9 @@ jobs:
       - name: 媒体登记一致性（课本 PDF / 封面图是否存在）
         run: pnpm check-media
 
+      - name: 音频资产一致性（预生成 TTS 是否齐全）
+        run: pnpm check-audio
+
       - name: 生成物与源一致（萌可图鉴）
         run: |
           node scripts/gen-moko-collection.cjs

@@ -23,6 +23,8 @@ services:
       # NAS 上仓库的实际位置（飞牛 FnOS 存储池前缀为 /vol1）
       - /vol1/1000/Docker/chengcheng-workbench/media/raz:/app/public/raz
       - /vol1/1000/Docker/chengcheng-workbench/media/textbooks:/app/public/textbooks
+      # 预生成 TTS 音频（可选覆盖通道，语义见 docker-compose.ghcr.yml 注释）
+      - /vol1/1000/Docker/chengcheng-workbench/media/audio:/app/public/audio
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
       interval: 30s

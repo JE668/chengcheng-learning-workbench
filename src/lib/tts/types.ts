@@ -1,7 +1,12 @@
 /** TTS 策略接口定义 */
 
 export type TTSLanguage = 'zh' | 'en';
-export type TTSEngineType = 'web-speech-strict' | 'web-speech-loose' | 'edge-tts';
+/** local-audio = 预生成静态 MP3（2026-10-18 B0：汉字/拼音例字/古诗句/英语单词） */
+export type TTSEngineType =
+  | 'local-audio'
+  | 'web-speech-strict'
+  | 'web-speech-loose'
+  | 'edge-tts';
 
 export interface TTSOptions {
   /** 语速 (0.1 - 2.0) */
