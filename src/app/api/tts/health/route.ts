@@ -14,6 +14,9 @@ const HEALTH_LIMIT = { windowSeconds: 60, maxRequests: 30 };
  */
 let pythonCache: { at: number; version: string } | null = null;
 const PYTHON_CACHE_TTL_MS = 60_000;
+/** 真实合成探测结果缓存（合成有网络开销，TTL 拉长到 5 分钟） */
+let synthCache: { at: number; ok: boolean } | null = null;
+const SYNTH_CACHE_TTL_MS = 5 * 60_000;
 
 /**
  * GET /api/tts/health — TTS 服务健康检查。
@@ -41,6 +44,28 @@ export async function GET(req: NextRequest) {
       const { execSync } = await import('node:child_process');
       const version = execSync('python3 --version', { timeout: 3000, encoding: 'utf8' }).trim();
       pythonCache = { at: now, version };
+    }
+    // ⚠️ 真实合成探测（2026-10-19）：只查「python3 在不在」会漏掉
+    // edge-tts 令牌被 Microsoft 拒绝这类「进程活着但合成必败」的故障
+    //（7.2.8 实测：health 200 而合成全 500）。每次（TTL 内首次）真合成
+    // 一小段，失败时把 ok 置 false 并带上错误——诊断页据此直接显示根因。
+    let synthError: string | null = null;
+    if (!synthCache || now - synthCache.at > SYNTH_CACHE_TTL_MS) {
+      try {
+        const { synthesizeWithEdgeTTS } = await import('../_lib');
+        const buf = await synthesizeWithEdgeTTS('测', 'zh-CN-XiaoxiaoNeural', '+0%');
+        synthCache = { at: now, ok: buf.length > 100 };
+        if (!synthCache.ok) synthError = '合成返回空音频';
+      } catch (e) {
+        synthCache = { at: now, ok: false };
+        synthError = (e as Error).message.slice(0, 120);
+      }
+    }
+    if (!synthCache?.ok) {
+      return NextResponse.json(
+        { ok: false, python: pythonCache.version, synthError: synthError ?? '合成探测失败' },
+        { status: 503 }
+      );
     }
     return NextResponse.json({ ok: true, python: pythonCache.version });
   } catch {

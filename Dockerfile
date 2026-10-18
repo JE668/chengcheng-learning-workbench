@@ -33,10 +33,13 @@ RUN pnpm build && \
 FROM node:22-bookworm-slim AS runner
 
 # 安装运行依赖（Python + edge-tts），ffmpeg 未使用故不安装
+# ⚠️ edge-tts 钉 7.3.1：7.2.x 的 Sec-MS-GEC 令牌算法已被 Microsoft 服务端
+# 拒绝（2025 收紧校验），实测表现为「健康检查 200 但合成全 500」——
+# NAS 上 7.2.8 每请求必败、7.3.1 正常。升版本前须先本地验证令牌链路。
 RUN apt-get update && apt-get install -y --no-install-recommends --no-install-suggests \
     python3 python3-pip tzdata \
     && rm -rf /var/lib/apt/lists/* /tmp/* \
-    && pip3 install --no-cache-dir --break-system-packages edge-tts==7.2.8 \
+    && pip3 install --no-cache-dir --break-system-packages edge-tts==7.3.1 \
     && pip3 cache purge \
     && rm -rf /root/.cache
 
