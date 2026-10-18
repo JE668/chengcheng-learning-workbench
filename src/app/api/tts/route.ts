@@ -68,7 +68,13 @@ export async function POST(req: NextRequest) {
   // rate 会原样透传给 Python 的 Communicate(rate=...) 并参与缓存 key，
   // 必须校验格式，否则任意字符串会污染缓存键并可能让上游报错。
   const r = typeof rate === 'string' && RATE_PATTERN.test(rate) ? rate : '+0%';
-  const cacheKey = ttsCacheKey(text, voice, r);
+  // ⚠️ 缓存 key 必须用 lang（zh/en）而不是 voice：批接口与客户端 blob
+  // 缓存都用 ${lang}|${rate}|${text} 模板。此前这里用 voice 当第一段，
+  // 与批接口（B4 预取）的 key 空间永不相交——批预取合成好的条目，
+  // 实时播放的单接口永远查不中，每条都重新排队合成（安卓平板无声
+  // 的最后一块拼图）。lang→voice 是双射，key 用 lang 无损。
+  const langKey = lang === 'en' ? 'en' : 'zh';
+  const cacheKey = ttsCacheKey(text, langKey, r);
   const cached = ttsCache.get(cacheKey);
   if (cached) {
     return new NextResponse(new Uint8Array(cached.data), {

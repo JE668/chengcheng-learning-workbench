@@ -9,7 +9,7 @@
 // v5：修复页面导航缓存里的 Response.clone() 时序错误（clone 必须在 return 之前同步完成，
 //     否则抛 "Response body is already used" 并导致页面缓存静默失效）。
 // 版本号变化会让 activate 阶段的 cleanupOldCaches 清掉所有旧缓存。
-const CACHE_VERSION = 'ccwb-v5';
+const CACHE_VERSION = 'ccwb-v6';
 const CACHE_NAME = `ccwb-${CACHE_VERSION}`;
 const OFFLINE_CACHE = `ccwb-offline-${CACHE_VERSION}`;
 const API_CACHE = `ccwb-api-${CACHE_VERSION}`;
@@ -108,11 +108,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 静态资源：Cache First + 网络回退
+  // 静态资源：Cache First + 网络回退。
+  // ⚠️ /audio/ 预生成 MP3 必须在这里（B0 第 0 层零延迟朗读的根基）：
+  // 此前 .mp3 不在扩展名列表里，落到「Network First」桶——每次 L0 播放
+  // 都先打网络再回退，弱网时 L0 变成「先等网络失败」，零延迟优势蒸发
+  // （安卓平板无声问题被进一步放大）。MP3 是内容寻址（文件名=文本），
+  // 内容永不变更，Cache First 语义完全安全。
   const isStatic =
     url.pathname.startsWith('/_next/static') ||
     url.pathname.startsWith('/moko/') ||
-    /\.(?:png|jpg|jpeg|svg|webp|gif|ico|woff2?|css|js|map)$/.test(url.pathname);
+    url.pathname.startsWith('/audio/') ||
+    /\.(?:png|jpg|jpeg|svg|webp|gif|ico|woff2?|css|js|map|mp3)$/.test(url.pathname);
   if (isStatic) {
     event.respondWith(cacheFirstThenNetwork(req, CACHE_NAME, event));
     return;
