@@ -192,7 +192,12 @@ function getCachedBlob(text: string, lang: 'zh' | 'en', rate: string): Blob | un
  * onerror 视为未命中，降级到后续层。播放成功与否由 Promise 回执。
  * ─────────────────────────────────────────────────────────────── */
 function localAudioUrl(text: string, lang: 'zh' | 'en'): string {
-  const enc = encodeURIComponent(text).replace(/[()*!']/g, (c) =>
+  // ⚠️ 英语统一小写：清单（scripts/audio-manifest.mjs）把 LETTERS 的 'Apple'
+  // 与词表的 'apple' 合并成一个小写文件（macOS 大小写不敏感文件系统会让
+  // 大写版静默覆盖小写版，Linux 上则缺文件——check-audio 已抓过这个坑）。
+  // 播放层必须同规则，否则 'Apple' 请求 /audio/en/Apple.mp3 必然 404。
+  const src = lang === 'en' ? text.toLowerCase() : text;
+  const enc = encodeURIComponent(src).replace(/[()*!']/g, (c) =>
     ({ '(': '%28', ')': '%29', '*': '%2A', '!': '%21', "'": '%27' }[c] || c)
   );
   return `/audio/${lang}/${enc}.mp3`;

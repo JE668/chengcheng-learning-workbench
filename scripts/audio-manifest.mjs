@@ -58,10 +58,14 @@ export function extractAudioManifest() {
   }
 
   // ④ 英语单词：ALL_EN_WORDS 由 EN_WORD_TOPICS 聚合，word 字段直接抓 study-data-en.ts
+  //    + LETTERS 的单词（Apple/Ball...首字母题朗读用）。
+  //    ⚠️ 统一转小写：词表 'apple' 与首字母题 'Apple' 读音相同，但 macOS
+  //    文件系统大小写不敏感——'Apple.mp3' 会写进已存在的 'apple.mp3'，
+  //    生成端静默跳过、CI（Linux 大小写敏感）精确查找却缺文件（check-audio
+  //    首次立功抓的就是这个）。播放层 audioFileName 同步小写化兜底。
   const enSrc = read('src/lib/study-data-en.ts');
-  for (const m of enSrc.matchAll(/word:\s*'([^']+)'/g)) en.push(m[1]);
-  // LETTERS 的单词（Apple/Ball...首字母题朗读用）
-  for (const m of enSrc.matchAll(/\{\s*letter:\s*'[A-Z]',\s*word:\s*'([^']+)'/g)) en.push(m[1]);
+  for (const m of enSrc.matchAll(/word:\s*'([^']+)'/g)) en.push(m[1].toLowerCase());
+  for (const m of enSrc.matchAll(/\{\s*letter:\s*'[A-Z]',\s*word:\s*'([^']+)'/g)) en.push(m[1].toLowerCase());
 
   return {
     zh: dedupeSorted(zh),
