@@ -173,7 +173,10 @@ export function StudyClient({ rec }: StudyClientProps) {
 
         {/* 趣味表达与练习 */}
         <h2 className="text-2xl font-black text-moko-violet mt-10 mb-3">🎨 趣味表达与练习</h2>
-        <div className="flex gap-2 justify-center">
+        {/* 三张工具卡（emoji+标题+副标题+箭头）窄屏横排必然溢出容器
+            （用户报：从首页卡片穿出来了）。改纵向堆叠，md+ 恢复横排；
+            文本块加 min-w-0 + truncate 防长副标题撑爆。 */}
+        <div className="grid gap-3 md:flex md:gap-2 md:justify-center">
           {TOOLS.map((t) => (
             <Link
               key={t.href}
@@ -181,9 +184,9 @@ export function StudyClient({ rec }: StudyClientProps) {
               className="flex items-center gap-4 rounded-2xl p-4 clay-card bg-white text-center hover:scale-105 transition"
             >
               <span className="text-4xl">{t.emoji}</span>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <h3 className="font-black text-moko-violet">{t.title}</h3>
-                <p className="text-gray-500">{t.sub}</p>
+                <p className="text-gray-500 truncate">{t.sub}</p>
               </div>
               <span className="text-moko-violet font-black">打开 ›</span>
             </Link>

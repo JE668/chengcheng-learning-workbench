@@ -45,6 +45,121 @@ export default function TtsDiagPage() {
     }
   }, [orchestrator]);
 
+  /**
+   * 📦 L0 直链测试（2026-10-18 新增）：平板/手机没有控制台——这两个
+   * 测试把结果打在页面上，一眼看清 L0/L3 各自是否健康。
+   * 直接 new Audio('/audio/zh/<预生成文件>.mp3') 绕过 speak.ts 全链，
+   * 只验证「静态文件可达 + 能出声」。失败=文件 404/被 SW 拦/解码问题，
+   * 与服务端无关；成功=继续测 L3。
+   */
+  async function testLocalAudio() {
+    setBusy(true);
+    clearLog();
+    push('=== 📦 L0 本地 MP3 直链测试 ===');
+    // 用 manifest 里确定存在的文件（汉字「一」与英语「apple」都已被
+    // gen-audio 生成并提交进镜像——check-audio 护栏保证它们永远在）
+    const cases: Array<{ label: string; url: string }> = [
+      { label: '汉字「一」', url: '/audio/zh/%E4%B8%80.mp3' },
+      { label: '英语「apple」', url: '/audio/en/apple.mp3' },
+    ];
+    for (const c of cases) {
+      push(`测试 ${c.label}: ${c.url}`);
+      const ok = await new Promise<boolean>((resolve) => {
+        try {
+          const a = new Audio(c.url);
+          const t = setTimeout(() => resolve(false), 8000); // 兜底：静默卡死时 8s 判死
+          a.onended = () => {
+            clearTimeout(t);
+            resolve(true);
+          };
+          a.onerror = () => {
+            clearTimeout(t);
+            resolve(false);
+          };
+          a.play().catch(() => {
+            clearTimeout(t);
+            resolve(false);
+          });
+        } catch {
+          resolve(false);
+        }
+      });
+      push(ok ? `  ✅ 播放成功（有声音=文件与解码 OK）` : `  ❌ 播放失败（404/被拦/无法解码）`);
+      // 顺带 HEAD 看看 HTTP 状态（区分 404 vs 解码失败）
+      try {
+        const r = await fetch(c.url, { method: 'HEAD' });
+        push(`  HTTP HEAD 状态: ${r.status} ${r.status === 200 ? '✅' : '⚠️'}`);
+      } catch {
+        push('  HTTP HEAD 失败: fetch 抛异常（网络层不通）');
+      }
+      push('');
+    }
+    push('结论：两行都 ✅ → L0 正常，无声问题在别层；有 ❌ → 把日志截图发开发者。');
+    setBusy(false);
+  }
+
+  /**
+   * 🌐 L3 服务端端到端测试：POST /api/tts 拿 MP3 blob 直接播放。
+   * 失败=服务端合成链路问题（Python 进程/edge-tts 网络/限流），
+   * 成功=服务端健康，无声问题在客户端缓存/降级逻辑。
+   */
+  async function testServerTts() {
+    setBusy(true);
+    clearLog();
+    push('=== 🌐 L3 服务端 TTS 端到端测试 ===');
+    const t0 = Date.now();
+    try {
+      const r = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: '服务端语音测试', lang: 'zh', rate: '+0%' }),
+      });
+      push(`HTTP 状态: ${r.status}（耗时 ${Date.now() - t0}ms）`);
+      if (!r.ok) {
+        const body = await r.text();
+        push(`❌ 服务端返回错误: ${body.slice(0, 200)}`);
+        push('结论：服务端合成链路异常——Python 进程/edge-tts 网络问题，截图发开发者。');
+        setBusy(false);
+        return;
+      }
+      const blob = await r.blob();
+      push(`返回体: ${blob.size} 字节, 类型 ${blob.type || '(空)'}（总耗时 ${Date.now() - t0}ms）`);
+      if (blob.size < 100) {
+        push('❌ 返回体异常小（<100B），疑似空音频');
+        setBusy(false);
+        return;
+      }
+      const ok = await new Promise<boolean>((resolve) => {
+        try {
+          const a = new Audio(URL.createObjectURL(blob));
+          const t = setTimeout(() => resolve(false), 10000);
+          a.onended = () => {
+            clearTimeout(t);
+            URL.revokeObjectURL(a.src);
+            resolve(true);
+          };
+          a.onerror = () => {
+            clearTimeout(t);
+            URL.revokeObjectURL(a.src);
+            resolve(false);
+          };
+          a.play().catch(() => {
+            clearTimeout(t);
+            resolve(false);
+          });
+        } catch {
+          resolve(false);
+        }
+      });
+      push(ok ? '✅ 播放成功（服务端合成+客户端播放全链 OK）' : '❌ 拿到音频但播放失败（解码/自动播放策略）');
+      push('结论：✅ → 服务端健康；❌ → 截图发开发者。');
+    } catch (e) {
+      push(`❌ fetch 异常: ${(e as Error).message}`);
+      push('结论：网络层不通（反向代理/防火墙拦 POST？），截图发开发者。');
+    }
+    setBusy(false);
+  }
+
   async function runFullTest() {
     setBusy(true);
     clearLog();
@@ -300,6 +415,36 @@ export default function TtsDiagPage() {
           }}
         >
           🗑️ 清空日志
+        </button>
+        <button
+          onClick={testLocalAudio}
+          disabled={busy}
+          style={{
+            padding: '12px 24px',
+            fontSize: 16,
+            cursor: busy ? 'default' : 'pointer',
+            background: '#e6862c',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+          }}
+        >
+          📦 测本地MP3(L0)
+        </button>
+        <button
+          onClick={testServerTts}
+          disabled={busy}
+          style={{
+            padding: '12px 24px',
+            fontSize: 16,
+            cursor: busy ? 'default' : 'pointer',
+            background: '#c2309c',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+          }}
+        >
+          🌐 测服务端TTS(L3)
         </button>
       </div>
 

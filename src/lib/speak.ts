@@ -266,6 +266,9 @@ function localAudioUrl(text: string, lang: 'zh' | 'en'): string {
   // 大写版静默覆盖小写版，Linux 上则缺文件——check-audio 已抓过这个坑）。
   // 播放层必须同规则，否则 'Apple' 请求 /audio/en/Apple.mp3 必然 404。
   const src = lang === 'en' ? text.toLowerCase() : text;
+  // URL 侧 percent-encode（浏览器语义）：服务器收到 %E4%B8%80 会解码回
+  // 「一」再查磁盘——磁盘存的是**明文文件名**（audioFileName 的规则），
+  // 这里的编码与磁盘明文正好对偶。此前磁盘存 %E4 字面名导致全链 400。
   const enc = encodeURIComponent(src).replace(/[()*!']/g, (c) =>
     ({ '(': '%28', ')': '%29', '*': '%2A', '!': '%21', "'": '%27' }[c] || c)
   );

@@ -74,15 +74,25 @@ export function extractAudioManifest() {
 }
 
 /**
- * 文件名规则：URL 安全 + 稳定。中文/特殊字符 → encodeURIComponent 再把
- * 不安全字符替换掉（encodeURIComponent 的输出全是安全字符，直接当文件名）。
+ * 文件名规则（2026-10-18 修正）：**明文**文件名，磁盘上存原始中文/英文。
+ *
+ * ⚠️ 历史教训：最初用 encodeURIComponent 的输出（%E4%B8%80）**当磁盘文件名**——
+ * 但浏览器请求 /audio/zh/%E4%B8%80.mp3 时，HTTP 服务器会把 %E4%B8%80
+ * **解码回「一」**再查磁盘。磁盘上是字面 %E4%B8%80.mp3、服务器找「一.mp3」
+ * → 400/404，L0 全链失效（平板/手机「没声音」的最终根因，本地起服实测抓到）。
+ *
+ * 正确语义：磁盘存明文（一.mp3），浏览器/客户端拼 URL 时 percent-encode
+ * （/audio/zh/%E4%B8%80.mp3），服务器解码后正好匹配明文文件。两边是对偶关系。
+ *
  * 与 speak.ts 的 localAudioUrl() 必须保持同一实现（那边同样算法拼 URL）。
+ * 文件名里的路径不安全字符（/ 等）仍需替换，用与 URL 编码一致的占位。
  */
 export function audioFileName(text) {
-  const enc = encodeURIComponent(text).replace(/[()*!']/g, (c) =>
-    ({ '(': '%28', ')': '%29', '*': '%2A', '!': '%21', "'": '%27' }[c] || c)
+  // 磁盘文件名：明文。仅替换文件系统/路径不安全字符。
+  const safe = text.replace(/[\\/:*?"<>|]/g, (c) =>
+    ({ '\\': '%5C', '/': '%2F', ':': '%3A', '*': '%2A', '?': '%3F', '"': '%22', '<': '%3C', '>': '%3E', '|': '%7C' }[c] || c)
   );
-  return `${enc}.mp3`;
+  return `${safe}.mp3`;
 }
 
 // 直接执行时打印清单统计（生成/校验脚本 import 使用）
