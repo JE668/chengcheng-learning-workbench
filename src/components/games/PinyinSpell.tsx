@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { speakPinyin } from '@/lib/speak';
+import { sfxCorrect, sfxWrong } from '@/lib/sfx';
 
 type Combo = { init: string; final: string; forms: string[]; han: string[] };
 
@@ -121,13 +122,20 @@ export default function PinyinSpell({ onFinish, level = 1 }: { onFinish: (score:
 
   function pick(form: string) {
     if (done) return;
-    if (form === q.target) {
+    const ok = form === q.target;
+    if (ok) {
       const bonus = streak >= 2 ? 5 : 0;
       setScore((s) => s + 10 + bonus);
       setStreak((x) => x + 1);
     } else {
       setStreak(0);
     }
+    // 🚀 B3 即时反馈（与 MakeTen 同款）
+    try {
+      if (ok) sfxCorrect();
+      else sfxWrong();
+      navigator.vibrate?.(ok ? 30 : [40, 40, 40]);
+    } catch {}
     setQ(makeQ());
   }
 

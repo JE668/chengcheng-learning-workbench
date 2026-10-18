@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { sfxCorrect, sfxWrong } from '@/lib/sfx';
 
 type Q = {
   kind: 'compose' | 'break' | 'carry' | 'borrow' | 'mixed';
@@ -133,13 +134,21 @@ export default function MakeTen({ onFinish, level = 1 }: { onFinish: (score: num
 
   function pick(n: number) {
     if (done) return;
-    if (n === q.answer) {
+    const ok = n === q.answer;
+    if (ok) {
       const bonus = streak >= 2 ? 5 : 0;
       setScore((s) => s + 10 + bonus);
       setStreak((x) => x + 1);
     } else {
       setStreak(0);
     }
+    // 🚀 B3 即时反馈：SFX (<50ms) + 触觉——答题手感的第一要素。
+    // try 包裹：jsdom 测试环境无 AudioContext 时静默。
+    try {
+      if (ok) sfxCorrect();
+      else sfxWrong();
+      navigator.vibrate?.(ok ? 30 : [40, 40, 40]);
+    } catch {}
     setQ(makeProblem(lv));
   }
 
