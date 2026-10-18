@@ -199,7 +199,7 @@ export function StudyClient({ rec }: StudyClientProps) {
           className="mt-6 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-gold/40 bg-gradient-to-r from-moko-gold/20 to-moko-yellow/20 hover:scale-[1.02] transition block"
         >
           <span className="text-4xl mb-1">📖</span>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <h2 className="text-2xl font-black text-moko-violet">电子课本 & 英语绘本</h2>
             <p className="text-gray-500 mb-4">一年级上册语文·数学课本，还有 RAZ 英语绘本跟读</p>
           </div>

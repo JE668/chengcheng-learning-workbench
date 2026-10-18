@@ -65,8 +65,9 @@ export default function Nav({ user }: { user: User }) {
 
   return (
     <>
-      {/* desktop sidebar */}
-      <aside className="hidden md:flex flex-col flex-shrink-0 flex-basis-64 w-64 h-screen sticky top-0 bg-gradient-to-b from-moko-purple to-moko-violet p-4 text-white shadow-xl">
+      {/* desktop sidebar。flex-shrink-0：外层 flex 行里 main 的宽内容
+          （跑马灯 max-content 轨道等）不得压缩侧栏——曾导致文字竖排。 */}
+      <aside className="hidden md:flex flex-col flex-shrink-0 w-64 h-screen sticky top-0 bg-gradient-to-b from-moko-purple to-moko-violet p-4 text-white shadow-xl">
         <div className="flex items-center gap-3 mb-8 px-2">
           <Image
             src="/moko/lemei.jpg"

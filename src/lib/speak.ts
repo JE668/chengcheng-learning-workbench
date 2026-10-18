@@ -28,6 +28,19 @@
  * 整体语速偏慢，适配一年级小朋友跟读。
  */
 
+/**
+ * 诊断日志：默认静默。localStorage 设 tts-debug=1 后在设备控制台/
+ * vConsole 里可见（安卓平板接 USB 调试时用），生产不刷屏。
+ */
+function ttsDebug(...args: unknown[]) {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage?.getItem('tts-debug') === '1')
+      console.log('[TTS]', ...args);
+  } catch {
+    /* localStorage 不可用则静默 */
+  }
+}
+
 let voicesReady = false;
 function ensureVoices() {
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
@@ -300,20 +313,24 @@ function playLocalAudio(
       // playbackRate 与 Web Speech 的 rate 同域（0.5~2），超界浏览器自动钳制
       if (wsRate && wsRate > 0 && wsRate !== 1) audio.playbackRate = wsRate;
       let settled = false;
-      // 时长兜底：部分安卓 WebView 在网络/解码异常时不触发 onerror，
-      // 只静默停住（readyState 永远不前进）——挂一个「合理最长时长」
-      // 计时器，超时按失败降级，绝不让 L0 把整个朗读链挂死。
-      // 静态短句的合理时长上限：60 字符撑死 15s（含 playbackRate 0.5）。
-      const failTimer = setTimeout(() => done(false), 15000);
+      // failTimer 必须先声明占位，done 定义后再赋值——箭头回调里引用
+      // 「声明前」的 const 会构成 TDZ 隐患（15s 后触发时若按严格求值
+      // 直接 ReferenceError），这里用 let 显式规避。
+      let failTimer: ReturnType<typeof setTimeout> | null = null;
       const done = (ok: boolean) => {
         if (settled) return;
         settled = true;
-        clearTimeout(failTimer);
+        if (failTimer) clearTimeout(failTimer);
         // 释放 src 让 GC 回收（本地静态文件走 HTTP 缓存，无需 ObjectURL）
         if (!ok) audio.removeAttribute('src');
         if (ok && pauseMs > 0) setTimeout(() => resolve(true), pauseMs);
         else resolve(ok);
       };
+      // 时长兜底：部分安卓 WebView 在网络/解码异常时不触发 onerror，
+      // 只静默停住（readyState 永远不前进）——挂一个「合理最长时长」
+      // 计时器，超时按失败降级，绝不让 L0 把整个朗读链挂死。
+      // 静态短句的合理时长上限：60 字符撑死 15s（含 playbackRate 0.5）。
+      failTimer = setTimeout(() => done(false), 15000);
       audio.onended = () => done(true);
       audio.onerror = () => done(false);
       audio.play().catch(() => done(false));
@@ -492,7 +509,7 @@ export async function playTtsWithResult(
 
   // ── 第 1 层：本地 Web Speech 严格匹配（零延迟，普通话）────────
   if (hasStrictVoice(lang)) {
-    console.log('[TTS-L1] strict Web Speech', lang, text.slice(0, 25));
+    ttsDebug('[TTS-L1] strict Web Speech', lang, text.slice(0, 25));
     const played = await speakEnd(text, lang === 'zh' ? 'zh-CN' : 'en-US', wsRate, pitch, pauseMs);
     if (played)
       return {
@@ -505,7 +522,7 @@ export async function playTtsWithResult(
   // ── 第 2 层：Web Speech 宽松兜底（零延迟，粤语/台式也行）────
   // 本机无严格嗓音时（如 Android Edge）先走宽松，总比走服务端快。
   if (typeof window !== 'undefined' && window.speechSynthesis) {
-    console.log('[TTS-L2] loose Web Speech', lang, text.slice(0, 25));
+    ttsDebug('[TTS-L2] loose Web Speech', lang, text.slice(0, 25));
     const loosePlayed = await speakEndLoose(
       text,
       lang === 'zh' ? 'zh' : 'en',
@@ -522,7 +539,7 @@ export async function playTtsWithResult(
   }
 
   // ── 第 3 层：服务端 edge-tts（神经嗓音，最后兜底）────────────
-  console.log('[TTS-L3] server edge-tts', lang, text.slice(0, 30));
+  ttsDebug('[TTS-L3] server edge-tts', lang, text.slice(0, 30));
   const serverOk = await tryServer(text, lang, { ...opts, wsRate, pitch });
   if (serverOk)
     return { success: true, engineUsed: 'edge-tts', latencyMs: Math.round(now() - startedAt) };

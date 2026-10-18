@@ -194,7 +194,7 @@ export default function CoOpPage() {
             className="flex items-center gap-4 rounded-2xl p-4 shadow-lg border-2 border-moko-purple/20 bg-white hover:scale-[1.02] transition block"
           >
             <span className="text-4xl">{t.emoji}</span>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <h3 className="font-black text-moko-violet">{t.title}</h3>
               <p className="text-sm text-gray-600">{t.desc}</p>
             </div>

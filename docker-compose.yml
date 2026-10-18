@@ -23,8 +23,11 @@ services:
       # NAS 上仓库的实际位置（飞牛 FnOS 存储池前缀为 /vol1）
       - /vol1/1000/Docker/chengcheng-workbench/media/raz:/app/public/raz
       - /vol1/1000/Docker/chengcheng-workbench/media/textbooks:/app/public/textbooks
-      # 预生成 TTS 音频（可选覆盖通道，语义见 docker-compose.ghcr.yml 注释）
-      - /vol1/1000/Docker/chengcheng-workbench/media/audio:/app/public/audio
+      # 预生成 TTS 音频：默认走镜像内置（648 个明文命名 MP3，随 5d6e7ea+ 镜像）。
+      # ⚠️ 2026-10-18 文件名规则改为明文（一.mp3）——若此前在 NAS 的
+      # media/audio/ 放过旧 %XX 命名文件，挂载会整体遮蔽镜像内新文件导致
+      # 全部无声。想用覆盖通道：清空旧文件后只放明文命名的新文件再解开此行。
+      # - /vol1/1000/Docker/chengcheng-workbench/media/audio:/app/public/audio
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
       interval: 30s

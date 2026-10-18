@@ -114,7 +114,7 @@ export default function MokoHousePage() {
       {nextMoko && (
         <div className="mt-5 rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-gold/20 flex items-center gap-3">
           <span className="text-3xl">🔜</span>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <p className="text-sm text-gray-500">下一只等待捕捉的萌可：</p>
             <p className="text-moko-violet font-black">{nextMoko.emoji} {nextMoko.mokoName}</p>
           </div>

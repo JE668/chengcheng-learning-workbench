@@ -611,7 +611,7 @@ function TimeGlassCard({
     <div className="rounded-3xl p-4 shadow-lg border-2 border-moko-violet/20 bg-moko-violet/5">
       <div className="flex items-center gap-3">
         <div className="text-4xl">⏳</div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="font-bold text-moko-violet">时光沙漏 ×{count}</div>
           <div className="text-xs text-gray-500">
             选一个过去漏做的日期，一键补打卡三科，恢复连续天数

@@ -54,7 +54,7 @@ export function AlgorithmHomeClient() {
       >
         <div className="flex items-center gap-3">
           <span className="text-3xl">📕</span>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="font-black text-gray-800">错题本</div>
             <div className="text-xs text-gray-500">回顾做错的题，巩固薄弱环节</div>
           </div>

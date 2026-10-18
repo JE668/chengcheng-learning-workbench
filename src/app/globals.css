@@ -251,7 +251,7 @@ body {
     6px 6px 18px rgba(var(--clay-h, 167, 139, 250), 0.35),
     inset 4px 4px 10px rgba(255, 255, 255, 0.45),
     inset -4px -4px 10px rgba(var(--clay-d, 124, 96, 220), 0.25);
-  transition: transform 140ms ease, box-shadow 140ms 140ms ease;
+  transition: transform 140ms ease, box-shadow 140ms ease;
 }
 .clay-btn:active {
   transform: scale(0.96);
