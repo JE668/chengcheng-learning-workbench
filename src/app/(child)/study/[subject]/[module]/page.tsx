@@ -36,6 +36,16 @@ export default async function StudyModulePage({
 
   return (
     <div className="max-w-4xl mx-auto pb-28 fade-up">
+      {/* 🍭 糖果房间：学科主题色环境光（方案②-3）。不识字的孩子靠颜色认房间。
+          fixed 全屏光晕从顶部洒下，pointer-events-none 不挡任何交互，
+          透明度 ≤0.13 保证正文对比度不受影响。 */}
+      <div
+        aria-hidden
+        className="fixed inset-x-0 top-0 h-72 pointer-events-none -z-10 transition-colors duration-700"
+        style={{
+          background: `radial-gradient(ellipse 80% 100% at 50% 0%, ${subj?.theme ?? 'rgba(167, 139, 250, 0.10)'}, transparent 70%)`,
+        }}
+      />
       <div className="flex items-center gap-3 mb-4">
         <Link href="/study" className="text-moko-violet font-bold hover:underline">
           ‹ 学习首页

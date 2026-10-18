@@ -184,8 +184,33 @@ export const STUDY_MODULES: Record<StudySubject, StudyModuleMeta[]> = {
   ],
 };
 
-export const SUBJECT_META: Record<StudySubject, { label: string; emoji: string; color: string; sub: string }> = {
-  chinese: { label: '语文城堡', emoji: '📖', color: 'text-moko-rose', sub: '爱心萌可陪你认字读诗' },
-  math: { label: '数学星球', emoji: '🔢', color: 'text-moko-blue', sub: '正正萌可带你算算比一比' },
-  english: { label: '英语乐园', emoji: '🔤', color: 'text-moko-yellow', sub: '唱唱萌可教你字母单词' },
+/** 学科主题环境光（方案②-3「糖果房间」）：
+ *  每个学科一个专属色，模块页顶部注入主题色渐变光晕——不识字的孩子
+ *  靠颜色就知道自己在哪个「房间」。色值与 moko 色板同源。
+ *  纪律（KidLearn Do/Don't）：光晕透明度 ≤0.13，保证正文对比度。 */
+export const SUBJECT_META: Record<
+  StudySubject,
+  { label: string; emoji: string; color: string; sub: string; theme: string }
+> = {
+  chinese: {
+    label: '语文城堡',
+    emoji: '📖',
+    color: 'text-moko-rose',
+    sub: '爱心萌可陪你认字读诗',
+    theme: 'rgba(255, 111, 165, 0.12)', // 粉房间
+  },
+  math: {
+    label: '数学星球',
+    emoji: '🔢',
+    color: 'text-moko-blue',
+    sub: '正正萌可带你算算比一比',
+    theme: 'rgba(56, 189, 248, 0.12)', // 蓝房间
+  },
+  english: {
+    label: '英语乐园',
+    emoji: '🔤',
+    color: 'text-moko-yellow',
+    sub: '唱唱萌可教你字母单词',
+    theme: 'rgba(252, 211, 77, 0.15)', // 金房间
+  },
 };
