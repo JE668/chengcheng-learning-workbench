@@ -13,7 +13,7 @@ import type {
   PracticeQuestion,
   PracticeSubmitResult,
 } from '@/lib/daily-practice';
-import { sfxComplete, sfxWrong } from '@/lib/sfx';
+import { sfxComplete, sfxWrong, sfxCorrect } from '@/lib/sfx';
 const KIND_META: Record<string, { label: string; grad: string; icon: string; subject: string }> = {
   pinyin: { label: '语文 · 拼音', grad: 'from-moko-pink to-moko-rose', icon: '🔤', subject: '语文' },
   dictation: { label: '语文 · 听写', grad: 'from-moko-pink to-moko-rose', icon: '✍️', subject: '语文' },
@@ -163,8 +163,19 @@ export default function DailyPracticePage() {
             : '哎呀，捣蛋萌可又溜回来了！再想一想，把它捉住！'
           : pickMokoLine(subject, ok);
       setPraise({ ok, text });
+      // 🚀 B2 叠音治理：答题瞬间 SFX 先响（<50ms 的即时听觉反馈），萌可
+      // 台词延迟 350ms 再上——避免「叮咚 + 说话」糊成一团。错题重选时
+      // SFX 尤其重要（孩子要立刻知道错了），台词晚一拍反而是节奏感。
+      try {
+        if (ok) sfxCorrect();
+        else sfxWrong();
+        // 轻触觉反馈（安卓平板支持，iOS Safari 忽略）
+        navigator.vibrate?.(ok ? 30 : [40, 40, 40]);
+      } catch {}
       const m = getMokoPraise(subject);
-      void playTts(`${m.name}说：${text} ${ok ? m.sign : ''}`, 'zh', { wsRate: 0.85 });
+      setTimeout(() => {
+        void playTts(`${m.name}说：${text} ${ok ? m.sign : ''}`, 'zh', { wsRate: 0.85 });
+      }, 350);
     },
     // selected 走函数式更新，无需列入依赖；q/idx 变化需重建
     [q, idx, selected]

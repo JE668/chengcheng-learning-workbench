@@ -46,6 +46,32 @@ function ensureVoices() {
 }
 
 /**
+ * 🚀 B2 voices 启动预热（2026-10-18）：
+ * Chrome/WebView 的 getVoices() 在页面加载初期经常返回空数组（异步加载，
+ * voiceschanged 可能数秒后才触发）。原 ensureVoices 只在首次 playTts 时才挂
+ * 监听——冷启动后的前几十秒 hasStrictVoice 恒 false，设备明明有严格嗓音
+ * 却被判定走 L2/L3。此函数由孩子端 layout 挂载时调用：立即触发一次枚举 +
+ * 挂监听，并**每 500ms 轮询直至就绪**（voiceschanged 在部分安卓 WebView
+ * 上根本不触发，轮询是唯一可靠信号；就绪即停）。
+ */
+export function warmupVoices() {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  ensureVoices();
+  if (voicesReady) return;
+  let tries = 0;
+  const poll = setInterval(() => {
+    tries++;
+    if (window.speechSynthesis.getVoices().length > 0) {
+      voicesReady = true;
+      clearInterval(poll);
+      return;
+    }
+    // 30 秒仍无嗓音（Android WebView 常态）——放弃，交给 L2/L3/本地文件层
+    if (tries >= 60) clearInterval(poll);
+  }, 500);
+}
+
+/**
  * Safari / iOS 严格自动播放策略：fetch → audio.play() 的异步链不被当作用户手势，
  * Safari 直接拦截。在首次用户交互时用静音 mp3 解锁整个页面的音频会话。
  * （Edge/Chrome/Android 对此更宽松，但统一解锁无副作用。）
