@@ -6,6 +6,7 @@ import { GuideModal } from '@/components/GuideModal';
 import { EmptyState } from '@/components/EmptyState';
 import { ClockFace } from '@/components/study/ClockFace';
 import { playTts } from '@/lib/speak';
+import { pickMokoLine, getMokoPraise, MokoPraiseBanner } from '@/components/study/MokoPraise';
 import { useOfflineStore } from '@/lib/stores';
 import type {
   PracticeDayRecord,
@@ -13,19 +14,19 @@ import type {
   PracticeSubmitResult,
 } from '@/lib/daily-practice';
 import { sfxComplete, sfxWrong } from '@/lib/sfx';
-const KIND_META: Record<string, { label: string; grad: string; icon: string }> = {
-  pinyin: { label: '语文 · 拼音', grad: 'from-moko-pink to-moko-rose', icon: '🔤' },
-  dictation: { label: '语文 · 听写', grad: 'from-moko-pink to-moko-rose', icon: '✍️' },
-  math: { label: '数学 · 口算', grad: 'from-moko-blue to-sky-400', icon: '🔢' },
-  english: { label: '英语 · 听音', grad: 'from-moko-yellow to-amber-300', icon: '🔤' },
-  mistake: { label: '错题重练', grad: 'from-moko-violet to-purple-400', icon: '🔁' },
-  poem: { label: '语文 · 古诗', grad: 'from-moko-purple to-moko-violet', icon: '🌙' },
-  'chinese-quiz': { label: '语文 · 识字', grad: 'from-moko-pink to-moko-rose', icon: '💡' },
-  antonym: { label: '语文 · 反义词', grad: 'from-moko-pink to-moko-rose', icon: '🔄' },
-  proverb: { label: '语文 · 谚语', grad: 'from-moko-pink to-moko-rose', icon: '📜' },
-  riddle: { label: '语文 · 谜语', grad: 'from-moko-pink to-moko-rose', icon: '🧩' },
+const KIND_META: Record<string, { label: string; grad: string; icon: string; subject: string }> = {
+  pinyin: { label: '语文 · 拼音', grad: 'from-moko-pink to-moko-rose', icon: '🔤', subject: '语文' },
+  dictation: { label: '语文 · 听写', grad: 'from-moko-pink to-moko-rose', icon: '✍️', subject: '语文' },
+  math: { label: '数学 · 口算', grad: 'from-moko-blue to-sky-400', icon: '🔢', subject: '数学' },
+  english: { label: '英语 · 听音', grad: 'from-moko-yellow to-amber-300', icon: '🔤', subject: '英语' },
+  mistake: { label: '错题重练', grad: 'from-moko-violet to-purple-400', icon: '🔁', subject: '语文' },
+  poem: { label: '语文 · 古诗', grad: 'from-moko-purple to-moko-violet', icon: '🌙', subject: '语文' },
+  'chinese-quiz': { label: '语文 · 识字', grad: 'from-moko-pink to-moko-rose', icon: '💡', subject: '语文' },
+  antonym: { label: '语文 · 反义词', grad: 'from-moko-pink to-moko-rose', icon: '🔄', subject: '语文' },
+  proverb: { label: '语文 · 谚语', grad: 'from-moko-pink to-moko-rose', icon: '📜', subject: '语文' },
+  riddle: { label: '语文 · 谜语', grad: 'from-moko-pink to-moko-rose', icon: '🧩', subject: '语文' },
 };
-const FALLBACK_META = { label: '今日练习', grad: 'from-moko-violet to-moko-purple', icon: '📝' };
+const FALLBACK_META = { label: '今日练习', grad: 'from-moko-violet to-moko-purple', icon: '📝', subject: '语文' };
 
 async function autoPlay(q?: PracticeQuestion) {
   if (!q) return;
@@ -52,6 +53,13 @@ export default function DailyPracticePage() {
   const [hasTimeGlass, setHasTimeGlass] = useState(false);
   /** 加载失败的原因。与「今天没有练习」必须区分开，见下方 load() 注释。 */
   const [loadError, setLoadError] = useState<string | null>(null);
+  /**
+   * 🧸 镇守萌可的答题反馈（2026-10-18 结合度深化）：
+   * 当前题答对/答错时由三科镇守萌可（爱心/正正/唱唱）出口头禅。
+   * 文案与语音取自同一句（pickMokoLine），保证「听到的=看到的」。
+   * 重选/切题时清掉，横幅只活在答题反馈那一瞬。
+   */
+  const [praise, setPraise] = useState<{ ok: boolean; text: string } | null>(null);
 
   /**
    * 拉取今日练习。
@@ -116,18 +124,30 @@ export default function DailyPracticePage() {
   const choose = useCallback(
     (optionIndex: number) => {
       if (!q) return;
+      // 已答对的本题锁死，不再重复触发萌可反馈
+      if (selected[idx] === q.answer) return;
       setSelected((prev) => {
         const next = [...prev];
         next[idx] = optionIndex;
         return next;
       });
+      // 🧸 镇守萌可出口头禅：文案先取，横幅与语音用同一句（听到的=看到的）。
+      // 语音用 void 不阻塞 UI；playTtsEnd 是「读完再停」语义，但这里不 await——
+      // 答错重选是高频交互，卡住等语音会打断手感。
+      const subject = (KIND_META[q.kind] ?? FALLBACK_META).subject;
+      const ok = optionIndex === q.answer;
+      const text = pickMokoLine(subject, ok);
+      setPraise({ ok, text });
+      const m = getMokoPraise(subject);
+      void playTts(`${m.name}说：${text} ${m.sign}`, 'zh', { wsRate: 0.85 });
     },
-    // selected 走函数式更新，无需列入依赖
-    [q, idx]
+    // selected 走函数式更新，无需列入依赖；q/idx 变化需重建
+    [q, idx, selected]
   );
 
   const retry = useCallback(() => {
     if (!data || !result) return;
+    setPraise(null); // 重练清掉上一轮的萌可气泡
     // 已完成的科自动填对答案（锁定），只清空没过、需要重练的科
     setSelected(
       data.questions.map((qq) => {
@@ -648,12 +668,18 @@ export default function DailyPracticePage() {
             答对啦！{q.explain}
           </p>
         )}
+
+        {/* 🧸 镇守萌可的口头禅反馈：与上面两句互补——上面是规则提示/解析，这里是伙伴情绪 */}
+        {praise && <MokoPraiseBanner subject={(KIND_META[q.kind] ?? FALLBACK_META).subject} ok={praise.ok} text={praise.text} />}
       </div>
 
       {/* 导航 */}
       <div className="flex justify-between mt-5">
         <button
-          onClick={() => setIdx((i) => Math.max(0, i - 1))}
+          onClick={() => {
+            setPraise(null); // 切题清掉上一题的萌可气泡
+            setIdx((i) => Math.max(0, i - 1));
+          }}
           disabled={idx === 0}
           className="px-5 py-3 rounded-full bg-white shadow text-moko-violet font-bold disabled:opacity-30"
         >
@@ -661,7 +687,10 @@ export default function DailyPracticePage() {
         </button>
         {idx < (data?.questions.length ?? 1) - 1 ? (
           <button
-            onClick={() => setIdx((i) => i + 1)}
+            onClick={() => {
+              setPraise(null);
+              setIdx((i) => i + 1);
+            }}
             disabled={selected[idx] === -1}
             className="px-6 py-3 rounded-full bg-gradient-to-r from-moko-pink to-moko-rose text-white font-black disabled:opacity-40"
           >
