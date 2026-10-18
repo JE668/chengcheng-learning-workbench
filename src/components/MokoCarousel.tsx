@@ -39,7 +39,7 @@ export function MokoCarousel({ items }: { items: CarouselItem[] }) {
   // 可见数撑不下一条跑马灯时降级为静态居中网格（数量少时重复渲染会穿帮）
   if (reduced || total < show * 2) {
     return (
-      <div className="overflow-hidden rounded-3xl bg-white/60 border-2 border-moko-pink/20 p-3 mb-6 clay-card clay-theme clay-pink">
+      <div className="overflow-hidden rounded-3xl bg-white/60 p-3 mb-6 clay-card clay-theme clay-pink">
         <CarouselHeader total={total} />
         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {items.map((item) => (
@@ -56,7 +56,7 @@ export function MokoCarousel({ items }: { items: CarouselItem[] }) {
   const speed = Math.max(18, Math.min(40, total * 1.6));
 
   return (
-    <div className="overflow-hidden rounded-3xl bg-white/60 border-2 border-moko-pink/20 p-3 mb-6 clay-card clay-theme clay-pink">
+    <div className="overflow-hidden rounded-3xl bg-white/60 p-3 mb-6 clay-card clay-theme clay-pink">
       <CarouselHeader total={total} />
       <div
         className="relative overflow-hidden"

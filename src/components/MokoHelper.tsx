@@ -38,7 +38,7 @@ export function MokoHelper({ subject, tips }: { subject: string; tips?: string[]
   }, [list.length]);
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl p-3 bg-white border-2 border-white/60 mb-5 clay-card">
+    <div className="flex items-center gap-3 rounded-2xl p-3 bg-white mb-5 clay-card clay-theme clay-violet">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={m.img}

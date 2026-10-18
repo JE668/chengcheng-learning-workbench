@@ -245,7 +245,7 @@ export default function DailyPracticePage() {
         <div className="text-center mt-6">
           <button
             onClick={() => void load()}
-            className="px-6 py-3 rounded-full bg-moko-pink text-white font-bold shadow active:scale-95 transition"
+            className="px-6 py-3 rounded-full bg-moko-pink text-white font-bold clay-btn clay-theme clay-pink transition"
           >
             🔄 重试
           </button>
@@ -329,7 +329,7 @@ export default function DailyPracticePage() {
                   alert(j.message || '操作失败');
                 }
               }}
-              className="px-6 py-2.5 rounded-full bg-gradient-to-r from-moko-violet to-moko-purple text-white font-black text-sm shadow active:scale-95 transition"
+              className="px-6 py-2.5 rounded-full bg-gradient-to-r from-moko-violet to-moko-purple text-white font-black text-sm clay-btn clay-theme clay-violet transition"
             >
               ⏳ 使用时光沙漏再做一次
             </button>
@@ -688,7 +688,7 @@ export default function DailyPracticePage() {
                 key={i}
                 onClick={() => choose(i)}
                 disabled={isCorrect}
-                className={`py-4 px-3 rounded-2xl ${longOpts ? 'text-base leading-snug' : 'text-2xl'} font-black transition transform active:scale-95 ${cls}`}
+                className={`py-4 px-3 rounded-2xl clay-card ${longOpts ? 'text-base leading-snug' : 'text-2xl'} font-black transition transform ${cls}`}
               >
                 {opt}
               </button>

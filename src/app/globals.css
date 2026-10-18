@@ -39,9 +39,11 @@
   --color-neutral-950: #0a0a0a;
 
   /* ===== 背景色 ===== */
-  --color-bg-primary: #fefaf7;
-  --color-bg-secondary: #fff8f0;
-  --color-bg-tertiary: #fff0e0;
+  /* Claymorphism 底色（方案 A）：暖奶油粉，萌可粉的极淡版。
+     纯白会杀死黏土的染色光晕——这是配方的硬规则（never pure #FFF）。 */
+  --color-bg-primary: #fff5f0;
+  --color-bg-secondary: #fff0e6;
+  --color-bg-tertiary: #ffe8dc;
   --color-bg-inverse: #1a1a2e;
 
   /* ===== 文本色 ===== */
@@ -202,68 +204,69 @@ body {
    ============================================================================ */
 
 .card-moko {
-  @apply bg-white rounded-3xl p-5 border-2 border-white/50;
-  box-shadow: var(--shadow-card), 0 4px 14px -10px rgba(15, 23, 42, 0.12);
+  @apply bg-white rounded-3xl p-5;
+  /* Claymorphism（方案 A）：card-moko 是全站答题面板/大卡片的基类，
+     直接升级为黏土配方（全强度），去掉 border 描边。 */
+  border: none;
+  box-shadow:
+    8px 8px 24px rgba(var(--clay-h, 255, 111, 165), 0.35),
+    inset 6px 6px 14px rgba(255, 255, 255, 0.5),
+    inset -6px -6px 14px rgba(var(--clay-d, 244, 114, 182), 0.22);
 }
 
 /* ============================================================================
-   🍭 Claymorphism 工具类层（2026-10-18 批1 · 方案②-1）
-   参考 setproduct.com 的黏土拟态配方：三重阴影（彩色外阴影 + 左上内高光
-   + 右下内阴影）让表面像充气软糖；按压时阴影同步收紧 = 手指按进黏土。
-   阴影色必须取**表面自身色相**（H = 表面色加深 ~15%），不用中性灰——
-   灰阴影会立刻杀死「捏出来的软糖感」。
-   配套纪律（防幼儿过刺激）：单视图 ≤3 高饱和色；圆角 ≥16px。
+   🍭 Claymorphism 工具类层（2026-10-18 批1 → 本轮全强度重做）
+   参考 setproduct.com 的黏土拟态配方，**严格按原文参数**：
+   - 外阴影 alpha 0.35（上一版 0.18 太淡=白改，被用户正确驳回）
+   - 内高光 alpha 0.55/0.5（充气感的一半）
+   - **禁用 border 描边**：描边会把「充气软糖」压成「贴纸」，
+     层次全靠三重阴影表达——黏土拟态的硬规则
+   - 按压时全部阴影同步收紧 + scale(0.97)
+   阴影色必须取表面自身色相（H = 表面色加深 ~15%），不用中性灰。
    ============================================================================ */
 
-/* 黏土卡：学科卡/横幅/答题面板等大表面 */
+/* 黏土卡：大表面。配方值严格对齐原文（8px 8px 24px / 0.35） */
 .clay-card {
-  border-radius: 1.75rem; /* 28px，黏土签名圆角 */
+  border: none;
+  border-radius: 1.75rem;
   box-shadow:
-    8px 8px 24px rgba(255, 111, 165, 0.18),          /* 彩色外阴影（moko-pink 色相） */
-    inset 6px 6px 14px rgba(255, 255, 255, 0.55),   /* 左上内高光 = 充气感 */
-    inset -6px -6px 14px rgba(244, 114, 182, 0.12); /* 右下内阴影 = 体积感 */
+    8px 8px 24px rgba(var(--clay-h, 255, 111, 165), 0.35),
+    inset 6px 6px 14px rgba(255, 255, 255, 0.55),
+    inset -6px -6px 14px rgba(var(--clay-d, 244, 114, 182), 0.25);
   transition: transform 140ms ease, box-shadow 140ms ease;
 }
 .clay-card:active {
   transform: scale(0.97);
   box-shadow:
-    4px 4px 12px rgba(255, 111, 165, 0.22),
+    4px 4px 12px rgba(var(--clay-h, 255, 111, 165), 0.3),
     inset 3px 3px 10px rgba(255, 255, 255, 0.45),
-    inset -3px -3px 10px rgba(244, 114, 182, 0.16);
+    inset -3px -3px 10px rgba(var(--clay-d, 244, 114, 182), 0.3);
 }
 
-/* 黏土按钮：主行动按钮（开始/提交/确认） */
+/* 黏土按钮：主行动按钮（粘土比卡薄，阴影强度略降） */
 .clay-btn {
+  border: none;
   border-radius: 18px;
   box-shadow:
-    6px 6px 18px rgba(167, 139, 250, 0.35),          /* moko-violet 色相 */
+    6px 6px 18px rgba(var(--clay-h, 167, 139, 250), 0.35),
     inset 4px 4px 10px rgba(255, 255, 255, 0.45),
-    inset -4px -4px 10px rgba(124, 96, 220, 0.25);
-  transition: transform 140ms ease, box-shadow 140ms ease;
+    inset -4px -4px 10px rgba(var(--clay-d, 124, 96, 220), 0.25);
+  transition: transform 140ms ease, box-shadow 140ms 140ms ease;
 }
 .clay-btn:active {
   transform: scale(0.96);
   box-shadow:
-    3px 3px 10px rgba(167, 139, 250, 0.4),
+    3px 3px 10px rgba(var(--clay-h, 167, 139, 250), 0.3),
     inset 2px 2px 6px rgba(255, 255, 255, 0.4),
-    inset -2px -2px 6px rgba(124, 96, 220, 0.32);
+    inset -2px -2px 6px rgba(var(--clay-d, 124, 96, 220), 0.32);
 }
 
-/* 主题变体：颜色跟随模块主题色（批3 接线） */
+/* 主题色变量：clay-card / clay-btn 消费。H=亮色相（外阴影），D=深色相（内阴影） */
 .clay-pink   { --clay-h: 255, 111, 165; --clay-d: 244, 114, 182; }
 .clay-violet { --clay-h: 167, 139, 250; --clay-d: 124, 96, 220; }
 .clay-gold   { --clay-h: 252, 211, 77;  --clay-d: 202, 155, 20; }
 .clay-cyan   { --clay-h: 74, 222, 128;  --clay-d: 34, 160, 93; }
 .clay-blue   { --clay-h: 56, 189, 248;  --clay-d: 14, 140, 200; }
-.clay-rose   { --clay-h: 255, 111, 165; --clay-d: 230, 90, 150; }
-
-/* 主题化黏土卡：外阴影/内阴影跟随 --clay-h/--clay-d 变量 */
-.clay-theme {
-  box-shadow:
-    8px 8px 24px rgba(var(--clay-h), 0.18),
-    inset 6px 6px 14px rgba(255, 255, 255, 0.55),
-    inset -6px -6px 14px rgba(var(--clay-d), 0.12);
-}
 
 /* 全局焦点反馈 */
 *:focus-visible {

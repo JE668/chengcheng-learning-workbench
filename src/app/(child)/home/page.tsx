@@ -194,7 +194,7 @@ export default async function HomePage() {
 
       {/* 今日学习进度 */}
       {todayModules.length > 0 && (
-        <div className="rounded-2xl p-4 bg-white border-2 border-moko-purple/15 mb-6 clay-card clay-theme clay-violet">
+        <div className="rounded-2xl p-4 bg-white mb-6 clay-card clay-theme clay-violet">
           <div className="flex items-center justify-between mb-2">
             <span className="font-bold text-moko-violet">
               📚 今日已学 {todayModules.length} 个模块
