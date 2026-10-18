@@ -48,11 +48,12 @@ services:
       # 媒体：把本地 public/raz、public/textbooks 拷到本目录下的 media/ 即可（无需改绝对路径）
       - ./media/raz:/app/public/raz
       - ./media/textbooks:/app/public/textbooks
-      # 预生成 TTS 音频（public/audio，随镜像内置）：此挂载为可选覆盖通道——
-      # 想单独换音频时把 mp3 放进 NAS 的 media/audio/{zh,en}/ 即可压过镜像内置版；
-      # 不挂载则直接用镜像里的版本（推荐，零操作）。
-      # 2026-10-18 起默认不挂载（镜像内置明文命名 MP3）。旧 %XX 命名文件
-      # 挂上来会遮蔽镜像内新文件导致无声；要用覆盖通道请清空目录后放新命名文件。
+      # 预生成 TTS 音频（public/audio，随镜像内置 648 个明文命名 MP3）：
+      # 日常推荐**不挂载**（零操作，check-audio 保证镜像内文件完整）。
+      # 覆盖通道（按需解开）：挂载是「整体遮蔽」——解开此行后容器只读
+      # media/audio/ 目录，镜像内置版全部失效，目录里必须放【全量 648 个
+      # 明文命名】文件（从仓库 public/audio/ 拷出后可替换个别）。
+      # 旧 %XX 命名文件挂着必然无声（2026-10-18 改明文命名）。
       # - ./media/audio:/app/public/audio
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
