@@ -235,7 +235,7 @@ export default async function HomePage() {
           ) : (
             <Link
               href="/daily-practice"
-              className="block text-center py-3 rounded-2xl bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black text-lg hover:scale-105 active:scale-95 transition"
+              className="block text-center py-3 rounded-2xl bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black text-lg clay-btn hover:scale-105 transition"
             >
               ▶ 开始今日一练（语文 · 数学 · 英语）
             </Link>
