@@ -340,6 +340,27 @@ body { padding-top: env(safe-area-inset-top); }
 
 .crown-glow { box-shadow: 0 0 15px rgba(234,179,8,.5), 0 0 30px rgba(234,179,8,.3); }
 
+/* 🎠 萌可大集合跑马灯：无限循环从右往左匀速滚动。
+   用 flex 首尾相接（渲染两份数组）+ 负 margin 消除拼接缝。
+   prefers-reduced-motion 下由组件内降级为静态网格。 */
+@keyframes mokoMarquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.moko-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: mokoMarquee var(--marquee-speed, 24s) linear infinite;
+}
+/* 触屏/鼠标悬停暂停——孩子把手指按在萌可上看时，滚动停下不打断 */
+.moko-marquee-track:hover,
+.moko-marquee-track:active {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .moko-marquee-track { animation: none; }
+}
+
 @keyframes mokoWalk {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   25% { transform: translateY(-4px) rotate(-2deg); }

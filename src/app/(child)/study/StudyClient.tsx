@@ -95,16 +95,16 @@ function StudyRecommendClient({
   if (!rec) return null;
 
   return (
-    <div className="mb-6 flex items-center gap-4">
+    <div className="mt-2 mb-7 flex items-center gap-4 flex-wrap">
       <Link
         href={rec.resumeHref}
-        className="px-4 py-2 rounded-full bg-moko-rose text-white font-bold text-sm active:scale-95 transition"
+        className="px-5 py-2.5 rounded-full bg-moko-rose text-white font-black text-base shadow-md active:scale-95 transition"
       >
         ▶ 继续学习
       </Link>
       <Link
         href={rec.nextHref}
-        className="px-4 py-2 rounded-full bg-moko-gold text-white font-bold text-sm active:scale-95 transition"
+        className="px-5 py-2.5 rounded-full bg-moko-gold text-white font-black text-base shadow-md active:scale-95 transition"
       >
         {rec.nextLabel}
       </Link>
