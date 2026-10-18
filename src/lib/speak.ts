@@ -56,11 +56,84 @@ let audioUnlocked = false;
 // 服务端 TTS（Layer 3）的音频 blob 缓存，key = lang|rate|text。
 // 故事朗读时预取下一段 TTS 并存入缓存，实际播放时命中缓存秒回。
 // 最大 80 条（约 20 集 × 4 段），超出时删最早插入的。
+//
+// 🚀 B1 持久化（2026-10-18）：blob 同时镜像到 localStorage（base64），
+// 页面刷新/重开应用时回填内存缓存——动态文本（题干/台词）在 Android
+//（Web Speech 失效、全走服务端）上不再每次冷启动。
+// 容量纪律：localStorage 限额 ~5MB，按条数（60）而非字节淘汰，
+// 单条 >60KB（长句）不持久化（内存缓存照常，避免一条吃掉配额）。
 const ttsBlobCache = new Map<string, Blob>();
 const TTS_CACHE_MAX = 80;
+const TTS_LS_PREFIX = 'tts-audio:';
+const TTS_LS_MAX = 60;
+const TTS_LS_MAX_ITEM_BYTES = 60 * 1024;
+
+/** 启动回填：把 localStorage 的持久音频还原进内存缓存（一次，惰性） */
+let lsRestored = false;
+function restoreFromLocalStorage() {
+  if (lsRestored || typeof window === 'undefined') return;
+  lsRestored = true;
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (!k || !k.startsWith(TTS_LS_PREFIX)) continue;
+      const key = k.slice(TTS_LS_PREFIX.length);
+      if (ttsBlobCache.has(key)) continue;
+      const b64 = window.localStorage.getItem(k);
+      if (!b64) continue;
+      try {
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let j = 0; j < bin.length; j++) bytes[j] = bin.charCodeAt(j);
+        ttsBlobCache.set(key, new Blob([bytes], { type: 'audio/mpeg' }));
+      } catch {
+        // 坏条目直接清掉
+        try {
+          window.localStorage.removeItem(k);
+        } catch {}
+      }
+    }
+  } catch {
+    /* localStorage 不可用（隐私模式等）——只用内存缓存 */
+  }
+}
+
+/** 持久化一条（条数超限时淘汰最旧；写失败静默） */
+function persistToLocalStorage(key: string, blob: Blob) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (blob.size > TTS_LS_MAX_ITEM_BYTES) return; // 长句不占配额
+    // 先淘汰：简单计数（localStorage 无原生序，key 排序即插入序近似）
+    const mine: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && k.startsWith(TTS_LS_PREFIX)) mine.push(k);
+    }
+    while (mine.length >= TTS_LS_MAX) {
+      // key 形如 tts-audio:zh|+0%|词 —— 无时间戳可排序，淘汰字典序首个
+      //（key 含 rate，同 rate 内淘汰最早的近似可接受；条目本身廉价）
+      mine.sort();
+      const victim = mine.shift();
+      if (victim) window.localStorage.removeItem(victim);
+    }
+    blob.arrayBuffer().then((buf) => {
+      const bytes = new Uint8Array(buf);
+      let bin = '';
+      // 分块 btoa（大字符串会栈溢出）
+      const CHUNK = 8192;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        bin += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+      }
+      window.localStorage.setItem(TTS_LS_PREFIX + key, btoa(bin));
+    }).catch(() => {});
+  } catch {
+    /* 配额满等——静默，内存缓存仍然有效 */
+  }
+}
 
 export function prefetchTts(text: string, lang: 'zh' | 'en', rate = '+0%'): void {
   if (typeof window === 'undefined' || !('fetch' in window)) return;
+  restoreFromLocalStorage(); // 首次预取时顺便回填持久缓存
   const key = `${lang}|${rate}|${text}`;
   if (ttsBlobCache.has(key)) return;
   fetch('/api/tts', {
@@ -72,6 +145,7 @@ export function prefetchTts(text: string, lang: 'zh' | 'en', rate = '+0%'): void
     .then((blob) => {
       if (!blob) return;
       ttsBlobCache.set(key, blob);
+      persistToLocalStorage(key, blob); // B1: 动态文本持久化
       if (ttsBlobCache.size > TTS_CACHE_MAX) {
         const first = ttsBlobCache.keys().next().value;
         if (first) ttsBlobCache.delete(first);
@@ -412,6 +486,18 @@ function tryServer(
         return res.blob();
       })
       .then((blob) => {
+        // B1: 播放路径也入缓存（原先只播不存，同一段文字重播要再付一次合成）。
+        // 静态内容已走第 0 层本地文件，这里进缓存的都是动态文本——正是
+        // 最值得持久化的内容。
+        const cacheKey = `${lang}|${toEdgeRate(wsRate)}|${text}`;
+        if (!ttsBlobCache.has(cacheKey)) {
+          ttsBlobCache.set(cacheKey, blob);
+          persistToLocalStorage(cacheKey, blob);
+          if (ttsBlobCache.size > TTS_CACHE_MAX) {
+            const first = ttsBlobCache.keys().next().value;
+            if (first) ttsBlobCache.delete(first);
+          }
+        }
         const url = URL.createObjectURL(blob);
         objectUrl = url;
         const audio = new Audio(url);
