@@ -45,7 +45,7 @@ export function MokoHelper({ subject, tips }: { subject: string; tips?: string[]
         alt={m.name}
         className={`w-14 h-14 rounded-full object-cover ring-4 ${m.ring} shadow flex-shrink-0`}
       />
-      <div className={`flex-1 rounded-2xl px-3 py-2 border-2 ${m.bubble}`}>
+      <div className={`flex-1 min-w-0 rounded-2xl px-3 py-2 border-2 ${m.bubble}`}>
         <div className="text-xs font-black text-gray-500 mb-0.5">{m.name} 说：</div>
         <div className="text-sm text-gray-700 font-medium leading-snug">
           {list[i]} <span className="font-black text-moko-violet">{m.sign}</span>

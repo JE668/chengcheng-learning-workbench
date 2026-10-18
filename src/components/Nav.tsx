@@ -66,7 +66,7 @@ export default function Nav({ user }: { user: User }) {
   return (
     <>
       {/* desktop sidebar */}
-      <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 bg-gradient-to-b from-moko-purple to-moko-violet p-4 text-white shadow-xl">
+      <aside className="hidden md:flex flex-col flex-shrink-0 flex-basis-64 w-64 h-screen sticky top-0 bg-gradient-to-b from-moko-purple to-moko-violet p-4 text-white shadow-xl">
         <div className="flex items-center gap-3 mb-8 px-2">
           <Image
             src="/moko/lemei.jpg"

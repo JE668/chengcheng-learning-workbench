@@ -14,7 +14,7 @@ export default async function ChildLayout({ children }: { children: React.ReactN
   return (
     <div className="flex min-h-screen">
       <Nav user={user} />
-      <main className="flex-1 p-4 md:p-8 pb-28 md:pb-8 safe-bottom kids-bg pr-28 md:pr-36">
+      <main className="flex-1 min-w-0 p-4 md:p-8 pb-28 md:pb-8 safe-bottom kids-bg pr-28 md:pr-36">
         <ErrorBoundary>{children}</ErrorBoundary>
       </main>
       {/*

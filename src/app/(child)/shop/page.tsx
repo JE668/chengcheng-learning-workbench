@@ -139,7 +139,7 @@ export default function ShopPage() {
           return (
             <div key={s.key} className="card-moko flex items-center gap-3">
               <div className="text-4xl">{s.icon}</div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="font-bold text-moko-violet">{s.name}</div>
                 <div className="text-xs text-gray-500">{s.desc}</div>
                 {isSkin && (

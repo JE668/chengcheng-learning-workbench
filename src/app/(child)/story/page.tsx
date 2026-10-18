@@ -408,7 +408,7 @@ export default function StoryPage() {
                 <div className="w-14 h-14 rounded-2xl bg-gray-300 flex items-center justify-center text-2xl">
                   🔒
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="font-black text-gray-500">
                     第 {i + 1} 集 · {c.title}
                   </div>
@@ -451,7 +451,7 @@ export default function StoryPage() {
                     {c.emoji}
                   </div>
                 )}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="font-black text-lg">
                     第 {i + 1} 集 · {c.title}
                   </div>

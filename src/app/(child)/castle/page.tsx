@@ -95,7 +95,7 @@ function TimeGlassRequestBtn({ busy, onMsg }: { busy: boolean; onMsg: (m: string
     <div className="mb-4 rounded-2xl bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 p-3 shadow">
       <div className="flex items-center gap-3">
         <span className="text-2xl">⏳</span>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="font-bold text-purple-700 text-sm">需要时光沙漏吗？</div>
           <div className="text-xs text-gray-500 mt-0.5">让爸爸妈妈帮你补打卡，找回萌可和星星币</div>
         </div>
@@ -237,7 +237,7 @@ export default function CastlePage() {
         <div className="mb-4 rounded-2xl bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 p-4 shadow-lg animate-bounce-in">
           <div className="flex items-start gap-3">
             <span className="text-2xl">⚠️</span>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="font-bold text-red-600 text-sm">城堡出事了！</div>
               <div className="text-sm text-red-700 mt-1">{state.penaltyAlert}</div>
               <div className="text-xs text-gray-500 mt-2">
@@ -477,7 +477,7 @@ export default function CastlePage() {
           {magicShop.map((s) => (
             <div key={s.key} className="card-moko flex items-center gap-3">
               <div className="text-4xl">{s.icon}</div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="font-bold text-moko-violet">{s.name}</div>
                 <div className="text-xs text-gray-500">{s.desc}</div>
                 {s.key === 'shield' && !state.canBuyShield && (
@@ -509,7 +509,7 @@ export default function CastlePage() {
           {Number(state.inventory.spray || 0) > 0 && (
             <div className="rounded-3xl p-4 shadow-lg border-2 border-green-100 bg-green-50 flex items-center gap-3">
               <div className="text-4xl">🧴</div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="font-bold text-moko-violet">魔法喷雾 ×{state.inventory.spray}</div>
                 <div className="text-xs text-gray-500">捉回捣蛋萌可 + 安抚萌可 + 找回星星币</div>
               </div>
@@ -525,7 +525,7 @@ export default function CastlePage() {
           {Number(state.inventory.shield || 0) > 0 && (
             <div className="card-moko flex items-center gap-3">
               <div className="text-4xl">🛡️</div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="font-bold text-moko-violet">护盾 ×{state.inventory.shield}</div>
                 <div className="text-xs text-gray-500">已自动装备，能帮乐美挡住一次捣蛋萌可</div>
               </div>
@@ -534,7 +534,7 @@ export default function CastlePage() {
           {state.freezeCount > 0 && (
             <div className="card-moko flex items-center gap-3">
               <div className="text-4xl">🧊</div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="font-bold text-moko-violet">冰冻徽章 ×{state.freezeCount}</div>
                 <div className="text-xs text-gray-500">下次漏卡时自动消耗，保护连胜不中断</div>
               </div>
@@ -552,7 +552,7 @@ export default function CastlePage() {
             .map((s) => (
               <div key={s.key} className="card-moko flex items-center gap-3">
                 <div className="text-4xl">{s.icon}</div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="font-bold text-moko-violet">
                     {s.name} ×{state.inventory[s.key]}
                   </div>
