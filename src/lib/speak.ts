@@ -185,6 +185,68 @@ function getCachedBlob(text: string, lang: 'zh' | 'en', rate: string): Blob | un
 }
 
 /* ───────────────────────────────────────────────────────────────
+ * 批量预取（2026-10-18 B4）
+ *
+ * 一次请求把整轮要读的文本全部打包合成，替代 N 次 /api/tts 往返：
+ *   - 省 HTTP 往返（HTTP/1.1 同域并发上限 6，逐条预取会排队）
+ *   - 服务端串行协议下批处理天然按序执行，不互相挤占
+ * 服务端 /api/tts/batch 限 10 条/次、10 次/分（IP）。
+ * 失败静默——预取是纯优化，播放时仍有单接口与 Web Speech 兜底。
+ * ─────────────────────────────────────────────────────────────── */
+export function prefetchTtsBatch(
+  items: Array<{ text: string; lang: 'zh' | 'en'; rate?: string }>
+): void {
+  if (typeof window === 'undefined' || !('fetch' in window)) return;
+  restoreFromLocalStorage();
+  // 只挑没缓存过的；同一 key 重复出现时去重（同一句可能既是题干又是朗读）
+  const seen = new Set<string>();
+  const todo: Array<{ text: string; lang: 'zh' | 'en'; rate: string }> = [];
+  for (const it of items) {
+    if (!it || !it.text) continue;
+    const rate = it.rate ?? '+0%';
+    const key = `${it.lang}|${rate}|${it.text}`;
+    if (ttsBlobCache.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    todo.push({ text: it.text, lang: it.lang, rate });
+    if (todo.length >= 10) break; // 与服务端 MAX_ITEMS 对齐
+  }
+  if (todo.length < 2) return; // 单条没有批处理收益，交给 prefetchTts
+  fetch('/api/tts/batch', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ items: todo }),
+  })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((j: { audio?: Record<string, string> } | null) => {
+      if (!j?.audio) return;
+      for (const [key, base64] of Object.entries(j.audio)) {
+        if (ttsBlobCache.has(key)) continue;
+        const blob = base64ToBlob(base64);
+        if (!blob) continue;
+        ttsBlobCache.set(key, blob);
+        persistToLocalStorage(key, blob); // 与单条预取同口径落持久缓存
+        if (ttsBlobCache.size > TTS_CACHE_MAX) {
+          const first = ttsBlobCache.keys().next().value;
+          if (first) ttsBlobCache.delete(first);
+        }
+      }
+    })
+    .catch(() => {});
+}
+
+/** base64 → Blob（批接口返回体；解码失败返回 null 走降级） */
+function base64ToBlob(b64: string): Blob | null {
+  try {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: 'audio/mpeg' });
+  } catch {
+    return null;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────
  * 第 0 层：预生成本地音频（2026-10-18 B0）
  * 静态内容的 MP3 由 scripts/gen-audio.mjs 生成于 public/audio/{zh,en}/。
  * 文件名 = encodeURIComponent(text)（与 scripts/audio-manifest.mjs 的

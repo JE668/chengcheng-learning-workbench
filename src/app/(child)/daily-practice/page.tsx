@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { GuideModal } from '@/components/GuideModal';
 import { EmptyState } from '@/components/EmptyState';
 import { ClockFace } from '@/components/study/ClockFace';
-import { playTts, prefetchTts, toEdgeRate } from '@/lib/speak';
+import { playTts, prefetchTtsBatch, toEdgeRate } from '@/lib/speak';
 import { pickMokoLine, getMokoPraise, MokoPraiseBanner } from '@/components/study/MokoPraise';
 import { useOfflineStore } from '@/lib/stores';
 import type {
@@ -105,24 +105,26 @@ export default function DailyPracticePage() {
     if (q && !data?.completed && !result) autoPlay(q);
   }, [q, data?.completed, result]);
 
-  // 🚀 TTS 预取（2026-10-18 B1）：进入第 N 题时预取第 N+1 题的音频。
+  // 🚀 TTS 批量预取（2026-10-18 B4 升级 B1 的逐条预取）
   // 静态内容（汉字/单词/诗句）已被第 0 层本地文件接管（零延迟），
-  // 这里只服务**动态文本**——错题重练的题干、萌可口头禅这类必须走
-  // 服务端合成的内容。预取进客户端 blob 缓存，真正播放时秒回。
-  // 下一题不存在/已完成时静默跳过。
+  // 这里只服务**动态文本**——与 autoPlay 的朗读分支同口径，只预取
+  // 会读出来的东西。一次 /api/tts/batch 把整轮全部打包，替代逐条
+  // /api/tts 的 N 次往返（HTTP/1.1 并发上限 6 会排队）。
+  // data 变化才重跑（一轮一次性触发），idx 变化不再逐条追预取。
   useEffect(() => {
     if (!data || data.completed || result) return;
-    const next = data.questions[idx + 1];
-    if (!next) return;
-    // 与 autoPlay 的朗读分支同口径：只预取会读出来的东西
-    if (next.kind === 'pinyin' && next.audioText)
-      prefetchTts(next.audioText, 'zh', toEdgeRate(0.6));
-    else if (next.kind === 'english' && next.word) prefetchTts(next.word, 'en', '+0%');
-    else if (next.kind === 'dictation' && next.han)
-      prefetchTts(next.han, 'zh', toEdgeRate(0.6));
-    else if (next.kind === 'mistake' && next.speakText)
-      prefetchTts(next.speakText, 'zh', toEdgeRate(0.7));
-  }, [data, idx, result]);
+    const items: Array<{ text: string; lang: 'zh' | 'en'; rate?: string }> = [];
+    for (const q of data.questions) {
+      if (q.kind === 'pinyin' && q.audioText)
+        items.push({ text: q.audioText, lang: 'zh', rate: toEdgeRate(0.6) });
+      else if (q.kind === 'english' && q.word) items.push({ text: q.word, lang: 'en', rate: '+0%' });
+      else if (q.kind === 'dictation' && q.han)
+        items.push({ text: q.han, lang: 'zh', rate: toEdgeRate(0.6) });
+      else if (q.kind === 'mistake' && q.speakText)
+        items.push({ text: q.speakText, lang: 'zh', rate: toEdgeRate(0.7) });
+    }
+    prefetchTtsBatch(items);
+  }, [data, result]);
 
   // 拉取是否拥有时光沙漏（控制已完成态下「再做一次」按钮显隐）
   useEffect(() => {
