@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { mokoChars } from '@/lib/moko';
 import { sfxComplete, sfxClick } from '@/lib/sfx';
 import { getGameLevel, setGameLevel, recordGameResult, getGameBest } from '@/lib/game-difficulty';
+import { playTts } from '@/lib/speak';
 
 export default function GameShell({
   gameId,
@@ -29,6 +30,8 @@ export default function GameShell({
   const [finished, setFinished] = useState(false);
   const [score, setScore] = useState(0);
   const [msg, setMsg] = useState('');
+  /** 🧸 镇守萌可的收官台词（结算页展示+语音同源） */
+  const [mokoMsg, setMokoMsg] = useState('');
   const [level, setLevel] = useState(1);
   const moko = mokoChars[mokoKey] || mokoChars.lemei;
   const maxLevels = levels?.length ?? 1;
@@ -47,6 +50,24 @@ export default function GameShell({
     setStarted(false);
     // 依据本次成绩调整下一局的难度档位（发挥好升档、退步降档）。
     setLevel(recordGameResult(gameId, finalScore, maxLevels));
+    // 🧸 镇守萌可收官台词：按成绩给三档情绪（破纪录/不错/再接再厉）。
+    // 结算页文案与语音同源；这里不 await，结算卡先出来、语音随后到。
+    const best = getGameBest(gameId);
+    const mood =
+      finalScore > 0 && finalScore >= best
+        ? 'record'
+        : finalScore > 0
+          ? 'good'
+          : 'tryagain';
+    const m = mokoChars[mokoKey] || mokoChars.lemei;
+    const mokoMsg =
+      mood === 'record'
+        ? `${m.name}说：哇！${finalScore} 分是新纪录！${m.line}`
+        : mood === 'good'
+          ? `${m.name}说：${finalScore} 分真不错，我们下次挑战更高！`
+          : `${m.name}说：没关系，${m.name}陪你再玩一次！`;
+    setMokoMsg(mokoMsg);
+    void playTts(mokoMsg, 'zh', { wsRate: 0.85 });
     try {
       const res = await fetch('/api/tasks/game-complete', {
         method: 'POST',
@@ -153,6 +174,18 @@ export default function GameShell({
             <div className="text-7xl mb-4">🎉</div>
             <h2 className="text-3xl font-extrabold text-moko-violet mb-2">太棒了！</h2>
             <p className="text-xl text-moko-rose font-bold mb-4">{msg || `获得 ${score} 积分！`}</p>
+            {/* 🧸 镇守萌可的收官：立绘+台词（比通用 🎉 多一层「伙伴见证」） */}
+            <div className="flex items-center justify-center gap-3 mb-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={moko.img || '/moko/lemei.jpg'}
+                alt={moko.name}
+                className="w-12 h-12 rounded-full border-2 border-moko-pink object-cover animate-bounce"
+              />
+              <p className="text-sm font-bold text-moko-violet bg-moko-pink/10 rounded-2xl px-4 py-2 max-w-xs text-left">
+                {mokoMsg}
+              </p>
+            </div>
             <p className="text-sm text-gray-400 mb-4">
               🏆 历史最高分：{Math.max(getGameBest(gameId), score)} 分
             </p>
@@ -163,6 +196,7 @@ export default function GameShell({
                   setStarted(true);
                   setScore(0);
                   setMsg('');
+                  setMokoMsg('');
                 }}
                 className="tap px-8 py-3 bg-moko-blue text-white rounded-full font-bold shadow hover:scale-105 transition"
               >
