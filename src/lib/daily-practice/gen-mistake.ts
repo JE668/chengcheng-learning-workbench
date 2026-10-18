@@ -58,7 +58,9 @@ export function genMistakeQ(
     prompt: m.prompt,
     options,
     answer: options.indexOf(m.answer),
-    explain: `正确答案是「${m.answer}」${m.wrong ? `，上次选成了「${m.wrong}」` : ''}`,
+    // 🧸 救护叙事：错题=捣蛋萌可弄乱的知识点，答对=送它回家（与城堡世界观一致：
+    // 漏卡=捣蛋萌可进城堡、喷雾=捉回去。错题复习是它在知识维度的镜像）。
+    explain: `捣蛋萌可被送回家啦！正确答案是「${m.answer}」${m.wrong ? `，上次选成了「${m.wrong}」` : ''}`,
     mistakeId: m.id,
     origin: m.kind ? `错题本 · ${m.kind}` : '错题本',
     speakText: shapeOf(m.answer).startsWith('han') ? m.prompt : undefined,

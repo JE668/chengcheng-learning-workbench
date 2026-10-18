@@ -134,12 +134,18 @@ export default function DailyPracticePage() {
       // 🧸 镇守萌可出口头禅：文案先取，横幅与语音用同一句（听到的=看到的）。
       // 语音用 void 不阻塞 UI；playTtsEnd 是「读完再停」语义，但这里不 await——
       // 答错重选是高频交互，卡住等语音会打断手感。
-      const subject = (KIND_META[q.kind] ?? FALLBACK_META).subject;
+      // 错题救护叙事：mistake 题答对 = 镇守萌可把捣蛋鬼送回家，答错 = 捣蛋鬼又溜回来。
+      const subject = q.kind === 'mistake' && q.subject ? q.subject : (KIND_META[q.kind] ?? FALLBACK_META).subject;
       const ok = optionIndex === q.answer;
-      const text = pickMokoLine(subject, ok);
+      const text =
+        q.kind === 'mistake'
+          ? ok
+            ? '捣蛋萌可被送回家啦，这个知识点归你了！'
+            : '哎呀，捣蛋萌可又溜回来了！再想一想，把它捉住！'
+          : pickMokoLine(subject, ok);
       setPraise({ ok, text });
       const m = getMokoPraise(subject);
-      void playTts(`${m.name}说：${text} ${m.sign}`, 'zh', { wsRate: 0.85 });
+      void playTts(`${m.name}说：${text} ${ok ? m.sign : ''}`, 'zh', { wsRate: 0.85 });
     },
     // selected 走函数式更新，无需列入依赖；q/idx 变化需重建
     [q, idx, selected]
@@ -615,9 +621,9 @@ export default function DailyPracticePage() {
           )}
           {q.kind === 'mistake' && (
             <>
-              <div className="text-4xl mb-2">🔁</div>
+              <div className="text-4xl mb-2">😈</div>
               <div className="inline-block text-xs bg-white/25 px-3 py-1 rounded-full mb-2">
-                {q.origin} · 上次做错了，再来一次！
+                {q.origin} · 捣蛋萌可把这个知识点弄乱了，把它送回家！
               </div>
               <div className="text-2xl font-black leading-snug">{q.prompt}</div>
               {q.speakText && (
@@ -670,7 +676,13 @@ export default function DailyPracticePage() {
         )}
 
         {/* 🧸 镇守萌可的口头禅反馈：与上面两句互补——上面是规则提示/解析，这里是伙伴情绪 */}
-        {praise && <MokoPraiseBanner subject={(KIND_META[q.kind] ?? FALLBACK_META).subject} ok={praise.ok} text={praise.text} />}
+        {praise && (
+          <MokoPraiseBanner
+            subject={q.kind === 'mistake' && q.subject ? q.subject : (KIND_META[q.kind] ?? FALLBACK_META).subject}
+            ok={praise.ok}
+            text={praise.text}
+          />
+        )}
       </div>
 
       {/* 导航 */}
