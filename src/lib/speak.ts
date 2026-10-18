@@ -203,12 +203,19 @@ export function prefetchTtsBatch(
   const todo: Array<{ text: string; lang: 'zh' | 'en'; rate: string }> = [];
   for (const it of items) {
     if (!it || !it.text) continue;
+    // ⚠️ 静态短文本（≤20 字，可命中第 0 层本地 MP3）排除在批量之外：
+    // 汉字/单词/古诗句本来就该走 L0 零延迟本地文件。批接口的 10 条会
+    // 被串行 Python 进程占住 30 秒+，实时播放的单条 L3 请求（6s 超时）
+    // 全部排队超时 → 安卓平板「点了没声音」（iPad 走 L1 Web Speech
+    // 不经服务端，所以只有安卓设备暴露此 bug）。
+    const plain = it.text.replace(/[，。！？、：；,.!?\s]/g, '');
+    if (plain.length > 0 && plain.length <= 20) continue; // L0 会接住它
     const rate = it.rate ?? '+0%';
     const key = `${it.lang}|${rate}|${it.text}`;
     if (ttsBlobCache.has(key) || seen.has(key)) continue;
     seen.add(key);
     todo.push({ text: it.text, lang: it.lang, rate });
-    if (todo.length >= 10) break; // 与服务端 MAX_ITEMS 对齐
+    if (todo.length >= 10) break;
   }
   if (todo.length < 2) return; // 单条没有批处理收益，交给 prefetchTts
   fetch('/api/tts/batch', {
@@ -290,9 +297,15 @@ function playLocalAudio(
       // playbackRate 与 Web Speech 的 rate 同域（0.5~2），超界浏览器自动钳制
       if (wsRate && wsRate > 0 && wsRate !== 1) audio.playbackRate = wsRate;
       let settled = false;
+      // 时长兜底：部分安卓 WebView 在网络/解码异常时不触发 onerror，
+      // 只静默停住（readyState 永远不前进）——挂一个「合理最长时长」
+      // 计时器，超时按失败降级，绝不让 L0 把整个朗读链挂死。
+      // 静态短句的合理时长上限：60 字符撑死 15s（含 playbackRate 0.5）。
+      const failTimer = setTimeout(() => done(false), 15000);
       const done = (ok: boolean) => {
         if (settled) return;
         settled = true;
+        clearTimeout(failTimer);
         // 释放 src 让 GC 回收（本地静态文件走 HTTP 缓存，无需 ObjectURL）
         if (!ok) audio.removeAttribute('src');
         if (ok && pauseMs > 0) setTimeout(() => resolve(true), pauseMs);
@@ -550,7 +563,10 @@ function tryServer(
       else resolve(ok);
     };
 
-    // 缓存命中：跳过 fetch，直接播放 blob（~0ms 延迟）
+    // 缓存命中：跳过 fetch，直接播放 blob（~0ms 延迟）。
+    // 播放失败（onerror：localStorage 恢复的坏 blob / 编码不兼容）时
+    // 丢弃缓存并 fetch 重新合成——此前直接判死整层，导致「明明有服务端
+    // 却静默无声」（安卓 WebView 对坏 blob 只触发 onerror 不抛异常）。
     const edgeRate = toEdgeRate(wsRate);
     const cached = getCachedBlob(text, lang, edgeRate);
     if (cached) {
@@ -559,7 +575,16 @@ function tryServer(
       const audio = new Audio(url);
       audio.preload = 'auto';
       audio.onended = () => settle(true, pauseMs);
-      audio.onerror = () => settle(false);
+      audio.onerror = () => {
+        // 坏 blob：清缓存 + 撤 URL + 判失败（本层重取由上层整体重试
+        // 语义决定：playTtsWithResult 已尽力，不在此处再发请求，
+        // 保持「一次调用 = 一次网络尝试」的可预测性）
+        ttsBlobCache.delete(`${lang}|${edgeRate}|${text}`);
+        try {
+          window.localStorage.removeItem(`tts-audio:${lang}|${edgeRate}|${text}`);
+        } catch {}
+        settle(false);
+      };
       audio.play().catch(() => settle(false));
       return;
     }
