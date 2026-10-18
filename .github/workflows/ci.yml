@@ -136,6 +136,7 @@ jobs:
             'cron/settle'
             'media/[...path]'
             'tts'
+            'tts/batch'
             'tts-edge'
             'tts-debug'
             'tts/health'

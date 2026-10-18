@@ -13,26 +13,26 @@
  * 延迟：~100-300ms（持久化 Python 进程，无启动开销），内存缓存命中秒回。
  *
  * 降级：edge-tts 失败时，前端 speak.ts 自动降级到 Web Speech。
+ *
+ * 2026-10-18 B4：进程管理/缓存/合成抽到 ./_lib.ts，与本路由及
+ * /api/tts/batch 共享同一个 Python 进程与缓存（单进程串行协议的正确语义）。
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { safeJson } from '@/lib/safe-json';
-import { spawn } from 'node:child_process';
-import { join } from 'node:path';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
+import {
+  VOICE_EDGE,
+  ttsCache,
+  TTS_CACHE_MAX,
+  ttsCacheKey,
+  synthesizeWithEdgeTTS,
+} from './_lib';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const VOICE_EDGE: Record<string, string> = {
-  zh: 'zh-CN-XiaoxiaoNeural',
-  en: 'en-US-AriaNeural',
-};
-
 const TTS_LIMIT = { windowSeconds: 60, maxRequests: 30 };
-
-const ttsCache = new Map<string, { data: Buffer; type: string }>();
-const TTS_CACHE_MAX = 500;
 
 /**
  * 入参上限。
@@ -44,124 +44,6 @@ const TTS_CACHE_MAX = 500;
 const MAX_TEXT_LENGTH = 500;
 /** rate 合法格式：+25% / -25% / +0% （edge-tts prosody 语法） */
 const RATE_PATTERN = /^[+-]?\d{1,3}%$/;
-
-// 空闲超时：30 分钟无请求自动清理 Python 进程
-const TTS_IDLE_TIMEOUT = 30 * 60 * 1000;
-let ttsIdleTimer: ReturnType<typeof setTimeout> | null = null;
-
-// 模块加载即预启动 Python 进程：Next.js route handler 模块在首次请求时加载，
-// 在顶层调用 getTtsProcess() 让进程在请求到达前就已运行，消除 ~200-300ms 冷启动。
-// spawn 是异步的，但 Python 脚本的 warmup 调用（连接 Bing WebSocket）只需 ~100ms，
-// 通常在后端 handle 函数执行前就已完成。
-try {
-  getTtsProcess();
-} catch {
-  /* 模块加载期 spawn 失败不影响后续请求 */
-}
-
-// 持久化 Python TTS 进程（避免每次请求启动 Python）
-let ttsProcess: import('node:child_process').ChildProcess | null = null;
-let ttsReqId = 0;
-const ttsPending = new Map<string, (data: Buffer | Promise<never>) => void>();
-
-function getTtsProcess() {
-  if (ttsProcess && !ttsProcess.killed) return ttsProcess;
-  const scriptPath = join(process.cwd(), 'scripts', 'tts-server.py');
-  // ⚠️ 绝对不要设 `timeout`：Node 的 spawn timeout 是**进程总存活时长**硬上限，
-  // 到点直接 SIGTERM。原先写了 `timeout: 30000`，与本文件通篇强调的
-  // 「持久化进程避免 200-300ms 启动开销」直接矛盾 —— worker 每 30 秒必被杀一次，
-  // 持久化优化 100% 失效，且正在合成的请求会被中途打断。
-  // 空闲回收由 resetIdleTimer()（30 分钟无请求）负责，两者职责必须分开。
-  const proc = spawn('python3', [scriptPath], {
-    stdio: ['pipe', 'pipe', 'inherit'],
-  });
-  ttsProcess = proc;
-  let buf = '';
-  proc.stdout!.on('data', (d: Buffer) => {
-    buf += d.toString();
-    const lines = buf.split('\n');
-    buf = lines.pop() || '';
-    for (const line of lines) {
-      if (!line.trim()) continue;
-      try {
-        const resp = JSON.parse(line);
-        const resolve = ttsPending.get(resp.id);
-        if (resolve) {
-          ttsPending.delete(resp.id);
-          if (resp.ok) resolve(Buffer.from(resp.data, 'base64'));
-          else resolve(Promise.reject(new Error(resp.error || 'TTS failed')));
-        }
-      } catch {
-        /* ignore parse errors */
-      }
-    }
-  });
-  // ⚠️ 必须监听 'error'：python3 缺失 / PATH 被改 / 脚本损坏时，spawn 会异步
-  // 发出 error(ENOENT)。Node 对 EventEmitter 的 error 事件在**无监听器**时会
-  // 升级为 uncaughtException —— 实测这会**直接终结整个 Node 进程**，
-  // 不是单个请求 500，而是全站不可用（且模块顶层的预启动调用让它在启动期就可能崩）。
-  proc.on('error', (err: NodeJS.ErrnoException) => {
-    console.error('[TTS] 无法启动 edge-tts 进程（python3 不可用?）:', err.message);
-    if (ttsProcess === proc) ttsProcess = null;
-    if (ttsIdleTimer) {
-      clearTimeout(ttsIdleTimer);
-      ttsIdleTimer = null;
-    }
-    // 让所有在途请求失败，前端据此降级到 Web Speech，而不是永久挂起
-    for (const [, resolve] of ttsPending)
-      resolve(Promise.reject(new Error('TTS process spawn failed')));
-    ttsPending.clear();
-  });
-  proc.on('exit', () => {
-    if (ttsProcess === proc) ttsProcess = null;
-    if (ttsIdleTimer) {
-      clearTimeout(ttsIdleTimer);
-      ttsIdleTimer = null;
-    }
-    for (const [, resolve] of ttsPending) resolve(Promise.reject(new Error('TTS process died')));
-    ttsPending.clear();
-  });
-  resetIdleTimer();
-  return proc;
-}
-
-/** 重置空闲计时器：每次请求后推迟 30 分钟再清理进程 */
-function resetIdleTimer() {
-  if (ttsIdleTimer) clearTimeout(ttsIdleTimer);
-  ttsIdleTimer = setTimeout(() => {
-    if (ttsProcess && !ttsProcess.killed) {
-      ttsProcess.kill('SIGTERM');
-      ttsProcess = null;
-    }
-    ttsIdleTimer = null;
-  }, TTS_IDLE_TIMEOUT);
-}
-
-function ttsCacheKey(text: string, lang: string, rate: string): string {
-  return `${lang}|${rate}|${text}`;
-}
-
-/** 通过持久化 Python 进程合成音频（stdin/stdout 协议，无启动开销） */
-async function synthesizeWithEdgeTTS(text: string, voice: string, rate: string): Promise<Buffer> {
-  const id = String(++ttsReqId);
-  return new Promise((resolve, reject) => {
-    try {
-      const proc = getTtsProcess();
-      resetIdleTimer();
-      ttsPending.set(id, resolve);
-      const req = JSON.stringify({ id, text, voice, rate }) + '\n';
-      proc.stdin!.write(req);
-      setTimeout(() => {
-        if (ttsPending.has(id)) {
-          ttsPending.delete(id);
-          reject(new Error('TTS timeout'));
-        }
-      }, 12000);
-    } catch (e) {
-      reject(new Error(`TTS process error: ${(e as Error).message}`));
-    }
-  });
-}
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
