@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { useEffect } from 'react';
 import { getCurrentUser } from '@/lib/auth';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import Nav from '@/components/Nav';
@@ -6,6 +7,16 @@ import EyeRest from '@/components/EyeRest';
 import Clock from '@/components/Clock';
 import FullscreenToggle from '@/components/FullscreenToggle';
 import StudyHeartbeat from '@/components/StudyHeartbeat';
+import { warmAudioCache } from '@/lib/warm-audio';
+
+/** 空闲预热的客户端挂载点（RSC 里不能直接调浏览器 API） */
+function WarmAudioOnMount() {
+  'use client';
+  useEffect(() => {
+    warmAudioCache();
+  }, []);
+  return null;
+}
 
 export default async function ChildLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -30,6 +41,10 @@ export default async function ChildLayout({ children }: { children: React.ReactN
       <FullscreenToggle />
       {/* 学习时长心跳：页面在前台时每分钟报一次（切后台自动停） */}
       <StudyHeartbeat />
+      {/* 🌙 空闲音频预热：弱网加固——登录后后台把 648 条静态 MP3
+          拉进 SW 缓存（约 6MB，3 路并发+批间让步），此后静态朗读
+          永久离线秒响（移动网络晚高峰跨网拥塞免疫）。 */}
+      <WarmAudioOnMount />
     </div>
   );
 }

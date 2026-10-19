@@ -105,6 +105,15 @@ jobs:
           }
           echo '✅ moko-collection 与生成器输出一致'
 
+      - name: 生成物与源一致（客户端音频预热清单）
+        run: |
+          node scripts/gen-audio-manifest-client.mjs
+          git diff --exit-code src/lib/audio-manifest-client.generated.ts >/dev/null || {
+            echo '❌ audio-manifest-client 与生成器输出不一致，请本地跑 node scripts/gen-audio-manifest-client.mjs 后提交';
+            exit 1;
+          }
+          echo '✅ audio-manifest-client 与生成器输出一致'
+
       - name: 生产构建冒烟（next build）
         run: pnpm build
         env:
