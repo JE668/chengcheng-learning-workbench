@@ -268,6 +268,43 @@ body {
 .clay-cyan   { --clay-h: 74, 222, 128;  --clay-d: 34, 160, 93; }
 .clay-blue   { --clay-h: 56, 189, 248;  --clay-d: 14, 140, 200; }
 
+/* ============================================================================
+   🍭 深色黏土表面（2026-10-19 · 左侧导航栏方案 A 补齐）
+   侧栏是深色底（紫罗兰渐变），浅色黏土的内高光直接看不见——需要
+   「反相黏土」：外阴影更深、内高光用紫白而不是纯白、右下内阴影
+   换成左下（深色表面的受光方向相反）。
+   ============================================================================ */
+.clay-dark {
+  box-shadow:
+    10px 0 28px rgba(88, 28, 135, 0.45),
+    inset 2px 0 10px rgba(216, 180, 254, 0.25),
+    inset -2px 0 8px rgba(76, 29, 149, 0.35);
+}
+/* 深色黏土导航项：激活态浮起 + 未激活态内凹 */
+.clay-nav-item {
+  box-shadow:
+    inset 3px 3px 8px rgba(76, 29, 149, 0.18),
+    inset -2px -2px 6px rgba(216, 180, 254, 0.10);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.clay-nav-item:active {
+  transform: scale(0.96) translateX(2px);
+  box-shadow:
+    inset 5px 5px 12px rgba(76, 29, 149, 0.3),
+    inset -3px -3px 8px rgba(216, 180, 254, 0.15);
+}
+/* 激活的导航项：黏土浮起（白底 item 在深色栏上像一块软糖） */
+.clay-nav-item-active {
+  box-shadow:
+    4px 4px 14px rgba(88, 28, 135, 0.5),
+    inset 2px 2px 6px rgba(255, 255, 255, 0.8),
+    inset -2px -2px 6px rgba(244, 114, 182, 0.25);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.clay-nav-item-active:active {
+  transform: scale(0.96);
+}
+
 /* 全局焦点反馈 */
 *:focus-visible {
   outline: 3px solid rgba(var(--color-primary), 0.6);
@@ -342,11 +379,14 @@ body {
 .empty-state .es-title { @apply font-black text-purple-600 text-lg; }
 .empty-state .es-desc { @apply text-sm mt-1 max-w-xs; }
 
+/* 孩子端环境光（2026-10-19 方案 A 调和）：与黏土底色 #fff5f0 同族的
+   暖粉/紫/金光斑。此前 alpha 0.20-0.22 的中性光斑叠在奶油粉底上，
+   把黏土暖底稀释成浅灰——方案 A「看不出变化」的原因之一。 */
 .kids-bg {
   background:
-    radial-gradient(circle at 12% 16%, rgba(255, 182, 246, 0.22), transparent 42%),
-    radial-gradient(circle at 88% 22%, rgba(165, 180, 252, 0.20), transparent 44%),
-    radial-gradient(circle at 50% 102%, rgba(255, 224, 178, 0.22), transparent 46%);
+    radial-gradient(circle at 12% 16%, rgba(255, 138, 200, 0.16), transparent 42%),
+    radial-gradient(circle at 88% 22%, rgba(196, 168, 255, 0.15), transparent 44%),
+    radial-gradient(circle at 50% 102%, rgba(255, 214, 165, 0.16), transparent 46%);
 }
 
 ::-webkit-scrollbar { width: 8px; }

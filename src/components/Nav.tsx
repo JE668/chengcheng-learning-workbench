@@ -47,8 +47,8 @@ export default function Nav({ user }: { user: User }) {
         href={href}
         className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl text-lg font-bold transition ${
           active
-            ? 'bg-white text-moko-rose shadow-lg scale-105'
-            : 'text-white/90 hover:bg-white/20'
+            ? 'bg-white text-moko-rose clay-nav-item-active scale-105'
+            : 'text-white/90 hover:bg-white/20 clay-nav-item'
         }`}
       >
         {moko ? (
@@ -66,15 +66,16 @@ export default function Nav({ user }: { user: User }) {
   return (
     <>
       {/* desktop sidebar。flex-shrink-0：外层 flex 行里 main 的宽内容
-          （跑马灯 max-content 轨道等）不得压缩侧栏——曾导致文字竖排。 */}
-      <aside className="hidden md:flex flex-col flex-shrink-0 w-64 h-screen sticky top-0 bg-gradient-to-b from-moko-purple to-moko-violet p-4 text-white shadow-xl">
+          （跑马灯 max-content 轨道等）不得压缩侧栏——曾导致文字竖排。
+          clay-dark：深色黏土表面（方案 A 全站统一质感的深色变体）。 */}
+      <aside className="hidden md:flex flex-col flex-shrink-0 w-64 h-screen sticky top-0 bg-gradient-to-b from-moko-purple to-moko-violet p-4 text-white clay-dark">
         <div className="flex items-center gap-3 mb-8 px-2">
           <Image
             src="/moko/lemei.jpg"
             alt="logo"
             width={48}
             height={48}
-            className="w-12 h-12 rounded-full border-4 border-white shadow"
+            className="w-12 h-12 rounded-full shadow-[0_4px_12px_rgba(88,28,135,0.5),inset_0_2px_6px_rgba(255,255,255,0.6)] ring-2 ring-white/40"
             sizes="48px"
           />
           <div>
