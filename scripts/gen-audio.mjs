@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { extractAudioManifest, audioFileName } from './audio-manifest.mjs';
 import { extractStoryAudioList } from './story-audio-manifest.mjs';
+import { extractMokoPhrases } from './moko-phrases-manifest.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'public', 'audio');
@@ -50,8 +51,9 @@ async function main() {
   // 含 autoChapters 模板拼接产物——正则拿不到，见 story-audio-manifest.mjs）
   const manifest = extractAudioManifest();
   const story = await extractStoryAudioList();
-  // 故事文本并入 zh 清单（去重交给 dedupeSorted）
-  const zhList = [...manifest.zh, ...story.zh].sort((a, b) => a.localeCompare(b));
+  const mokoPhrases = extractMokoPhrases();
+  // 故事 + 萌可台词并入 zh 清单（去重交给 dedupeSorted）
+  const zhList = [...manifest.zh, ...story.zh, ...mokoPhrases].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   const seen = new Set();
   const zhDedup = zhList.filter((t) => (seen.has(t) ? false : (seen.add(t), true)));
   manifest.zh = zhDedup;
@@ -65,7 +67,7 @@ async function main() {
   }
 
   const total = manifest.zh.length + manifest.en.length;
-  console.log(`清单：zh ${manifest.zh.length} 条（含故事），en ${manifest.en.length} 条，共 ${total} 条`);
+  console.log(`清单：zh ${manifest.zh.length} 条（含故事+萌可台词），en ${manifest.en.length} 条，共 ${total} 条`);
 
   // 顺序生成 + 限并发（edge-tts 上游是 WebSocket，并发太高会被限流）。
   // 3 路并发是实测安全值（同 tts-server 单进程串行的语义）。

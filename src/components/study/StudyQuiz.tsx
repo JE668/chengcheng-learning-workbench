@@ -176,7 +176,7 @@ export function StudyQuiz({
       } else {
         // 等萌可把这句夸夸读完，再切下一题并朗读新题，避免被新题朗读盖住
         void waitSpeechEnd(
-          playTtsEnd(`爱心萌可说：${line} ${getMokoPraise(subject).sign}`, 'zh', { wsRate: 0.85 }),
+          playTtsEnd(`爱心萌可说：${line} ${getMokoPraise(subject).sign}`, 'zh', { wsRate: 0.85, preferStatic: true }),
           4500
         ).then(() => {
           if (feedbackGen.current === gen) next();
@@ -195,7 +195,7 @@ export function StudyQuiz({
       });
       // 等萌可鼓励读完再撤掉反馈条（期间选项禁用，孩子不会误触重做导致两句叠加）
       void waitSpeechEnd(
-        playTtsEnd(`爱心萌可说：${line} ${getMokoPraise(subject).sign}`, 'zh', { wsRate: 0.85 }),
+        playTtsEnd(`爱心萌可说：${line} ${getMokoPraise(subject).sign}`, 'zh', { wsRate: 0.85, preferStatic: true }),
         4500
       ).then(() => {
         if (feedbackGen.current === gen) setPicked(null);

@@ -19,6 +19,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extractAudioManifest, audioFileName } from './audio-manifest.mjs';
 import { extractStoryAudioList } from './story-audio-manifest.mjs';
+import { extractMokoPhrases } from './moko-phrases-manifest.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const audioRoot = process.argv[2]
@@ -27,7 +28,8 @@ const audioRoot = process.argv[2]
 // 与 gen-audio 同源合并：教材静态清单 + 故事全文（esbuild 真实运行抽取）
 const manifest = extractAudioManifest();
 const story = await extractStoryAudioList();
-const merged = [...manifest.zh, ...story.zh].sort((a, b) => a.localeCompare(b));
+const mokoPhrases = extractMokoPhrases();
+const merged = [...manifest.zh, ...story.zh, ...mokoPhrases].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 const seen = new Set();
 manifest.zh = merged.filter((t) => (seen.has(t) ? false : (seen.add(t), true)));
 let missing = 0;

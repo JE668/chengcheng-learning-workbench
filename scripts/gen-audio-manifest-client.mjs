@@ -13,6 +13,7 @@ import { writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extractAudioManifest } from './audio-manifest.mjs';
+import { extractMokoPhrases } from './moko-phrases-manifest.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'src/lib/audio-manifest-client.generated.ts');
@@ -27,14 +28,18 @@ function audioUrl(text, lang) {
 }
 
 const manifest = extractAudioManifest();
+const mokoPhrases = extractMokoPhrases();
 const urls = [
   ...manifest.zh.map((t) => audioUrl(t, 'zh')),
   ...manifest.en.map((t) => audioUrl(t, 'en')),
+  // 萌可台词（45 条高频表扬/提示——网络差最先播不出的那批）
+  ...mokoPhrases.map((t) => audioUrl(t, 'zh')),
 ];
 
 const body = `/**
  * ⚠️ 自动生成（scripts/gen-audio-manifest-client.mjs）——不要手改。
- * 客户端空闲预热清单：教材静态内容（${manifest.zh.length} 汉字 + ${manifest.en.length} 英语单词）的 MP3 URL。
+ * 客户端空闲预热清单：教材静态内容（${manifest.zh.length} 汉字 + ${manifest.en.length} 英语单词）
+ * + 萌可台词（${mokoPhrases.length} 条表扬/提示）的 MP3 URL。
  * 由 warm-audio.ts 消费；CI 校验与生成器输出一致。
  */
 export const AUDIO_MANIFEST_URLS: string[] = ${JSON.stringify(urls)};

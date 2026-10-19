@@ -176,7 +176,7 @@ export default function DailyPracticePage() {
       } catch {}
       const m = getMokoPraise(subject);
       setTimeout(() => {
-        void playTts(`${m.name}说：${text} ${ok ? m.sign : ''}`, 'zh', { wsRate: 0.85 });
+        void playTts(`${m.name}说：${text} ${ok ? m.sign : ''}`, 'zh', { wsRate: 0.85, preferStatic: true });
       }, 350);
     },
     // selected 走函数式更新，无需列入依赖；q/idx 变化需重建

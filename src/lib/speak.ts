@@ -977,5 +977,7 @@ const PRAISES = [
 
 export function praise(rate = 0.7) {
   const text = PRAISES[Math.floor(Math.random() * PRAISES.length)];
-  speakZh(text, rate);
+  // 弱网加固：表扬语全部在预生成静态集——直查本地 MP3（弱网/断网
+  // 也必出声，这是孩子最重要的正反馈），未命中才走全链。
+  void playTts(text, 'zh', { wsRate: rate, preferStatic: true });
 }
