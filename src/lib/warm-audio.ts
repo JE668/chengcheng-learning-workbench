@@ -32,7 +32,6 @@ const CONCURRENCY = 3;
 const MAX_ITEM_BYTES = 200 * 1024;
 
 let warming = false;
-let warmedKey = '';
 
 export function isAudioWarming(): boolean {
   return warming;
@@ -45,8 +44,7 @@ export function isAudioWarming(): boolean {
 export function warmAudioCache(): void {
   if (typeof window === 'undefined') return;
   const today = new Date().toISOString().slice(0, 10);
-  const runKey = `warm-${today}`;
-  if (warming || warmedKey === runKey) return;
+  if (warming) return;
 
   // 每天最多完整跑一次：localStorage 记录当天完成标记
   try {
