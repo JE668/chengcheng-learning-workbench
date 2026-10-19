@@ -20,9 +20,14 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 
-/** 去重 + 排序，保证清单稳定（顺序变化不应触发全量重新生成） */
+/**
+ * 去重 + 排序，保证清单稳定（顺序变化不应触发全量重新生成）。
+ * ⚠️ 用码点序而不是 localeCompare：后者依赖系统 locale（CI 是 en_US、
+ * 开发机常见 zh_CN，中文排序结果不同）→ 生成的客户端清单在 CI 重跑
+ * 时 diff 不一致，门禁误红。码点序在任何环境输出完全一致。
+ */
 function dedupeSorted(arr) {
-  return [...new Set(arr)].filter(Boolean).sort((a, b) => a.localeCompare(b));
+  return [...new Set(arr)].filter(Boolean).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
 export function extractAudioManifest() {
