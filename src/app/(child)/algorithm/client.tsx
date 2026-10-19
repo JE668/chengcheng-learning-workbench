@@ -20,7 +20,7 @@ export function AlgorithmHomeClient() {
       <div className="card-moko flex items-center gap-5 mb-6 bg-gradient-to-r from-moko-violet to-moko-purple text-white p-6">
         <div className="animate-bounce-slow">
           <Image
-            src="/moko/lemei.jpg"
+            src="/moko/lemei.webp"
             alt="乐美萌可"
             width={80}
             height={80}
@@ -85,7 +85,7 @@ export function AlgorithmHomeClient() {
                     </div>
                   </div>
                   <Image
-                    src={topic.moko.img || '/moko/lemei.jpg'}
+                    src={topic.moko.img || '/moko/lemei.webp'}
                     alt={topic.moko.name}
                     width={64}
                     height={64}

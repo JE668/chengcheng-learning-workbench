@@ -23,7 +23,7 @@ const cards = [
     key: 'chinese',
     label: '语文城堡',
     sub: '爱心萌可陪你学拼音、识字、古诗、描红',
-    img: '/moko/heartping.jpg',
+    img: '/moko/heartping.webp',
     color: 'bg-moko-pink',
     border: 'border-moko-pink/30',
     clay: 'clay-pink',
@@ -32,7 +32,7 @@ const cards = [
     key: 'math',
     label: '数学星球',
     sub: '正正萌可带你认数、比较、看角、练加减',
-    img: '/moko/courageping.jpg',
+    img: '/moko/courageping.webp',
     color: 'bg-moko-blue',
     border: 'border-moko-blue/30',
     clay: 'clay-blue',
@@ -41,7 +41,7 @@ const cards = [
     key: 'english',
     label: '英语乐园',
     sub: '唱唱萌可教你字母、单词、听读练习',
-    img: '/moko/singping.jpg',
+    img: '/moko/singping.webp',
     color: 'bg-moko-yellow',
     border: 'border-moko-yellow/30',
     clay: 'clay-gold',
@@ -61,7 +61,7 @@ function ReviewBadgeClient() {
   return (
     <Link
       href="/study/review"
-      className="block rounded-2xl p-4 bg-gradient-to-r from-moko-purple to-moko-violet text-white shadow-lg hover:scale-[1.02] transition"
+      className="block rounded-2xl p-4 bg-gradient-to-r from-moko-purple to-moko-violet text-white clay-dark hover:scale-[1.02] transition"
     >
       <div className="flex items-center justify-between">
         <div>

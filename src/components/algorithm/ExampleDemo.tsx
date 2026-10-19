@@ -176,7 +176,7 @@ export function ExampleDemo({
             {/* 萌可教练 + 引导语 */}
             <div className="flex items-start gap-3 mb-4">
               <Image
-                src={moko.img || '/moko/lemei.jpg'}
+                src={moko.img || '/moko/lemei.webp'}
                 alt={moko.name}
                 width={44}
                 height={44}

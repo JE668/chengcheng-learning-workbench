@@ -41,7 +41,7 @@ export function PrincipleCard({
         <div className="flex items-start gap-4">
           <div className="flex-shrink-0">
             <Image
-              src={mokoImg || '/moko/lemei.jpg'}
+              src={mokoImg || '/moko/lemei.webp'}
               alt={mokoName}
               width={56}
               height={56}

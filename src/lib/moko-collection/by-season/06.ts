@@ -7,7 +7,7 @@ export const mokoCollection_06: MokoChar[] = [
     "name": "乐美公主",
     "category": "guide",
     "season": "星星萌可_第六季",
-    "img": "/moko/lemei.jpg",
+    "img": "/moko/lemei.webp",
     "emoji": "👑",
     "color": "text-moko-cyan",
     "item": "✨ 魔法道具",

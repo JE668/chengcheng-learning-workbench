@@ -28,7 +28,7 @@ export const TEXTBOOKS: Textbook[] = [
     emoji: '📕',
     color: 'bg-moko-pink',
     border: 'border-moko-pink/40',
-    img: '/moko/heartping.jpg',
+    img: '/moko/heartping.webp',
     chapters: [
       {
         idx: 1,
@@ -111,7 +111,7 @@ export const TEXTBOOKS: Textbook[] = [
     emoji: '📘',
     color: 'bg-moko-blue',
     border: 'border-moko-blue/40',
-    img: '/moko/courageping.jpg',
+    img: '/moko/courageping.webp',
     chapters: [
       {
         idx: 1,
@@ -178,7 +178,7 @@ export const TEXTBOOKS: Textbook[] = [
     emoji: '📝',
     color: 'bg-moko-purple',
     border: 'border-moko-purple/40',
-    img: '/moko/gemsping.jpg',
+    img: '/moko/gemsping.webp',
     chapters: [
       {
         idx: 1,

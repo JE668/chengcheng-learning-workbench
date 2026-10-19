@@ -90,7 +90,7 @@ export default function GameShell({
       <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
         <div className="flex items-center gap-4">
           <Image
-            src={moko.img || '/moko/lemei.jpg'}
+            src={moko.img || '/moko/lemei.webp'}
             alt={moko.name}
             width={112}
             height={112}
@@ -181,7 +181,7 @@ export default function GameShell({
             <div className="flex items-center justify-center gap-3 mb-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={moko.img || '/moko/lemei.jpg'}
+                src={moko.img || '/moko/lemei.webp'}
                 alt={moko.name}
                 className="w-12 h-12 rounded-full border-2 border-moko-pink object-cover animate-bounce"
               />

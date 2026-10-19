@@ -18,7 +18,7 @@ import { ReactNode, useRef, useEffect, useState } from 'react';
  */
 
 // 萌可头像列表（用于页面切换时的飞行装饰）
-const MOKO_AVATARS = ['/moko/lemei.jpg', '/moko/love.jpg', '/moko/wisdom.jpg', '/moko/brave.jpg'];
+const MOKO_AVATARS = ['/moko/lemei.webp', '/moko/love.jpg', '/moko/wisdom.jpg', '/moko/brave.jpg'];
 
 export function PageTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();

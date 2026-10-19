@@ -108,7 +108,7 @@ export const mokoImgByName: Record<string, string> = {
   "蛋糕弟弟萌可": "/moko/collection/05_甜心萌可_第五季/蛋糕弟弟萌可_render.webp",
   "酸奶萌可": "/moko/collection/05_甜心萌可_第五季/酸奶萌可_render.webp",
   "马卡龙萌可": "/moko/collection/05_甜心萌可_第五季/马卡龙萌可_render.webp",
-  "乐美公主": "/moko/lemei.jpg",
+  "乐美公主": "/moko/lemei.webp",
   "亲亲萌可": "/moko/collection/06_星星萌可_第六季/亲亲萌可_render.webp",
   "光明萌可": "/moko/collection/06_星星萌可_第六季/光明萌可_render.webp",
   "兔兔萌可": "/moko/collection/06_星星萌可_第六季/兔兔萌可_render.webp",

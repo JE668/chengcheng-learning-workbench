@@ -34,7 +34,7 @@ export default function MokoCard({
     >
       {badge}
       <Image
-        src={img || '/moko/lemei.jpg'}
+        src={img || '/moko/lemei.webp'}
         alt={title}
         width={128}
         height={128}

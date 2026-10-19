@@ -46,7 +46,7 @@ export default function GamesPage() {
             href={`/games/${g.id}`}
             title={g.title}
             desc={`${g.desc} · ${g.difficulty}`}
-            img={mokoChars[g.mokoKey]?.img || '/moko/lemei.jpg'}
+            img={mokoChars[g.mokoKey]?.img || '/moko/lemei.webp'}
             color="bg-gradient-to-br from-moko-purple to-moko-violet"
             badge={<GameBestBadge gameId={g.id} />}
           />

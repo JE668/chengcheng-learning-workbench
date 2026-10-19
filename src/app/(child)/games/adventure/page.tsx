@@ -45,7 +45,7 @@ export default function AdventurePage() {
               <div key={g.id} className={`relative flex ${side === 'left' ? 'justify-start' : 'justify-end'}`}>
                 <div className={`w-[78%] sm:w-[60%] rounded-3xl p-4 shadow-xl border-2 ${unlocked ? 'bg-white border-moko-purple/30' : 'bg-gray-100 border-gray-200 opacity-80'}`}>
                   <div className="flex items-center gap-3">
-                    <Image src={mokoChars[g.mokoKey]?.img || '/moko/lemei.jpg'} alt={g.title} width={64} height={64} className={`w-16 h-16 rounded-2xl object-cover border-2 border-white shadow ${unlocked ? '' : 'grayscale'}`} />
+                    <Image src={mokoChars[g.mokoKey]?.img || '/moko/lemei.webp'} alt={g.title} width={64} height={64} className={`w-16 h-16 rounded-2xl object-cover border-2 border-white shadow ${unlocked ? '' : 'grayscale'}`} />
                     <div className="flex-1 min-w-0">
                       <div className="font-black text-moko-violet text-lg">第 {i + 1} 关 · {g.title}</div>
                       <div className="text-xs text-gray-500">{g.desc}</div>

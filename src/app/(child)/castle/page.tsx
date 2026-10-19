@@ -337,7 +337,7 @@ export default function CastlePage() {
                 {state.troublemakers.map((t, i) => (
                   <Image
                     key={i}
-                    src={t.img || '/moko/lemei.jpg'}
+                    src={t.img || '/moko/lemei.webp'}
                     alt={t.name}
                     width={64}
                     height={64}

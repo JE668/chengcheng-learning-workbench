@@ -77,7 +77,7 @@ describe('MokoCard · badge 透传', () => {
     render(
       <MokoCard
         title="测试卡片"
-        img="/moko/lemei.jpg"
+        img="/moko/lemei.webp"
         color="bg-red-500"
         badge={<span data-testid="custom-badge">自定义</span>}
       />
@@ -87,7 +87,7 @@ describe('MokoCard · badge 透传', () => {
 
   it('不传 badge 时不渲染角标容器', () => {
     const { container } = render(
-      <MokoCard title="无角标" img="/moko/lemei.jpg" color="bg-red-500" />
+      <MokoCard title="无角标" img="/moko/lemei.webp" color="bg-red-500" />
     );
     expect(container.querySelector('[data-testid="custom-badge"]')).toBeNull();
   });

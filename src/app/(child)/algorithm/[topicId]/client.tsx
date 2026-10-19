@@ -70,7 +70,7 @@ export function AlgorithmTopicClient({
         <div className="flex items-start gap-4">
           <FloatY duration={3} amplitude={3}>
             <Image
-              src={topic.moko.img || '/moko/lemei.jpg'}
+              src={topic.moko.img || '/moko/lemei.webp'}
               alt={topic.moko.name}
               width={80}
               height={80}

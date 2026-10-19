@@ -23,7 +23,7 @@ export interface MokoPraiseData {
 const MOKO_PRAISE: Record<string, MokoPraiseData> = {
   语文: {
     name: '爱心萌可',
-    img: '/moko/heartping.jpg',
+    img: '/moko/heartping.webp',
     ring: 'ring-moko-rose/40',
     bubble: 'bg-moko-pink/10 border-moko-pink/30',
     frill: 'text-moko-rose border-moko-rose/30 bg-moko-rose/5',
@@ -33,7 +33,7 @@ const MOKO_PRAISE: Record<string, MokoPraiseData> = {
   },
   数学: {
     name: '正正萌可',
-    img: '/moko/courageping.jpg',
+    img: '/moko/courageping.webp',
     ring: 'ring-moko-blue/40',
     bubble: 'bg-moko-blue/10 border-moko-blue/30',
     frill: 'text-moko-blue border-moko-blue/30 bg-moko-blue/5',
@@ -43,7 +43,7 @@ const MOKO_PRAISE: Record<string, MokoPraiseData> = {
   },
   英语: {
     name: '唱唱萌可',
-    img: '/moko/singping.jpg',
+    img: '/moko/singping.webp',
     ring: 'ring-moko-yellow/40',
     bubble: 'bg-moko-yellow/10 border-moko-yellow/30',
     frill: 'text-moko-yellow border-moko-yellow/30 bg-moko-yellow/5',

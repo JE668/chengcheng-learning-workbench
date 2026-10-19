@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 
 /** 每个学科对应的萌可吉祥物（真实图片 + 鼓励语 + 口头禅） */
 const MOKO: Record<string, { name: string; img: string; ring: string; bubble: string; sign: string }> = {
-  语文: { name: '爱心萌可', img: '/moko/heartping.jpg', ring: 'ring-moko-rose/40', bubble: 'bg-moko-pink/10 border-moko-pink/30', sign: '啾～' },
-  数学: { name: '正正萌可', img: '/moko/courageping.jpg', ring: 'ring-moko-blue/40', bubble: 'bg-moko-blue/10 border-moko-blue/30', sign: '哈哈！' },
-  英语: { name: '唱唱萌可', img: '/moko/singping.jpg', ring: 'ring-moko-yellow/40', bubble: 'bg-moko-yellow/10 border-moko-yellow/30', sign: '啦啦啦～' },
+  语文: { name: '爱心萌可', img: '/moko/heartping.webp', ring: 'ring-moko-rose/40', bubble: 'bg-moko-pink/10 border-moko-pink/30', sign: '啾～' },
+  数学: { name: '正正萌可', img: '/moko/courageping.webp', ring: 'ring-moko-blue/40', bubble: 'bg-moko-blue/10 border-moko-blue/30', sign: '哈哈！' },
+  英语: { name: '唱唱萌可', img: '/moko/singping.webp', ring: 'ring-moko-yellow/40', bubble: 'bg-moko-yellow/10 border-moko-yellow/30', sign: '啦啦啦～' },
 };
 
 const DEFAULT_TIPS: Record<string, string[]> = {

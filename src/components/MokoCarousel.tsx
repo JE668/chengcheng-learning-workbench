@@ -87,7 +87,7 @@ function CarouselCard({ item, marquee }: { item: CarouselItem; marquee?: boolean
     <div className={`text-center ${marquee ? 'px-2 flex-shrink-0 w-24 md:w-28' : ''}`}>
       <div className="relative mx-auto w-20 h-20 md:w-24 md:h-24 rounded-2xl shadow-lg overflow-hidden border-2 border-white/80 bg-gradient-to-br from-moko-pink/10 to-moko-purple/10">
         <Image
-          src={item.img || '/moko/lemei.jpg'}
+          src={item.img || '/moko/lemei.webp'}
           alt={item.name}
           fill
           sizes="96px"

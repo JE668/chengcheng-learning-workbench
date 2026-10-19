@@ -71,7 +71,7 @@ export default function Nav({ user }: { user: User }) {
       <aside className="hidden md:flex flex-col flex-shrink-0 w-64 h-screen sticky top-0 bg-gradient-to-b from-moko-purple to-moko-violet p-4 text-white clay-dark">
         <div className="flex items-center gap-3 mb-8 px-2">
           <Image
-            src="/moko/lemei.jpg"
+            src="/moko/lemei.webp"
             alt="logo"
             width={48}
             height={48}

@@ -158,7 +158,7 @@ export default async function HomePage() {
       {/* 顶部问候 */}
       <div className="card-moko flex items-center gap-5 mb-6 bg-gradient-to-r from-moko-pink to-moko-rose text-white">
         <Image
-          src="/moko/lemei.jpg"
+          src="/moko/lemei.webp"
           alt="乐美"
           width={96}
           height={96}

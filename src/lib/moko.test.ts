@@ -135,8 +135,9 @@ describe('mokoCollection and mokoCollectionByName', () => {
 });
 
 describe('games', () => {
-  it('should have 15 games defined', () => {
-    expect(games.length).toBe(15);
+  it('should have 16 games defined', () => {
+    // 2026-10-19 +oral-master（口算达人：60 秒限时口算挑战）
+    expect(games.length).toBe(16);
   });
 
   it('each game should have required fields', () => {

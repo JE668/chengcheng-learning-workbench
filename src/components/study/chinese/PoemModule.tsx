@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { POEMS, type PoemItem } from '@/lib/study-data/poems';
 import { speakZh } from '@/lib/speak';
+import { RepeatMachine } from '@/components/study/RepeatMachine';
 import { useModuleProgress } from '@/lib/module-progress';
 import { ModuleStars } from '@/components/study/ModuleStars';
 import { useRecorder, recognizeSpeech } from '../useRecorder';
@@ -117,6 +118,19 @@ function PoemCard({ item }: { item: PoemItem }) {
           )}
         </div>
       )}
+      {/* 🔁 逐句复读机（2026-10-19 ③号升级）：整首背诵打分之外，
+          提供「逐句 听范读→我来读→对比听」的精练闭环。默认收起，
+          想精练某一句的孩子点开。 */}
+      <details className="mt-3">
+        <summary className="cursor-pointer text-sm font-bold text-moko-violet select-none">
+          🔁 逐句复读机（想精练哪句点哪句）
+        </summary>
+        <div className="mt-2 space-y-3">
+          {item.lines.map((line) => (
+            <RepeatMachine key={line} text={line} label="句子复读" />
+          ))}
+        </div>
+      </details>
     </div>
   );
 }

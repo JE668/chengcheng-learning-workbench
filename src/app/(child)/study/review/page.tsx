@@ -80,7 +80,7 @@ export default function ReviewPage() {
       {loading ? (
         <div className="text-center text-gray-400 py-16 flex flex-col items-center justify-center gap-3"><span className="moko-loader"><span></span><span></span><span></span></span>萌可正在翻找你的错题本…</div>
       ) : items.length === 0 ? (
-        <div className="rounded-3xl p-10 bg-white shadow-lg border-2 border-moko-purple/20 text-center">
+        <div className="rounded-3xl p-10 bg-white clay-card clay-theme clay-violet text-center">
           <div className="text-6xl mb-3">🎉</div>
           <div className="text-xl font-black text-moko-violet">今天没有要复习的，真棒！</div>
           <p className="text-gray-500 mt-2">去学科里多学一点吧～</p>
@@ -90,7 +90,7 @@ export default function ReviewPage() {
           <div className="text-sm text-gray-500 mb-3">今日待复习 {items.length} 个 · 已复习 {done} 个</div>
           <div className="space-y-3">
             {items.map((it) => (
-              <div key={it.id} className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-purple/15">
+              <div key={it.id} className="rounded-2xl p-4 bg-white clay-card">
                 <div className="flex items-center gap-2 mb-2">
                   <span>{subjectEmoji[it.subject] || '📘'}</span>
                   <span className="font-bold text-moko-violet">{it.subject}</span>

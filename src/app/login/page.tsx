@@ -79,7 +79,7 @@ export default function LoginPage() {
       {/* 浮动萌可装饰 */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <Image
-          src="/moko/heartping.jpg"
+          src="/moko/heartping.webp"
           alt="爱心萌可装饰图"
           width={80}
           height={80}
@@ -87,7 +87,7 @@ export default function LoginPage() {
           style={{ top: '8%', left: '6%', animationDelay: '0s' }}
         />
         <Image
-          src="/moko/courageping.jpg"
+          src="/moko/courageping.webp"
           alt="正正萌可装饰图"
           width={64}
           height={64}
@@ -95,7 +95,7 @@ export default function LoginPage() {
           style={{ top: '12%', right: '8%', animationDelay: '1.5s' }}
         />
         <Image
-          src="/moko/singping.jpg"
+          src="/moko/singping.webp"
           alt="唱唱萌可装饰图"
           width={72}
           height={72}
@@ -103,7 +103,7 @@ export default function LoginPage() {
           style={{ bottom: '20%', left: '4%', animationDelay: '0.8s' }}
         />
         <Image
-          src="/moko/gemsping.jpg"
+          src="/moko/gemsping.webp"
           alt="宝石萌可装饰图"
           width={56}
           height={56}
@@ -111,7 +111,7 @@ export default function LoginPage() {
           style={{ bottom: '10%', right: '6%', animationDelay: '2.2s' }}
         />
         <Image
-          src="/moko/lemei.jpg"
+          src="/moko/lemei.webp"
           alt="乐美装饰图"
           width={96}
           height={96}
@@ -141,7 +141,7 @@ export default function LoginPage() {
         <div className="relative mx-auto mb-5 w-32 h-32">
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-moko-pink to-moko-purple opacity-20 animate-pulse" />
           <Image
-            src="/moko/lemei.jpg"
+            src="/moko/lemei.webp"
             alt="乐美"
             fill
             className="w-28 h-28 rounded-full border-4 border-moko-pink shadow-lg mx-auto object-cover relative z-10"

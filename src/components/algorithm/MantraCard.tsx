@@ -25,7 +25,7 @@ export function MantraCard({ emoji, mantra, mokoName, mokoImg, showLabel = true 
           <div className="flex-shrink-0">
             <FloatY duration={4} amplitude={3}>
               <Image
-                src={mokoImg || '/moko/lemei.jpg'}
+                src={mokoImg || '/moko/lemei.webp'}
                 alt={mokoName}
                 width={64}
                 height={64}

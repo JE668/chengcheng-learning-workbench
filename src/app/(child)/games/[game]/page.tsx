@@ -18,6 +18,7 @@ import Schulte from '@/components/games/Schulte';
 import PinyinSpell from '@/components/games/PinyinSpell';
 import SpotDifference from '@/components/games/SpotDifference';
 import SoundMemory from '@/components/games/SoundMemory';
+import OralMaster from '@/components/games/OralMaster';
 
 const gameMap: Record<string, React.FC<{ onFinish: (score: number) => void; level?: number }>> = {
   'pinyin-eliminate': PinyinEliminate,
@@ -35,6 +36,7 @@ const gameMap: Record<string, React.FC<{ onFinish: (score: number) => void; leve
   'pinyin-spell': PinyinSpell,
   'spot-difference': SpotDifference,
   'sound-memory': SoundMemory,
+  'oral-master': OralMaster,
 };
 
 export default function GamePage() {
