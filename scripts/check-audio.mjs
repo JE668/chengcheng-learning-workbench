@@ -18,13 +18,18 @@ import { existsSync, statSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extractAudioManifest, audioFileName } from './audio-manifest.mjs';
+import { extractStoryAudioList } from './story-audio-manifest.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const audioRoot = process.argv[2]
   ? join(process.argv[2].replace(/\/+$/, ''), 'audio')
   : join(ROOT, 'public', 'audio');
-
+// 与 gen-audio 同源合并：教材静态清单 + 故事全文（esbuild 真实运行抽取）
 const manifest = extractAudioManifest();
+const story = await extractStoryAudioList();
+const merged = [...manifest.zh, ...story.zh].sort((a, b) => a.localeCompare(b));
+const seen = new Set();
+manifest.zh = merged.filter((t) => (seen.has(t) ? false : (seen.add(t), true)));
 let missing = 0;
 let empty = 0;
 let totalSize = 0;
