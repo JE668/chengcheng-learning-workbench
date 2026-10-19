@@ -44,7 +44,7 @@ const EXCLUDE_NAMES = new Set(['神秘萌可', '其他萌可', '波荡萌可', '
 // 个别图片覆盖：用指定图片替换扫描到的默认图。
 // 乐美公主用头像 /moko/lemei.jpg（而非全身照「乐美萌可_render.webp」，否则登录页/奖状显示成腿）。
 const IMG_OVERRIDE = {
-  '乐美公主': '/moko/lemei.jpg',
+  '乐美公主': '/moko/lemei.webp',
 };
 
 // 个别分类/emoji/台词覆盖（人类角色，非萌可）
