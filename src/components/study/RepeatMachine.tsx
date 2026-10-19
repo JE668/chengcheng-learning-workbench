@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { playTts } from '@/lib/speak';
 import { useRecorder } from './useRecorder';
 
@@ -19,19 +19,7 @@ import { useRecorder } from './useRecorder';
 export function RepeatMachine({ text, lang = 'zh' as const, label }: { text: string; lang?: 'zh' | 'en'; label?: string }) {
   const [phase, setPhase] = useState<'idle' | 'recording' | 'compare'>('idle');
   const [playingModel, setPlayingModel] = useState(false);
-  const modelAudioRef = useRef<HTMLAudioElement | null>(null);
   const rec = useRecorder({ maxMs: 12000 });
-
-  // 卸载时停掉范读音频
-  useEffect(() => {
-    return () => {
-      try {
-        modelAudioRef.current?.pause();
-      } catch {
-        /* ignore */
-      }
-    };
-  }, []);
 
   const playModel = async () => {
     setPlayingModel(true);

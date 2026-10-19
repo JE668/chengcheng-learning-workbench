@@ -16,7 +16,6 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { sfxCorrect, sfxWrong } from '@/lib/sfx';
-import { speakZh } from '@/lib/speak';
 
 interface OralQuestion {
   prompt: string;
