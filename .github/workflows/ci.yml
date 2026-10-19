@@ -305,9 +305,9 @@ jobs:
           MAX_LOGIN_FAILS: '100'
           LOGIN_LOCK_SECONDS: '0'
           NODE_ENV: production
-          # ⚠️ 绝对路径：server.js 的 cwd 是 .next/standalone，相对路径会
-          # 解析到那里（首版踩坑：库建错位置）。
-          TURSO_URL: file:$GITHUB_WORKSPACE/.e2e-db/local.db
+          # ⚠️ env: 块不做 $VAR 插值（首版踩坑：$GITHUB_WORKSPACE 字面量
+          # 传给了 libSQL）。用 workflow 表达式 {{ }} 取真实路径。
+          TURSO_URL: file:${{ github.workspace }}/.e2e-db/local.db
           CRON_SECRET: e2e-cron-secret
         run: |
           # Dockerfile 同款步骤：standalone 不自动带 static/public
