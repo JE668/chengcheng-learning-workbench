@@ -35,7 +35,13 @@ test.describe('家长管理流程', () => {
       .locator('form')
       .filter({ has: page.getByRole('button', { name: '发布任务' }) });
     await form.locator('input').first().fill('背诵古诗《静夜思》');
-    await form.locator('select').selectOption('语文');
+    // 表单内有两个 select（学科 + 指派给孩子——多娃指派功能）：
+    // strict 模式下裸 locator('select') 撞多元素。学科 select 的
+    // 选项含「语文」，用 hasOption 精确锚定。
+    await form
+      .locator('select')
+      .filter({ has: page.locator('option', { hasText: '语文' }) })
+      .selectOption('语文');
     await form.getByRole('button', { name: '发布任务' }).click();
 
     // 验证任务创建成功。
