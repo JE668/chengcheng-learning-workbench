@@ -197,6 +197,33 @@ function getCachedBlob(text: string, lang: 'zh' | 'en', rate: string): Blob | un
   return ttsBlobCache.get(`${lang}|${rate}|${text}`);
 }
 
+/**
+ * 🔒 静态 MP3 预取（2026-10-20 弱网加固 · 故事页专用）：
+ * 用 <link rel="preload" as="audio"> 触发浏览器提前下载预生成文件，
+ * 不走任何服务端合成。SW 的 Cache First 策略会自动把它收进缓存，
+ * 弱网/断网时播放直接命中本地。
+ * 与 prefetchTts（服务端合成路线）互不干扰——本函数只服务
+ * 「已在 833 条故事静态集里」的文本。
+ */
+const staticPreloaded = new Set<string>();
+export function prefetchStaticAudio(text: string, lang: 'zh' | 'en'): void {
+  if (typeof document === 'undefined') return;
+  const url = localAudioUrl(text, lang);
+  if (staticPreloaded.has(url)) return; // 同 URL 只预取一次
+  staticPreloaded.add(url);
+  try {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'audio';
+    link.href = url;
+    document.head.appendChild(link);
+    // 预取完成（或失败）后移除节点，防 head 无限增长
+    setTimeout(() => link.remove(), 30_000);
+  } catch {
+    /* 预取是纯优化，任何失败静默 */
+  }
+}
+
 /* ───────────────────────────────────────────────────────────────
  * 批量预取（2026-10-18 B4）
  *
@@ -293,7 +320,10 @@ function playLocalAudio(
   text: string,
   lang: 'zh' | 'en',
   wsRate: number,
-  pauseMs: number
+  pauseMs: number,
+  /** true = 跳过 20 字门（调用方确知文本在预生成清单里，如故事段落——
+   * 833 条故事 MP3 已进镜像，但段落长 >20 字被门挡住等于白做）。 */
+  skipLengthGate = false
 ): Promise<boolean> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined' || !('Audio' in window)) {
@@ -303,10 +333,12 @@ function playLocalAudio(
     // 动态文本（题干/台词/长短句）几乎必然未命中——快速长度门限，
     // 避免「先等 404 再降级」给高频动态调用加半拍延迟。静态清单的
     // 汉字/单词/古诗句全部 ≤ 20 字（古诗最长句 12 字 + 标点）。
-    const plain = text.replace(/[，。！？、：；,.!?\s]/g, '');
-    if (plain.length === 0 || plain.length > 20) {
-      resolve(false);
-      return;
+    if (!skipLengthGate) {
+      const plain = text.replace(/[，。！？、：；,.!?\s]/g, '');
+      if (plain.length === 0 || plain.length > 20) {
+        resolve(false);
+        return;
+      }
     }
     try {
       const audio = new Audio(localAudioUrl(text, lang));
@@ -457,7 +489,7 @@ export function toEdgeRate(wsRate: number): string {
 export async function playTts(
   text: string,
   lang: 'zh' | 'en',
-  opts: { wsRate?: number; pitch?: number; pauseMs?: number } = {}
+  opts: { wsRate?: number; pitch?: number; pauseMs?: number; preferStatic?: boolean } = {}
 ) {
   await playTtsWithResult(text, lang, opts);
 }
@@ -479,7 +511,7 @@ export async function playTts(
 export async function playTtsWithResult(
   text: string,
   lang: 'zh' | 'en',
-  opts: { wsRate?: number; pitch?: number; pauseMs?: number } = {}
+  opts: { wsRate?: number; pitch?: number; pauseMs?: number; preferStatic?: boolean } = {}
 ): Promise<{
   success: boolean;
   engineUsed: 'local-audio' | 'web-speech-strict' | 'web-speech-loose' | 'edge-tts';
@@ -498,7 +530,7 @@ export async function playTtsWithResult(
   // 延迟 + 音色与在线合成完全一致。排在 Web Speech 之前：Android WebView
   // 的 Web Speech 本就不可靠，且神经嗓音在 iOS 上也比系统嗓音稳。
   // 速率用 HTMLAudioElement.playbackRate 实现（0.5~2 与 Web Speech 域对齐）。
-  const localHit = await playLocalAudio(text, lang, wsRate, pauseMs);
+  const localHit = await playLocalAudio(text, lang, wsRate, pauseMs, opts.preferStatic === true);
   if (localHit) {
     return {
       success: true,
@@ -654,7 +686,7 @@ function tryServer(
 export function playTtsEnd(
   text: string,
   lang: 'zh' | 'en',
-  opts: { wsRate?: number; pitch?: number; pauseMs?: number } = {}
+  opts: { wsRate?: number; pitch?: number; pauseMs?: number; preferStatic?: boolean } = {}
 ): Promise<void> {
   return playTts(text, lang, opts);
 }

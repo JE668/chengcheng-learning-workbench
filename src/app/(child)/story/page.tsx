@@ -7,7 +7,7 @@ import { storyChapters } from '@/lib/story';
 import { STUDY_MODULES, type StudySubject } from '@/lib/study-modules';
 import { mokoImgByName } from '@/lib/moko-imgs';
 import { mokoCollectionByName } from '@/lib/moko-collection';
-import { playTtsEnd, prefetchTts, toEdgeRate } from '@/lib/speak';
+import { playTtsEnd, prefetchStaticAudio } from '@/lib/speak';
 import { CaptureMoment, type CapturePayload } from '@/components/CaptureMoment';
 
 interface Progress {
@@ -149,11 +149,11 @@ export default function StoryPage() {
         return;
       }
       setReadPara(k);
-      // 预取下一段 TTS blob 到客户端缓存，趁当前段朗读时让服务端提前缓存
+      // 预取下一段静态 MP3（浏览器 HTTP 缓存；弱网下命中即零网络）
       if (k + 1 < c.paragraphs.length) {
-        prefetchTts(c.paragraphs[k + 1], 'zh', toEdgeRate(0.7));
+        prefetchStaticAudio(c.paragraphs[k + 1], 'zh');
       }
-      await playTtsEnd(c.paragraphs[k], 'zh', { wsRate: 0.7, pauseMs: 80 });
+      await playTtsEnd(c.paragraphs[k], 'zh', { wsRate: 0.7, pauseMs: 80, preferStatic: true });
     }
     if (c.tip) {
       if (abortRef.current) {
@@ -162,14 +162,17 @@ export default function StoryPage() {
         return;
       }
       setReadPara(c.paragraphs.length);
-      await playTtsEnd(c.tip, 'zh', { wsRate: 0.7, pauseMs: 80 });
+      await playTtsEnd(c.tip, 'zh', { wsRate: 0.7, pauseMs: 80, preferStatic: true });
     }
     // 故事朗读完毕：预取下一集的前两段 TTS，减少切换到下一集时的等待
     const nextIdx = storyChapters.findIndex((ch) => ch.id === c.id) + 1;
     if (nextIdx < storyChapters.length) {
       const nextCh = storyChapters[nextIdx];
-      if (nextCh.paragraphs.length > 0) prefetchTts(nextCh.paragraphs[0], 'zh', toEdgeRate(0.7));
-      if (nextCh.paragraphs.length > 1) prefetchTts(nextCh.paragraphs[1], 'zh', toEdgeRate(0.7));
+      // 静态预取：下一集开讲前把前两段拉进 HTTP 缓存（833 条故事
+      // MP3 已随镜像内置，prefetchStaticAudio 用 <link preload> 让
+      // 浏览器提前下载，不走服务端合成）
+      if (nextCh.paragraphs.length > 0) prefetchStaticAudio(nextCh.paragraphs[0], 'zh');
+      if (nextCh.paragraphs.length > 1) prefetchStaticAudio(nextCh.paragraphs[1], 'zh');
     }
     if (abortRef.current) {
       setNarrating(null);
@@ -202,7 +205,7 @@ export default function StoryPage() {
     if (!quiz || quizSpeaking) return;
     setQuizSpeaking(true);
     quizAbortRef.current = false;
-    await playTtsEnd(quiz.q, 'zh', { wsRate: 0.7, pauseMs: 220 });
+    await playTtsEnd(quiz.q, 'zh', { wsRate: 0.7, pauseMs: 220, preferStatic: true });
     if (quizAbortRef.current) {
       setQuizSpeaking(false);
       return;
@@ -221,7 +224,7 @@ export default function StoryPage() {
   /** 单独朗读某一个选项文字 */
   async function speakOne(text: string) {
     stopQuiz();
-    await playTtsEnd(text, 'zh', { wsRate: 0.85, pauseMs: 120 });
+    await playTtsEnd(text, 'zh', { wsRate: 0.85, pauseMs: 120, preferStatic: true });
   }
 
   /** 展开/收起 */
@@ -240,9 +243,10 @@ export default function StoryPage() {
       setActive(c.id);
       // 多娃差异化：展开章节即按当前孩子取题（答题校验与服务端同源）
       if (c.quiz) loadChildQuiz(c.id);
-      // 打开章节时预取所有段落 TTS blob，用户读文字时服务端已在合成
-      for (const p of c.paragraphs) prefetchTts(p, 'zh', toEdgeRate(0.7));
-      if (c.tip) prefetchTts(c.tip, 'zh', toEdgeRate(0.7));
+      // 打开章节即静态预取全部段落+tip（833 条故事 MP3 随镜像内置，
+      // 弱网下朗读全部本地命中；不再触发服务端合成）
+      for (const p of c.paragraphs) prefetchStaticAudio(p, 'zh');
+      if (c.tip) prefetchStaticAudio(c.tip, 'zh');
       // 还没读过这集 → 打开就自动朗读（满足「打开阅读故事 + 自动语音」）
       if (!readSet.has(c.id)) startNarration(c);
     }
