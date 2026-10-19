@@ -7,6 +7,7 @@
  * 需要的语义（单进程串行协议），也顺带让单接口与批接口共享缓存命中。
  */
 import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 export const VOICE_EDGE: Record<string, string> = {
@@ -160,7 +161,6 @@ let kokoroProc: import('node:child_process').ChildProcess | null = null;
 let kokoroPending: ((buf: Buffer) => void) | null = null;
 const KOKORO_MODEL = 'assets/kokoro-v1.0.int8.onnx';
 const KOKORO_VOICES = 'assets/voices-v1.0.bin';
-const KOKORO_VOICE: Record<string, string> = { zh: 'zf_xiaobei', en: 'af_bella' };
 
 function getKokoroProcess(): import('node:child_process').ChildProcess | null {
   if (kokoroProc && !kokoroProc.killed) return kokoroProc;
@@ -168,8 +168,7 @@ function getKokoroProcess(): import('node:child_process').ChildProcess | null {
   const voicesPath = join(process.cwd(), KOKORO_VOICES);
   // 模型文件没部署（构建期下载失败/未开启备胎）→ 直接放弃降级
   try {
-    const fs = require('node:fs') as typeof import('node:fs');
-    if (!fs.existsSync(modelPath) || !fs.existsSync(voicesPath)) return null;
+    if (!existsSync(modelPath) || !existsSync(voicesPath)) return null;
   } catch {
     return null;
   }
