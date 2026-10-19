@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { useEffect } from 'react';
 import { getCurrentUser } from '@/lib/auth';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import Nav from '@/components/Nav';
@@ -7,16 +6,7 @@ import EyeRest from '@/components/EyeRest';
 import Clock from '@/components/Clock';
 import FullscreenToggle from '@/components/FullscreenToggle';
 import StudyHeartbeat from '@/components/StudyHeartbeat';
-import { warmAudioCache } from '@/lib/warm-audio';
-
-/** 空闲预热的客户端挂载点（RSC 里不能直接调浏览器 API） */
-function WarmAudioOnMount() {
-  'use client';
-  useEffect(() => {
-    warmAudioCache();
-  }, []);
-  return null;
-}
+import { WarmAudioOnMount } from '@/components/WarmAudioOnMount';
 
 export default async function ChildLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
