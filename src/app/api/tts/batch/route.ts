@@ -65,7 +65,9 @@ export async function POST(req: NextRequest) {
         // 批量预取走「排队让路」入口：实时播放（单接口）在队头优先，
         // 预取永远排在任何等待发声的孩子之后。
         data = await synthesizeForBatch(text, voice, rate);
-        ttsCache.set(key, { data, type: 'audio/mpeg' });
+        // kokoro 备胎输出 WAV：按 RIFF 头嗅探（与单接口同规则）
+        const type = data.length > 4 && data[0] === 0x52 && data[1] === 0x49 ? 'audio/wav' : 'audio/mpeg';
+        ttsCache.set(key, { data, type });
         if (ttsCache.size > TTS_CACHE_MAX) {
           const first = ttsCache.keys().next().value;
           if (first) ttsCache.delete(first);

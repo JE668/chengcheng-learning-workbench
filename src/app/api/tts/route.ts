@@ -89,7 +89,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const data = await synthesizeWithEdgeTTS(text, voice, r);
-    const type = 'audio/mpeg';
+    // ⑦号升级后合成可能来自 kokoro 备胎（WAV）而非 edge（MP3）——
+    // 按 RIFF 头嗅探，两种都能正确标注
+    const type = data.length > 4 && data[0] === 0x52 && data[1] === 0x49 ? 'audio/wav' : 'audio/mpeg';
     ttsCache.set(cacheKey, { data, type });
     if (ttsCache.size > TTS_CACHE_MAX) {
       const first = ttsCache.keys().next().value;

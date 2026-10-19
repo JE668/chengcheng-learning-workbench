@@ -121,7 +121,16 @@ function enqueueSynthesis(
   rate: string,
   priority: boolean
 ): Promise<Buffer> {
-  const run = () => synthesizeRaw(text, voice, rate);
+  // ⑦ 号升级（2026-10-19）：edge-tts 失败自动降级 kokoro 离线引擎。
+  // 7.2.8 令牌事件证明 Microsoft 可能随时断链——kokoro（CPU ONNX，
+  // NAS 完全离线可跑）是备胎。惰性启动：只有 edge 真失败了才尝试。
+  const run = () =>
+    synthesizeRaw(text, voice, rate).catch((edgeErr) =>
+      synthesizeWithKokoro(text, voice, rate).catch((kokoroErr) => {
+        // 双引擎全灭：抛 edge 的原始错误（它含上游诊断信息更有价值）
+        throw edgeErr instanceof Error ? edgeErr : new Error(String(edgeErr ?? kokoroErr));
+      })
+    );
   if (priority) {
     // 实时请求插队：把 run 接到「当前链头」，后续任务接在其后。
     // 实现：新建一个节点占住链尾，把 run 插在链尾之前。
@@ -134,6 +143,105 @@ function enqueueSynthesis(
   const next = ttsChain.then(run, run);
   ttsChain = next.catch(() => {});
   return next;
+}
+
+/* ─── kokoro 离线备胎（⑦号升级）────────────────────────────────
+ * scripts/kokoro-tts.py --serve 的 stdin/stdout JSON 协议与
+ * tts-server.py 同构（逐行请求/响应），但模型是本地 ONNX——
+ * Microsoft 断链时的完全离线兜底。
+ * 惰性 + 单例：首次降级才 spawn；进程死了下次降级再拉起。
+ * WAV 输出转 MP3 由客户端兼容（HTMLAudioElement 原生播 WAV），
+ * 这里不转码——Content-Type 由调用方按返回值决定。
+ */
+let kokoroProc: import('node:child_process').ChildProcess | null = null;
+// ⚠️ kokoro serve 协议不回传请求 id（响应只有 {"wav_b64"}）——Map 分发无法路由。
+// 安全前提：ttsChain 保证串行（同一时刻至多一个 kokoro 请求在途），
+// 单槽 resolve 即可。退出时唤醒挂起者（空 buffer = 失败）。
+let kokoroPending: ((buf: Buffer) => void) | null = null;
+const KOKORO_MODEL = 'assets/kokoro-v1.0.int8.onnx';
+const KOKORO_VOICES = 'assets/voices-v1.0.bin';
+const KOKORO_VOICE: Record<string, string> = { zh: 'zf_xiaobei', en: 'af_bella' };
+
+function getKokoroProcess(): import('node:child_process').ChildProcess | null {
+  if (kokoroProc && !kokoroProc.killed) return kokoroProc;
+  const modelPath = join(process.cwd(), KOKORO_MODEL);
+  const voicesPath = join(process.cwd(), KOKORO_VOICES);
+  // 模型文件没部署（构建期下载失败/未开启备胎）→ 直接放弃降级
+  try {
+    const fs = require('node:fs') as typeof import('node:fs');
+    if (!fs.existsSync(modelPath) || !fs.existsSync(voicesPath)) return null;
+  } catch {
+    return null;
+  }
+  try {
+    const proc = spawn('python3', [
+      join(process.cwd(), 'scripts', 'kokoro-tts.py'),
+      '--serve',
+      '--model', modelPath,
+      '--voices', voicesPath,
+    ], { stdio: ['pipe', 'pipe', 'inherit'] });
+    proc.on('exit', () => {
+      if (kokoroProc === proc) kokoroProc = null;
+      if (kokoroPending) {
+        const r = kokoroPending;
+        kokoroPending = null;
+        r(Buffer.alloc(0)); // 空 buffer = 失败信号
+      }
+    });
+    proc.on('error', () => {
+      if (kokoroProc === proc) kokoroProc = null;
+    });
+    let buf = '';
+    proc.stdout!.on('data', (d: Buffer) => {
+      buf += d.toString();
+      const lines = buf.split('\n');
+      buf = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const resp = JSON.parse(line);
+          if (kokoroPending) {
+            const r = kokoroPending;
+            kokoroPending = null;
+            r(resp.wav_b64 ? Buffer.from(resp.wav_b64, 'base64') : Buffer.alloc(0));
+          }
+        } catch {
+          /* 忽略协议噪声 */
+        }
+      }
+    });
+    kokoroProc = proc;
+    return proc;
+  } catch {
+    return null;
+  }
+}
+
+function synthesizeWithKokoro(text: string, voice: string, rate: string): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const proc = getKokoroProcess();
+    if (!proc) {
+      reject(new Error('kokoro model not deployed'));
+      return;
+    }
+    // rate 形如 "-30%" → kokoro speed 是 0.5~2 的倍率
+    const pct = parseInt(rate.replace('%', ''), 10) || 0;
+    const speed = Math.max(0.5, Math.min(2, 1 + pct / 100));
+    // voice（zh-CN-XiaoxiaoNeural / en-US-AriaNeural）→ kokoro lang
+    const lang = voice.startsWith('en') ? 'en' : 'zh';
+    kokoroPending = (buf) => {
+      if (buf.length === 0) reject(new Error('kokoro empty output'));
+      else resolve(buf);
+    };
+    const req = JSON.stringify({ text, lang, speed }) + '\n';
+    proc.stdin!.write(req);
+    setTimeout(() => {
+      if (kokoroPending) {
+        kokoroPending = null;
+        reject(new Error('kokoro timeout'));
+      }
+    }, 20000); // CPU 推理比云慢，放宽到 20s
+  });
 }
 
 /** 原始合成（写 stdin，无互斥——只被 enqueueSynthesis 调用） */

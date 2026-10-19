@@ -50,10 +50,18 @@ export async function POST(req: Request) {
       apiKey: process.env.NVIDIA_API_KEY,
     });
 
-    // 模型可配（AI_MODEL）：默认 8B（出一年级选择题足够、响应快、省额度）。
-    // 想要更聪明的题干可换 meta/llama-3.3-70b-instruct 等 NIM 目录里的模型，
-    // 代价是响应慢几秒。必须在 NVIDIA_API_KEY 配置的前提下才有意义。
-    const model = process.env.AI_MODEL || 'meta/llama-3.1-8b-instruct';
+    // 模型可配（⑧号升级：分学科）：
+    //   AI_MODEL_<学科>  优先（AI_MODEL_CHINESE / AI_MODEL_MATH / AI_MODEL_ENGLISH）
+    //   AI_MODEL         全局兜底
+    //   默认             meta/llama-3.1-8b-instruct（一年级题足够、快、省额度）
+    // 数学题要算对数——想给数学单独上更强的推理模型（如 llama-3.3-70b）
+    // 只需设 AI_MODEL_MATH，其他学科保持 8B 不动，额度与延迟按需分配。
+    const SUBJECT_MODEL_KEYS: Record<string, string> = { 语文: 'CHINESE', 数学: 'MATH', 英语: 'ENGLISH' };
+    const subjectKey = SUBJECT_MODEL_KEYS[subject as string] ?? '';
+    const model =
+      (subjectKey && process.env[`AI_MODEL_${subjectKey}`]) ||
+      process.env.AI_MODEL ||
+      'meta/llama-3.1-8b-instruct';
 
     const result = await generateObject({
       model: nvidiaOpenAI(model),

@@ -132,6 +132,7 @@ jobs:
             'auth/login'
             'auth/logout'
             'cron/backup'
+            'cron/weekly-report'
             'cron/remind'
             'cron/settle'
             'media/[...path]'
