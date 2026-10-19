@@ -173,24 +173,27 @@ export function StudyClient({ rec }: StudyClientProps) {
 
         {/* 趣味表达与练习 */}
         <h2 className="text-2xl font-black text-moko-violet mt-10 mb-3">🎨 趣味表达与练习</h2>
-        {/* 5 张工具卡（emoji+标题+副标题+箭头）。⚠️ 三轮返工教训：
-            平板 768-1100px 间无论 flex 横排还是压缩，5 张卡单行都放不下
-            （用户实拍：挤压穿出、列成一行）——纵向单列堆叠是唯一稳解，
-            只在 xl(1280px+) 才用两列网格分摊高度。每卡全宽，箭头/标题
-            有充足空间，永远不会再挤。 */}
-        <div className="grid gap-3 xl:grid-cols-2">
+        {/* 5 张工具卡（emoji+标题+副标题+箭头）。⚠️ 用户四轮反馈同一区块：
+            平板上仍显示成一行穿出。本地四视口实测已是多行 grid——
+            怀疑 NAS 跑的是修复前镜像；但为了绝对保险，本版做防御性
+            三重锁：
+            a) 容器永不横向 flex（grid 语义）
+            b) 每卡 max-w-full —— 任何情况下卡不超出列宽
+            c) 卡内 emoji flex-shrink-0（不被压缩消失）+ 文本 truncate
+            断点策略：<1280 单列（平板横竖屏都安全），1280+ 两列。 */}
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {TOOLS.map((t) => (
             <Link
               key={t.href}
               href={t.href}
-              className="flex items-center gap-4 rounded-2xl p-4 clay-card bg-white text-center hover:scale-[1.02] transition"
+              className="flex max-w-full items-center gap-4 rounded-2xl p-4 clay-card bg-white text-center hover:scale-[1.02] transition"
             >
-              <span className="text-4xl">{t.emoji}</span>
+              <span className="text-4xl flex-shrink-0">{t.emoji}</span>
               <div className="flex-1 min-w-0">
                 <h3 className="font-black text-moko-violet">{t.title}</h3>
                 <p className="text-gray-500 truncate">{t.sub}</p>
               </div>
-              <span className="text-moko-violet font-black">打开 ›</span>
+              <span className="text-moko-violet font-black flex-shrink-0">打开 ›</span>
             </Link>
           ))}
         </div>
