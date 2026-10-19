@@ -45,10 +45,26 @@ export default defineConfig({
       use: { ...devices['iPhone 12'] },
     },
   ],
+  // 2026-10-19 ⑤号升级：E2E 从 `pnpm dev` 改为 **standalone 生产模式**。
+  // 动机：dev 测的从来不是部署产物——standalone 探针曾抓到「dev 正常 /
+  // 生产 500」（原生模块缺失）这类只有生产包才暴露的问题。改为构建
+  // standalone 再起服务，E2E 从「界面回归」升级为「部署预检」。
+  // 流程 = Dockerfile 同款：build → 补 static/public → 起 server.js。
+  // 数据库：全新路径 .e2e-db/local.db（ensureSchema 的 isNewDb 分支
+  // 自动种子 cara/0000 账号，E2E 不需要额外 seed 步骤）。
+  // reuseExistingServer 保留：本地迭代可先手动起服务复用。
   webServer: {
-    command: 'pnpm dev',
+    command:
+      'pnpm build && node -e "const fs=require(\'fs\');fs.cpSync(\'.next/static\',\'.next/standalone/.next/static\',{recursive:true});fs.cpSync(\'public\',\'.next/standalone/public\',{recursive:true})" && node .next/standalone/server.js',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
-    timeout: 120000,
+    timeout: 300000,
+    env: {
+      // standalone 的 server.js 不读 .env（dev 模式以前自动加载），
+      // 由 playwright 显式注入。DB 用一次性路径，跑完即弃。
+      NODE_ENV: 'production',
+      TURSO_URL: 'file:./.e2e-db/local.db',
+      CRON_SECRET: 'e2e-cron-secret',
+    },
   },
 });

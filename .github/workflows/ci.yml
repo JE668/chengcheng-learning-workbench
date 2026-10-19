@@ -291,34 +291,39 @@ jobs:
         run: |
           node -e "const {chromium}=require('@playwright/test');chromium.launch().then(async b=>{await b.close();console.log('✅ chromium 启动正常')}).catch(e=>{console.error('❌ chromium 无法启动:',e.message);process.exit(1)})"
 
-      - name: 启动开发服务器
+      - name: 构建 standalone 生产包（E2E 测部署产物，不测 dev）
+        run: pnpm build
+
+      - name: 补齐 static/public 并启动 standalone 服务
         env:
           # e2e 有 23 次登录尝试，默认限流 5 分钟 10 次会导致后半段测试全部 429。
-          # 测试环境放宽：1 小时 100 次（仅影响本测试 run 的 dev server 进程）。
+          # 测试环境放宽：1 小时 100 次（仅影响本测试 run 的服务进程）。
           # 账号级锁定：5 次失败锁 15 分钟，测试中多次登录同一账号可能误触（parent 在 auth 和 business-flows 各登录 1 次）。
           LOGIN_RATE_LIMIT_WINDOW: '3600'
           LOGIN_RATE_LIMIT_MAX: '100'
           MAX_LOGIN_FAILS: '100'
           LOGIN_LOCK_SECONDS: '0'
+          NODE_ENV: production
+          TURSO_URL: file:./.e2e-db/local.db
+          CRON_SECRET: e2e-cron-secret
         run: |
-          pnpm dev > dev.log 2>&1 &
-          DEV_PID=$!
-          echo "Dev server PID: $DEV_PID"
-          # 等待并重试检查服务器是否就绪
-          for i in {1..60}; do
+          # Dockerfile 同款步骤：standalone 不自动带 static/public
+          mkdir -p .next/standalone/.next .e2e-db
+          cp -r .next/static .next/standalone/.next/
+          cp -r public .next/standalone/public
+          cd .next/standalone
+          node server.js > ../e2e-server.log 2>&1 &
+          echo $! > server.pid
+          cd ../..
+          for i in {1..90}; do
             if curl -sf http://localhost:3000 > /dev/null 2>&1; then
-              echo "Dev server ready after $i attempts"
+              echo "standalone server ready after $i attempts"
               break
-            fi
-            if ! kill -0 $DEV_PID 2>/dev/null; then
-              echo "Dev server process died!"
-              cat dev.log
-              exit 1
             fi
             sleep 2
           done
-          # 最后确认
-          curl -f http://localhost:3000 || (cat dev.log && exit 1)
+          # 最后确认（失败时打日志便于定位）
+          curl -f http://localhost:3000 || (cat .next/e2e-server.log && exit 1)
 
       - name: 运行 E2E 测试（跑全部 spec，不再点名子集）
         # 不再只点名 3 个文件：learning/parent 两个 spec 此前从未在 CI 里跑过。
