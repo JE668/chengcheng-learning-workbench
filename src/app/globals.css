@@ -209,9 +209,9 @@ body {
      直接升级为黏土配方（全强度），去掉 border 描边。 */
   border: none;
   box-shadow:
-    8px 8px 24px rgba(var(--clay-h, 255, 111, 165), 0.35),
-    inset 6px 6px 14px rgba(255, 255, 255, 0.5),
-    inset -6px -6px 14px rgba(var(--clay-d, 244, 114, 182), 0.22);
+    8px 8px 24px rgba(var(--clay-h, 255, 111, 165), 0.5),
+    inset 6px 6px 14px rgba(255, 255, 255, 0.55),
+    inset -6px -6px 14px rgba(var(--clay-d, 244, 114, 182), 0.28);
 }
 
 /* ============================================================================
@@ -230,17 +230,17 @@ body {
   border: none;
   border-radius: 1.75rem;
   box-shadow:
-    8px 8px 24px rgba(var(--clay-h, 255, 111, 165), 0.35),
-    inset 6px 6px 14px rgba(255, 255, 255, 0.55),
-    inset -6px -6px 14px rgba(var(--clay-d, 244, 114, 182), 0.25);
+    8px 8px 24px rgba(var(--clay-h, 255, 111, 165), 0.5),
+    inset 6px 6px 14px rgba(255, 255, 255, 0.6),
+    inset -6px -6px 14px rgba(var(--clay-d, 244, 114, 182), 0.3);
   transition: transform 140ms ease, box-shadow 140ms ease;
 }
 .clay-card:active {
   transform: scale(0.97);
   box-shadow:
-    4px 4px 12px rgba(var(--clay-h, 255, 111, 165), 0.3),
-    inset 3px 3px 10px rgba(255, 255, 255, 0.45),
-    inset -3px -3px 10px rgba(var(--clay-d, 244, 114, 182), 0.3);
+    4px 4px 12px rgba(var(--clay-h, 255, 111, 165), 0.42),
+    inset 3px 3px 10px rgba(255, 255, 255, 0.5),
+    inset -3px -3px 10px rgba(var(--clay-d, 244, 114, 182), 0.38);
 }
 
 /* 黏土按钮：主行动按钮（粘土比卡薄，阴影强度略降） */
@@ -248,9 +248,9 @@ body {
   border: none;
   border-radius: 18px;
   box-shadow:
-    6px 6px 18px rgba(var(--clay-h, 167, 139, 250), 0.35),
-    inset 4px 4px 10px rgba(255, 255, 255, 0.45),
-    inset -4px -4px 10px rgba(var(--clay-d, 124, 96, 220), 0.25);
+    6px 6px 18px rgba(var(--clay-h, 167, 139, 250), 0.5),
+    inset 4px 4px 10px rgba(255, 255, 255, 0.5),
+    inset -4px -4px 10px rgba(var(--clay-d, 124, 96, 220), 0.3);
   transition: transform 140ms ease, box-shadow 140ms ease;
 }
 .clay-btn:active {
@@ -269,36 +269,40 @@ body {
 .clay-blue   { --clay-h: 56, 189, 248;  --clay-d: 14, 140, 200; }
 
 /* ============================================================================
-   🍭 深色黏土表面（2026-10-19 · 左侧导航栏方案 A 补齐）
+   🍭 深色黏土表面（2026-10-19 · 左侧导航栏方案 A · 按用户反馈加深一档）
    侧栏是深色底（紫罗兰渐变），浅色黏土的内高光直接看不见——需要
    「反相黏土」：外阴影更深、内高光用紫白而不是纯白、右下内阴影
    换成左下（深色表面的受光方向相反）。
+   加深版：外阴影 0.45→0.65（体积感拉满），内高光叠加第二层，
+   导航项两态反差加大（激活软糖浮起 vs 未激活深槽内凹）。
    ============================================================================ */
 .clay-dark {
   box-shadow:
-    10px 0 28px rgba(88, 28, 135, 0.45),
-    inset 2px 0 10px rgba(216, 180, 254, 0.25),
-    inset -2px 0 8px rgba(76, 29, 149, 0.35);
+    12px 0 32px rgba(88, 28, 135, 0.65),
+    inset 3px 0 12px rgba(216, 180, 254, 0.35),
+    inset -3px 0 10px rgba(76, 29, 149, 0.45),
+    inset 0 2px 8px rgba(216, 180, 254, 0.18);
 }
-/* 深色黏土导航项：激活态浮起 + 未激活态内凹 */
+/* 深色黏土导航项：未激活态深槽内凹 */
 .clay-nav-item {
   box-shadow:
-    inset 3px 3px 8px rgba(76, 29, 149, 0.18),
-    inset -2px -2px 6px rgba(216, 180, 254, 0.10);
+    inset 4px 4px 10px rgba(76, 29, 149, 0.28),
+    inset -3px -3px 8px rgba(216, 180, 254, 0.14);
   transition: transform 140ms ease, box-shadow 140ms ease;
 }
 .clay-nav-item:active {
   transform: scale(0.96) translateX(2px);
   box-shadow:
-    inset 5px 5px 12px rgba(76, 29, 149, 0.3),
-    inset -3px -3px 8px rgba(216, 180, 254, 0.15);
+    inset 7px 7px 14px rgba(76, 29, 149, 0.42),
+    inset -4px -4px 10px rgba(216, 180, 254, 0.2);
 }
-/* 激活的导航项：黏土浮起（白底 item 在深色栏上像一块软糖） */
+/* 激活的导航项：白软糖浮起（双层外阴影 + 强内高光） */
 .clay-nav-item-active {
   box-shadow:
-    4px 4px 14px rgba(88, 28, 135, 0.5),
-    inset 2px 2px 6px rgba(255, 255, 255, 0.8),
-    inset -2px -2px 6px rgba(244, 114, 182, 0.25);
+    6px 6px 18px rgba(88, 28, 135, 0.65),
+    2px 2px 8px rgba(88, 28, 135, 0.4),
+    inset 3px 3px 8px rgba(255, 255, 255, 0.9),
+    inset -3px -3px 8px rgba(244, 114, 182, 0.3);
   transition: transform 140ms ease, box-shadow 140ms ease;
 }
 .clay-nav-item-active:active {

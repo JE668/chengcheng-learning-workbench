@@ -173,15 +173,17 @@ export function StudyClient({ rec }: StudyClientProps) {
 
         {/* 趣味表达与练习 */}
         <h2 className="text-2xl font-black text-moko-violet mt-10 mb-3">🎨 趣味表达与练习</h2>
-        {/* 三张工具卡（emoji+标题+副标题+箭头）窄屏横排必然溢出容器
-            （用户报：从首页卡片穿出来了）。改纵向堆叠，md+ 恢复横排；
-            文本块加 min-w-0 + truncate 防长副标题撑爆。 */}
-        <div className="grid gap-3 md:flex md:gap-2 md:justify-center">
+        {/* 5 张工具卡（emoji+标题+副标题+箭头）。⚠️ 三轮返工教训：
+            平板 768-1100px 间无论 flex 横排还是压缩，5 张卡单行都放不下
+            （用户实拍：挤压穿出、列成一行）——纵向单列堆叠是唯一稳解，
+            只在 xl(1280px+) 才用两列网格分摊高度。每卡全宽，箭头/标题
+            有充足空间，永远不会再挤。 */}
+        <div className="grid gap-3 xl:grid-cols-2">
           {TOOLS.map((t) => (
             <Link
               key={t.href}
               href={t.href}
-              className="flex items-center gap-4 rounded-2xl p-4 clay-card bg-white text-center hover:scale-105 transition"
+              className="flex items-center gap-4 rounded-2xl p-4 clay-card bg-white text-center hover:scale-[1.02] transition"
             >
               <span className="text-4xl">{t.emoji}</span>
               <div className="flex-1 min-w-0">
@@ -196,7 +198,7 @@ export function StudyClient({ rec }: StudyClientProps) {
         {/* 课本 & 绘本 */}
         <Link
           href="/textbook"
-          className="mt-6 flex items-center gap-4 rounded-3xl p-5 shadow-xl border-2 border-moko-gold/40 bg-gradient-to-r from-moko-gold/20 to-moko-yellow/20 hover:scale-[1.02] transition block"
+          className="mt-6 flex items-center gap-4 rounded-3xl p-5 clay-card clay-theme clay-gold bg-gradient-to-r from-moko-gold/20 to-moko-yellow/20 hover:scale-[1.02] transition block"
         >
           <span className="text-4xl mb-1">📖</span>
           <div className="flex-1 min-w-0">
@@ -206,7 +208,7 @@ export function StudyClient({ rec }: StudyClientProps) {
           <span className="text-moko-violet font-bold">打开 ›</span>
         </Link>
 
-        <div className="mt-8 rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-purple/20">
+        <div className="mt-8 rounded-2xl p-5 bg-white clay-card clay-theme clay-violet">
           <h3 className="text-lg font-black text-moko-violet mb-2">💡 给程程的小提示</h3>
           <ul className="text-gray-600 text-sm space-y-1 list-disc list-inside">
             <li>自主学习内容每天都可以点开来玩，不消耗积分。</li>
