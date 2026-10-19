@@ -305,11 +305,13 @@ jobs:
           MAX_LOGIN_FAILS: '100'
           LOGIN_LOCK_SECONDS: '0'
           NODE_ENV: production
-          TURSO_URL: file:./.e2e-db/local.db
+          # ⚠️ 绝对路径：server.js 的 cwd 是 .next/standalone，相对路径会
+          # 解析到那里（首版踩坑：库建错位置）。
+          TURSO_URL: file:$GITHUB_WORKSPACE/.e2e-db/local.db
           CRON_SECRET: e2e-cron-secret
         run: |
           # Dockerfile 同款步骤：standalone 不自动带 static/public
-          mkdir -p .next/standalone/.next .e2e-db
+          mkdir -p .next/standalone/.next "$GITHUB_WORKSPACE/.e2e-db"
           cp -r .next/static .next/standalone/.next/
           cp -r public .next/standalone/public
           cd .next/standalone
@@ -323,8 +325,17 @@ jobs:
             fi
             sleep 2
           done
-          # 最后确认（失败时打日志便于定位）
+          # 冒烟 1：首页 200
           curl -f http://localhost:3000 || (cat .next/e2e-server.log && exit 1)
+          # 冒烟 2：登录页真的渲染出表单（30 分钟超时跑的教训：curl 200
+          # 不代表页面可用——SSR 错误页也是 200）
+          curl -fsS http://localhost:3000/login | grep -q 'input' \
+            || (echo '❌ 登录页无 input——SSR 可能报错'; cat .next/e2e-server.log; exit 1)
+          # 冒烟 3：全新库自动种子账号可登录（ensureSchema isNewDb 分支）
+          curl -fsS -X POST http://localhost:3000/api/auth/login \
+            -H 'content-type: application/json' \
+            -d '{"username":"cara","password":"0000"}' | grep -q '"ok":true' \
+            || (echo '❌ cara/0000 登录失败——种子账号未生成'; cat .next/e2e-server.log; exit 1)
 
       - name: 运行 E2E 测试（跑全部 spec，不再点名子集）
         # 不再只点名 3 个文件：learning/parent 两个 spec 此前从未在 CI 里跑过。
