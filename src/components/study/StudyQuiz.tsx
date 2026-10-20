@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { speakZh, speakEn, playTtsEnd } from '@/lib/speak';
-import { pickMokoLine, getMokoPraise, MokoPraiseBanner } from '@/components/study/MokoPraise';
+import { pickMokoLine, MokoPraiseBanner } from '@/components/study/MokoPraise';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { useModuleProgress } from '@/lib/module-progress';
 import { useStudyContext } from '@/lib/study-context';
