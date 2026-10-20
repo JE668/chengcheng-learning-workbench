@@ -39,33 +39,44 @@ export default async function ReportsPage() {
   const ws = dateStr(weekStart);
   const we = dateStr(weekEnd);
 
-  const daily = c ? await db.execute({
-    sql: `SELECT ${LOCAL_DAY_COL} as day, SUM(c.points) as total
-          FROM completions c WHERE c.child_id = ? AND ${LOCAL_DAY_COL} BETWEEN ? AND ?
-          GROUP BY ${LOCAL_DAY_COL} ORDER BY day DESC`,
-    args: [childId, ws, we],
-  }) : { rows: [] };
+  // 四个聚合查询相互无依赖——并行（此前串行 4 个往返，报表页
+  // 首屏在 NAS 本地库上也要多吃 3 拍）。有孩子才查；旧表缺失按空集。
+  const [dailyRes, checkinRes, studyRes, resolvedRes] = c ? await Promise.all([
+    db.execute({
+      sql: `SELECT ${LOCAL_DAY_COL} as day, SUM(c.points) as total
+            FROM completions c WHERE c.child_id = ? AND ${LOCAL_DAY_COL} BETWEEN ? AND ?
+            GROUP BY ${LOCAL_DAY_COL} ORDER BY day DESC`,
+      args: [childId, ws, we],
+    }),
+    db.execute({
+      sql: `SELECT day, COUNT(*) as n FROM daily_checkins WHERE child_id = ? AND day BETWEEN ? AND ? AND status = 'confirmed' GROUP BY day`,
+      args: [childId, ws, we],
+    }),
+    // 本周学习时长（2026-10-17 心跳统计）：分钟/天。旧库无表时为 0，不阻塞报告页。
+    db.execute({
+      sql: `SELECT day, minutes FROM study_sessions WHERE child_id = ? AND day BETWEEN ? AND ? ORDER BY day DESC`,
+      args: [childId, ws, we],
+    }).catch(() => ({ rows: [] as { day: unknown; minutes: unknown }[] })),
+    db.execute({
+      sql: 'SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND resolved = 1',
+      args: [childId],
+    }),
+  ]) : [
+    { rows: [] },
+    { rows: [] },
+    { rows: [] as { day: unknown; minutes: unknown }[] },
+    { rows: [{ n: 0 }] },
+  ];
+
+  const daily = dailyRes;
+  const checkinRows = checkinRes;
+  const studyTime = studyRes;
+  const resolved = resolvedRes;
 
   const pointsWeek = daily.rows.reduce((s: number, r) => s + Number(r.total ?? 0), 0);
-
-  const checkinRows = c ? await db.execute({
-    sql: `SELECT day, COUNT(*) as n FROM daily_checkins WHERE child_id = ? AND day BETWEEN ? AND ? AND status = 'confirmed' GROUP BY day`,
-    args: [childId, ws, we],
-  }) : { rows: [] };
   const fullDays = checkinRows.rows.filter((r) => Number(r.n) === 3).length;
   const activeDays = checkinRows.rows.length;
-
-  // 本周学习时长（2026-10-17 心跳统计）：分钟/天。旧库无表时为 0，不阻塞报告页。
-  const studyTime = c ? await db.execute({
-    sql: `SELECT day, minutes FROM study_sessions WHERE child_id = ? AND day BETWEEN ? AND ? ORDER BY day DESC`,
-    args: [childId, ws, we],
-  }).catch(() => ({ rows: [] as { day: unknown; minutes: unknown }[] })) : { rows: [] as { day: unknown; minutes: unknown }[] };
   const minutesWeek = studyTime.rows.reduce((s: number, r) => s + Number(r.minutes ?? 0), 0);
-
-  const resolved = c ? await db.execute({
-    sql: 'SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND resolved = 1',
-    args: [childId],
-  }) : { rows: [{ n: 0 }] };
   const resolvedCount = Number(resolved.rows[0]?.n ?? 0);
 
   const mokoProgress = c ? await getMokoProgress(childId) : { owned: 0, total: 0, percent: 0 };

@@ -134,17 +134,22 @@ export async function POST(req: Request) {
     args: [childId, topicId, lv, effectiveCorrect, expectedTotal, stars, stars],
   });
 
-  // 记录错题（答错的题）
-  for (const qid of cappedMistakes) {
-    await db.execute({
-      sql: `INSERT INTO algorithm_mistakes (child_id, topic_id, level, question_id, wrong_count, last_wrong_at)
-            VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
-            ON CONFLICT(child_id, topic_id, level, question_id) DO UPDATE SET
-              wrong_count = wrong_count + 1,
-              last_wrong_at = CURRENT_TIMESTAMP,
-              is_mastered = 0`,
-      args: [childId, topicId, lv, qid],
-    });
+  // 记录错题（答错的题）。
+  // ⚠️ db.batch 一次往返原子提交——此前逐条 await 是 N+1（一关最多
+  // 10 错题 = 10 次往返，且每次都过 process 级写锁排队；这是孩子每
+  // 次做题都打的高频接口）。空数组 batch 会报错，先判空。
+  if (cappedMistakes.length > 0) {
+    await db.batch(
+      cappedMistakes.map((qid) => ({
+        sql: `INSERT INTO algorithm_mistakes (child_id, topic_id, level, question_id, wrong_count, last_wrong_at)
+              VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
+              ON CONFLICT(child_id, topic_id, level, question_id) DO UPDATE SET
+                wrong_count = wrong_count + 1,
+                last_wrong_at = CURRENT_TIMESTAMP,
+                is_mastered = 0`,
+        args: [childId, topicId, lv, qid],
+      }))
+    );
   }
 
   // 标记已掌握：本关中之前有错题记录、但这次答对的题

@@ -32,10 +32,14 @@ export default async function ParentCertPage() {
   const childRow = await db.execute({ sql: 'SELECT display_name FROM users WHERE id = ?', args: [childId] });
   const childName = String(childRow.rows[0]?.display_name ?? '小朋友');
 
-  const data = await getCertData(childId, childName);
-  const prefRow = await db.execute({ sql: 'SELECT cert_pref FROM users WHERE id = ?', args: [childId] });
+  // 三个无相互依赖的查询并行（此前串行 3 个往返——cert_data 依赖
+  // childName 必须等它，但 pref/requests 不依赖，与 data 一并发出）
+  const [data, prefRow, requests] = await Promise.all([
+    getCertData(childId, childName),
+    db.execute({ sql: 'SELECT cert_pref FROM users WHERE id = ?', args: [childId] }),
+    getCertRequests(childId),
+  ]);
   const initialPref = parsePref(prefRow.rows[0]?.cert_pref);
-  const requests = await getCertRequests(childId);
 
   return (
     <div className="max-w-3xl mx-auto">

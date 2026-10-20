@@ -147,11 +147,14 @@ export default function CastlePage() {
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    const r = await fetch('/api/castle/state');
-    const j = await r.json();
+    // 弱网优化：state 与 badges 无依赖关系，并行取（此前串行两个
+    // 往返，移动网络晚高峰页面亮屏要多等一拍）
+    const [r, b] = await Promise.all([
+      fetch('/api/castle/state'),
+      fetch('/api/castle/badges'),
+    ]);
+    const [j, bj] = await Promise.all([r.json(), b.json()]);
     setState(j);
-    const b = await fetch('/api/castle/badges');
-    const bj = await b.json();
     setBadges(bj.badges || []);
   }, []);
   useEffect(() => {
