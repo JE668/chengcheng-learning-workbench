@@ -14,6 +14,7 @@ import {
 } from '@/lib/study-data/math';
 
 import { speakZh } from '@/lib/speak';
+import { sfxCorrect, sfxWrong } from '@/lib/sfx';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 
 /* ---------- 数感：1~10 ---------- */
@@ -43,6 +44,7 @@ export function CompareModule() {
   function pick(ans: '>' | '<' | '=') {
     const correct: '>' | '<' | '=' = q.left > q.right ? '>' : q.left < q.right ? '<' : '=';
     const ok = ans === correct;
+    try { if (ok) sfxCorrect(); else sfxWrong(); navigator.vibrate?.(ok ? 30 : [40, 40, 40]); } catch {}
     setResult(ok ? 'right' : 'wrong');
     speakZh(ok ? '答对啦！' : '再想想看～');
     if (ok) {

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ALL_EN_WORDS } from '@/lib/study-data-en';
 
 import { speakEn, praise } from '@/lib/speak';
+import { sfxCorrect, sfxWrong } from '@/lib/sfx';
 import { useModuleProgress } from '@/lib/module-progress';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 
@@ -61,6 +62,7 @@ export function EnSpellModule() {
     if (picked) return;
     setPicked(c);
     const ok = c === item.word[blankIdx];
+    try { if (ok) sfxCorrect(); else sfxWrong(); navigator.vibrate?.(ok ? 30 : [40, 40, 40]); } catch {}
     if (ok) {
       praise();
       setCorrect((n) => n + 1);

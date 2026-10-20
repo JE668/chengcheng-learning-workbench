@@ -6,6 +6,7 @@ import { SAFETY_TIPS } from '@/lib/study-data/life';
 
 import { useModuleProgress } from '@/lib/module-progress';
 import { speakZh, praise } from '@/lib/speak';
+import { sfxCorrect, sfxWrong } from '@/lib/sfx';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 
 function shuffle<T>(arr: T[]): T[] {
@@ -35,7 +36,9 @@ export function SafetyModule() {
   function pick(v: boolean) {
     if (picked !== null) return;
     setPicked(v);
-    if (v === item.isSafe) {
+    const ok = v === item.isSafe;
+    try { if (ok) sfxCorrect(); else sfxWrong(); navigator.vibrate?.(ok ? 30 : [40, 40, 40]); } catch {}
+    if (ok) {
       praise();
       setRightCount((c) => c + 1);
     } else {

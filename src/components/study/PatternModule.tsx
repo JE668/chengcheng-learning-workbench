@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { speakZh } from '@/lib/speak';
+import { sfxCorrect, sfxWrong } from '@/lib/sfx';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 
 type Prob = { seq: string[]; options: string[]; answer: number; say: string };
@@ -91,6 +92,7 @@ export function FindPatternModule() {
     if (result !== 'idle') return;
     setPicked(i);
     const ok = i === p.answer;
+    try { if (ok) sfxCorrect(); else sfxWrong(); navigator.vibrate?.(ok ? 30 : [40, 40, 40]); } catch {}
     setResult(ok ? 'right' : 'wrong');
     speakZh(ok ? '答对啦！你发现规律了！' : '再观察一下规律～');
     if (ok) {

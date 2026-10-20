@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { SIMILAR_CHARS } from '@/lib/study-data/yiketie';
 
 import { speakZh, praise } from '@/lib/speak';
+import { sfxCorrect, sfxWrong } from '@/lib/sfx';
 import { useModuleProgress } from '@/lib/module-progress';
 
 export function SimilarCharModule() {
@@ -33,6 +34,8 @@ export function SimilarCharModule() {
   function pick(side: 'a' | 'b') {
     if (picked) return;
     setPicked(side);
+    const ok = side === 'a';
+    try { if (ok) sfxCorrect(); else sfxWrong(); navigator.vibrate?.(ok ? 30 : [40, 40, 40]); } catch {}
     if (side === 'a') {
       speakZh(g.a);
       praise();

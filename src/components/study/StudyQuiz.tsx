@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { speakZh, speakEn, playTtsEnd } from '@/lib/speak';
+import { sfxCorrect, sfxWrong } from '@/lib/sfx';
 import { pickMokoLine, MokoPraiseBanner } from '@/components/study/MokoPraise';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { useModuleProgress } from '@/lib/module-progress';
@@ -157,6 +158,16 @@ export function StudyQuiz({
     const gen = ++feedbackGen.current;
     setPicked(opt);
     const ok = opt === item.answer;
+    // 🚀 三重即时反馈（2026-10-20 补齐，与 daily-practice/games 同标准）：
+    // SFX <50ms 即响 + 震动——学习模块此前只有 TTS 台词（慢网络下孩子
+    // 点了像没反应）。台词仍延迟 350ms 由下方 waitSpeechEnd 链播放。
+    try {
+      if (ok) sfxCorrect();
+      else sfxWrong();
+      navigator.vibrate?.(ok ? 30 : [40, 40, 40]);
+    } catch {
+      /* 触觉不受支持时忽略 */
+    }
     attemptsRef.current += 1;
     if (ok) {
       rightRef.current += 1;
