@@ -76,14 +76,14 @@ async function startWarming(day: string): Promise<void> {
       while (cursor < queue.length) {
         const url = queue[cursor++];
         try {
-          // SW 缓存已有 → 跳过（断点续传语义）
-          const cache = await caches?.open?.('ccwb-ccwb-v6');
-          if (cache) {
-            const hit = await cache.match(url);
-            if (hit) {
-              done++;
-              continue;
-            }
+          // SW 缓存已有 → 跳过（断点续传语义）。
+          // ⚠️ caches.match 不带 cacheName = 匹配所有缓存——SW 版本
+          // 升级（ccwb-v6→v7）后这里不需要跟着改。首版硬编码缓存名
+          // 在版本迭代时会静默失效（打不开旧名 → 永远从头拉）。
+          const hit = await caches?.match?.(url);
+          if (hit) {
+            done++;
+            continue;
           }
           // 直接 GET：SW fetch 处理器会把它放进 Cache First 桶
           const res = await fetch(url, { cache: 'no-store' });

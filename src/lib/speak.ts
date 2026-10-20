@@ -217,8 +217,9 @@ export function prefetchStaticAudio(text: string, lang: 'zh' | 'en'): void {
     link.as = 'audio';
     link.href = url;
     document.head.appendChild(link);
-    // 预取完成（或失败）后移除节点，防 head 无限增长
-    setTimeout(() => link.remove(), 30_000);
+    // ⚠️ 不自动移除：preload 下载中移除 <link> 会取消下载（弱网下
+    // 大概率 30s 内没下完）。head 里每会话最多几十个节点（章节级
+    // 预取），导航卸载自然清理，不构成泄漏。
   } catch {
     /* 预取是纯优化，任何失败静默 */
   }
