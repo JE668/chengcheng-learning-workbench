@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { storyChapters } from '@/lib/story';
 import { mokoCollection } from '@/lib/moko-collection';
-import { speakZh } from '@/lib/speak';
+import { playTts } from '@/lib/speak';
 import MokoTasks from '@/components/MokoTasks';
 
 const COLLECTION_MAP = new Map(mokoCollection.map((m) => [m.key, m]));
@@ -49,7 +49,9 @@ export default function MokoHousePage() {
 
   const tap = (key: string, line: string) => {
     setBouncing(key);
-    if (line) speakZh(line, 0.85);
+    // 图鉴台词已全部预生成（150 条裸句）——preferStatic 直查本地
+    // MP3，弱网/断网点萌可必出声（此前走服务端合成，网络差就哑）
+    if (line) void playTts(line, 'zh', { wsRate: 0.85, preferStatic: true });
     setTimeout(() => setBouncing((b) => (b === key ? null : b)), 900);
   };
 

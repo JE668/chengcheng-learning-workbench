@@ -87,6 +87,15 @@ export function extractMokoPhrases() {
     }
   }
 
+  // ④b 图鉴 line（150 只萌可的自我介绍——moko-house tap 播的裸台词。
+  // ⚠️ 必须放在 assembled 之后：图鉴台词只以裸句播放（speakZh(line)），
+  // 不走「萌可名说：」拼接——首版放前面导致 900 条永不播放的拼接变体
+  // 白生成（18MB 镜像死重 + 预热浪费移动流量），由生成后自查发现。
+  const byName = read('src/lib/moko-collection/by-name.ts');
+  for (const m of byName.matchAll(/"line": "([^"]{4,60})"/g)) {
+    out.push(m[1]);
+  }
+
   return dedupeSorted([...out, ...assembled]);
 }
 
