@@ -4,9 +4,24 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
 
-# 依赖覆盖（pnpm v11 起从这里读，package.json 的 pnpm.overrides 已不再生效）。
-# postcss-selector-parser < 7.1.6 有二次复杂度 CPU 耗尽漏洞（dependabot #52，moderate，
-# 构建期工具链的传递依赖，不进运行时）。7.x 仅为 API 变更的大版本跳，仅被
-# postcss/tailwind 工具链消费，构建即验证，风险可控。
+# 依赖覆盖（pnpm 10 起从这里读，package.json 的 pnpm.overrides 已不再生效）。
+# 全量安全钉版从 package.json 迁移（2026-10-21）：此前只搬了 1 条，
+# 其余 13 条在旧位置被 pnpm 10.12.1 静默忽略——靠旧锁文件苟活，
+# npm audit 抓到 vite launch-editor (GHSA-587h-7wmj-h5pm) 才暴露。
+# postcss-selector-parser < 7.1.6 有二次复杂度 CPU 耗尽漏洞（dependabot #52，
+# moderate，构建期工具链的传递依赖，不进运行时）。
 overrides:
   postcss-selector-parser: ^7.1.6
+  postcss: 8.5.26
+  dot-prop: 5.3.0
+  glob: 10.5.0
+  vite: 6.4.4
+  js-yaml: 4.3.2
+  fast-uri: ^3.1.8
+  undici: ^7.29.1
+  brace-expansion@1: ^1.1.20
+  brace-expansion@2: ^2.1.6
+  brace-expansion@5: ^5.0.11
+  tinypool: ^2.2.0
+  source-map-js: ^1.2.2
+  yaml: ^2.8.3
