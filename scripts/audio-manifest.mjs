@@ -72,6 +72,12 @@ export function extractAudioManifest() {
   for (const m of enSrc.matchAll(/word:\s*'([^']+)'/g)) en.push(m[1].toLowerCase());
   for (const m of enSrc.matchAll(/\{\s*letter:\s*'[A-Z]',\s*word:\s*'([^']+)'/g)) en.push(m[1].toLowerCase());
 
+  // ⑤ 英语小剧场（2026-10-21）：情景对话的萌可台词 + 全部回应选项。
+  // 台词含空格/标点，小写化与单词清单同规则（文件名小写明文）。
+  const dialogueSrc = read('src/lib/study-data/english-dialogues.ts');
+  for (const m of dialogueSrc.matchAll(/mokoLine: '([^']+)'/g)) en.push(m[1].toLowerCase());
+  for (const m of dialogueSrc.matchAll(/'([A-Z][^']*!)'/g)) en.push(m[1].toLowerCase());
+
   return {
     zh: dedupeSorted(zh),
     en: dedupeSorted(en),

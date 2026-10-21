@@ -87,6 +87,24 @@ export function extractMokoPhrases() {
     }
   }
 
+  // ⑦b 识字组词（③号内容升级 2026-10-21）：CharacterModule 的「读一读」
+  // 播 `${char}，${w1}，${w2}`（组词版优先），词牌单独点击播单词。
+  // 拼接与裸词都是固定文案，全部预生成。
+  const wordsSrc = read('src/lib/study-data/character-words.ts');
+  for (const m of wordsSrc.matchAll(/^\s+(\S): \[([^\]]+)\],?\s*$/gm)) {
+    const ch = m[1];
+    const ws = (m[2].match(/'([^']{2})'/g) || []).map((x) => x.slice(1, -1));
+    if (ws.length) {
+      out.push(`${ch}，${ws.join('，')}`);
+      for (const w of ws) out.push(w);
+    }
+  }
+
+  // ⑧b 诗意小问答（④号内容升级）：q/选项/解释全部朗读——固定文案
+  const poemQuizSrc = read('src/lib/study-data/poem-quizzes.ts');
+  for (const m of poemQuizSrc.matchAll(/q: '([^']{8,60})'/g)) out.push(m[1]);
+  for (const m of poemQuizSrc.matchAll(/explain: '([^']{8,60})'/g)) out.push(m[1]);
+
   // ⑥b 小老师台词（萌可小课堂 2026-10-21：孩子教萌可时的学会/困惑反馈。
   // 只以裸句播放，放 assembled 之后——与图鉴 line 同理不参与拼接模板。）
   const reviewSrc = read('src/app/(child)/study/review/page.tsx');

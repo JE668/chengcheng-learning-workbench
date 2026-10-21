@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { POEMS, type PoemItem } from '@/lib/study-data/poems';
 import { speakZh } from '@/lib/speak';
 import { RepeatMachine } from '@/components/study/RepeatMachine';
+import { PoemMeaningQuiz } from '@/components/study/PoemMeaningQuiz';
 import { useModuleProgress } from '@/lib/module-progress';
 import { ModuleStars } from '@/components/study/ModuleStars';
 import { useRecorder, recognizeSpeech } from '../useRecorder';
@@ -118,6 +119,9 @@ function PoemCard({ item }: { item: PoemItem }) {
           )}
         </div>
       )}
+      {/* 🌙 诗意小问答（④号升级 2026-10-21）：读懂比背会更重要 */}
+      <PoemMeaningQuiz poemTitle={item.title} />
+
       {/* 🔁 逐句复读机（2026-10-19 ③号升级）：整首背诵打分之外，
           提供「逐句 听范读→我来读→对比听」的精练闭环。默认收起，
           想精练某一句的孩子点开。 */}

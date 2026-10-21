@@ -6,7 +6,8 @@
 import Link from 'next/link';
 import { useRef, useState, useEffect } from 'react';
 import { CHARACTERS, CHARACTER_CATEGORIES, type CharacterItem } from '@/lib/study-data/characters';
-import { speakZh } from '@/lib/speak';
+import { speakZh, playTts } from '@/lib/speak';
+import { CHARACTER_WORDS } from '@/lib/study-data/character-words';
 import { useModuleProgress } from '@/lib/module-progress';
 
 /* ---------- 识字（按类别，一屏一类） ---------- */
@@ -31,12 +32,33 @@ function CharacterCard({
       </div>
       <div className="text-5xl font-black text-moko-rose mb-2">{item.char}</div>
       <div className="text-sm text-gray-600">{item.meaning}</div>
+      {/* 📚 组词（③号内容升级 2026-10-21）：字不离词——点词牌单独读该词 */}
+      {CHARACTER_WORDS[item.char] && (
+        <div className="flex gap-1.5 mt-1.5 flex-wrap justify-center">
+          {CHARACTER_WORDS[item.char].map((w) => (
+            <button
+              key={w}
+              onClick={() => void playTts(w, 'zh', { wsRate: 0.7, preferStatic: true })}
+              className="text-xs px-2 py-0.5 rounded-full bg-moko-rose/10 text-moko-rose font-black active:scale-95 transition"
+            >
+              {w}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="text-xs text-gray-400 mt-1">
         {item.strokeCount} 画 · {item.phrase}
       </div>
       <div className="flex gap-1.5 mt-2">
         <button
-          onClick={() => speakZh(`${item.char}，${item.meaning}。${item.phrase}`)}
+          onClick={() => {
+            const words = CHARACTER_WORDS[item.char];
+            if (words && words.length) {
+              void playTts(`${item.char}，${words.join('，')}`, 'zh', { wsRate: 0.75, preferStatic: true });
+            } else {
+              speakZh(`${item.char}，${item.meaning}。${item.phrase}`);
+            }
+          }}
           className="flex-1 text-xs px-2 py-1 rounded-full bg-moko-pink text-white font-bold"
         >
           🔊 读一读

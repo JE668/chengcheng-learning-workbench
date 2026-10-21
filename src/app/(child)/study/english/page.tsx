@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { SubjectStudyPage } from '@/components/study/SubjectStudyPage';
+import { EnglishTheatre } from '@/components/study/EnglishTheatre';
 
 import { EN_UNITS } from '@/lib/study-data/english';
 
@@ -70,6 +71,14 @@ export default async function EnglishStudyPage() {
         </section>
       }
       featured={
+        <>
+          <h2 className="section-title mb-3">🎭 萌可英语小剧场</h2>
+          <p className="text-xs text-gray-400 mb-3">
+            16 课生活情景对话 · 听唱唱萌可说，选出合适的回应 · 口语启蒙
+          </p>
+          <div className="rounded-3xl bg-white/60 clay-card clay-theme clay-yellow p-4 mb-8">
+            <EnglishTheatre />
+          </div>
         <section className="mb-8">
           <h2 className="section-title mb-3">📖 RAZ 词汇练习</h2>
           <p className="text-xs text-gray-400 mb-3">
@@ -90,6 +99,7 @@ export default async function EnglishStudyPage() {
             </div>
           </Link>
         </section>
+        </>
       }
     />
   );
