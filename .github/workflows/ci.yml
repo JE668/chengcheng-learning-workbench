@@ -114,6 +114,15 @@ jobs:
           }
           echo '✅ audio-manifest-client 与生成器输出一致'
 
+      - name: 生成物与源一致（笔顺数据）
+        run: |
+          node scripts/gen-strokes-data.mjs
+          git diff --exit-code src/lib/study-data/strokes-data.generated.ts >/dev/null || {
+            echo '❌ strokes-data 与生成器输出不一致，请本地跑 node scripts/gen-strokes-data.mjs 后提交';
+            exit 1;
+          }
+          echo '✅ strokes-data 与生成器输出一致'
+
       - name: 生产构建冒烟（next build）
         run: pnpm build
         env:

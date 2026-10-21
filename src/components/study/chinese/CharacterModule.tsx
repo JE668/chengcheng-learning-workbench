@@ -3,12 +3,15 @@
 // ⚠️ 直接从具体子模块导入，不要走 `@/lib/study-data` barrel（barrel 的 export *
 // 会把全部 ~110KB 数据打进 chunk，见拆分前的 ChineseModules 原注释）。
 
-import Link from 'next/link';
 import { useRef, useState, useEffect } from 'react';
 import { CHARACTERS, CHARACTER_CATEGORIES, type CharacterItem } from '@/lib/study-data/characters';
 import { speakZh, playTts } from '@/lib/speak';
 import { CHARACTER_WORDS } from '@/lib/study-data/character-words';
 import { useModuleProgress } from '@/lib/module-progress';
+import dynamic from 'next/dynamic';
+import { hasStrokes } from '@/components/study/StrokePlayer';
+// 笔顺动画（hanzi-writer + 566KB 数据）动态加载，不进识字首屏
+const StrokePlayer = dynamic(() => import('@/components/study/StrokePlayer'), { ssr: false });
 
 /* ---------- 识字（按类别，一屏一类） ---------- */
 function CharacterCard({
@@ -20,6 +23,7 @@ function CharacterCard({
   done: boolean;
   onDone: () => void;
 }) {
+  const [showStrokes, setShowStrokes] = useState(false);
   return (
     <div
       className={`rounded-2xl p-4 shadow-lg border-2 text-center transition ${done ? 'bg-green-50 border-green-300' : 'bg-white border-moko-pink/20'}`}
@@ -63,12 +67,13 @@ function CharacterCard({
         >
           🔊 读一读
         </button>
-        <Link
-          href="/study/chinese/strokes-order"
-          className="flex-1 text-xs px-2 py-1 rounded-full bg-moko-violet/10 text-moko-violet border-2 border-moko-violet/30 font-bold text-center inline-flex items-center justify-center"
+        <button
+          onClick={() => hasStrokes(item.char) && setShowStrokes(true)}
+          disabled={!hasStrokes(item.char)}
+          className="flex-1 text-xs px-2 py-1 rounded-full bg-moko-violet/10 text-moko-violet border-2 border-moko-violet/30 font-bold text-center inline-flex items-center justify-center disabled:opacity-40"
         >
           ✍️ 看笔顺
-        </Link>
+        </button>
         <button
           onClick={onDone}
           disabled={done}
@@ -77,6 +82,12 @@ function CharacterCard({
           {done ? '✅ 认识啦' : '👆 我认识'}
         </button>
       </div>
+
+      {/* 🖌 笔顺动画遮罩（⑥号升级 2026-10-21）：修复原「看笔顺」死链
+          （strokes-order 路由从未存在过）——改为本地逐画动画，299 字全覆盖 */}
+      {showStrokes && (
+        <StrokePlayer char={item.char} onClose={() => setShowStrokes(false)} />
+      )}
     </div>
   );
 }
