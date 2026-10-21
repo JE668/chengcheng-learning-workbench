@@ -2,6 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { playTts } from '@/lib/speak';
+
+/**
+ * 🏫 小老师台词（2026-10-21 ②号内容升级）——固定文案，已进预生成
+ * 静态集（moko-phrases-manifest ⑥ 段），播放走 preferStatic。
+ * learning-by-teaching：让孩子把错题「讲给萌可听」，教是最好的学。
+ */
+const TEACH_LINES_OK = [
+  '萌可学会啦，谢谢小老师！',
+  '哇，原来如此！程程教得真清楚！',
+  '程程是萌可最棒的小老师！',
+];
+const TEACH_LINES_RETRY = [
+  '萌可还有点没听懂，再教一遍好不好？',
+  '萌可想到了另一个答案，小老师再看看？',
+];
 
 interface MistakeRow {
   id: number;
@@ -72,9 +88,10 @@ export default function ReviewPage() {
       <div className="flex items-center gap-3 mb-4">
         <Link href="/study" className="text-moko-violet font-bold hover:underline">‹ 学习首页</Link>
       </div>
-      <h1 className="page-title mb-2">📝 我的复习本</h1>
+      <h1 className="page-title mb-2">🏫 萌可小课堂</h1>
       <p className="text-gray-600 mb-6">
-        这里收集了之前做错的小题，按照「遗忘曲线」每天帮你复习，记牢就不会再错啦～
+        萌可们有些题还没弄懂，程程来当<b className="text-moko-violet">小老师</b>教教它们吧！
+        想一想正确答案是哪个，点出来讲给萌可听～
       </p>
 
       {loading ? (
@@ -82,8 +99,8 @@ export default function ReviewPage() {
       ) : items.length === 0 ? (
         <div className="rounded-3xl p-10 bg-white clay-card clay-theme clay-violet text-center">
           <div className="text-6xl mb-3">🎉</div>
-          <div className="text-xl font-black text-moko-violet">今天没有要复习的，真棒！</div>
-          <p className="text-gray-500 mt-2">去学科里多学一点吧～</p>
+          <div className="text-xl font-black text-moko-violet">萌可们全都学会了，没有要教的题！</div>
+          <p className="text-gray-500 mt-2">去学科里多学一点，攒更多知识当小老师吧～</p>
         </div>
       ) : (
         <>
@@ -116,7 +133,15 @@ export default function ReviewPage() {
                           onClick={() => {
                             setPickedAns((p) => ({ ...p, [it.id]: opt }));
                             setRevealed((p) => ({ ...p, [it.id]: true }));
-                            if (opt === it.answer) { setDone((n) => n + 1); }
+                            if (opt === it.answer) {
+                              setDone((n) => n + 1);
+                              // 小老师教对了：萌可学会的反馈（静态台词秒响）
+                              const line = TEACH_LINES_OK[Math.floor(Math.random() * TEACH_LINES_OK.length)];
+                              void playTts(line, 'zh', { wsRate: 0.85, preferStatic: true });
+                            } else {
+                              const line = TEACH_LINES_RETRY[Math.floor(Math.random() * TEACH_LINES_RETRY.length)];
+                              void playTts(line, 'zh', { wsRate: 0.85, preferStatic: true });
+                            }
                           }}
                           className={`w-full text-left px-3 py-2 rounded-xl font-bold text-sm transition ${
                             pickedAns[it.id] === opt
@@ -135,13 +160,13 @@ export default function ReviewPage() {
                     onClick={() => review(it.id, true)}
                     className="flex-1 py-2 rounded-full bg-green-500 text-white font-bold text-sm active:scale-95 transition"
                   >
-                    我会了 ✅
+                    萌可学会了 ✅
                   </button>
                   <button
                     onClick={() => review(it.id, false)}
                     className="flex-1 py-2 rounded-full bg-gray-200 text-gray-600 font-bold text-sm active:scale-95 transition"
                   >
-                    还不会 💡
+                    萌可没听懂 💡
                   </button>
                 </div>
                 {it.source_module && (

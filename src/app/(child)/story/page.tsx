@@ -26,6 +26,12 @@ export default function StoryPage() {
   const [narrating, setNarrating] = useState<string | null>(null); // 正在自动朗读的章节
   const [readPara, setReadPara] = useState(-1); // 当前朗读到第几段（-1=未朗读，paragraphs.length=正在读 tip）
   const [readSet, setReadSet] = useState<Set<string>>(new Set());
+  // 🌙 晚安模式（2026-10-21 ①号内容升级）：睡前连播已解锁的故事集——
+  // 更慢语速（0.6）、无答题、暗屏遮罩、读完自动停。孩子睡前听故事是
+  // 真实高频场景，故事 TTS 已全量预生成（弱网/断网也秒响）。
+  const [bedtime, setBedtime] = useState(false);
+  const [bedtimeCh, setBedtimeCh] = useState<(typeof storyChapters)[number] | null>(null);
+  const bedtimeAbort = useRef(false);
   const [quizSet, setQuizSet] = useState<Set<string>>(new Set());
   const [capturing, setCapturing] = useState(false);
   const [toast, setToast] = useState('');
@@ -227,6 +233,46 @@ export default function StoryPage() {
     await playTtsEnd(text, 'zh', { wsRate: 0.85, pauseMs: 120, preferStatic: true });
   }
 
+  /** 🌙 晚安连播：从第一集顺序播已解锁的全部故事（含 nextIndex 集） */
+  async function startBedtime() {
+    if (bedtime || !progress) return;
+    const playable = storyChapters.slice(0, progress.nextIndex + 1);
+    if (playable.length === 0) return;
+    stopNarration();
+    stopQuiz();
+    bedtimeAbort.current = false;
+    setBedtime(true);
+    try {
+      for (const c of playable) {
+        if (bedtimeAbort.current) break;
+        setBedtimeCh(c);
+        // 预取本集段落（静态 MP3，弱网零延迟）
+        for (const p of c.paragraphs) prefetchStaticAudio(p, 'zh');
+        if (c.tip) prefetchStaticAudio(c.tip, 'zh');
+        for (let k = 0; k < c.paragraphs.length; k++) {
+          if (bedtimeAbort.current) break;
+          await playTtsEnd(c.paragraphs[k], 'zh', { wsRate: 0.6, pauseMs: 260, preferStatic: true });
+        }
+        if (!bedtimeAbort.current && c.tip) {
+          await playTtsEnd(c.tip, 'zh', { wsRate: 0.6, pauseMs: 400, preferStatic: true });
+        }
+        // 集间停顿：让孩子知道换了一集
+        if (!bedtimeAbort.current) {
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+      }
+    } finally {
+      setBedtime(false);
+      setBedtimeCh(null);
+    }
+  }
+
+  function stopBedtime() {
+    bedtimeAbort.current = true;
+    setBedtime(false);
+    setBedtimeCh(null);
+  }
+
   /** 展开/收起 */
   function toggleOpen(c: (typeof storyChapters)[number]) {
     stopNarration();
@@ -383,6 +429,60 @@ export default function StoryPage() {
           style={{ width: `${(progress.captured.length / progress.total) * 100}%` }}
         />
       </div>
+
+      {/* 🌙 晚安模式入口：睡前连播已解锁的故事——慢语速、暗屏、无答题 */}
+      {progress && progress.nextIndex >= 0 && (
+        <button
+          onClick={() => void startBedtime()}
+          className="mb-6 w-full rounded-2xl p-4 bg-gradient-to-r from-moko-purple to-moko-violet text-white font-black clay-dark hover:scale-[1.02] transition flex items-center justify-center gap-2"
+        >
+          🌙 晚安故事 · 连播 {Math.min(progress.nextIndex + 1, storyChapters.length)} 集
+          <span className="text-xs font-bold opacity-80">慢速 · 无答题 · 播完自动停</span>
+        </button>
+      )}
+
+      {/* 🌙 晚安模式遮罩：暗屏 + 当前集信息 + 停止按钮。全宽 fixed，
+          不依赖页面结构；pointer-events 只在卡片上，点遮罩即停。 */}
+      {bedtime && (
+        <div
+          className="fixed inset-0 z-[70] bg-gradient-to-b from-[#1a1a2e]/92 to-[#2d2d44]/96 flex items-center justify-center p-6"
+          onClick={stopBedtime}
+        >
+          <div
+            className="max-w-md w-full text-center space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-6xl">🌙</div>
+            <div className="text-white/60 text-sm font-bold tracking-widest">晚安故事</div>
+            {bedtimeCh && (
+              <>
+                <div className="text-2xl font-black text-white leading-snug">
+                  {bedtimeCh.emoji} {bedtimeCh.title}
+                </div>
+                <div className="text-white/50 text-sm">
+                  {bedtimeCh.mokoName} 陪程程入睡
+                </div>
+                <div className="mx-auto w-20 h-20 rounded-full overflow-hidden ring-4 ring-white/20 opacity-90">
+                  <Image
+                    src={mokoImgByName[bedtimeCh.mokoName] || '/moko/lemei.webp'}
+                    alt={bedtimeCh.mokoName}
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </>
+            )}
+            <button
+              onClick={stopBedtime}
+              className="px-8 py-3 rounded-full bg-white/15 text-white/90 font-black text-lg clay-btn transition active:scale-95"
+            >
+              ⏹ 停止，程程要睡觉啦
+            </button>
+            <div className="text-white/30 text-xs">连播中 · 点击屏幕任意处也可以停止</div>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div className="mb-5 rounded-2xl p-3 text-center font-bold bg-moko-rose/10 text-moko-rose border-2 border-moko-rose/20">

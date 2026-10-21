@@ -87,6 +87,15 @@ export function extractMokoPhrases() {
     }
   }
 
+  // ⑥b 小老师台词（萌可小课堂 2026-10-21：孩子教萌可时的学会/困惑反馈。
+  // 只以裸句播放，放 assembled 之后——与图鉴 line 同理不参与拼接模板。）
+  const reviewSrc = read('src/app/(child)/study/review/page.tsx');
+  for (const m of reviewSrc.matchAll(/(?:TEACH_LINES_OK|TEACH_LINES_RETRY) = \[([\s\S]*?)\];/g)) {
+    for (const t of (m[1].match(/'([^']{6,40})'/g) ?? []).map((x) => x.slice(1, -1))) {
+      out.push(t);
+    }
+  }
+
   // ④b 图鉴 line（150 只萌可的自我介绍——moko-house tap 播的裸台词。
   // ⚠️ 必须放在 assembled 之后：图鉴台词只以裸句播放（speakZh(line)），
   // 不走「萌可名说：」拼接——首版放前面导致 900 条永不播放的拼接变体
