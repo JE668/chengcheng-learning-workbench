@@ -10,7 +10,10 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.12.1 --activate
 
 # 先装依赖（利用 Docker 缓存层），HUSKY=0 + --ignore-scripts 禁用 git hooks 和 build scripts（Docker 无 .git 目录）
-COPY --link package.json pnpm-lock.yaml ./
+# ⚠️ pnpm-workspace.yaml 必须与锁文件同批 COPY：pnpm 10 起依赖 overrides
+# 住在 yaml 里（vite/postcss 等安全钉版），漏拷则 frozen install 报
+# LOCKFILE_CONFIG_MISMATCH（overrides 迁移出 package.json 首日踩坑）。
+COPY --link package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN HUSKY=0 pnpm install --frozen-lockfile --ignore-scripts && pnpm store prune
 
 # 复制源码并构建
