@@ -31,7 +31,7 @@
     "@ai-sdk/openai": "^4.0.50",
     "@libsql/client": "^0.14.0",
     "@radix-ui/react-slot": "^1.3.3",
-    "@sentry/nextjs": "^10.71.0",
+    "@sentry/nextjs": "^10.75.2",
     "ai": "^7.0.83",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
