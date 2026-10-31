@@ -629,13 +629,19 @@ describe('喷雾与收获', () => {
     await insertChild(cid);
     const db = getDb();
     const today = dateStr();
-    // 昨天缺卡 → 1 捣蛋萌可，star_coins 被藏一半
     await insertCastle(cid, addDays(today, -2), 100);
     for (const subj of ['语文', '数学', '英语'])
       await confirmSubject(cid, addDays(today, -2), subj);
     await getCastleState(cid); // 触发惩罚
-    const beforeTrouble = await db.execute({
-      sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ? AND resolved = 0',
+    // ⚠️ 显式构造「喷雾要修的对象」：漏卡第 1 天的惩罚并不产生捣蛋萌可，
+    // 而新版 castSpray 在「无可修理对象」时不再白扣喷雾（离线重放护栏，见 castle.ts）。
+    // 放一只未解决的捣蛋萌可 + 一笔被藏的星星币，让本次按喷雾真正有活可干。
+    await db.execute({
+      sql: 'INSERT INTO troublemakers (child_id, moko_key, day, resolved) VALUES (?, ?, ?, 0)',
+      args: [cid, 'tm_scare', addDays(today, -1)],
+    });
+    await db.execute({
+      sql: 'UPDATE castle_state SET last_stolen = 20 WHERE child_id = ?',
       args: [cid],
     });
     await db.execute({
@@ -647,13 +653,19 @@ describe('喷雾与收获', () => {
     expect(res.ok).toBe(true);
     expect(res.message).toContain('星星币');
 
-    // 捣蛋萌可已清理（如果之前有的话）
+    // 捣蛋萌可已全部解决
     const afterTrouble = await db.execute({
       sql: 'SELECT COUNT(*) AS n FROM troublemakers WHERE child_id = ? AND resolved = 0',
       args: [cid],
     });
-    // 由于测试环境可能未生成捣蛋萌可，仅验证不报错
-    expect(Number(afterTrouble.rows[0]?.n ?? 0)).toBeGreaterThanOrEqual(0);
+    expect(Number(afterTrouble.rows[0]?.n ?? 0)).toBe(0);
+
+    // 喷雾已扣（有对象时才扣 —— 重放护栏的前提）
+    const spray = await db.execute({
+      sql: "SELECT qty FROM inventory WHERE child_id = ? AND item_key = 'spray'",
+      args: [cid],
+    });
+    expect(Number(spray.rows[0]?.qty ?? 0)).toBe(0);
 
     // 结算日重置为昨天
     const row = await getDb().execute({
@@ -661,6 +673,31 @@ describe('喷雾与收获', () => {
       args: [cid],
     });
     expect(String(row.rows[0]?.last_settled_day)).toBe(addDays(dateStr(), -1));
+  });
+
+  it('castSpray：城堡干净（无捣蛋/无藏币/无受伤萌可）→ 拒绝且不扣喷雾（离线重放护栏）', async () => {
+    const cid = nextChild();
+    await insertChild(cid);
+    const db = getDb();
+    await insertCastle(cid, dateStr(), 50);
+    // 心情满、全部 resident、无捣蛋、last_stolen=0 —— 没有任何可修理对象
+    await db.execute({
+      sql: "INSERT INTO moko_owned (child_id, moko_key, stage, mood, status) VALUES (?, 'col_01_爱心萌可_render', 'friend', 3, 'resident')",
+      args: [cid],
+    });
+    await db.execute({
+      sql: "INSERT INTO inventory (child_id, item_key, qty) VALUES (?, 'spray', 1)",
+      args: [cid],
+    });
+
+    const res = await castSpray(cid);
+    expect(res.ok).toBe(false);
+    // 关键断言：喷雾一瓶没扣（离线重放第二次执行时不能白亏道具）
+    const spray = await db.execute({
+      sql: "SELECT qty FROM inventory WHERE child_id = ? AND item_key = 'spray'",
+      args: [cid],
+    });
+    expect(Number(spray.rows[0]?.qty ?? 0)).toBe(1);
   });
 
   it('harvest：friend 萌可产出星星币', async () => {

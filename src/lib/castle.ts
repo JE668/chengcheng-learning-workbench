@@ -314,6 +314,33 @@ export async function castSpray(childId: number) {
       sql: 'SELECT day FROM troublemakers WHERE child_id = ? AND resolved = 0 ORDER BY day DESC LIMIT 1',
       args: [childId],
     });
+    // ⚠️ 「无可修理对象」时**不扣喷雾**直接返回 —— 离线重放护栏 + 防手滑白扣。
+    //
+    // 本函数入离线队列：孩子按喷雾时若「服务端已执行、响应丢在网络上」，客户端
+    // 会当作失败入队，联网后再执行一次。原实现在这一步之前没有任何判断，于是
+    // 重放会**再扣一瓶喷雾**换一堆 no-op（捣蛋已 resolved、心情已满、
+    // last_stolen 已清零所以找回 0 币）—— 白亏一件道具。
+    //
+    // 判据是「这次按下去到底有没有东西要修」，三者全无才算白按：
+    //   · 未解决的捣蛋萌可
+    //   · 被藏起来、可找回的星星币（last_stolen）
+    //   · 心情未满或已逃亡的萌可
+    // 注意不能只看捣蛋萌可：漏卡第 1 天的惩罚只有心情 -1、**不产生捣蛋萌可**，
+    // 只看 troublemakers 会把这种合法用法一起挡掉。
+    //
+    // 这条守卫同时修掉另一个既有缺口：/api/castle/use-item **没有**限流
+    //（对比 /api/castle/buy 有 IP 级限流），在线连点两下也会白扣一瓶。
+    const needRepair = await db.execute({
+      sql: `SELECT
+              (SELECT COUNT(*) FROM troublemakers WHERE child_id = ? AND resolved = 0) AS trouble,
+              (SELECT COUNT(*) FROM moko_owned WHERE child_id = ? AND (mood < 3 OR status <> 'resident')) AS hurt`,
+      args: [childId, childId],
+    });
+    const troubleN = Number(needRepair.rows[0]?.trouble ?? 0);
+    const hurtN = Number(needRepair.rows[0]?.hurt ?? 0);
+    if (troubleN === 0 && hurtN === 0 && Number(row?.last_stolen ?? 0) === 0) {
+      return { ok: false, message: '城堡现在很干净，没有需要帮助的萌可，喷雾先留着吧～' };
+    }
     const returnCoins = Math.ceil(Number(row?.last_stolen ?? 0) * 0.5);
     const today = dateStr();
     const yesterday = addDays(today, -1);
@@ -474,7 +501,10 @@ export async function applyTimeGlass(
         return { ok: false, message: '没有时光沙漏，请爸爸妈妈在家长端送给你吧～' };
       }
       if (e instanceof Error && e.message === '__timeglass_noop') {
-        return { ok: false, message: formatBackfillDayLabel(day) + ' 三科都已经打卡过了，不用补～' };
+        return {
+          ok: false,
+          message: formatBackfillDayLabel(day) + ' 三科都已经打卡过了，不用补～',
+        };
       }
       throw e;
     }
@@ -632,7 +662,10 @@ export async function harvest(childId: number) {
         args: [gained, childId],
       });
       await db.execute({
-        sql: 'UPDATE moko_owned SET last_harvest_day = ? WHERE child_id = ? AND id IN (' + ids.map(() => '?').join(', ') + ')',
+        sql:
+          'UPDATE moko_owned SET last_harvest_day = ? WHERE child_id = ? AND id IN (' +
+          ids.map(() => '?').join(', ') +
+          ')',
         args: [today, childId, ...ids],
       });
       await logGrowthEvent(
