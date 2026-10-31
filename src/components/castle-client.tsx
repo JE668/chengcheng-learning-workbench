@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useOfflineStore } from '@/lib/stores';
 import type { Subject } from '@/lib/types';
 import { MokoAvatar } from '@/components/MokoAvatar';
 import { mokoChars, subjectMokoKey } from '@/lib/moko';
@@ -26,7 +27,10 @@ export function CheckinPanel({ initial }: { initial: Record<Subject, string> }) 
         const done = st !== 'pending';
         const m = mokoChars[subjectMokoKey[s.key]];
         return (
-          <div key={s.key} className={`flex flex-col items-center rounded-3xl p-4 bg-gradient-to-br ${s.grad} text-white shadow-lg`}>
+          <div
+            key={s.key}
+            className={`flex flex-col items-center rounded-3xl p-4 bg-gradient-to-br ${s.grad} text-white shadow-lg`}
+          >
             <MokoAvatar
               img={m?.img}
               emoji={m?.emoji ?? '🧸'}
@@ -72,7 +76,8 @@ export function HarvestBtn({ info }: { info?: HarvestInfo }) {
   const hasFriends = friendTotal > 0;
   const canHarvest = harvestableStars > 0;
   // 收获进度 = 已收萌可数 / 好友总数（满 100% 时今日已收完）
-  const harvestProgress = friendTotal > 0 ? Math.min(100, (friendHarvestedToday / friendTotal) * 100) : 0;
+  const harvestProgress =
+    friendTotal > 0 ? Math.min(100, (friendHarvestedToday / friendTotal) * 100) : 0;
   // 可收获的萌可数 = 好友总数 - 已收数
   const unharvestedCount = friendTotal - friendHarvestedToday;
 
@@ -85,7 +90,9 @@ export function HarvestBtn({ info }: { info?: HarvestInfo }) {
       setMsg(j.message || '');
       router.refresh();
     } catch {
-      setMsg('网络错误');
+      // 网络错误：入离线队列，联网后自动重放
+      useOfflineStore.getState().addAction({ type: 'harvest', payload: {} });
+      setMsg('网络不稳，已离线保存，联网后自动同步～');
     } finally {
       setBusy(false);
     }
@@ -118,11 +125,19 @@ export function HarvestBtn({ info }: { info?: HarvestInfo }) {
           {hasFriends ? (
             canHarvest ? (
               <span className="text-amber-700 font-semibold">
-                {'🎯 ' + unharvestedCount + ' 只萌可好友可以收获，共 ' + harvestableStars + ' 颗星星币！'}
+                {'🎯 ' +
+                  unharvestedCount +
+                  ' 只萌可好友可以收获，共 ' +
+                  harvestableStars +
+                  ' 颗星星币！'}
               </span>
             ) : (
               <span>
-                {'🌙 今天已全部收完（' + friendHarvestedToday + '/' + friendTotal + ' 只），明天再来～'}
+                {'🌙 今天已全部收完（' +
+                  friendHarvestedToday +
+                  '/' +
+                  friendTotal +
+                  ' 只），明天再来～'}
               </span>
             )
           ) : (
@@ -135,9 +150,18 @@ export function HarvestBtn({ info }: { info?: HarvestInfo }) {
         <button
           onClick={harvest}
           disabled={busy || (hasFriends && !canHarvest)}
-          className={'btn font-bold text-sm px-5 py-2.5 rounded-xl shadow-lg transition-all ' + (canHarvest ? 'bg-gradient-to-r from-moko-gold to-amber-400 text-white hover:scale-105 active:scale-95' : 'bg-gray-200 text-gray-400 cursor-default')}
+          className={
+            'btn font-bold text-sm px-5 py-2.5 rounded-xl shadow-lg transition-all ' +
+            (canHarvest
+              ? 'bg-gradient-to-r from-moko-gold to-amber-400 text-white hover:scale-105 active:scale-95'
+              : 'bg-gray-200 text-gray-400 cursor-default')
+          }
         >
-          {busy ? '⏳ 收获中…' : canHarvest ? ('⭐ 收获 ' + harvestableStars + ' 颗星星币') : '⭐ 收获星星币'}
+          {busy
+            ? '⏳ 收获中…'
+            : canHarvest
+              ? '⭐ 收获 ' + harvestableStars + ' 颗星星币'
+              : '⭐ 收获星星币'}
         </button>
         {msg && <span className="text-xs text-moko-violet font-semibold">{msg}</span>}
       </div>

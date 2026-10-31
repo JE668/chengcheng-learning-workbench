@@ -9,6 +9,7 @@ import { mokoImgByName } from '@/lib/moko-imgs';
 import { mokoCollectionByName } from '@/lib/moko-collection';
 import { playTtsEnd, prefetchStaticAudio } from '@/lib/speak';
 import { CaptureMoment, type CapturePayload } from '@/components/CaptureMoment';
+import { useOfflineStore } from '@/lib/stores';
 
 interface Progress {
   captured: string[];
@@ -251,7 +252,11 @@ export default function StoryPage() {
         if (c.tip) prefetchStaticAudio(c.tip, 'zh');
         for (let k = 0; k < c.paragraphs.length; k++) {
           if (bedtimeAbort.current) break;
-          await playTtsEnd(c.paragraphs[k], 'zh', { wsRate: 0.6, pauseMs: 260, preferStatic: true });
+          await playTtsEnd(c.paragraphs[k], 'zh', {
+            wsRate: 0.6,
+            pauseMs: 260,
+            preferStatic: true,
+          });
         }
         if (!bedtimeAbort.current && c.tip) {
           await playTtsEnd(c.tip, 'zh', { wsRate: 0.6, pauseMs: 400, preferStatic: true });
@@ -362,7 +367,9 @@ export default function StoryPage() {
         setToast(j.error || '捕捉失败，再试一次');
       }
     } catch {
-      setToast('网络好像走神了，再试一次吧');
+      // 网络错误：入离线队列，联网后自动重放
+      useOfflineStore.getState().addAction({ type: 'story-capture', payload: { chapterId } });
+      setToast('网络不稳，已离线保存，联网后自动同步～');
     } finally {
       setCapturing(false);
     }
@@ -459,9 +466,7 @@ export default function StoryPage() {
                 <div className="text-2xl font-black text-white leading-snug">
                   {bedtimeCh.emoji} {bedtimeCh.title}
                 </div>
-                <div className="text-white/50 text-sm">
-                  {bedtimeCh.mokoName} 陪程程入睡
-                </div>
+                <div className="text-white/50 text-sm">{bedtimeCh.mokoName} 陪程程入睡</div>
                 <div className="mx-auto w-20 h-20 rounded-full overflow-hidden ring-4 ring-white/20 opacity-90">
                   <Image
                     src={mokoImgByName[bedtimeCh.mokoName] || '/moko/lemei.webp'}
@@ -604,55 +609,59 @@ export default function StoryPage() {
                   )}
 
                   {/* —— 读完故事，弹出小问题（答对才能捕捉） —— */}
-                  {open && isRead && !isQuiz && (childQuiz[c.id] || c.quiz) && (() => {
-                    const quiz = childQuiz[c.id] ?? c.quiz!;
-                    return (
-                    <div className="mt-4 rounded-2xl bg-moko-gold/10 border-2 border-moko-gold/30 p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-black text-moko-violet">❓ 小问题</span>
-                        {quizSpeaking && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-moko-violet/10 text-moko-violet text-xs font-bold px-2 py-0.5">
-                            🔊 正在读题…
-                          </span>
-                        )}
-                        <button
-                          onClick={() => speakQuiz(c)}
-                          className="ml-auto text-xs px-3 py-1 rounded-full bg-moko-violet/10 text-moko-violet font-bold hover:bg-moko-violet/20 transition"
-                        >
-                          🔊 再听一遍
-                        </button>
-                      </div>
-                      <p className="font-bold text-gray-800 mb-3 leading-relaxed">{quiz.q}</p>
-                      <div className="grid grid-cols-1 gap-2">
-                        {quiz.options.map((opt, k) => (
-                          <div key={k} className="flex items-center gap-2">
+                  {open &&
+                    isRead &&
+                    !isQuiz &&
+                    (childQuiz[c.id] || c.quiz) &&
+                    (() => {
+                      const quiz = childQuiz[c.id] ?? c.quiz!;
+                      return (
+                        <div className="mt-4 rounded-2xl bg-moko-gold/10 border-2 border-moko-gold/30 p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-black text-moko-violet">❓ 小问题</span>
+                            {quizSpeaking && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-moko-violet/10 text-moko-violet text-xs font-bold px-2 py-0.5">
+                                🔊 正在读题…
+                              </span>
+                            )}
                             <button
-                              onClick={() => answerQuiz(c, k)}
-                              className="flex-1 text-left px-4 py-2.5 rounded-xl bg-white border-2 border-moko-violet/30 font-bold text-gray-800 hover:bg-moko-violet/10 hover:border-moko-violet transition"
+                              onClick={() => speakQuiz(c)}
+                              className="ml-auto text-xs px-3 py-1 rounded-full bg-moko-violet/10 text-moko-violet font-bold hover:bg-moko-violet/20 transition"
                             >
-                              {opt}
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                speakOne(opt);
-                              }}
-                              className="px-3 py-2.5 rounded-xl bg-moko-violet/10 text-moko-violet font-bold hover:bg-moko-violet/20 transition"
-                              aria-label="听这个选项"
-                            >
-                              🔊
+                              🔊 再听一遍
                             </button>
                           </div>
-                        ))}
-                      </div>
-                      {quizWrongFor === c.id && (
-                        <p className="mt-3 text-sm font-bold text-moko-rose">
-                          😊 再想想看，选另一个试试吧～
-                        </p>
-                      )}
-                    </div>
-                    );
-                  })()}
+                          <p className="font-bold text-gray-800 mb-3 leading-relaxed">{quiz.q}</p>
+                          <div className="grid grid-cols-1 gap-2">
+                            {quiz.options.map((opt, k) => (
+                              <div key={k} className="flex items-center gap-2">
+                                <button
+                                  onClick={() => answerQuiz(c, k)}
+                                  className="flex-1 text-left px-4 py-2.5 rounded-xl bg-white border-2 border-moko-violet/30 font-bold text-gray-800 hover:bg-moko-violet/10 hover:border-moko-violet transition"
+                                >
+                                  {opt}
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    speakOne(opt);
+                                  }}
+                                  className="px-3 py-2.5 rounded-xl bg-moko-violet/10 text-moko-violet font-bold hover:bg-moko-violet/20 transition"
+                                  aria-label="听这个选项"
+                                >
+                                  🔊
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          {quizWrongFor === c.id && (
+                            <p className="mt-3 text-sm font-bold text-moko-rose">
+                              😊 再想想看，选另一个试试吧～
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                   {/* 答对：quizRightFor 才代表「刚刚这道题答对了」；isQuiz 只是「这一集已解锁过」，
                       答题框靠它切换是对的，但鼓励语应只在刚答对的那一刻出现。 */}

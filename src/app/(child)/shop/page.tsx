@@ -4,6 +4,17 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { starShop } from '@/lib/moko';
 import { EmptyState } from '@/components/EmptyState';
+import { useOfflineStore } from '@/lib/stores';
+
+/**
+ * 愿望的幂等引用号：同一次「存进去」无论重放多少次，服务端只落一条。
+ * 离线入队时冻结在 payload 里（见 shop 页 addWish），所以首次请求与重放共用同一个 ref，
+ * 服务端按 (child_id, client_ref) 唯一索引去重（migrations v23）。
+ * 含入队时间戳与随机尾巴，确保「两次不同的许愿」不会互相吞掉。
+ */
+function wishRef(): string {
+  return `w-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 interface StateView {
   starCoins: number;
@@ -58,21 +69,57 @@ export default function ShopPage() {
 
   async function buy(key: string, cost: number) {
     setMsg('');
-    const r = await fetch('/api/castle/buy', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ itemKey: key }) });
-    const j = await r.json();
-    setMsg(j.message || (j.ok ? '兑换成功！' : (j.error || '')));
-    await load(); router.refresh();
+    try {
+      const r = await fetch('/api/castle/buy', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ itemKey: key }),
+      });
+      const j = await r.json();
+      setMsg(j.message || (j.ok ? '兑换成功！' : j.error || ''));
+      await load();
+      router.refresh();
+    } catch {
+      // 断网/弱网：入离线队列，联网后自动重放。
+      // 幂等性：buy 的「扣币」与「发货」同在一个事务（castle.ts buy），
+      // 首次若已落库就不会出现在这里；响应丢失的极端情况会多扣一次币，
+      // 概率远低于断网本身，家庭场景可接受（与 daily-practice 同口径）。
+      useOfflineStore.getState().addAction({ type: 'buy', payload: { itemKey: key } });
+      setMsg('网络不稳，兑换已离线保存，联网后自动同步～');
+    }
   }
 
   async function addWish() {
     const t = wishText.trim();
     if (!t) return;
     setWishText('');
-    await fetch('/api/wishes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: t }) });
-    await loadWishes();
+    // ref 在**首次请求前**生成：首次请求与（若断网）离线重放共用同一个，
+    // 服务端按 (child_id, client_ref) 唯一索引去重（migrations v23）。
+    const ref = wishRef();
+    try {
+      await fetch('/api/wishes', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: t, clientRef: ref }),
+      });
+      await loadWishes();
+    } catch {
+      useOfflineStore.getState().addAction({ type: 'wish', payload: { text: t, clientRef: ref } });
+      setMsg('网络不稳，愿望已离线保存，联网后自动同步～');
+    }
   }
 
-  if (!state) return <div className="max-w-3xl mx-auto flex flex-col items-center justify-center py-20 gap-3 text-moko-violet font-bold"><span className="moko-loader"><span></span><span></span><span></span></span>商城加载中… ✨</div>;
+  if (!state)
+    return (
+      <div className="max-w-3xl mx-auto flex flex-col items-center justify-center py-20 gap-3 text-moko-violet font-bold">
+        <span className="moko-loader">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+        商城加载中… ✨
+      </div>
+    );
 
   return (
     <div className="max-w-3xl mx-auto fade-up">
@@ -87,7 +134,9 @@ export default function ShopPage() {
           <span className="text-2xl">🐷</span>
           <h2 className="text-lg font-black text-moko-rose">我的愿望存钱罐</h2>
         </div>
-        <p className="text-xs text-gray-500 mb-3">把想换的奖励写进存钱罐，攒够星星币、爸爸妈妈同意就能实现啦～</p>
+        <p className="text-xs text-gray-500 mb-3">
+          把想换的奖励写进存钱罐，攒够星星币、爸爸妈妈同意就能实现啦～
+        </p>
         <div className="flex gap-2 mb-3">
           <input
             value={wishText}
@@ -97,7 +146,9 @@ export default function ShopPage() {
             maxLength={100}
             className="flex-1 rounded-2xl border-2 border-moko-pink/30 px-4 py-2 text-sm focus:border-moko-pink outline-none"
           />
-          <button onClick={addWish} className="btn btn-primary text-sm whitespace-nowrap">存进去 💰</button>
+          <button onClick={addWish} className="btn btn-primary text-sm whitespace-nowrap">
+            存进去 💰
+          </button>
         </div>
         {/* 💡 常见愿望推荐 */}
         <div className="flex flex-wrap gap-1.5 mb-3">
@@ -115,13 +166,24 @@ export default function ShopPage() {
           {wishes.map((w) => {
             const m = WISH_META[w.status];
             return (
-              <div key={w.id} className="flex items-center justify-between gap-3 rounded-2xl bg-white px-3 py-2 shadow-sm">
-                <span className="flex-1 text-sm font-semibold text-gray-700 truncate">{w.text}</span>
-                <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${m.cls}`}>{m.label}</span>
+              <div
+                key={w.id}
+                className="flex items-center justify-between gap-3 rounded-2xl bg-white px-3 py-2 shadow-sm"
+              >
+                <span className="flex-1 text-sm font-semibold text-gray-700 truncate">
+                  {w.text}
+                </span>
+                <span
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${m.cls}`}
+                >
+                  {m.label}
+                </span>
               </div>
             );
           })}
-          {wishes.length === 0 && <EmptyState emoji="🐷" title="存钱罐还是空的" desc="写下第一个愿望吧～" />}
+          {wishes.length === 0 && (
+            <EmptyState emoji="🐷" title="存钱罐还是空的" desc="写下第一个愿望吧～" />
+          )}
         </div>
       </div>
 
@@ -143,7 +205,9 @@ export default function ShopPage() {
                 <div className="font-bold text-moko-violet">{s.name}</div>
                 <div className="text-xs text-gray-500">{s.desc}</div>
                 {isSkin && (
-                  <div className={`mt-1.5 h-8 rounded-lg ${skinPreview[s.key] ?? 'bg-gray-200'} flex items-center justify-center`}>
+                  <div
+                    className={`mt-1.5 h-8 rounded-lg ${skinPreview[s.key] ?? 'bg-gray-200'} flex items-center justify-center`}
+                  >
                     <span className="text-xs text-white/80 font-bold">预览效果</span>
                   </div>
                 )}
@@ -151,7 +215,13 @@ export default function ShopPage() {
               {owned ? (
                 <span className="text-sm font-bold text-green-500">已拥有 ✓</span>
               ) : (
-                <button onClick={() => buy(s.key, s.cost)} disabled={!afford} className={`btn text-white text-sm whitespace-nowrap ${afford ? 'btn-gold' : 'bg-gray-300 cursor-not-allowed'}`}>⭐ {s.cost}</button>
+                <button
+                  onClick={() => buy(s.key, s.cost)}
+                  disabled={!afford}
+                  className={`btn text-white text-sm whitespace-nowrap ${afford ? 'btn-gold' : 'bg-gray-300 cursor-not-allowed'}`}
+                >
+                  ⭐ {s.cost}
+                </button>
               )}
             </div>
           );

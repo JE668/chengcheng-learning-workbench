@@ -9,6 +9,7 @@ import { SeriesCompleteBanner } from '@/components/SeriesCompleteBanner';
 import { EmptyState } from '@/components/EmptyState';
 import { HarvestBtn } from '@/components/castle-client';
 import { addDays, dateStr } from '@/lib/date';
+import { useOfflineStore } from '@/lib/stores';
 
 type Stage = 'obtained' | 'settled' | 'playing' | 'friend';
 interface Resident {
@@ -149,10 +150,7 @@ export default function CastlePage() {
   const load = useCallback(async () => {
     // 弱网优化：state 与 badges 无依赖关系，并行取（此前串行两个
     // 往返，移动网络晚高峰页面亮屏要多等一拍）
-    const [r, b] = await Promise.all([
-      fetch('/api/castle/state'),
-      fetch('/api/castle/badges'),
-    ]);
+    const [r, b] = await Promise.all([fetch('/api/castle/state'), fetch('/api/castle/badges')]);
     const [j, bj] = await Promise.all([r.json(), b.json()]);
     setState(j);
     setBadges(bj.badges || []);
@@ -161,7 +159,7 @@ export default function CastlePage() {
     load();
   }, [load]);
 
-  async function act(url: string, body?: any) {
+  async function act(url: string, body?: any, offlineType?: string) {
     setBusy(true);
     setMsg('');
     try {
@@ -175,7 +173,13 @@ export default function CastlePage() {
       await load();
       router.refresh();
     } catch {
-      setMsg('网络错误');
+      // 网络错误：入离线队列，联网后自动重放
+      if (offlineType && body) {
+        useOfflineStore.getState().addAction({ type: offlineType as any, payload: body });
+        setMsg('网络不稳，已离线保存，联网后自动同步～');
+      } else {
+        setMsg('网络错误');
+      }
     } finally {
       setBusy(false);
     }
@@ -490,7 +494,7 @@ export default function CastlePage() {
                 )}
               </div>
               <button
-                onClick={() => act('/api/castle/buy', { itemKey: s.key })}
+                onClick={() => act('/api/castle/buy', { itemKey: s.key }, 'buy')}
                 disabled={busy}
                 className="btn btn-gold text-sm whitespace-nowrap"
               >
@@ -517,7 +521,7 @@ export default function CastlePage() {
                 <div className="text-xs text-gray-500">捉回捣蛋萌可 + 安抚萌可 + 找回星星币</div>
               </div>
               <button
-                onClick={() => act('/api/castle/use-item', { itemKey: 'spray' })}
+                onClick={() => act('/api/castle/use-item', { itemKey: 'spray' }, 'use-item')}
                 disabled={busy}
                 className="btn btn-mint text-sm"
               >
@@ -547,7 +551,9 @@ export default function CastlePage() {
             <TimeGlassCard
               count={Number(state.inventory.timeglass)}
               busy={busy}
-              onUse={(day) => act('/api/castle/use-item', { itemKey: 'timeglass', day })}
+              onUse={(day) =>
+                act('/api/castle/use-item', { itemKey: 'timeglass', day }, 'use-item')
+              }
             />
           )}
           {starShop

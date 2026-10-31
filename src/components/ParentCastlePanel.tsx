@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatBackfillDayLabel } from '@/lib/backfill-date';
+import { useOfflineStore } from '@/lib/stores';
 
 interface StateView {
   today: string;
@@ -34,15 +35,23 @@ export default function ParentCastlePanel() {
 
   async function confirm(day: string, subject: string) {
     setMsg('');
-    const r = await fetch('/api/castle/confirm', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ day, subject }),
-    });
-    const j = await r.json();
-    setMsg(j.message || (j.ok ? '已确认' : j.error || ''));
-    await load();
-    router.refresh();
+    try {
+      const r = await fetch('/api/castle/confirm', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ day, subject }),
+      });
+      const j = await r.json();
+      setMsg(j.message || (j.ok ? '已确认' : j.error || ''));
+      await load();
+      router.refresh();
+    } catch {
+      // 断网：入离线队列，联网后自动重放。
+      // 幂等性：confirm 用 daily_checkins ON CONFLICT DO NOTHING 幂等插卡，
+      // 重复重放不会双倍发奖（与每日练习离线打卡同一套服务端保证）。
+      useOfflineStore.getState().addAction({ type: 'confirm', payload: { day, subject } });
+      setMsg('网络不稳，补作业已离线保存，联网后自动同步～');
+    }
   }
 
   async function giftTimeGlass() {
