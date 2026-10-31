@@ -11,7 +11,20 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 /** 离线队列 Store（用于 PWA 离线同步） */
 interface OfflineAction {
   id: string;
-  type: 'completion' | 'checkin' | 'task' | 'redemption' | 'harvest' | 'capture' | 'mistake';
+  type:
+    | 'completion'
+    | 'checkin'
+    | 'task'
+    | 'redemption'
+    | 'harvest'
+    | 'capture'
+    | 'mistake'
+    | 'use-item'
+    | 'buy'
+    | 'story-capture'
+    | 'mistake-review'
+    | 'confirm'
+    | 'wish';
   payload: Record<string, any>;
   timestamp: number;
   retries: number;

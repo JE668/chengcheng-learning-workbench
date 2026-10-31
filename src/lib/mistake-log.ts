@@ -35,9 +35,11 @@ export async function logMistake(m: MistakePayload): Promise<boolean> {
       body: JSON.stringify(m),
     });
     if (res.ok) return true;
-    // 4xx（参数非法/未登录）重放也不会变好，入队只是徒增噪音，直接放弃。
-    // 5xx 与网络异常则值得稍后重试，落到下面的入队。
-    if (res.status >= 400 && res.status < 500) return false;
+    // ⚠️ 只丢**真正永久失败**的 4xx：400 参数非法 / 404 / 409 前置不满足。
+    // 401（会话过期）、403（CSRF 软闸误判）、429（限流）都值得入队重试——
+    // 与 offline-sync.ts 的 DISCARD_STATUSES 保持同一口径，否则孩子登录态过期
+    // 那会儿写错的题会被永久丢弃（曾按「所有 4xx」判丢，误杀了过期会话的记录）。
+    if (res.status === 400 || res.status === 404 || res.status === 409) return false;
   } catch {
     /* 网络异常 → 走下面的入队 */
   }

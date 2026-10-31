@@ -62,13 +62,39 @@ describe('logMistake · 离线不丢错题', () => {
     expect(addAction).toHaveBeenCalledTimes(1);
   });
 
-  it('4xx 客户端错误 → 不入队（重放也不会变好，徒增噪音）', async () => {
+  it('永久性 4xx（400/404/409）→ 不入队（重放也不会变好，徒增噪音）', async () => {
+    for (const status of [400, 404, 409]) {
+      addAction.mockClear();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => new Response('', { status }))
+      );
+      await expect(logMistake(M)).resolves.toBe(false);
+      expect(addAction, `status=${status} 不该入队`).not.toHaveBeenCalled();
+    }
+  });
+
+  // ⚠️ 401/403/429 必须入队重试，不能按「所有 4xx」一刀切丢弃：
+  //   · 401 会话过期（cookie 7 天）—— 孩子登录后重放就能成功，此前写错的题被永久丢掉
+  //   · 403 反代改写 Host 触发的 CSRF 软闸误判
+  //   · 429 限流
+  // 口径与 offline-sync.ts 的 DISCARD_STATUSES 一致。
+  it('401 会话过期 → 入队（登录后重放能成功，此前被永久丢弃）', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => new Response('', { status: 400 }))
+      vi.fn(async () => new Response('', { status: 401 }))
     );
     await expect(logMistake(M)).resolves.toBe(false);
-    expect(addAction).not.toHaveBeenCalled();
+    expect(addAction, '会话过期时错题被永久丢弃了').toHaveBeenCalledTimes(1);
+  });
+
+  it('429 限流 → 入队', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('', { status: 429 }))
+    );
+    await expect(logMistake(M)).resolves.toBe(false);
+    expect(addAction).toHaveBeenCalledTimes(1);
   });
 
   it('localStorage 不可用时不抛错（不打断答题）', async () => {

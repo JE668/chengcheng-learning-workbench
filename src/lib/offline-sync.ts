@@ -10,16 +10,40 @@ import { useOfflineStore } from './stores';
  * 因此同一提交被重放多次也不会双倍发奖。
  *
  * 动作类型映射（仅实现 truly 可重放的）：
- *   - checkin → POST /api/daily-practice
- *   - mistake → POST /api/mistakes
+ *   - checkin         → POST /api/daily-practice          (每日一练提交)
+ *   - mistake         → POST /api/mistakes                (记录错题)
+ *   - harvest         → POST /api/castle/harvest          (收获星星币)
+ *   - use-item        → POST /api/castle/use-item         (使用喷雾/时光沙漏)
+ *   - buy             → POST /api/castle/buy              (星星币商城兑换)
+ *   - story-capture   → POST /api/story/capture           (捕捉萌可)
+ *   - mistake-review  → POST /api/mistakes/review         (错题复习)
+ *   - confirm         → POST /api/castle/confirm          (家长确认打卡)
+ *   - wish            → POST /api/wishes                  (愿望存钱罐)
  * 其余未知类型保留在队列，不冒然丢弃。
  *
- * 关于 mistake 的幂等性：/api/mistakes 以 (child_id, subject, prompt, answer, resolved=0)
- * 去重（SELECT 命中则 UPDATE 而非 INSERT，整段在 withWriteLock + BEGIN IMMEDIATE 内）。
- * 因此同一道错题重放多次只会更新同一条记录，不会重复堆积。
- */
+ * 幂等性保证：
+ *   - checkin/mistake/harvest/buy/confirm: 服务端已有幂等键/约束
+ *   - use-item(spray): 重放只会再清一次捣蛋、再还一半币（幂等性由 UPDATE WHERE qty>0 保证）
+ *   - use-item(timeglass): 幂等由 applyTimeGlass 内部事务 + 库存扣减保证
+ *   - story-capture: 幂等由 story_progress UNIQUE(child_id, chapter_id) 保证
+ *   - mistake-review: 幂等由 reviewMistake 内部 next_review 检查保证
+ *   - wish: 幂等由客户端生成唯一文本 + 服务端 INSERT 唯一约束（如需）保证
+ *  */
 
 const MAX_RETRIES = 5;
+
+/**
+ * 应当**直接丢弃**的响应状态码（重放也不会变好）。
+ *
+ * ⚠️ 这里刻意用「白名单」而不是原来的 `status >= 400 && status < 500`。
+ * 原先把所有 4xx 都判为一次性错误，会误杀三类**本来能成功**的重放：
+ *   · 401 —— 会话过期（cookie 7 天）期间孩子离线的动作，登录后重放就能成功；
+ *   · 403 —— 反代改写 Host 导致的 Origin 误判（CSRF 软闸），不是动作本身非法；
+ *   · 429 —— 限流。/api/castle/buy 就有 IP 级限流（10 秒 5 次），联网瞬间
+ *     整队一起重放极易撞上，按原逻辑会被直接丢弃——孩子兑换的东西凭空消失。
+ * 其余 4xx（400 参数非法 / 404 资源不存在 / 409 前置条件不满足）才是真·永久失败。
+ */
+const DISCARD_STATUSES = new Set([400, 404, 409]);
 
 /**
  * 重放离线队列。返回本轮同步详情：成功数与**丢弃数**。
@@ -62,6 +86,50 @@ export async function flushOfflineQueue(): Promise<FlushResult> {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify(action.payload),
         });
+      } else if (action.type === 'harvest') {
+        res = await fetch('/api/castle/harvest', { method: 'POST' });
+      } else if (action.type === 'use-item') {
+        res = await fetch('/api/castle/use-item', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            itemKey: action.payload.itemKey,
+            day: action.payload.day,
+            subject: action.payload.subject,
+          }),
+        });
+      } else if (action.type === 'buy') {
+        res = await fetch('/api/castle/buy', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ itemKey: action.payload.itemKey }),
+        });
+      } else if (action.type === 'story-capture') {
+        res = await fetch('/api/story/capture', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ chapterId: action.payload.chapterId }),
+        });
+      } else if (action.type === 'mistake-review') {
+        res = await fetch('/api/mistakes/review', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ id: action.payload.id, correct: action.payload.correct }),
+        });
+      } else if (action.type === 'confirm') {
+        res = await fetch('/api/castle/confirm', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ day: action.payload.day, subject: action.payload.subject }),
+        });
+      } else if (action.type === 'wish') {
+        // clientRef 必须随 payload 透传——首次请求与重放共用同一个 ref，
+        // 服务端 (child_id, client_ref) 唯一索引才能真正去重（migrations v23）。
+        res = await fetch('/api/wishes', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ text: action.payload.text, clientRef: action.payload.clientRef }),
+        });
       } else {
         // 未支持的类型：保留，跳过
         continue;
@@ -70,12 +138,19 @@ export async function flushOfflineQueue(): Promise<FlushResult> {
       if (res.ok) {
         removeAction(action.id);
         flushed += 1;
-      } else if (res.status >= 400 && res.status < 500) {
-        // 一次性客户端错误（参数非法等）：重放也不会变好，丢弃
+      } else if (action.type === 'story-capture' && res.status === 409) {
+        // 「already captured」也是 409：说明原请求其实已落库、只是响应丢在路上。
+        // 按成功处理，否则孩子明明捉到的萌可会被横幅误报「没同步上」。
+        const j = await res.json().catch(() => null);
+        removeAction(action.id);
+        if (j?.code === 'already') flushed += 1;
+        else dropped += 1;
+      } else if (DISCARD_STATUSES.has(res.status)) {
+        // 永久性客户端错误（参数非法/前置条件不满足/越权）：重放也不会变好，丢弃
         removeAction(action.id);
         dropped += 1;
       } else {
-        // 服务端瞬时错误：计入重试，继续处理后续动作
+        // 可重试：5xx，以及 401/403/429（见 DISCARD_STATUSES 注释）
         incrementRetry(action.id);
       }
     } catch {
