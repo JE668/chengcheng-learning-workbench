@@ -74,15 +74,28 @@ src/
 
 `lib/stores/index.ts`：
 
-| Store                      | 用途                     | 持久化 |
-| -------------------------- | ------------------------ | ------ |
-| `useAuthStore`             | 认证状态                 | ✅     |
-| `useChildPreferencesStore` | 学习偏好/设置            | ✅     |
-| `useTTSStore`              | TTS 播放队列             | ❌     |
-| `useCaptureStore`          | 萌可捕捉动画             | ❌     |
-| `useUIStore`               | 全局 Loading/Toast/Modal | ❌     |
+| Store             | 用途                     | 持久化 |
+| ----------------- | ------------------------ | ------ |
+| `useOfflineStore` | 离线写动作队列（重放）   | ✅     |
+| `useUIStore`      | 全局 Loading/Toast/Modal | ❌     |
 
-> 说明：`useOfflineStore`（离线同步队列）**已接入业务**：`daily-practice` 交卷失败时本地暂存，`OfflineSync` 组件在恢复联网后重放（服务端 `submitPractice` 幂等，重放不会重复发奖）。
+> `useAuthStore` / `useChildPreferencesStore` / `useTTSStore` / `useCaptureStore` 已删除——
+> 全仓零引用，认证与偏好由服务端 session + 局部 state 承担，TTS/捕捉动画各有自己的实现。
+
+> 说明：`useOfflineStore`（离线同步队列）**已覆盖全部高频写动作**：每日一练交卷、错题记录、错题复习、
+> 收获星星币、使用道具（喷雾/时光沙漏）、商城兑换、捕捉萌可、家长补作业确认、许愿。任一动作失败即本地
+> 暂存（localStorage），`OfflineSync` 组件在恢复联网后由 `flushOfflineQueue` 重放。
+>
+> **重放的三条纪律**（见 `lib/offline-sync.ts`）：
+>
+> 1. **每个动作都要有幂等键**才允许入队——`daily_checkins`/`story_progress` 的唯一约束、库存
+>    `qty > 0` 原子扣减、`reviewMistake` 的 `next_review` 判定；`wishes` 原本是纯 INSERT 无幂等键，
+>    已补 `client_ref` + 部分唯一索引（migrations v23）。
+> 2. **失败分类用白名单**（`DISCARD_STATUSES = 400/404/409`），不再把「所有 4xx」当永久失败：
+>    401（会话过期）、403（CSRF 软闸误判）、429（限流，`castle/buy` 是 10 秒 5 次，整队重放极易撞上）
+>    都值得重试，一刀切丢弃会让孩子已经成功的操作凭空消失。
+> 3. **无副作用护栏**：`castSpray` 在「城堡里没有任何可修理对象」时直接返回、不扣喷雾，
+>    重放因此变得无害（同时修掉 `use-item` 无节流导致在线连点白扣道具的既有缺口）。
 
 ---
 
@@ -156,7 +169,8 @@ src/
 
 ## 路线图（规划中，未实现）
 
-- **离线补打卡增强**：当前只重放「每日一练交卷」一种动作（`flushOfflineQueue` 仅支持 `checkin`），其余学习行为未纳入离线队列。
+- ~~**离线补打卡增强**~~：已完成（2026-10-31）——离线队列从「只重放每日一练交卷」扩展到 11 种写动作，
+  并补齐幂等键 / 失败白名单 / 无副作用护栏三条纪律。
 - **设计系统推广**：将 `components/atomic` 组件逐步替换页面内自建样式，收敛重复 UI。
 - **多实例支持**：若未来上 Serverless/多副本，需把进程内限流/写锁/会话锁定替换为共享存储（Redis 等）。
 - **Feature 减法**：对非核心模块（部分小游戏等）做取舍，把维护成本集中到「每日一练 + 城堡 + 打卡」核心闭环。
