@@ -681,6 +681,29 @@ export const MIGRATIONS: Migration[] = [
       await db.execute({ sql: 'DROP TABLE IF EXISTS coop_challenges', args: [] });
     },
   },
+  {
+    // 离线队列重放 /api/wishes 需要幂等键。
+    // 背景：孩子断网许愿 → 入队 → 联网重放。若原请求其实已落库（只是响应丢失），
+    // 重放就会凭空多出一条一模一样的愿望，家长端看到两条重复的申请。
+    // 其余入队的动作都有天然幂等键（daily_checkins 唯一约束、story_progress 唯一约束、
+    // 库存扣减 qty>0、reviewMistake 的 next_review 判定），唯独 wishes 是纯 INSERT。
+    // 故新增 client_ref：客户端为「同一次许愿」生成同一个引用号，服务端按它去重。
+    version: 23,
+    name: 'wishes_client_ref',
+    description: 'wishes 加 client_ref 列 + 部分唯一索引：离线重放去重',
+    up: async (db) => {
+      await addColumnIfMissing(db, 'wishes', 'client_ref TEXT');
+      // 部分索引：只对带引用号的行去重，历史行（client_ref IS NULL）不受影响。
+      await db.execute({
+        sql: 'CREATE UNIQUE INDEX IF NOT EXISTS idx_wishes_child_ref ON wishes(child_id, client_ref) WHERE client_ref IS NOT NULL',
+        args: [],
+      });
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'DROP INDEX IF EXISTS idx_wishes_child_ref', args: [] });
+      await db.execute({ sql: 'ALTER TABLE wishes DROP COLUMN client_ref', args: [] });
+    },
+  },
 ];
 
 export async function ensureMigrationTable(db: Client): Promise<void> {

@@ -21,11 +21,16 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: '未登录' }, { status: 401 });
-  if (user.role !== 'child' && user.role !== 'parent') return NextResponse.json({ error: '无权限' }, { status: 403 });
+  if (user.role !== 'child' && user.role !== 'parent')
+    return NextResponse.json({ error: '无权限' }, { status: 403 });
   let text = '';
+  let clientRef: string | null = null;
   try {
     const body = await safeJson(req, {});
     text = typeof body.text === 'string' ? body.text : '';
+    // 客户端为「同一次许愿」生成的稳定引用号（离线重放按它去重，见 migrations v23）。
+    clientRef =
+      typeof body.clientRef === 'string' && body.clientRef ? body.clientRef.slice(0, 64) : null;
   } catch {
     return NextResponse.json({ error: 'invalid body' }, { status: 400 });
   }
@@ -34,13 +39,27 @@ export async function POST(req: NextRequest) {
   const childId = await resolveChildId(user);
   if (!childId) return NextResponse.json({ error: '没有孩子账号' }, { status: 404 });
   const db = getDb();
-  await db.execute({
-    sql: 'INSERT INTO wishes (child_id, text, status) VALUES (?, ?, ?)',
-    args: [childId, text.trim().slice(0, 100), 'pending'],
-  });
-  // 孩子写入的新愿望 → 推送家长审批提醒（家长自己写入的不推）。
+  let inserted = 0;
+  if (clientRef) {
+    // 带引用号：走部分唯一索引 (child_id, client_ref) 去重。
+    // 冲突（重放撞上已落库的原请求）→ rowsAffected=0，静默当作幂等成功。
+    // 用无目标形式 `ON CONFLICT DO NOTHING`：任何唯一约束冲突都跳过，
+    // 避免依赖「冲突目标须匹配部分索引」的版本细节（写法更稳）。
+    const ins = await db.execute({
+      sql: 'INSERT INTO wishes (child_id, text, status, client_ref) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING',
+      args: [childId, text.trim().slice(0, 100), 'pending', clientRef],
+    });
+    inserted = Number(ins.rowsAffected ?? 0);
+  } else {
+    const ins = await db.execute({
+      sql: 'INSERT INTO wishes (child_id, text, status) VALUES (?, ?, ?)',
+      args: [childId, text.trim().slice(0, 100), 'pending'],
+    });
+    inserted = Number(ins.rowsAffected ?? 0);
+  }
+  // 孩子写入的新愿望 → 推送家长审批提醒（家长自己写入的不推；重复愿望不再推）。
   // 写库已成功，推送失败不影响响应（notifyChildSubscribers 内部兜底）。
-  if (user.role === 'child') {
+  if (user.role === 'child' && inserted > 0) {
     import('@/lib/push-notifications').then(({ notifyChildSubscribers }) =>
       notifyChildSubscribers(childId, {
         title: '🎁 新的愿望请求',
@@ -55,7 +74,8 @@ export async function POST(req: NextRequest) {
 /** 家长审核：approved=同意兑换目标 / fulfilled=已经实现 */
 export async function PATCH(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role !== 'parent') return NextResponse.json({ error: '无权限' }, { status: 403 });
+  if (!user || user.role !== 'parent')
+    return NextResponse.json({ error: '无权限' }, { status: 403 });
   let id = 0;
   let status = '';
   try {
@@ -76,7 +96,8 @@ export async function PATCH(req: NextRequest) {
     sql: 'UPDATE wishes SET status = ? WHERE id = ? AND child_id = ?',
     args: [status, id, childId],
   });
-  if (Number(res.rowsAffected ?? 0) === 0) return NextResponse.json({ error: '无权限或记录不存在' }, { status: 403 });
+  if (Number(res.rowsAffected ?? 0) === 0)
+    return NextResponse.json({ error: '无权限或记录不存在' }, { status: 403 });
 
   // 审批结果推送给孩子（2026-10-17 推送补全）：此前孩子端毫无感知，
   // 要自己刷页面才知道申请结果。写库已成功，推送失败不影响响应。

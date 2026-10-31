@@ -201,6 +201,55 @@ describe('wishes · 越权与入参', () => {
     expect(await wishStatus(id)).toBe('fulfilled');
   });
 
+  // ⚠️ 离线重放去重（migrations v23 + 路由 client_ref 分支）：
+  // 孩子断网许愿 → 请求其实已落库、只是响应丢在路上 → 客户端入队，联网后再发一次。
+  // wishes 是纯 INSERT，没有天然幂等键（其余入队动作都有：daily_checkins/story_progress
+  // 的唯一约束、库存 qty>0、reviewMistake 的 next_review），所以靠客户端生成的
+  // client_ref 撞 (child_id, client_ref) 部分唯一索引去重。
+  it('POST：同一 clientRef 重放两次只落一条（离线重放不产生重复愿望）', async () => {
+    const ref = 'w-test-dedup-1';
+    expect((await wishesPost(req({ text: '去公园玩', clientRef: ref }))).status).toBe(200);
+    expect((await wishesPost(req({ text: '去公园玩', clientRef: ref }))).status).toBe(200);
+    const r = await db().execute({
+      sql: 'SELECT COUNT(*) AS n FROM wishes WHERE child_id = ? AND client_ref = ?',
+      args: [ME, ref],
+    });
+    expect(Number(r.rows[0].n)).toBe(1);
+  });
+
+  it('POST：不同 clientRef 各自落库（两次不同的许愿不能互相吞掉）', async () => {
+    await wishesPost(req({ text: '愿望 A', clientRef: 'w-test-a' }));
+    await wishesPost(req({ text: '愿望 B', clientRef: 'w-test-b' }));
+    const r = await db().execute({
+      sql: 'SELECT COUNT(*) AS n FROM wishes WHERE child_id = ? AND client_ref IN (?, ?)',
+      args: [ME, 'w-test-a', 'w-test-b'],
+    });
+    expect(Number(r.rows[0].n)).toBe(2);
+  });
+
+  it('POST：不带 clientRef 的旧客户端照常插入（向后兼容，不受唯一索引影响）', async () => {
+    await wishesPost(req({ text: '老客户端愿望' }));
+    await wishesPost(req({ text: '老客户端愿望' }));
+    const r = await db().execute({
+      sql: "SELECT COUNT(*) AS n FROM wishes WHERE child_id = ? AND client_ref IS NULL AND text = '老客户端愿望'",
+      args: [ME],
+    });
+    expect(Number(r.rows[0].n)).toBe(2);
+  });
+
+  it('POST：clientRef 跨孩子不互斥（同一 ref 在别的孩子名下仍能落库）', async () => {
+    const ref = 'w-test-cross';
+    await wishesPost(req({ text: '我的', clientRef: ref })); // ME
+    h.user = { id: OTHER, role: 'child' };
+    h.childId = OTHER;
+    await wishesPost(req({ text: '他的', clientRef: ref })); // OTHER
+    const r = await db().execute({
+      sql: 'SELECT child_id FROM wishes WHERE client_ref = ? ORDER BY child_id',
+      args: [ref],
+    });
+    expect(r.rows.map((x) => Number(x.child_id))).toEqual([ME, OTHER]);
+  });
+
   it('GET：孩子只看到自己的愿望', async () => {
     await addWish(ME, 'mine');
     await addWish(OTHER, 'theirs');

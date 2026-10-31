@@ -31,8 +31,9 @@ export async function ensureSchema() {
   });
   const isNewDb = guard.rows.length === 0;
 
-  await db.batch([
-    `CREATE TABLE IF NOT EXISTS users (
+  await db.batch(
+    [
+      `CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
@@ -44,13 +45,13 @@ export async function ensureSchema() {
       FOREIGN KEY(parent_id) REFERENCES users(id),
       FOREIGN KEY(selected_child_id) REFERENCES users(id)
     );`,
-    `CREATE TABLE IF NOT EXISTS sessions (
+      `CREATE TABLE IF NOT EXISTS sessions (
       token TEXT PRIMARY KEY,
       user_id INTEGER NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(user_id) REFERENCES users(id)
     );`,
-    `CREATE TABLE IF NOT EXISTS tasks (
+      `CREATE TABLE IF NOT EXISTS tasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       subject TEXT NOT NULL,
@@ -61,7 +62,7 @@ export async function ensureSchema() {
       assigned_to INTEGER,
       FOREIGN KEY(created_by) REFERENCES users(id)
     );`,
-    `CREATE TABLE IF NOT EXISTS completions (
+      `CREATE TABLE IF NOT EXISTS completions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       task_id INTEGER,
       child_id INTEGER NOT NULL,
@@ -71,7 +72,7 @@ export async function ensureSchema() {
       FOREIGN KEY(task_id) REFERENCES tasks(id),
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
-    `CREATE TABLE IF NOT EXISTS redemptions (
+      `CREATE TABLE IF NOT EXISTS redemptions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       child_id INTEGER NOT NULL,
       reward_name TEXT NOT NULL,
@@ -82,18 +83,21 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
-    // 🐷 愿望存钱罐：孩子写下想换的奖励，爸爸妈妈审核/实现
-    `CREATE TABLE IF NOT EXISTS wishes (
+      // 🐷 愿望存钱罐：孩子写下想换的奖励，爸爸妈妈审核/实现
+      // client_ref：客户端为「同一次许愿」生成的稳定引用号，离线重放按它去重
+      //（部分唯一索引由 migrations.ts v23 创建；本列在此声明供全新库直接用）。
+      `CREATE TABLE IF NOT EXISTS wishes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       child_id INTEGER NOT NULL,
       text TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'pending',
+      client_ref TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
-    // 🏰 萌可城堡：单个孩子的城堡资源
-    `CREATE TABLE IF NOT EXISTS castle_state (
+      // 🏰 萌可城堡：单个孩子的城堡资源
+      `CREATE TABLE IF NOT EXISTS castle_state (
       child_id INTEGER PRIMARY KEY,
       sunlight INTEGER NOT NULL DEFAULT 0,
       star_coins INTEGER NOT NULL DEFAULT 0,
@@ -105,8 +109,8 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
-    // 🏰 已入驻的萌可（含成长阶段与心情值）
-    `CREATE TABLE IF NOT EXISTS moko_owned (
+      // 🏰 已入驻的萌可（含成长阶段与心情值）
+      `CREATE TABLE IF NOT EXISTS moko_owned (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       child_id INTEGER NOT NULL,
       moko_key TEXT NOT NULL,
@@ -121,8 +125,8 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
-    // 🌟 学习↔城堡：每日三科打卡
-    `CREATE TABLE IF NOT EXISTS daily_checkins (
+      // 🌟 学习↔城堡：每日三科打卡
+      `CREATE TABLE IF NOT EXISTS daily_checkins (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       child_id INTEGER NOT NULL,
       day TEXT NOT NULL,
@@ -134,8 +138,8 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
-    // 🏰 道具背包
-    `CREATE TABLE IF NOT EXISTS inventory (
+      // 🏰 道具背包
+      `CREATE TABLE IF NOT EXISTS inventory (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       child_id INTEGER NOT NULL,
       item_key TEXT NOT NULL,
@@ -144,8 +148,8 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
-    // 🏰 捣蛋萌可记录（帮乐美捕捉）
-    `CREATE TABLE IF NOT EXISTS troublemakers (
+      // 🏰 捣蛋萌可记录（帮乐美捕捉）
+      `CREATE TABLE IF NOT EXISTS troublemakers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       child_id INTEGER NOT NULL,
       moko_key TEXT NOT NULL,
@@ -155,8 +159,8 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
-    // 📝 错词本 / 错题本（间隔重复复习）
-    `CREATE TABLE IF NOT EXISTS mistakes (
+      // 📝 错词本 / 错题本（间隔重复复习）
+      `CREATE TABLE IF NOT EXISTS mistakes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       child_id INTEGER NOT NULL,
       subject TEXT NOT NULL,
@@ -173,8 +177,8 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
-    // 📔 萌可成长日记（里程碑事件流，由联动动作埋点写入）
-    `CREATE TABLE IF NOT EXISTS growth_events (
+      // 📔 萌可成长日记（里程碑事件流，由联动动作埋点写入）
+      `CREATE TABLE IF NOT EXISTS growth_events (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       child_id INTEGER NOT NULL,
       day TEXT NOT NULL,
@@ -186,8 +190,8 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
-    // 📜 萌可剧情捕捉进度（每集捕捉一只萌可，顺序解锁）
-    `CREATE TABLE IF NOT EXISTS story_progress (
+      // 📜 萌可剧情捕捉进度（每集捕捉一只萌可，顺序解锁）
+      `CREATE TABLE IF NOT EXISTS story_progress (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       child_id INTEGER NOT NULL,
       chapter_id TEXT NOT NULL,
@@ -196,8 +200,8 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
-    // 🎯 每日一练（合并到三科打卡：做完且全对 = 三科自动打卡完成）
-    `CREATE TABLE IF NOT EXISTS daily_practice (
+      // 🎯 每日一练（合并到三科打卡：做完且全对 = 三科自动打卡完成）
+      `CREATE TABLE IF NOT EXISTS daily_practice (
       child_id INTEGER NOT NULL,
       day TEXT NOT NULL,
       completed INTEGER NOT NULL DEFAULT 0,
@@ -210,22 +214,30 @@ export async function ensureSchema() {
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
-    // 🎟️ 捕捉券（剧情解锁需消耗；每日一练每确认一科发放 1 张）
-    `CREATE TABLE IF NOT EXISTS capture_tickets (
+      // 🎟️ 捕捉券（剧情解锁需消耗；每日一练每确认一科发放 1 张）
+      `CREATE TABLE IF NOT EXISTS capture_tickets (
       child_id INTEGER PRIMARY KEY,
       total INTEGER NOT NULL DEFAULT 0,
       used INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
-  ], 'write');
+    ],
+    'write'
+  );
 
   // —— 以下仅全新库执行：账号种子 + 初始化标记（已部署旧库跳过，避免重复建账号）——
   if (isNewDb) {
     // 账号迁移：确保 child 用户为 cara / 0000。
     // 遗留的 cheng 自动改名并重置密码，users.id 不变，城堡/打卡等关联数据全部保留。
-    const cara = await db.execute({ sql: "SELECT id FROM users WHERE username = 'cara'", args: [] });
+    const cara = await db.execute({
+      sql: "SELECT id FROM users WHERE username = 'cara'",
+      args: [],
+    });
     if (cara.rows.length === 0) {
-      const cheng = await db.execute({ sql: "SELECT id FROM users WHERE username = 'cheng'", args: [] });
+      const cheng = await db.execute({
+        sql: "SELECT id FROM users WHERE username = 'cheng'",
+        args: [],
+      });
       if (cheng.rows.length > 0) {
         await db.execute({
           sql: "UPDATE users SET username = 'cara', password_hash = ?, display_name = '程程' WHERE username = 'cheng'",
@@ -240,7 +252,10 @@ export async function ensureSchema() {
     }
 
     // 全新部署兜底：确保家长账号 parent / 12345678 存在（幂等，已有则跳过）。
-    const parent = await db.execute({ sql: "SELECT id FROM users WHERE username = 'parent'", args: [] });
+    const parent = await db.execute({
+      sql: "SELECT id FROM users WHERE username = 'parent'",
+      args: [],
+    });
     if (parent.rows.length === 0) {
       await db.execute({
         sql: 'INSERT INTO users (username, password_hash, role, display_name) VALUES (?, ?, ?, ?)',
@@ -249,8 +264,14 @@ export async function ensureSchema() {
     }
 
     // 标记初始化完成（供守卫识别，避免每次冷启动重跑账号种子）
-    await db.execute({ sql: 'CREATE TABLE IF NOT EXISTS _schema_meta (initialized INTEGER PRIMARY KEY DEFAULT 1)', args: [] });
-    await db.execute({ sql: 'INSERT OR IGNORE INTO _schema_meta (initialized) VALUES (1)', args: [] });
+    await db.execute({
+      sql: 'CREATE TABLE IF NOT EXISTS _schema_meta (initialized INTEGER PRIMARY KEY DEFAULT 1)',
+      args: [],
+    });
+    await db.execute({
+      sql: 'INSERT OR IGNORE INTO _schema_meta (initialized) VALUES (1)',
+      args: [],
+    });
   }
 
   // 版本化迁移跑道：增量表 / 增量列 / 历史数据回填的唯一入口（见 migrations.ts）。
