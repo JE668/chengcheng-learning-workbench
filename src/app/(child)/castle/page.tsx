@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { HarvestBtn } from '@/components/castle-client';
 import { addDays, dateStr } from '@/lib/date';
 import { useOfflineStore } from '@/lib/stores';
+import { ClayCard, ClayButton } from '@/components/design-system';
 
 type Stage = 'obtained' | 'settled' | 'playing' | 'friend';
 interface Resident {
@@ -196,11 +197,11 @@ export default function CastlePage() {
         {/* 惩罚通报骨架 */}
         <div className="mb-4 h-20 rounded-2xl bg-gradient-to-r from-red-50/50 to-orange-50/50 border-2 border-red-100/50 animate-pulse" />
         {/* 繁荣度 + 收获骨架 */}
-        <div className="card-moko mb-4">
-          <div className="h-4 w-32 rounded-full bg-moko-purple/20 animate-pulse mb-4" />
-          <div className="h-16 rounded-2xl bg-moko-gold/10 border-2 border-moko-gold/30 animate-pulse mb-3" />
-          <div className="h-10 rounded-2xl bg-moko-gold/20 animate-pulse" />
-        </div>
+        <ClayCard theme="gold" className="mb-4 animate-pulse">
+          <div className="h-4 w-32 rounded-full bg-moko-purple/20 mb-4" />
+          <div className="h-16 rounded-2xl bg-moko-gold/10 border-2 border-moko-gold/30 mb-3" />
+          <div className="h-10 rounded-2xl" />
+        </ClayCard>
         {/* 选项卡骨架 */}
         <div className="flex gap-2 mb-4">
           {[1, 2, 3, 4, 5].map((i) => (
@@ -208,16 +209,16 @@ export default function CastlePage() {
           ))}
         </div>
         {/* 城堡大厅骨架 */}
-        <div className="card-moko">
+        <ClayCard className="animate-pulse">
           <div className="flex gap-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="w-28 text-center">
-                <div className="w-24 h-24 mx-auto rounded-full bg-moko-purple/15 animate-pulse mb-2" />
-                <div className="h-4 w-16 mx-auto rounded-full bg-moko-purple/20 animate-pulse" />
+                <div className="w-24 h-24 mx-auto rounded-full bg-moko-purple/15 mb-2" />
+                <div className="h-4 w-16 mx-auto" />
               </div>
             ))}
           </div>
-        </div>
+        </ClayCard>
         <p className="text-center text-moko-violet/40 text-sm mt-4 font-bold flex items-center justify-center gap-2">
           <span className="moko-loader">
             <span></span>
@@ -268,12 +269,12 @@ export default function CastlePage() {
       )}
 
       {/* 繁荣度 + 收获 */}
-      <div className="card-moko mb-4">
+      <ClayCard className="mb-4">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-sm text-gray-600">城堡繁荣度</span>
           <div className="flex-1 h-3 rounded-full bg-moko-cream overflow-hidden">
             <div
-              className="h-full prosperity-sparkle bg-gradient-to-r from-moko-yellow via-moko-pink to-moko-violet"
+              className="h-full prosperity-sparkle bg-gradient_to_r from-moko-yellow via-moko-pink to-moko-violet"
               style={{ width: `${Math.min(100, state.prosperity * 4)}%` }}
             />
           </div>
@@ -291,10 +292,10 @@ export default function CastlePage() {
         <div className="flex items-center justify-between mt-2">
           <span className="text-xs text-gray-500">连续打卡 {state.streakDays} 天</span>
         </div>
-      </div>
+      </ClayCard>
 
       {/* 城堡皮肤切换 */}
-      <div className="card-moko mb-4">
+      <ClayCard className="mb-4">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-bold text-moko-violet mr-1">🎨 城堡皮肤：</span>
           {SKINS.map((s) => {
@@ -314,7 +315,7 @@ export default function CastlePage() {
             );
           })}
         </div>
-      </div>
+      </ClayCard>
 
       {/* Tabs */}
       <div className="flex gap-2 mb-4 overflow-x-auto">
@@ -482,7 +483,7 @@ export default function CastlePage() {
         <div className="space-y-3">
           <h2 className="section-title">🧪 魔法商店（阳光能量）</h2>
           {magicShop.map((s) => (
-            <div key={s.key} className="card-moko flex items-center gap-3">
+            <ClayCard key={s.key} className="flex items-center gap-3">
               <div className="text-4xl">{s.icon}</div>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-moko-violet">{s.name}</div>
@@ -500,7 +501,7 @@ export default function CastlePage() {
               >
                 ☀️ {s.cost}
               </button>
-            </div>
+            </ClayCard>
           ))}
         </div>
       )}
@@ -509,43 +510,44 @@ export default function CastlePage() {
       {tab === 'bag' && (
         <div className="space-y-3">
           <h2 className="section-title">🎒 魔法背包</h2>
-          <div className="card-moko text-sm text-gray-600">
+          <ClayCard className="text-sm text-gray-600">
             星星币余额：⭐ {state.starCoins}　护盾：🛡️ {state.shieldEquipped}
             {state.freezeCount > 0 ? `　冰冻：🧊 ×${state.freezeCount}` : ''}
-          </div>
+          </ClayCard>
           {Number(state.inventory.spray || 0) > 0 && (
-            <div className="rounded-3xl p-4 shadow-lg border-2 border-green-100 bg-green-50 flex items-center gap-3">
+            <ClayCard theme="mint" className="flex items-center gap-3">
               <div className="text-4xl">🧴</div>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-moko-violet">魔法喷雾 ×{state.inventory.spray}</div>
                 <div className="text-xs text-gray-500">捉回捣蛋萌可 + 安抚萌可 + 找回星星币</div>
               </div>
-              <button
-                onClick={() => act('/api/castle/use-item', { itemKey: 'spray' }, 'use-item')}
+              <ClayButton
+                variant="mint"
+                size="sm"
                 disabled={busy}
-                className="btn btn-mint text-sm"
+                onClick={() => act('/api/castle/use-item', { itemKey: 'spray' }, 'use-item')}
               >
                 帮乐美捉回
-              </button>
-            </div>
+              </ClayButton>
+            </ClayCard>
           )}
           {Number(state.inventory.shield || 0) > 0 && (
-            <div className="card-moko flex items-center gap-3">
+            <ClayCard className="flex items-center gap-3">
               <div className="text-4xl">🛡️</div>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-moko-violet">护盾 ×{state.inventory.shield}</div>
                 <div className="text-xs text-gray-500">已自动装备，能帮乐美挡住一次捣蛋萌可</div>
               </div>
-            </div>
+            </ClayCard>
           )}
           {state.freezeCount > 0 && (
-            <div className="card-moko flex items-center gap-3">
+            <ClayCard className="flex items-center gap-3">
               <div className="text-4xl">🧊</div>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-moko-violet">冰冻徽章 ×{state.freezeCount}</div>
                 <div className="text-xs text-gray-500">下次漏卡时自动消耗，保护连胜不中断</div>
               </div>
-            </div>
+            </ClayCard>
           )}
           {Number(state.inventory.timeglass || 0) > 0 && (
             <TimeGlassCard
@@ -559,7 +561,7 @@ export default function CastlePage() {
           {starShop
             .filter((s) => Number(state.inventory[s.key] || 0) > 0)
             .map((s) => (
-              <div key={s.key} className="card-moko flex items-center gap-3">
+              <ClayCard key={s.key} className="flex items-center gap-3">
                 <div className="text-4xl">{s.icon}</div>
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-moko-violet">
@@ -567,7 +569,7 @@ export default function CastlePage() {
                   </div>
                   <div className="text-xs text-gray-500">已拥有</div>
                 </div>
-              </div>
+              </ClayCard>
             ))}
           {Object.keys(state.inventory).length === 0 && (
             <EmptyState emoji="🎒" title="背包还是空的" desc="去魔法商店用阳光能量兑换好物吧！" />
@@ -584,16 +586,17 @@ export default function CastlePage() {
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {badges.map((b) => (
-              <div
+              <ClayCard
                 key={b.id}
-                className={`rounded-2xl p-3 text-center shadow-lg border-2 ${b.earned ? 'bg-gradient-to-br from-moko-yellow to-moko-pink text-white border-white/40' : 'bg-white text-gray-400 border-gray-200'}`}
+                theme={b.earned ? 'gold' : 'secondary'}
+                className="p-3 text-center"
               >
                 <div className="text-4xl mb-1 grayscale-[0.3]">{b.emoji}</div>
                 <div className="font-black text-sm">{b.earned ? b.name : '??'}</div>
                 <div className="text-[11px] mt-1 leading-tight">
                   {b.earned ? b.desc : `🔒 ${b.hint}`}
                 </div>
-              </div>
+              </ClayCard>
             ))}
           </div>
         </div>
