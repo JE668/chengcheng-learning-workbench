@@ -5,6 +5,7 @@ import { EnglishTheatre } from '@/components/study/EnglishTheatre';
 import { EN_UNITS } from '@/lib/study-data/english';
 
 import { RAZ_VOCAB, RAZ_ALL_WORDS } from '@/lib/raz-vocab';
+import { ClayCard } from '@/components/design-system';
 
 export default async function EnglishStudyPage() {
   return (
@@ -18,10 +19,7 @@ export default async function EnglishStudyPage() {
           <h2 className="section-title mb-3">📘 按单元学</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             {EN_UNITS.map((u) => (
-              <div
-                key={u.unit}
-                className="rounded-2xl bg-white shadow border-2 border-moko-yellow/10 p-4"
-              >
+              <ClayCard key={u.unit} theme="yellow" className="p-4">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{u.emoji}</span>
                   <div className="flex-1 min-w-0">
@@ -65,7 +63,7 @@ export default async function EnglishStudyPage() {
                     🎙️ 口语跟读
                   </Link>
                 </div>
-              </div>
+              </ClayCard>
             ))}
           </div>
         </section>
@@ -76,29 +74,31 @@ export default async function EnglishStudyPage() {
           <p className="text-xs text-gray-400 mb-3">
             16 课生活情景对话 · 听唱唱萌可说，选出合适的回应 · 口语启蒙
           </p>
-          <div className="rounded-3xl bg-white/60 clay-card clay-theme clay-yellow p-4 mb-8">
+          <ClayCard theme="yellow" className="mb-8">
             <EnglishTheatre />
-          </div>
-        <section className="mb-8">
-          <h2 className="section-title mb-3">📖 RAZ 词汇练习</h2>
-          <p className="text-xs text-gray-400 mb-3">
-            {RAZ_ALL_WORDS.length} 个核心词汇 · {Object.keys(RAZ_VOCAB).length} 个主题分类 ·
-            听音认词（绘本阅读见「课本」页）
-          </p>
-          <Link
-            href="/study/english/raz-vocab"
-            className="rounded-2xl overflow-hidden shadow-lg border-2 border-moko-purple/20 bg-white hover:scale-[1.02] transition block"
-          >
-            <div className="p-4 bg-gradient-to-br from-moko-purple to-moko-violet">
-              <div className="text-3xl mb-1">🔤</div>
-              <h3 className="font-black text-white">词汇练习</h3>
-              <p className="text-xs text-white/80 mt-1">按主题分类，听音认词</p>
-            </div>
-            <div className="p-3 text-xs text-gray-500">
-              {RAZ_ALL_WORDS.length} 个词 · {Object.keys(RAZ_VOCAB).length} 个主题
-            </div>
-          </Link>
-        </section>
+          </ClayCard>
+          <section className="mb-8">
+            <h2 className="section-title mb-3">📖 RAZ 词汇练习</h2>
+            <p className="text-xs text-gray-400 mb-3">
+              {RAZ_ALL_WORDS.length} 个核心词汇 · {Object.keys(RAZ_VOCAB).length} 个主题分类 ·
+              听音认词（绘本阅读见「课本」页）
+            </p>
+            <ClayCard
+              theme="violet"
+              as={Link}
+              href="/study/english/raz-vocab"
+              className="hoverable"
+            >
+              <div className="p-4 bg-gradient-to-br from-moko-purple to-moko-violet">
+                <div className="text-3xl mb-1">🔤</div>
+                <h3 className="font-black text-white">词汇练习</h3>
+                <p className="text-xs text-white/80 mt-1">按主题分类，听音认词</p>
+              </div>
+              <div className="p-3 text-xs text-gray-500">
+                {RAZ_ALL_WORDS.length} 个词 · {Object.keys(RAZ_VOCAB).length} 个主题
+              </div>
+            </ClayCard>
+          </section>
         </>
       }
     />
