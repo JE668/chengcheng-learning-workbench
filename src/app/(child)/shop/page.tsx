@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { starShop } from '@/lib/moko';
 import { EmptyState } from '@/components/EmptyState';
 import { useOfflineStore } from '@/lib/stores';
+import { ClayCard, ClayButton } from '@/components/design-system';
 
 /**
  * 愿望的幂等引用号：同一次「存进去」无论重放多少次，服务端只落一条。
@@ -129,7 +130,7 @@ export default function ShopPage() {
       </div>
 
       {/* 🐷 愿望存钱罐 */}
-      <div className="rounded-3xl p-5 mb-5 bg-gradient-to-br from-pink-50 to-rose-50 border-2 border-moko-pink/30 shadow">
+      <ClayCard theme="pink" className="p-5 mb-5">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-2xl">🐷</span>
           <h2 className="text-lg font-black text-moko-rose">我的愿望存钱罐</h2>
@@ -146,9 +147,9 @@ export default function ShopPage() {
             maxLength={100}
             className="flex-1 rounded-2xl border-2 border-moko-pink/30 px-4 py-2 text-sm focus:border-moko-pink outline-none"
           />
-          <button onClick={addWish} className="btn btn-primary text-sm whitespace-nowrap">
+          <ClayButton variant="brand" size="sm" className="whitespace-nowrap" onClick={addWish}>
             存进去 💰
-          </button>
+          </ClayButton>
         </div>
         {/* 💡 常见愿望推荐 */}
         <div className="flex flex-wrap gap-1.5 mb-3">
@@ -185,7 +186,7 @@ export default function ShopPage() {
             <EmptyState emoji="🐷" title="存钱罐还是空的" desc="写下第一个愿望吧～" />
           )}
         </div>
-      </div>
+      </ClayCard>
 
       <p className="text-gray-500 mb-4 text-sm">用好朋友萌可每天产出的星星币，兑换长期小奖励～</p>
       {msg && <p className="text-sm text-moko-violet font-semibold mb-3">{msg}</p>}
@@ -199,7 +200,7 @@ export default function ShopPage() {
             skin_candy: 'bg-gradient-to-br from-pink-300 to-orange-300',
           };
           return (
-            <div key={s.key} className="card-moko flex items-center gap-3">
+            <ClayCard key={s.key} className="flex items-center gap-3">
               <div className="text-4xl">{s.icon}</div>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-moko-violet">{s.name}</div>
@@ -215,15 +216,16 @@ export default function ShopPage() {
               {owned ? (
                 <span className="text-sm font-bold text-green-500">已拥有 ✓</span>
               ) : (
-                <button
-                  onClick={() => buy(s.key, s.cost)}
+                <ClayButton
+                  variant={afford ? 'gold' : 'secondary'}
+                  size="sm"
                   disabled={!afford}
-                  className={`btn text-white text-sm whitespace-nowrap ${afford ? 'btn-gold' : 'bg-gray-300 cursor-not-allowed'}`}
+                  onClick={() => buy(s.key, s.cost)}
                 >
                   ⭐ {s.cost}
-                </button>
+                </ClayButton>
               )}
-            </div>
+            </ClayCard>
           );
         })}
       </div>
