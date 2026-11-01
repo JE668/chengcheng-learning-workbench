@@ -8,6 +8,7 @@ import { TRACE_CHARS } from '@/lib/study-data/texts';
 
 import { speakZh } from '@/lib/speak';
 import { trackActivity } from '@/lib/activity';
+import { ClayCard, ClayButton } from '@/components/design-system';
 
 const CHAR_INFO = new Map(CHARACTERS.map((c) => [c.char, c]));
 
@@ -137,7 +138,7 @@ export default function TracePage() {
         沿着灰色范字一笔一画描红，写完点「下一个」换字。共 {TRACE_CHARS.length} 个字可以练。
       </p>
 
-      <div className="rounded-3xl p-6 shadow-xl border-2 border-moko-pink/30 bg-white flex flex-col items-center">
+      <ClayCard theme="violet" className="p-6 flex flex-col items-center">
         <div className="relative">
           <canvas
             ref={canvasRef}
@@ -166,53 +167,38 @@ export default function TracePage() {
         </div>
 
         <div className="flex flex-wrap gap-3 justify-center mt-5">
-          <button
-            onClick={read}
-            className="rounded-2xl px-5 py-3 bg-moko-violet text-white font-black shadow hover:scale-105 active:scale-95 transition"
-          >
+          <ClayButton variant="brand" size="lg" onClick={read}>
             🔊 听读音
-          </button>
-          <button
-            onClick={readPhrase}
-            className="rounded-2xl px-5 py-3 bg-moko-cyan text-white font-black shadow hover:scale-105 active:scale-95 transition"
-          >
+          </ClayButton>
+          <ClayButton variant="cyan" size="lg" onClick={readPhrase}>
             📖 听词语
-          </button>
-          <button
-            onClick={clear}
-            className="rounded-2xl px-5 py-3 bg-gray-200 text-gray-700 font-black shadow hover:scale-105 active:scale-95 transition"
-          >
+          </ClayButton>
+          <ClayButton variant="outline" size="lg" onClick={clear}>
             🧽 重写
-          </button>
+          </ClayButton>
         </div>
 
         <div className="flex items-center gap-6 mt-6">
-          <button
-            onClick={prev}
-            className="rounded-full w-14 h-14 bg-moko-yellow text-white font-black shadow text-2xl hover:scale-105 active:scale-95 transition"
-          >
+          <ClayButton variant="gold" size="xl" onClick={prev}>
             ‹
-          </button>
+          </ClayButton>
           <span className="text-gray-500 font-black">
             {idx + 1} / {TRACE_CHARS.length}
           </span>
-          <button
-            onClick={next}
-            className="rounded-full w-14 h-14 bg-moko-pink text-white font-black shadow text-2xl hover:scale-105 active:scale-95 transition"
-          >
+          <ClayButton variant="pink" size="xl" onClick={next}>
             ›
-          </button>
+          </ClayButton>
         </div>
-      </div>
+      </ClayCard>
 
-      <div className="mt-6 rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-purple/20">
+      <ClayCard className="mt-6 p-5">
         <h3 className="text-lg font-black text-moko-violet mb-2">💡 描红小窍门</h3>
         <ul className="text-gray-600 text-sm space-y-1 list-disc list-inside">
           <li>用指尖或鼠标顺着灰色字慢慢写，笔顺和范字一样才漂亮。</li>
           <li>写之前先听两遍读音，记住这个字怎么读、什么意思。</li>
           <li>写歪了没关系，点「重写」再来一次就好。</li>
         </ul>
-      </div>
+      </ClayCard>
     </div>
   );
 }
