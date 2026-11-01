@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
 import { EmptyState } from '@/components/EmptyState';
+import { ClayCard, ClayButton } from '@/components/design-system';
 
 type PTask = {
   id: number;
@@ -39,7 +40,7 @@ export default function TasksPage() {
 
   async function load() {
     const res = await fetch('/api/tasks');
-    const data = await res.json() as { tasks?: Array<Record<string, unknown>> };
+    const data = (await res.json()) as { tasks?: Array<Record<string, unknown>> };
     setTasks(
       (data.tasks || []).map((r) => ({
         id: Number(r.id),
@@ -49,7 +50,7 @@ export default function TasksPage() {
         points: Number(r.points ?? 0),
         created_at: String(r.created_at ?? ''),
         assigned_to: r.assigned_to == null ? null : Number(r.assigned_to),
-      })),
+      }))
     );
   }
   useEffect(() => {
@@ -129,12 +130,17 @@ export default function TasksPage() {
       <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
         <h1 className="page-title">学习任务 📝</h1>
         <div className="flex items-center gap-2">
-          <Link href="/dictation" className="px-4 py-2 rounded-2xl bg-gradient-to-r from-moko-rose to-moko-pink text-white font-black shadow hover:scale-105 transition text-sm">🎤 布置听写/口算</Link>
+          <Link
+            href="/dictation"
+            className="px-4 py-2 rounded-2xl bg-gradient-to-r from-moko-rose to-moko-pink text-white font-black shadow hover:scale-105 transition text-sm"
+          >
+            🎤 布置听写/口算
+          </Link>
           <ChildSwitcher />
         </div>
       </div>
 
-      <div className="card-moko mb-6">
+      <ClayCard className="mb-6">
         {editing ? (
           <form onSubmit={saveEdit} className="space-y-4">
             <div className="font-black text-moko-violet">编辑：{editing.title}</div>
@@ -181,101 +187,111 @@ export default function TasksPage() {
               </div>
             )}
             <div className="flex gap-2">
-              <button className="flex-1 py-3 bg-gradient-to-r from-moko-rose to-moko-pink text-white text-lg font-extrabold rounded-2xl shadow hover:scale-[1.02] transition">
+              <ClayButton variant="brand" size="lg" fullWidth type="submit">
                 保存修改
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditing(null)}
-                className="px-5 py-3 rounded-2xl bg-gray-200 text-gray-700 font-bold hover:bg-gray-300"
-              >
+              </ClayButton>
+              <ClayButton variant="ghost" size="lg" fullWidth onClick={() => setEditing(null)}>
                 取消
-              </button>
+              </ClayButton>
             </div>
           </form>
         ) : (
           <>
-          <form onSubmit={submit} className="space-y-4">
-            {msg && <div className="mb-2 p-3 rounded-2xl bg-moko-mint text-white font-bold text-center">{msg}</div>}
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">任务名称</label>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
-              />
-            </div>
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">学科</label>
-              <select
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
-              >
-                {SUBJECTS.map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">描述</label>
-              <input
-                value={desc}
-                onChange={(e) => setDesc(e.target.value)}
-                className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
-              />
-            </div>
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">积分奖励</label>
-              <input
-                type="number"
-                min={1}
-                max={50}
-                value={points}
-                onChange={(e) => setPoints(Number(e.target.value))}
-                className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
-              />
-            </div>
-            {childrenOpts.length > 0 && (
+            <form onSubmit={submit} className="space-y-4">
+              {msg && (
+                <div className="mb-2 p-3 rounded-2xl bg-moko-mint text-white font-bold text-center">
+                  {msg}
+                </div>
+              )}
               <div>
-                <label className="block font-bold text-gray-700 mb-1">指派给孩子</label>
+                <label className="block font-bold text-gray-700 mb-1">任务名称</label>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">学科</label>
                 <select
-                  value={assignedTo}
-                  onChange={(e) => setAssignedTo(e.target.value)}
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
                   className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
                 >
-                  <option value="">👨‍👩‍👧 全家（谁都能做）</option>
-                  {childrenOpts.map((c) => (
-                    <option key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </option>
+                  {SUBJECTS.map((s) => (
+                    <option key={s}>{s}</option>
                   ))}
                 </select>
               </div>
-            )}
-            <button className="w-full py-3 bg-gradient-to-r from-moko-rose to-moko-pink text-white text-xl font-extrabold rounded-2xl shadow hover:scale-[1.02] transition">
-              发布任务
-            </button>
-          </form>
-          {/* 一键布置每日一练 */}
-          <button
-            onClick={async () => {
-              const res = await fetch('/api/tasks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: '完成今日一练（语文+数学+英语）', subject: '语文', description: '去「萌可闯关」做完今天的三科练习，做对 80% 就算通过！', points: 10 }),
-              });
-              if (res.ok) { setMsg('已布置「完成今日一练」任务（+10 积分），孩子端马上能看到～'); await load(); }
-              else setMsg('布置失败，可能已布置过');
-            }}
-            className="w-full mt-3 py-2.5 bg-moko-gold text-white font-bold rounded-2xl shadow hover:scale-[1.02] transition text-sm"
-          >
-            ⚡ 一键布置「完成今日一练」（+10 积分）
-          </button>
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">描述</label>
+                <input
+                  value={desc}
+                  onChange={(e) => setDesc(e.target.value)}
+                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">积分奖励</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={points}
+                  onChange={(e) => setPoints(Number(e.target.value))}
+                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
+                />
+              </div>
+              {childrenOpts.length > 0 && (
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">指派给孩子</label>
+                  <select
+                    value={assignedTo}
+                    onChange={(e) => setAssignedTo(e.target.value)}
+                    className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
+                  >
+                    <option value="">👨‍👩‍👧 全家（谁都能做）</option>
+                    {childrenOpts.map((c) => (
+                      <option key={c.id} value={String(c.id)}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <ClayButton variant="brand" size="xl" fullWidth type="submit">
+                发布任务
+              </ClayButton>
+            </form>
+            {/* 一键布置每日一练 */}
+            <ClayButton
+              variant="gold"
+              size="sm"
+              fullWidth
+              className="mt-3"
+              onClick={async () => {
+                const res = await fetch('/api/tasks', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    title: '完成今日一练（语文+数学+英语）',
+                    subject: '语文',
+                    description: '去「萌可闯关」做完今天的三科练习，做对 80% 就算通过！',
+                    points: 10,
+                  }),
+                });
+                if (res.ok) {
+                  setMsg('已布置「完成今日一练」任务（+10 积分），孩子端马上能看到～');
+                  await load();
+                } else setMsg('布置失败，可能已布置过');
+              }}
+            >
+              ⚡ 一键布置「完成今日一练」（+10 积分）
+            </ClayButton>
           </>
         )}
-      </div>
+      </ClayCard>
       <h2 className="text-2xl font-black text-moko-violet mb-3">已发布任务（{tasks.length}）</h2>
       <div className="space-y-2">
         {tasks.map((t) => (
@@ -289,7 +305,9 @@ export default function TasksPage() {
                     ` · 🎯 指派给${childrenOpts.find((c) => c.id === t.assigned_to)?.name ?? '孩子'}`}
                 </span>
               </div>
-              {t.description && <div className="text-sm text-gray-500 truncate">{t.description}</div>}
+              {t.description && (
+                <div className="text-sm text-gray-500 truncate">{t.description}</div>
+              )}
             </div>
             {confirmId === t.id ? (
               <div className="flex gap-2 shrink-0">
@@ -325,14 +343,26 @@ export default function TasksPage() {
           </div>
         ))}
         {tasks.length === 0 && (
-          <EmptyState emoji="📝" title="还没有发布任务" desc="在上面填表，发布第一个学习任务给孩子吧！" />
+          <EmptyState
+            emoji="📝"
+            title="还没有发布任务"
+            desc="在上面填表，发布第一个学习任务给孩子吧！"
+          />
         )}
       </div>
     </div>
   );
 }
 
-function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function Field({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div>
       <label className="block font-bold text-gray-700 mb-1">{label}</label>
