@@ -10,6 +10,7 @@ import { mokoCollectionByName } from '@/lib/moko-collection';
 import { playTtsEnd, prefetchStaticAudio } from '@/lib/speak';
 import { CaptureMoment, type CapturePayload } from '@/components/CaptureMoment';
 import { useOfflineStore } from '@/lib/stores';
+import { ClayCard, ClayButton } from '@/components/design-system';
 
 interface Progress {
   captured: string[];
@@ -478,12 +479,9 @@ export default function StoryPage() {
                 </div>
               </>
             )}
-            <button
-              onClick={stopBedtime}
-              className="px-8 py-3 rounded-full bg-white/15 text-white/90 font-black text-lg clay-btn transition active:scale-95"
-            >
+            <ClayButton variant="brand" size="lg" onClick={stopBedtime}>
               ⏹ 停止，程程要睡觉啦
-            </button>
+            </ClayButton>
             <div className="text-white/30 text-xs">连播中 · 点击屏幕任意处也可以停止</div>
           </div>
         </div>
@@ -510,10 +508,7 @@ export default function StoryPage() {
 
           if (isLocked || lockedByModule) {
             return (
-              <div
-                key={c.id}
-                className="rounded-3xl p-5 shadow-lg border-2 border-gray-200 bg-gray-100 opacity-90 flex items-center gap-4"
-              >
+              <ClayCard key={c.id} theme="secondary" className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-gray-300 flex items-center justify-center text-2xl">
                   🔒
                 </div>
@@ -537,14 +532,23 @@ export default function StoryPage() {
                     </div>
                   )}
                 </div>
-              </div>
+              </ClayCard>
             );
           }
 
           return (
-            <div
+            <ClayCard
               key={c.id}
-              className={`rounded-3xl p-5 shadow-xl border-2 bg-gradient-to-br ${c.gradient} text-white`}
+              theme={
+                c.gradient === 'from-moko-pink to-moko-purple'
+                  ? 'pink'
+                  : c.gradient === 'from-moko-yellow to-moko-yellow'
+                    ? 'gold'
+                    : c.gradient === 'from-moko-blue to-moko-blue'
+                      ? 'blue'
+                      : 'violet'
+              }
+              className="p-5"
             >
               <div className="flex items-center gap-4">
                 {img ? (
@@ -735,13 +739,14 @@ export default function StoryPage() {
 
                 {/* 已读已答且有资格：直接捕捉 */}
                 {isNext && !isCaptured && isQuiz && (i === 0 || progress.tickets > 0) && (
-                  <button
-                    onClick={() => capture(c.id)}
+                  <ClayButton
+                    variant="brand"
+                    size="sm"
                     disabled={capturing}
-                    className="px-5 py-2 rounded-full bg-white text-moko-violet font-black shadow hover:scale-105 transition disabled:opacity-60"
+                    onClick={() => capture(c.id)}
                   >
                     {capturing ? '捕捉中…' : `✨ 捕捉${c.mokoName}！`}
-                  </button>
+                  </ClayButton>
                 )}
 
                 {isCaptured && (
@@ -753,7 +758,7 @@ export default function StoryPage() {
                   </Link>
                 )}
               </div>
-            </div>
+            </ClayCard>
           );
         })}
       </div>
