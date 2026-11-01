@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import MokoCard from '@/components/MokoCard';
-import GameBestBadge from '@/components/GameBestBadge';
+import Image from 'next/image';
 import { games, mokoChars } from '@/lib/moko';
+import GameBestBadge from '@/components/GameBestBadge';
+import { ClayCard } from '@/components/design-system';
 
 export default function GamesPage() {
   // 本页是服务端组件，而最佳成绩存在 localStorage（客户端专属，见 lib/game-difficulty.ts）。
@@ -41,15 +42,28 @@ export default function GamesPage() {
       </Link>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {games.map((g) => (
-          <MokoCard
+          <ClayCard
             key={g.id}
+            theme="violet"
+            className="flex flex-col"
+            as={Link}
             href={`/games/${g.id}`}
-            title={g.title}
-            desc={`${g.desc} · ${g.difficulty}`}
-            img={mokoChars[g.mokoKey]?.img || '/moko/lemei.webp'}
-            color="bg-gradient-to-br from-moko-purple to-moko-violet"
-            badge={<GameBestBadge gameId={g.id} />}
-          />
+          >
+            <div className="flex-1 flex flex-col">
+              <Image
+                src={mokoChars[g.mokoKey]?.img || '/moko/lemei.webp'}
+                alt={g.title}
+                width={128}
+                height={128}
+                className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-2xl border-4 border-white/40 shadow mb-3"
+              />
+              <h3 className="text-xl md:text-2xl font-extrabold drop-shadow">{g.title}</h3>
+              <p className="text-sm md:text-base opacity-90 mt-1 font-medium">
+                {g.desc} · {g.difficulty}
+              </p>
+            </div>
+            <GameBestBadge gameId={g.id} />
+          </ClayCard>
         ))}
       </div>
     </div>
