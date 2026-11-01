@@ -13,6 +13,7 @@ import { MokoCarousel } from '@/components/MokoCarousel';
 import { MokoAvatar } from '@/components/MokoAvatar';
 import { MokoIsland, type MokoIslandItem } from '@/components/MokoIsland';
 import { MOKO_NAV_ENTRIES } from '@/lib/moko-nav-mapping';
+import { ClayCard, ClayButton } from '@/components/design-system';
 
 export default async function HomePage() {
   const user = await getCurrentUser();
@@ -71,27 +72,27 @@ export default async function HomePage() {
   }));
 
   const stats = [
-    { label: '我的积分', value: points, icon: '🏅', color: 'bg-moko-rose', href: '/record' },
+    { label: '我的积分', value: points, icon: '🏅', theme: 'pink' as const, href: '/record' },
     {
       label: '阳光能量',
       value: castle.sunlight,
       icon: '☀️',
-      color: 'bg-moko-yellow',
+      theme: 'gold' as const,
       href: '/castle',
     },
-    { label: '星星币', value: castle.starCoins, icon: '⭐', color: 'bg-moko-gold', href: '/shop' },
+    { label: '星星币', value: castle.starCoins, icon: '⭐', theme: 'gold' as const, href: '/shop' },
     {
       label: '萌可图鉴',
       value: `${totalMoko} 种`,
       icon: '🧸',
-      color: 'bg-moko-purple',
+      theme: 'violet' as const,
       href: '/castle',
     },
     {
       label: '城堡繁荣度',
       value: castle.prosperity,
       icon: '🏰',
-      color: 'bg-moko-blue',
+      theme: 'blue' as const,
       href: '/castle',
     },
   ];
@@ -156,7 +157,10 @@ export default async function HomePage() {
     <div className="relative max-w-4xl mx-auto min-h-screen fade-up">
       <MokoGroupBg />
       {/* 顶部问候 */}
-      <div className="card-moko flex items-center gap-5 mb-6 bg-gradient-to-r from-moko-pink to-moko-rose text-white">
+      <ClayCard
+        theme="pink"
+        className="flex items-center gap-5 mb-6 bg-gradient-to-r from-moko-pink to-moko-rose text-white"
+      >
         <Image
           src="/moko/lemei.webp"
           alt="乐美"
@@ -168,7 +172,7 @@ export default async function HomePage() {
           <h1 className="text-3xl font-black">你好呀，{user.displayName}！</h1>
           <p className="text-lg opacity-90">今天也要和萌可们一起加油学习哦～</p>
         </div>
-      </div>
+      </ClayCard>
 
       {/* 萌可灵动岛 —— 个性化推荐 */}
       {islandItems.length > 0 && <MokoIsland items={islandItems} />}
@@ -180,21 +184,23 @@ export default async function HomePage() {
       <h2 className="section-title mb-3">我的成长看板 📊</h2>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
         {stats.map((s) => (
-          <Link
+          <ClayCard
             key={s.label}
+            theme={s.theme}
+            className="p-4 text-center hoverable cursor-pointer"
+            as={Link}
             href={s.href}
-            className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white hover:scale-105 active:scale-95 transition cursor-pointer`}
           >
             <div className="text-3xl mb-1">{s.icon}</div>
             <div className="text-2xl font-black leading-tight">{s.value}</div>
             <div className="text-xs opacity-90 mt-1">{s.label} ›</div>
-          </Link>
+          </ClayCard>
         ))}
       </div>
 
       {/* 今日学习进度 */}
       {todayModules.length > 0 && (
-        <div className="rounded-2xl p-4 bg-white mb-6 clay-card clay-theme clay-violet">
+        <ClayCard theme="violet" className="p-4 mb-6 bg-white">
           <div className="flex items-center justify-between mb-2">
             <span className="font-bold text-moko-violet">
               📚 今日已学 {todayModules.length} 个模块
@@ -212,11 +218,11 @@ export default async function HomePage() {
               </span>
             ))}
           </div>
-        </div>
+        </ClayCard>
       )}
 
       {/* 今日一练 · 三科打卡（合并卡片：状态 + 入口合一） */}
-      <div className="card-moko mb-6">
+      <ClayCard className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="section-title">🎯 今日一练 · 三科打卡</h2>
           <span className="text-sm text-gray-500">每科 3 题全对，自动完成该科打卡 🌟</span>
@@ -233,21 +239,18 @@ export default async function HomePage() {
               </Link>
             </div>
           ) : (
-            <Link
-              href="/daily-practice"
-              className="block text-center py-3 rounded-2xl bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black text-lg clay-btn hover:scale-105 transition"
-            >
+            <ClayButton variant="gold" size="xl" fullWidth as={Link} href="/daily-practice">
               ▶ 开始今日一练（语文 · 数学 · 英语）
-            </Link>
+            </ClayButton>
           )}
         </div>
         <div className="mt-3 text-xs text-gray-500">
           再坚持 {practice.nextMilestone} 天，解锁一只新萌可入驻城堡 🧸
         </div>
-      </div>
+      </ClayCard>
 
       {/* 我的任务（家长布置，孩子端即时可见） */}
-      <div className="card-moko mb-6">
+      <ClayCard className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="section-title">📝 我的任务</h2>
           <Link href="/my-tasks" className="text-sm font-bold text-moko-rose">
@@ -280,11 +283,11 @@ export default async function HomePage() {
             ))}
           </ul>
         )}
-      </div>
+      </ClayCard>
 
       {/* 城堡快览 + 快捷入口 */}
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="card-moko bg-gradient-to-br from-indigo-50 to-purple-50">
+        <ClayCard theme="violet" className="bg-gradient-to-br from-indigo-50 to-purple-50">
           <div className="flex items-center justify-between mb-3">
             <h2 className="section-title">🏰 萌可城堡</h2>
             <Link href="/castle" className="text-sm font-bold text-moko-rose">
@@ -315,23 +318,23 @@ export default async function HomePage() {
             {castle.residents.length === 0 && (
               <span className="text-sm text-gray-500">还没有萌可入驻，快去打卡吧！</span>
             )}
+            {castle.troublemakers.length > 0 && (
+              <p className="text-sm text-red-500 font-semibold mb-2">
+                ⚠️ {castle.troublemakers.length}{' '}
+                只捣蛋萌可溜进城堡！快用魔法喷雾和乐美一起把它们捉回去～
+              </p>
+            )}
+            <HarvestBtn
+              info={{
+                harvestableStars: castle.harvestableStars,
+                friendTotal: castle.friendTotal,
+                friendHarvestedToday: castle.friendHarvestedToday,
+              }}
+            />
           </div>
-          {castle.troublemakers.length > 0 && (
-            <p className="text-sm text-red-500 font-semibold mb-2">
-              ⚠️ {castle.troublemakers.length}{' '}
-              只捣蛋萌可溜进城堡！快用魔法喷雾和乐美一起把它们捉回去～
-            </p>
-          )}
-          <HarvestBtn
-            info={{
-              harvestableStars: castle.harvestableStars,
-              friendTotal: castle.friendTotal,
-              friendHarvestedToday: castle.friendHarvestedToday,
-            }}
-          />
-        </div>
+        </ClayCard>
 
-        <div className="card-moko">
+        <ClayCard>
           <h2 className="section-title mb-1">🚀 按顺序做，资源越来越多！</h2>
           <p className="text-xs text-gray-400 mb-3">从上往下点，每一步都能攒到东西～</p>
           <div className="space-y-2">
@@ -438,7 +441,7 @@ export default async function HomePage() {
               trigger="📖 看攻略：积分/星星币怎么攒？花在哪里？"
             />
           </div>
-        </div>
+        </ClayCard>
       </div>
     </div>
   );

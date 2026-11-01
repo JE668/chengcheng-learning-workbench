@@ -22,7 +22,11 @@ export const buttonVariants = cva(
     focusRing,
     disabledStyles,
     activeScale,
-    minTouchTarget,
+    // ⚠️ minTouchTarget 刻意**不放在 base**：它带 min-w，放在 base 会把所有按钮
+    // 撑成 44px 见方（含文字按钮），并压过 size 的高度（size 的 h-* 与 base 的
+    // min-h 不属于同一属性组，h-8 的 sm 按钮实际会被撑到 44px，尺寸梯度失效）。
+    // 儿童端 44px 的目标由 size 的 h-* 梯度保证：sm~xl 全部 ≥ 44px；
+    // xs 是桌面/家长端的紧凑档，明确豁免；icon 单独在下面补足。
     'rounded-xl',
   ],
   {
@@ -77,7 +81,8 @@ export const buttonVariants = cva(
         md: ['h-10 px-4 text-base', textSizes.base, fontWeights.medium],
         lg: ['h-11 px-6 text-lg', textSizes.lg, fontWeights.semibold],
         xl: ['h-12 px-8 text-xl', textSizes.xl, fontWeights.semibold],
-        icon: ['h-10 w-10 p-0'],
+        // icon 是唯一没有文字的尺寸，必须自带最小触控面积（44×44 的 WCAG 2.5.8 口径）
+        icon: ['h-10 w-10 p-0', minTouchTarget],
       },
       fullWidth: {
         true: 'w-full',

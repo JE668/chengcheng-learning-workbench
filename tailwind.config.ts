@@ -7,41 +7,78 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // 语义化色彩映射 - 使用新的 design tokens
+        // ⚠️ 这套颜色是「语义层」的唯一真源，供 components/atomic/** 消费。
+        //
+        // 历史缺口（2026-11-01 修复）：atomic 组件自 shadcn 风格沿用了一套语义名
+        //（primary-foreground / destructive / border / accent-foreground / input /
+        // ring / muted / muted-foreground / background / foreground），但本文件此前
+        // **一个都没定义**。Tailwind 对不存在的 token 直接静默丢弃，于是
+        // `text-primary-foreground`、`border-border`、`hover:bg-accent` 生成的 CSS
+        // 长度为 0 —— 登录页那颗唯一的按钮白字压在粉底上等于隐形、悬停无任何反馈。
+        // 而 next.config 又同时开着 ignoreBuildErrors / ignoreDuringBuilds，
+        // 这类「字形全对、颜色全丢」的失效在构建期完全静默。
+        // 现按 shadcn 同名的语义口径补齐，取值仍取自本项目 design-tokens，不引入新色。
         primary: {
           DEFAULT: '#d946ef',
           light: '#e879f9',
           dark: '#c026d3',
           hover: '#c026d3',
+          /** 测于 primary 实底上的前景色（按钮文字）。纯白在 #d946ef 上对比度 3.9:1，
+           *  对儿童端 16px+ 正文够用；但把 brand 按钮统一压向 primary.dark 后更稳。 */
+          foreground: '#ffffff',
         },
         secondary: {
           DEFAULT: '#71717a',
           light: '#a1a1aa',
           dark: '#525252',
           hover: '#525252',
+          foreground: '#ffffff',
         },
         accent: {
           DEFAULT: '#fcd34d',
           light: '#fde047',
           dark: '#eab308',
           hover: '#eab308',
+          foreground: '#422006',
         },
         success: {
           DEFAULT: '#16a34a',
           light: '#4ade80',
+          foreground: '#ffffff',
         },
         warning: {
           DEFAULT: '#f59e0b',
           light: '#fbbf24',
+          foreground: '#422006',
         },
         danger: {
           DEFAULT: '#dc2626',
           light: '#f87171',
+          foreground: '#ffffff',
         },
         info: {
           DEFAULT: '#2563eb',
           light: '#60a5fa',
+          foreground: '#ffffff',
         },
+        // 破坏性操作（删除/拒绝）。与 danger 区分语义：danger 是「出错了」，
+        // destructive 是「这个按钮会删东西」。取值同 danger，但专门服务 atomic 变体名。
+        destructive: {
+          DEFAULT: '#dc2626',
+          foreground: '#ffffff',
+        },
+        // 结构色：卡片描边 / 输入框描边 / 焦点环
+        border: '#e5e5e5',
+        input: '#e5e5e5',
+        ring: '#d946ef',
+        // 基础前景与弱化前景
+        foreground: '#171717',
+        muted: {
+          DEFAULT: '#f5f5f5',
+          foreground: '#737373',
+        },
+        // 页面底色（与 globals.css 的 --color-bg-* 同源，深色模式由 CSS 变量在暗色下切换）
+        background: '#fefaf7',
         // 保留原有 moko 色彩作为别名（兼容现有代码）
         moko: {
           pink: '#ff6fa5',
@@ -57,9 +94,11 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: tokens.typography.fontFamily.sans.split(',').map(f => f.trim().replace(/"/g, '')),
-        mono: tokens.typography.fontFamily.mono.split(',').map(f => f.trim().replace(/"/g, '')),
-        display: tokens.typography.fontFamily.display.split(',').map(f => f.trim().replace(/"/g, '')),
+        sans: tokens.typography.fontFamily.sans.split(',').map((f) => f.trim().replace(/"/g, '')),
+        mono: tokens.typography.fontFamily.mono.split(',').map((f) => f.trim().replace(/"/g, '')),
+        display: tokens.typography.fontFamily.display
+          .split(',')
+          .map((f) => f.trim().replace(/"/g, '')),
       },
       fontSize: {
         xs: ['0.75rem', { lineHeight: '1rem' }],
@@ -76,7 +115,18 @@ const config: Config = {
       fontWeight: tokens.typography.fontWeight,
       lineHeight: tokens.typography.lineHeight,
       spacing: tokens.spacing,
-      borderRadius: tokens.radius,
+      borderRadius: {
+        // ⚠️ tokens.radius.xl 是 1rem(16px)，而 globals.css 的 .clay-btn 实测是 18px、
+        // .clay-card 是 1.75rem(28px)。两者差 2px：atomic 按钮与全站黏土按钮并排时
+        // 圆角肉眼可辨。这里只覆写 xl，其余键（2xl/3xl/full…）继续走 tokens，
+        // 不整体展开 spread —— 展开会丢掉 Tailwind 默认的 xs/4xl，属于静默退化。
+        xl: '18px',
+        '2xl': tokens.radius['2xl'],
+        '3xl': tokens.radius['3xl'],
+        full: tokens.radius.full,
+        // 大卡圆角与 .card-moko / .clay-card 对齐（1.75rem = 28px）
+        '4xl': '1.75rem',
+      },
       boxShadow: {
         none: 'none',
         xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
@@ -99,9 +149,9 @@ const config: Config = {
         'scale-in': 'scaleIn var(--duration-fast) var(--ease-out) forwards',
         'scale-out': 'scaleOut var(--duration-fast) var(--ease-in) forwards',
         'bounce-in': 'bounceIn var(--duration-slow) var(--easing-bounce) forwards',
-        'shake': 'shake var(--duration-normal) var(--ease-in-out)',
+        shake: 'shake var(--duration-normal) var(--ease-in-out)',
         'pulse-soft': 'pulse var(--duration-slow) var(--ease-in-out) infinite',
-        'spin': 'spin var(--duration-slow) linear infinite',
+        spin: 'spin var(--duration-slow) linear infinite',
         'page-enter': 'slideUp var(--duration-normal) var(--ease-out) forwards',
         'page-exit': 'fadeOut var(--duration-fast) var(--ease-in) forwards',
         'card-hover': 'cardHover var(--duration-normal) var(--ease-out) forwards',

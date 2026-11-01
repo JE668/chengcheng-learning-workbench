@@ -136,7 +136,7 @@ export default function LoginPage() {
         ))}
       </div>
 
-      <div className="relative z-10 bg-white/80 backdrop-blur-md rounded-[2.5rem] shadow-2xl p-8 md:p-10 w-full max-w-md text-center border-2 border-white/60">
+      <div className="relative z-10 clay-card clay-violet p-8 md:p-10 w-full max-w-md text-center">
         {/* 乐美欢迎头像 */}
         <div className="relative mx-auto mb-5 w-32 h-32">
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-moko-pink to-moko-purple opacity-20 animate-pulse" />
@@ -157,26 +157,16 @@ export default function LoginPage() {
         {/* 快速选择：家长 / 孩子 */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           {USERS.map((u) => (
-            <button
+            <Button
               key={u.username}
               onClick={() => quickLogin(u.username)}
-              className={
-                'rounded-2xl p-4 shadow-lg border-2 transition-all active:scale-95 ' +
-                (username === u.username
-                  ? 'border-moko-rose scale-105 bg-gradient-to-br ' + u.color + ' text-white'
-                  : 'border-gray-100 bg-white hover:border-moko-pink/30')
-              }
+              variant={username === u.username ? 'brand' : 'outline'}
+              size="lg"
+              className="h-20 flex flex-col gap-1"
             >
-              <div className="text-3xl mb-1">{u.emoji}</div>
-              <div
-                className={
-                  'font-bold text-sm ' +
-                  (username === u.username ? 'text-white' : 'text-moko-violet')
-                }
-              >
-                {u.label}
-              </div>
-            </button>
+              <span className="text-3xl">{u.emoji}</span>
+              <span className="font-bold text-sm">{u.label}</span>
+            </Button>
           ))}
         </div>
 
@@ -198,7 +188,12 @@ export default function LoginPage() {
             size="lg"
           />
           {error && (
-            <p className="text-red-500 font-bold text-sm bg-red-50 rounded-2xl p-3">{error}</p>
+            <p
+              className="text-danger-foreground font-bold text-sm bg-danger/10 border border-danger/20 rounded-2xl p-3"
+              role="alert"
+            >
+              {error}
+            </p>
           )}
           <Button type="submit" variant="brand" size="xl" fullWidth loading={loading}>
             ✨ 进入学习世界
