@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
+import { ClayCard, ClayButton, ClayInput } from '@/components/design-system';
 
 interface Exemption {
   day: string;
@@ -134,7 +135,8 @@ export default function SettingsPage() {
         <h1 className="page-title">设置 ⚙️</h1>
         <ChildSwitcher />
       </div>
-      <div className="card-moko">
+
+      <ClayCard theme="purple" className="p-6">
         <h2 className="text-xl font-bold text-moko-violet mb-4">修改孩子密码</h2>
         {msg && (
           <div className="mb-4 p-3 rounded-2xl bg-moko-mint text-white font-bold text-center">
@@ -142,35 +144,32 @@ export default function SettingsPage() {
           </div>
         )}
         <div className="space-y-4">
-          <div>
-            <label className="block font-bold text-gray-700 mb-1">孩子用户名</label>
-            <input
-              value={childUsername}
-              onChange={(e) => setChildUsername(e.target.value)}
-              className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
-            />
-          </div>
-          <div>
-            <label className="block font-bold text-gray-700 mb-1">新密码（至少 4 位）</label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
-            />
-          </div>
-          <button
+          <ClayInput
+            label="孩子用户名"
+            value={childUsername}
+            onChange={(e) => setChildUsername(e.target.value)}
+            className="w-full"
+          />
+          <ClayInput
+            label="新密码（至少 4 位）"
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full"
+          />
+          <ClayButton
             onClick={save}
             disabled={newPassword.length < 4}
-            className="w-full py-3 bg-gradient-to-r from-moko-rose to-moko-pink text-white text-xl font-extrabold rounded-2xl shadow hover:scale-[1.02] transition disabled:opacity-40 disabled:cursor-not-allowed"
+            variant="gold"
+            className="w-full py-3 text-xl font-extrabold shadow hover:scale-[1.02] transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             保存修改
-          </button>
+          </ClayButton>
         </div>
-      </div>
+      </ClayCard>
 
       {/* 💾 数据备份与恢复 */}
-      <div className="card-moko mt-6">
+      <ClayCard theme="blue" className="mt-6 p-6">
         <h2 className="text-xl font-bold text-moko-violet mb-2">💾 数据备份与恢复</h2>
         <p className="text-sm text-gray-600 mb-4">
           导出全部学习数据（积分、萌可、任务、错题本等，含账号密码）为 JSON 文件；换设备 /
@@ -178,7 +177,7 @@ export default function SettingsPage() {
         </p>
         <div className="flex flex-col gap-3">
           {/* 导出 */}
-          <button
+          <ClayButton
             onClick={async () => {
               try {
                 const r = await fetch('/api/backup/export');
@@ -201,10 +200,11 @@ export default function SettingsPage() {
                 setMsg('导出失败，请检查连接');
               }
             }}
-            className="w-full py-3 bg-gradient-to-r from-moko-blue to-moko-cyan text-white text-base font-extrabold rounded-2xl shadow hover:scale-[1.02] transition active:scale-95"
+            variant="blue"
+            className="w-full py-3 text-base font-extrabold shadow hover:scale-[1.02] transition active:scale-95"
           >
             📤 导出数据（下载备份）
-          </button>
+          </ClayButton>
 
           {/* 导入 */}
           <div className="flex items-center gap-2">
@@ -214,30 +214,27 @@ export default function SettingsPage() {
               accept="application/json,.json"
               className="flex-1 text-sm text-gray-500 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-moko-violet/10 file:text-moko-violet file:font-bold file:cursor-pointer"
             />
-            <button
+            <ClayButton
               onClick={restoreFromFile}
               disabled={restoring}
-              // ⚠️ 必须 shrink-0 + whitespace-nowrap：
-              // 左边 input 用了 flex-1，而 flex 项默认 flex-shrink:1 —— 空间紧张时
-              // 浏览器会**压缩按钮**而不是让 input 收缩，于是「📥 恢复」被折成
-              // 「📥 恢 / 复」两行，看起来像坏掉的按钮（实测 1000px 宽就是这样）。
-              className="shrink-0 whitespace-nowrap px-5 py-2 rounded-xl bg-moko-violet text-white font-bold text-sm shadow hover:scale-105 transition active:scale-95 disabled:opacity-50"
+              variant="violet"
+              className="shrink-0 whitespace-nowrap px-5 py-2 rounded-xl font-bold text-sm shadow hover:scale-105 transition active:scale-95 disabled:opacity-50"
             >
               {restoring ? '恢复中…' : '📥 恢复'}
-            </button>
+            </ClayButton>
           </div>
         </div>
         <p className="text-xs text-gray-400 mt-3">
           ⚠️ 恢复会<strong>覆盖当前全部数据</strong>
           （含账号），操作前请先导出备份。恢复后建议刷新页面。
         </p>
-      </div>
+      </ClayCard>
 
       {/* CSV 导出 */}
-      <div className="card-moko mt-6">
+      <ClayCard theme="blue" className="mt-6 p-6">
         <h2 className="text-xl font-bold text-moko-violet mb-2">📊 导出学习数据</h2>
         <p className="text-sm text-gray-600 mb-4">下载学习记录为 CSV 文件，可在 Excel 中打开分析</p>
-        <button
+        <ClayButton
           onClick={async () => {
             try {
               const r = await fetch('/api/backup');
@@ -268,39 +265,36 @@ export default function SettingsPage() {
               setMsg('导出失败');
             }
           }}
-          className="w-full py-3 bg-gradient-to-r from-moko-blue to-cyan-400 text-white text-base font-extrabold rounded-2xl shadow hover:scale-[1.02] transition active:scale-95"
+          variant="blue"
+          className="w-full py-3 text-base font-extrabold shadow hover:scale-[1.02] transition active:scale-95"
         >
           📥 下载 CSV 学习数据
-        </button>
-      </div>
+        </ClayButton>
+      </ClayCard>
 
       {/* 🌴 节假日豁免 */}
-      <div className="card-moko mt-6">
+      <ClayCard theme="violet" className="mt-6 p-6">
         <h2 className="text-xl font-bold text-moko-violet mb-2">🌴 节假日豁免</h2>
         <p className="text-sm text-gray-600 mb-4">
           出游、生病、走亲戚的日子加进豁免表，当天不会结算惩罚（捣蛋萌可不进城堡，连胜和冰冻徽章也不受影响）。
           注意：只对未来结算生效，已经结算过的日期补加不会追溯。
         </p>
         <div className="flex gap-2 flex-wrap items-end mb-4">
-          <label className="flex-1 min-w-[150px]">
-            <span className="text-sm font-bold text-moko-violet">日期</span>
-            <input
-              type="date"
-              value={exDay}
-              onChange={(e) => setExDay(e.target.value)}
-              className="w-full mt-1 rounded-2xl border-2 border-moko-purple/20 p-2.5 text-moko-violet font-bold"
-            />
-          </label>
-          <label className="flex-1 min-w-[150px]">
-            <span className="text-sm font-bold text-moko-violet">备注（可不填）</span>
-            <input
-              value={exNote}
-              onChange={(e) => setExNote(e.target.value)}
-              placeholder="如：三亚旅行"
-              className="w-full mt-1 rounded-2xl border-2 border-moko-purple/20 p-2.5 text-moko-violet font-bold"
-            />
-          </label>
-          <button
+          <ClayInput
+            label="日期"
+            type="date"
+            value={exDay}
+            onChange={(e) => setExDay(e.target.value)}
+            className="flex-1 min-w-[150px]"
+          />
+          <ClayInput
+            label="备注（可不填）"
+            value={exNote}
+            onChange={(e) => setExNote(e.target.value)}
+            placeholder="如：三亚旅行"
+            className="flex-1 min-w-[150px]"
+          />
+          <ClayButton
             onClick={async () => {
               if (!exDay) {
                 setMsg('先选一个日期哦');
@@ -318,10 +312,11 @@ export default function SettingsPage() {
                 await loadExemptions();
               } else setMsg('添加失败，请重试');
             }}
-            className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-moko-mint to-emerald-400 text-white font-black shadow hover:scale-105 transition"
+            variant="mint"
+            className="px-5 py-2.5 rounded-2xl font-black shadow hover:scale-105 transition"
           >
             ➕ 添加豁免日
-          </button>
+          </ClayButton>
         </div>
         {exemptions.length === 0 ? (
           <p className="text-sm text-gray-400">还没有豁免日。有出游计划时提前加上～</p>
@@ -334,9 +329,13 @@ export default function SettingsPage() {
               >
                 <span className="font-bold text-moko-violet">
                   {ex.day}
-                  {ex.note && <span className="text-gray-400 font-normal text-sm"> · {ex.note}</span>}
+                  {ex.note && (
+                    <span className="text-gray-400 font-normal text-sm"> · {ex.note}</span>
+                  )}
                 </span>
-                <button
+                <ClayButton
+                  variant="outline"
+                  size="sm"
                   onClick={async () => {
                     const r = await fetch(`/api/holiday-exemptions?day=${ex.day}`, {
                       method: 'DELETE',
@@ -346,17 +345,16 @@ export default function SettingsPage() {
                       await loadExemptions();
                     } else setMsg('移除失败');
                   }}
-                  className="px-3 py-1 rounded-xl bg-red-100 text-red-500 font-bold text-sm hover:bg-red-200 transition"
                 >
                   移除
-                </button>
+                </ClayButton>
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </ClayCard>
 
-      <div className="card-moko border-2 border-red-300 mt-6">
+      <ClayCard theme="secondary" className="mt-6 p-6 border-2 border-red-300">
         <h2 className="text-xl font-bold text-red-500 mb-2">还原出厂设置 🏭</h2>
         <p className="text-sm text-gray-600 mb-4">
           清空该家长名下所有孩子的学习数据（萌可图鉴、错题本、城堡进度、奖状、任务等），账号保留。
@@ -368,25 +366,24 @@ export default function SettingsPage() {
           </div>
         )}
         <div className="space-y-4">
-          <div>
-            <label className="block font-bold text-gray-700 mb-1">家长密码</label>
-            <input
-              type="password"
-              value={resetPw}
-              onChange={(e) => setResetPw(e.target.value)}
-              className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-red-300 outline-none"
-              placeholder="请输入家长密码"
-            />
-          </div>
-          <button
+          <ClayInput
+            label="家长密码"
+            type="password"
+            value={resetPw}
+            onChange={(e) => setResetPw(e.target.value)}
+            placeholder="请输入家长密码"
+            className="w-full"
+          />
+          <ClayButton
             onClick={resetFactory}
             disabled={resetting}
-            className="w-full py-3 bg-red-500 text-white text-xl font-extrabold rounded-2xl shadow hover:scale-[1.02] transition disabled:opacity-40 disabled:cursor-not-allowed"
+            variant="destructive"
+            className="w-full py-3 text-xl font-extrabold shadow hover:scale-[1.02] transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             还原出厂设置
-          </button>
+          </ClayButton>
         </div>
-      </div>
+      </ClayCard>
     </div>
   );
 }

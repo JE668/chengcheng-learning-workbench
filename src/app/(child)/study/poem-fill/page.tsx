@@ -10,6 +10,7 @@ import { speakZh, praise } from '@/lib/speak';
 import { trackActivity } from '@/lib/activity';
 import { useModuleProgress } from '@/lib/module-progress';
 import { ModuleStars } from '@/components/study/ModuleStars';
+import { ClayCard } from '@/components/design-system';
 
 const PUNCT = new Set(['，', '。', '？', '！', '、', '；', '：', '“', '”', '《', '》']);
 
@@ -151,7 +152,7 @@ export default function PoemFillPage() {
         把缺少的字从下方字卡里点出来补上，全部填对就能听萌可念整首诗啦！
       </p>
 
-      <div className="rounded-3xl p-6 shadow-xl border-2 border-moko-gold/30 bg-white">
+      <ClayCard theme="gold" className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-2xl font-black text-moko-violet">{poem.title}</h2>
@@ -201,18 +202,18 @@ export default function PoemFillPage() {
             </div>
           ))}
         </div>
+      </ClayCard>
 
-        {solved && (
-          <div className="mt-5 rounded-2xl p-4 bg-moko-gold/15 text-center">
-            <div className="text-4xl mb-1">🎉🌟🎉</div>
-            <p className="text-moko-violet font-black">
-              太棒啦！这首诗你填对啦，跟着萌可一起背一遍吧～
-            </p>
-          </div>
-        )}
-      </div>
+      {solved && (
+        <ClayCard theme="gold" className="p-4 text-center">
+          <div className="text-4xl mb-1">🎉🌟🎉</div>
+          <p className="text-moko-violet font-black">
+            太棒啦！这首诗你填对啦，跟着萌可一起背一遍吧～
+          </p>
+        </ClayCard>
+      )}
 
-      <div className="mt-5 rounded-3xl p-5 shadow-lg border-2 border-moko-purple/20 bg-white">
+      <ClayCard className="mt-5 p-5" theme="purple">
         <h3 className="text-lg font-black text-moko-violet mb-3">🔤 字卡（点一点补到上面）</h3>
         <div className="flex flex-wrap gap-3">
           {candidates.map((c, ci) => (
@@ -250,16 +251,16 @@ export default function PoemFillPage() {
             下一首 ›
           </button>
         </div>
-      </div>
 
-      <div className="mt-6 rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-purple/20">
-        <h3 className="text-lg font-black text-moko-violet mb-2">💡 背诵小帮手</h3>
-        <ul className="text-gray-600 text-sm space-y-1 list-disc list-inside">
-          <li>先点「朗读全诗」听两遍，脑子里有画面再填空更容易。</li>
-          <li>点错的字卡会变红一下，别急，换一张试试。</li>
-          <li>填对全部空后，跟着萌可大声背出来，比死记硬背记得牢。</li>
-        </ul>
-      </div>
+        <div className="mt-5 p-5">
+          <h3 className="text-lg font-black text-moko-violet mb-3">💡 背诵小帮手</h3>
+          <ul className="text-gray-600 text-sm space-y-1 list-disc list-inside">
+            <li>先点「朗读全诗」听两遍，脑子里有画面再填空更容易。</li>
+            <li>点错的字卡会变红一下，别急，换一张试试。</li>
+            <li>填对全部空后，跟着萌可大声背出来，比死记硬背记得牢。</li>
+          </ul>
+        </div>
+      </ClayCard>
     </div>
   );
 }

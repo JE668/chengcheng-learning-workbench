@@ -9,6 +9,7 @@ import { MantraCard } from '@/components/algorithm/MantraCard';
 import { ExampleDemo } from '@/components/algorithm/ExampleDemo';
 import { PrincipleCard } from '@/components/algorithm/PrincipleCard';
 import { FadeIn, FloatY } from '@/components/algorithm/LazyMotion';
+import { ClayCard } from '@/components/design-system';
 
 export interface PracticeSetSummary {
   id: string;
@@ -66,7 +67,13 @@ export function AlgorithmTopicClient({
       </div>
 
       {/* 主题卡片（萌可教练角色 + 口诀） */}
-      <div className={`card-moko mb-6 bg-gradient-to-r ${topic.moko.color} text-white p-6`}>
+      <ClayCard
+        theme="violet"
+        className="mb-6 p-6"
+        style={{
+          background: `linear-gradient(to right, ${topic.moko.color.replace('from-', '').replace('to-', '')})`,
+        }}
+      >
         <div className="flex items-start gap-4">
           <FloatY duration={3} amplitude={3}>
             <Image
@@ -88,7 +95,7 @@ export function AlgorithmTopicClient({
             </p>
           </div>
         </div>
-      </div>
+      </ClayCard>
 
       {/* 跟着萌可做例题（先看具体例题，再讲抽象原理，适合低龄孩子） */}
       <FadeIn duration={0.3}>

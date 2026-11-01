@@ -5,6 +5,7 @@ import { getCertData, getCertRequests } from '@/lib/cert';
 import Certificate from '@/components/Certificate';
 import PrintButton from '@/components/PrintButton';
 import CertApproveClient from '@/components/parent/CertApproveClient';
+import { ClayCard } from '@/components/design-system';
 
 function parsePref(raw: unknown): { mokoKey: string; theme: string; name?: string } | null {
   if (raw == null) return null;
@@ -29,7 +30,10 @@ export default async function ParentCertPage() {
   const childId = (await getChildId(user)) ?? 0;
 
   const db = getDb();
-  const childRow = await db.execute({ sql: 'SELECT display_name FROM users WHERE id = ?', args: [childId] });
+  const childRow = await db.execute({
+    sql: 'SELECT display_name FROM users WHERE id = ?',
+    args: [childId],
+  });
   const childName = String(childRow.rows[0]?.display_name ?? '小朋友');
 
   // 三个无相互依赖的查询并行（此前串行 3 个往返——cert_data 依赖
@@ -53,31 +57,41 @@ export default async function ParentCertPage() {
       </p>
 
       {/* 奖状预览（家长打印） */}
-      <div className="rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-purple/20 mb-6">
+      <ClayCard theme="purple" className="p-4 mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-black text-moko-violet">奖状预览</h2>
           <PrintButton className="btn btn-gold text-sm" />
         </div>
         <Certificate data={data} editable={false} initialPref={initialPref} />
-      </div>
+      </ClayCard>
 
       {/* 申请记录 */}
       <h2 className="text-2xl font-black text-moko-violet mb-3">颁发申请记录</h2>
       <div className="space-y-3">
         {requests.map((r) => (
-          <div key={r.id} className="card-moko flex flex-col md:flex-row justify-between md:items-center gap-3">
+          <ClayCard
+            key={r.id}
+            theme="purple"
+            className="flex flex-col md:flex-row justify-between md:items-center gap-3 p-4"
+          >
             <div>
               <div className="font-bold text-lg">第 {r.id} 次申请</div>
               <div className="text-sm text-gray-500">
                 {r.createdAt}
-                {r.status === 'pending' ? ' · 待审批' : r.status === 'approved' ? ' · 已颁发' : ' · 未通过'}
+                {r.status === 'pending'
+                  ? ' · 待审批'
+                  : r.status === 'approved'
+                    ? ' · 已颁发'
+                    : ' · 未通过'}
               </div>
             </div>
             <CertApproveClient requestId={r.id} initialStatus={r.status} />
-          </div>
+          </ClayCard>
         ))}
         {requests.length === 0 && (
-          <div className="card-moko text-gray-500">孩子还没有提交奖状申请～孩子端点「申请颁发奖状」后，这里就会出现待审批记录。</div>
+          <ClayCard theme="purple" className="text-gray-500">
+            孩子还没有提交奖状申请～孩子端点「申请颁发奖状」后，这里就会出现待审批记录。
+          </ClayCard>
         )}
       </div>
     </div>

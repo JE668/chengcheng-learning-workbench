@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Button } from '@/components/atomic/Button';
-import { Input } from '@/components/atomic/Input';
+import { ClayCard, ClayButton, ClayInput } from '@/components/design-system';
 
 const USERS = [
   {
@@ -136,7 +135,7 @@ export default function LoginPage() {
         ))}
       </div>
 
-      <div className="relative z-10 clay-card clay-violet p-8 md:p-10 w-full max-w-md text-center">
+      <ClayCard theme="violet" className="relative z-10 p-8 md:p-10 w-full max-w-md text-center">
         {/* 乐美欢迎头像 */}
         <div className="relative mx-auto mb-5 w-32 h-32">
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-moko-pink to-moko-purple opacity-20 animate-pulse" />
@@ -157,7 +156,7 @@ export default function LoginPage() {
         {/* 快速选择：家长 / 孩子 */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           {USERS.map((u) => (
-            <Button
+            <ClayButton
               key={u.username}
               onClick={() => quickLogin(u.username)}
               variant={username === u.username ? 'brand' : 'outline'}
@@ -166,25 +165,25 @@ export default function LoginPage() {
             >
               <span className="text-3xl">{u.emoji}</span>
               <span className="font-bold text-sm">{u.label}</span>
-            </Button>
+            </ClayButton>
           ))}
         </div>
 
         <form id="login-form" onSubmit={submit} className="space-y-4">
-          <Input
+          <ClayInput
             type="text"
             name="username"
             placeholder="用户名"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
             size="lg"
           />
-          <Input
+          <ClayInput
             type="password"
             name="password"
             placeholder="密码"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             size="lg"
           />
           {error && (
@@ -195,11 +194,11 @@ export default function LoginPage() {
               {error}
             </p>
           )}
-          <Button type="submit" variant="brand" size="xl" fullWidth loading={loading}>
+          <ClayButton type="submit" variant="brand" size="xl" fullWidth loading={loading}>
             ✨ 进入学习世界
-          </Button>
+          </ClayButton>
         </form>
-      </div>
+      </ClayCard>
     </div>
   );
 }

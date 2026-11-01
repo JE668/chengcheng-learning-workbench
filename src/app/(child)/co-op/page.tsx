@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { speakZh } from '@/lib/speak';
 import { EmptyState } from '@/components/EmptyState';
+import { ClayCard, ClayButton } from '@/components/design-system';
 
 interface Child {
   id: string;
@@ -13,10 +14,25 @@ interface Child {
 }
 
 const COOP_TASKS = [
-  { emoji: '🌙', title: '一起读一首古诗', desc: '和兄弟姐妹各读一首，看谁读得最顺', href: '/study/chinese/poems' },
+  {
+    emoji: '🌙',
+    title: '一起读一首古诗',
+    desc: '和兄弟姐妹各读一首，看谁读得最顺',
+    href: '/study/chinese/poems',
+  },
   { emoji: '➕', title: '一起玩凑十法', desc: '比一比，谁先算完十格阵', href: '/games/make-ten' },
-  { emoji: '🌳', title: '一起背乘法口诀', desc: '你考我、我考你，口诀记得牢', href: '/study/math/mult-table' },
-  { emoji: '🔤', title: '一起拼拼音', desc: '轮流拼读，看谁拼得又快又准', href: '/games/pinyin-spell' },
+  {
+    emoji: '🌳',
+    title: '一起背乘法口诀',
+    desc: '你考我、我考你，口诀记得牢',
+    href: '/study/math/mult-table',
+  },
+  {
+    emoji: '🔤',
+    title: '一起拼拼音',
+    desc: '轮流拼读，看谁拼得又快又准',
+    href: '/games/pinyin-spell',
+  },
 ];
 
 export default function CoOpPage() {
@@ -68,13 +84,18 @@ export default function CoOpPage() {
 
   return (
     <div className="max-w-3xl mx-auto pb-28 fade-up">
-      <Link href="/home" className="text-moko-violet font-black no-underline">‹ 返回首页</Link>
+      <Link href="/home" className="text-moko-violet font-black no-underline">
+        ‹ 返回首页
+      </Link>
       <h1 className="page-title mt-2 mb-1">萌可帮帮忙 🤝</h1>
       <p className="text-gray-600 mb-6">和家里的兄弟姐妹一起学习、互相加油，学习更有劲！</p>
 
       {/* 🤝 今日组队挑战 */}
       {challenge && (
-        <div className={`card-moko mb-8 border-2 ${challenge.rewarded ? 'border-moko-mint' : 'border-moko-gold/40'}`}>
+        <ClayCard
+          theme="gold"
+          className={`mb-8 border-2 ${challenge.rewarded ? 'border-moko-mint' : 'border-moko-gold/40'}`}
+        >
           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
             <h2 className="section-title">🤝 今日组队挑战</h2>
             {challenge.rewarded && (
@@ -100,86 +121,119 @@ export default function CoOpPage() {
               </div>
             ))}
           </div>
-        </div>
+        </ClayCard>
       )}
 
       {/* 家庭成员 */}
       <h2 className="section-title mb-3">👨‍👩‍👧 我的家庭成员</h2>
       {loading ? (
-        <div className="card-moko text-center text-gray-500 py-4 flex flex-col items-center justify-center gap-2"><span className="moko-loader"><span></span><span></span><span></span></span>萌可正在准备帮帮忙…</div>
+        <ClayCard
+          theme="purple"
+          className="text-center text-gray-500 py-4 flex flex-col items-center justify-center gap-2"
+        >
+          <span className="moko-loader">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+          萌可正在准备帮帮忙…
+        </ClayCard>
       ) : children.length === 0 ? (
-        <EmptyState emoji="👧" title="还没有其他小朋友" desc="让爸爸妈妈在「设置」里加一个兄弟姐妹，就能一起合作学习啦！" />
+        <EmptyState
+          emoji="👧"
+          title="还没有其他小朋友"
+          desc="让爸爸妈妈在「设置」里加一个兄弟姐妹，就能一起合作学习啦！"
+        />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
           {children.map((c) => (
-            <div key={c.id} className={`rounded-2xl p-4 bg-white shadow border-2 text-center ${cheer === c.name ? 'border-moko-gold animate-bounce' : 'border-moko-purple/20'}`}>
+            <ClayCard
+              key={c.id}
+              theme="purple"
+              className={`p-4 bg-white shadow border-2 text-center ${cheer === c.name ? 'border-moko-gold animate-bounce' : ''}`}
+            >
               <div className="text-4xl mb-1">{c.selected ? '🌟' : '🧒'}</div>
               <div className="font-black text-moko-violet">{c.name}</div>
               {c.selected && <div className="text-xs text-moko-gold font-bold">就是我</div>}
-              <button
+              <ClayButton
+                variant="gold"
+                size="sm"
+                className="mt-2 w-full"
                 onClick={() => cheerFor(c.name)}
-                className="mt-2 px-3 py-1.5 rounded-full bg-moko-gold text-white font-bold text-xs active:scale-95 transition"
               >
                 👏 加油
-              </button>
+              </ClayButton>
               {/* ⭐ 星星币互赠：给自己的兄弟姐妹送礼物（不是自己才显示） */}
               {!c.selected && (
-                <button
+                <ClayButton
+                  variant="violet"
+                  size="sm"
+                  className="mt-1 block w-full"
                   onClick={() => setGiftTo({ id: c.id, name: c.name })}
-                  className="mt-1 block w-full px-3 py-1.5 rounded-full bg-moko-purple text-white font-bold text-xs active:scale-95 transition"
                 >
                   🎁 送星星币
-                </button>
+                </ClayButton>
               )}
-            </div>
+            </ClayCard>
           ))}
         </div>
       )}
 
       {/* 🎁 送星星币弹层 */}
       {giftTo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setGiftTo(null)}>
-          <div className="card-moko max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-black text-moko-violet mb-1">🎁 送星星币给 {giftTo.name}</h3>
-            <p className="text-xs text-gray-500 mb-3">用自己的星星币给家人买份小礼物，分享最快乐～</p>
-            <div className="flex gap-2 flex-wrap mb-3">
-              {[5, 10, 20].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setGiftAmount(n)}
-                  className={`px-4 py-2 rounded-2xl font-black text-sm transition ${
-                    giftAmount === n
-                      ? 'bg-moko-rose text-white'
-                      : 'bg-white border-2 border-moko-purple/20 text-moko-violet'
-                  }`}
-                >
-                  {n} ⭐
-                </button>
-              ))}
-            </div>
-            <button
-              disabled={giftBusy}
-              onClick={async () => {
-                setGiftBusy(true);
-                try {
-                  const r = await fetch('/api/gift-stars', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ toChildId: Number(giftTo.id), amount: giftAmount }),
-                  });
-                  const j = await r.json();
-                  speakZh(r.ok ? `已经送给${giftTo.name}${giftAmount}颗星星币啦！` : j.error || '赠送失败，再试一次', 0.9);
-                  if (r.ok) setGiftTo(null);
-                } catch {
-                  speakZh('网络开小差了，再试一次', 0.9);
-                } finally {
-                  setGiftBusy(false);
-                }
-              }}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-moko-rose to-moko-pink text-white font-black shadow hover:scale-105 transition disabled:opacity-50"
-            >
-              {giftBusy ? '送出中…' : `送出 ${giftAmount} ⭐`}
-            </button>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setGiftTo(null)}
+        >
+          <div className="max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <ClayCard theme="purple" className="p-4">
+              <h3 className="font-black text-moko-violet mb-1">🎁 送星星币给 {giftTo.name}</h3>
+              <p className="text-xs text-gray-500 mb-3">
+                用自己的星星币给家人买份小礼物，分享最快乐～
+              </p>
+              <div className="flex gap-2 flex-wrap mb-3">
+                {[5, 10, 20].map((n) => (
+                  <ClayButton
+                    key={n}
+                    variant={giftAmount === n ? 'gold' : 'outline'}
+                    size="sm"
+                    className="px-4 py-2 rounded-2xl font-black text-sm transition"
+                    onClick={() => setGiftAmount(n)}
+                  >
+                    {n} ⭐
+                  </ClayButton>
+                ))}
+              </div>
+              <ClayButton
+                variant="gold"
+                className="w-full py-3 rounded-2xl font-black shadow hover:scale-105 transition disabled:opacity-50"
+                disabled={giftBusy}
+                onClick={async () => {
+                  setGiftBusy(true);
+                  try {
+                    const r = await fetch('/api/gift-stars', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ toChildId: Number(giftTo.id), amount: giftAmount }),
+                    });
+                    const j = await r.json();
+                    speakZh(
+                      r.ok
+                        ? `已经送给${giftTo.name}${giftAmount}颗星星币啦！`
+                        : j.error || '赠送失败，再试一次',
+                      0.9
+                    );
+                    if (r.ok) setGiftTo(null);
+                  } catch {
+                    speakZh('网络开小差了，再试一次', 0.9);
+                  } finally {
+                    setGiftBusy(false);
+                  }
+                }}
+              >
+                {giftBusy ? '送出中…' : `送出 ${giftAmount} ⭐`}
+              </ClayButton>
+            </ClayCard>
           </div>
         </div>
       )}
@@ -203,14 +257,14 @@ export default function CoOpPage() {
         ))}
       </div>
 
-      <div className="rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-gold/20">
+      <ClayCard theme="gold" className="p-5">
         <h3 className="text-lg font-black text-moko-violet mb-2">💡 怎么玩合作？</h3>
         <ul className="text-gray-600 text-sm space-y-1 list-disc list-inside">
           <li>点家庭成员的「加油」，给兄弟姐妹打气，萌可也会一起喊加油！</li>
           <li>选一个「合作任务」，和兄弟姐妹各自完成，再比比谁更棒。</li>
           <li>互相帮助、不吵架，就是最棒的萌可小队～</li>
         </ul>
-      </div>
+      </ClayCard>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
 import { EmptyState } from '@/components/EmptyState';
-import { ClayCard, ClayButton } from '@/components/design-system';
+import { ClayCard, ClayButton, ClayInput } from '@/components/design-system';
 
 type PTask = {
   id: number;
@@ -140,42 +140,43 @@ export default function TasksPage() {
         </div>
       </div>
 
-      <ClayCard className="mb-6">
+      <ClayCard theme="purple" className="mb-6 p-6">
         {editing ? (
           <form onSubmit={saveEdit} className="space-y-4">
             <div className="font-black text-moko-violet">编辑：{editing.title}</div>
-            <Field label="任务名称" value={eTitle} onChange={setETitle} />
+            <ClayInput
+              label="任务名称"
+              value={eTitle}
+              onChange={(e) => setETitle(e.target.value)}
+            />
             <div>
               <label className="block font-bold text-gray-700 mb-1">学科</label>
               <select
                 value={eSubject}
                 onChange={(e) => setESubject(e.target.value)}
-                className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
+                className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none clay-input"
               >
                 {SUBJECTS.map((s) => (
                   <option key={s}>{s}</option>
                 ))}
               </select>
             </div>
-            <Field label="描述" value={eDesc} onChange={setEDesc} />
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">积分奖励</label>
-              <input
-                type="number"
-                min={1}
-                max={50}
-                value={ePoints}
-                onChange={(e) => setEPoints(Number(e.target.value))}
-                className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
-              />
-            </div>
+            <ClayInput label="描述" value={eDesc} onChange={(e) => setEDesc(e.target.value)} />
+            <ClayInput
+              label="积分奖励"
+              type="number"
+              min={1}
+              max={50}
+              value={ePoints}
+              onChange={(e) => setEPoints(Number(e.target.value))}
+            />
             {childrenOpts.length > 0 && (
               <div>
                 <label className="block font-bold text-gray-700 mb-1">指派给孩子</label>
                 <select
                   value={eAssignedTo}
                   onChange={(e) => setEAssignedTo(e.target.value)}
-                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
+                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none clay-input"
                 >
                   <option value="">👨‍👩‍👧 全家（谁都能做）</option>
                   {childrenOpts.map((c) => (
@@ -196,60 +197,47 @@ export default function TasksPage() {
             </div>
           </form>
         ) : (
-          <>
+          <div>
             <form onSubmit={submit} className="space-y-4">
               {msg && (
                 <div className="mb-2 p-3 rounded-2xl bg-moko-mint text-white font-bold text-center">
                   {msg}
                 </div>
               )}
-              <div>
-                <label className="block font-bold text-gray-700 mb-1">任务名称</label>
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
-                />
-              </div>
+              <ClayInput
+                label="任务名称"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
               <div>
                 <label className="block font-bold text-gray-700 mb-1">学科</label>
                 <select
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
+                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none clay-input"
                 >
                   {SUBJECTS.map((s) => (
                     <option key={s}>{s}</option>
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block font-bold text-gray-700 mb-1">描述</label>
-                <input
-                  value={desc}
-                  onChange={(e) => setDesc(e.target.value)}
-                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
-                />
-              </div>
-              <div>
-                <label className="block font-bold text-gray-700 mb-1">积分奖励</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={50}
-                  value={points}
-                  onChange={(e) => setPoints(Number(e.target.value))}
-                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
-                />
-              </div>
+              <ClayInput label="描述" value={desc} onChange={(e) => setDesc(e.target.value)} />
+              <ClayInput
+                label="积分奖励"
+                type="number"
+                min={1}
+                max={50}
+                value={points}
+                onChange={(e) => setPoints(Number(e.target.value))}
+              />
               {childrenOpts.length > 0 && (
                 <div>
                   <label className="block font-bold text-gray-700 mb-1">指派给孩子</label>
                   <select
                     value={assignedTo}
                     onChange={(e) => setAssignedTo(e.target.value)}
-                    className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
+                    className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none clay-input"
                   >
                     <option value="">👨‍👩‍👧 全家（谁都能做）</option>
                     {childrenOpts.map((c) => (
@@ -263,39 +251,43 @@ export default function TasksPage() {
               <ClayButton variant="brand" size="xl" fullWidth type="submit">
                 发布任务
               </ClayButton>
+              {/* 一键布置每日一练 */}
+              <ClayButton
+                variant="gold"
+                size="sm"
+                fullWidth
+                className="mt-3"
+                onClick={async () => {
+                  const res = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      title: '完成今日一练（语文+数学+英语）',
+                      subject: '语文',
+                      description: '去「萌可闯关」做完今天的三科练习，做对 80% 就算通过！',
+                      points: 10,
+                    }),
+                  });
+                  if (res.ok) {
+                    setMsg('已布置「完成今日一练」任务（+10 积分），孩子端马上能看到～');
+                    await load();
+                  } else setMsg('布置失败，可能已布置过');
+                }}
+              >
+                ⚡ 一键布置「完成今日一练」（+10 积分）
+              </ClayButton>
             </form>
-            {/* 一键布置每日一练 */}
-            <ClayButton
-              variant="gold"
-              size="sm"
-              fullWidth
-              className="mt-3"
-              onClick={async () => {
-                const res = await fetch('/api/tasks', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    title: '完成今日一练（语文+数学+英语）',
-                    subject: '语文',
-                    description: '去「萌可闯关」做完今天的三科练习，做对 80% 就算通过！',
-                    points: 10,
-                  }),
-                });
-                if (res.ok) {
-                  setMsg('已布置「完成今日一练」任务（+10 积分），孩子端马上能看到～');
-                  await load();
-                } else setMsg('布置失败，可能已布置过');
-              }}
-            >
-              ⚡ 一键布置「完成今日一练」（+10 积分）
-            </ClayButton>
-          </>
+          </div>
         )}
       </ClayCard>
       <h2 className="text-2xl font-black text-moko-violet mb-3">已发布任务（{tasks.length}）</h2>
       <div className="space-y-2">
         {tasks.map((t) => (
-          <div key={t.id} className="card-moko flex items-center justify-between gap-3">
+          <ClayCard
+            key={t.id}
+            theme="purple"
+            className="flex items-center justify-between gap-3 p-4"
+          >
             <div className="flex-1 min-w-0">
               <div className="font-bold text-moko-violet truncate">
                 {t.title}{' '}
@@ -311,36 +303,24 @@ export default function TasksPage() {
             </div>
             {confirmId === t.id ? (
               <div className="flex gap-2 shrink-0">
-                <button
-                  onClick={() => remove(t.id)}
-                  className="px-3 py-1.5 rounded-xl bg-red-400 text-white font-bold text-sm hover:opacity-90"
-                >
+                <ClayButton variant="destructive" size="sm" onClick={() => remove(t.id)}>
                   确定
-                </button>
-                <button
-                  onClick={() => setConfirmId(null)}
-                  className="px-3 py-1.5 rounded-xl bg-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-300"
-                >
+                </ClayButton>
+                <ClayButton variant="ghost" size="sm" onClick={() => setConfirmId(null)}>
                   取消
-                </button>
+                </ClayButton>
               </div>
             ) : (
               <div className="flex gap-2 shrink-0">
-                <button
-                  onClick={() => startEdit(t)}
-                  className="px-3 py-1.5 rounded-xl bg-moko-yellow text-gray-800 font-bold text-sm hover:opacity-90"
-                >
+                <ClayButton variant="outline" size="sm" onClick={() => startEdit(t)}>
                   编辑
-                </button>
-                <button
-                  onClick={() => setConfirmId(t.id)}
-                  className="px-3 py-1.5 rounded-xl bg-red-400 text-white font-bold text-sm hover:opacity-90"
-                >
+                </ClayButton>
+                <ClayButton variant="destructive" size="sm" onClick={() => setConfirmId(t.id)}>
                   删除
-                </button>
+                </ClayButton>
               </div>
             )}
-          </div>
+          </ClayCard>
         ))}
         {tasks.length === 0 && (
           <EmptyState
@@ -350,27 +330,6 @@ export default function TasksPage() {
           />
         )}
       </div>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div>
-      <label className="block font-bold text-gray-700 mb-1">{label}</label>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none"
-      />
     </div>
   );
 }

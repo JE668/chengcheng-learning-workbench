@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ALGORITHM_TOPICS } from '@/lib/algorithm/topics';
 import { MokoGroupBg } from '@/components/moko-bg';
 import { FadeIn } from '@/components/algorithm/LazyMotion';
+import { ClayCard } from '@/components/design-system';
 
 export function AlgorithmHomeClient() {
   return (
@@ -13,11 +14,13 @@ export function AlgorithmHomeClient() {
 
       {/* 头部 */}
       <div className="mb-6 flex items-center gap-3">
-        <Link href="/home" className="text-moko-violet font-bold hover:underline">‹ 萌可小屋</Link>
+        <ClayCard as={Link} href="/home" className="text-moko-violet font-bold hover:underline">
+          ‹ 萌可小屋
+        </ClayCard>
       </div>
 
       {/* 萌可总教练 */}
-      <div className="card-moko flex items-center gap-5 mb-6 bg-gradient-to-r from-moko-violet to-moko-purple text-white p-6">
+      <ClayCard theme="violet" className="flex items-center gap-5 mb-6 p-6">
         <div className="animate-bounce-slow">
           <Image
             src="/moko/lemei.webp"
@@ -31,10 +34,10 @@ export function AlgorithmHomeClient() {
           <h1 className="text-3xl font-black">🧮 萌可算法学院</h1>
           <p className="text-lg opacity-90 mt-1">不只是算得快！更要想得清楚、做得巧妙～</p>
         </div>
-      </div>
+      </ClayCard>
 
       {/* 提示卡片 */}
-      <div className="bg-white rounded-2xl p-4 mb-6 shadow border-l-4 border-moko-gold border-2 border-moko-gold/20">
+      <ClayCard theme="gold" className="mb-6 p-4 border-l-4 border-moko-gold">
         <div className="flex items-start gap-3">
           <span className="text-2xl">💡</span>
           <div>
@@ -45,10 +48,11 @@ export function AlgorithmHomeClient() {
             </p>
           </div>
         </div>
-      </div>
+      </ClayCard>
 
       {/* 错题本入口 */}
-      <Link
+      <ClayCard
+        as={Link}
         href="/algorithm/mistakes"
         className="block mb-6 bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-4 shadow border-2 border-orange-200 hover:border-orange-300 hover:scale-[1.01] transition"
       >
@@ -60,18 +64,15 @@ export function AlgorithmHomeClient() {
           </div>
           <span className="text-moko-violet font-black text-lg">→</span>
         </div>
-      </Link>
+      </ClayCard>
 
       {/* 十大技巧卡片 */}
       <h2 className="section-title mb-4">✨ 学习这十大魔法技巧</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {ALGORITHM_TOPICS.map((topic, idx) => (
-          <FadeIn
-            key={topic.id}
-            delay={idx * 0.08}
-            duration={0.3}
-          >
-            <Link
+          <FadeIn key={topic.id} delay={idx * 0.08} duration={0.3}>
+            <ClayCard
+              as={Link}
               href={`/algorithm/${topic.id}`}
               className={`block rounded-3xl overflow-hidden shadow-lg border-2 border-white/40 bg-gradient-to-r ${topic.moko.color} text-white hover:scale-[1.02] active:scale-[0.98] transition`}
             >
@@ -81,7 +82,9 @@ export function AlgorithmHomeClient() {
                     <span className="text-4xl">{topic.mantraEmoji}</span>
                     <div>
                       <h3 className="text-xl font-black">{topic.name}</h3>
-                      <p className="text-sm opacity-90 mt-0.5">{topic.description.slice(0, 20)}...</p>
+                      <p className="text-sm opacity-90 mt-0.5">
+                        {topic.description.slice(0, 20)}...
+                      </p>
                     </div>
                   </div>
                   <Image
@@ -98,7 +101,7 @@ export function AlgorithmHomeClient() {
                   </span>
                 </div>
               </div>
-            </Link>
+            </ClayCard>
           </FadeIn>
         ))}
       </div>

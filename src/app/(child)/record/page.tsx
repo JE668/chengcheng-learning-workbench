@@ -7,6 +7,7 @@ import GrowthTree from '@/components/GrowthTree';
 import CheckinCalendar from '@/components/CheckinCalendar';
 import { EmptyState } from '@/components/EmptyState';
 import { dateStr } from '@/lib/date';
+import { ClayCard, ClayButton } from '@/components/design-system';
 
 export default async function RecordPage() {
   const user = await getCurrentUser();
@@ -103,19 +104,19 @@ export default async function RecordPage() {
         </div>
       </Link>
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="card-moko text-center">
+        <ClayCard theme="purple" className="text-center">
           <div className="text-4xl font-black text-moko-rose">{points}</div>
           <div className="text-gray-500">当前积分</div>
-        </div>
-        <div className="card-moko text-center">
+        </ClayCard>
+        <ClayCard theme="blue" className="text-center">
           <div className="text-4xl font-black text-moko-blue">{comps.rows.length}</div>
           <div className="text-gray-500">完成次数</div>
-        </div>
+        </ClayCard>
       </div>
 
       {/* 近 7 天积分趋势 */}
       {weeklyTrend.length > 0 && (
-        <div className="card-moko mb-6">
+        <ClayCard theme="gold" className="mb-6">
           <h2 className="text-xl font-bold text-moko-violet mb-3">📈 近 7 天积分趋势</h2>
           <div className="relative h-28">
             <svg viewBox="0 0 700 140" className="w-full h-full" preserveAspectRatio="none">
@@ -195,16 +196,16 @@ export default async function RecordPage() {
               </defs>
             </svg>
           </div>
-        </div>
+        </ClayCard>
       )}
       {/* 📅 打卡日历（近 35 天） */}
-      <div className="card-moko mb-6">
+      <ClayCard theme="purple" className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-2xl font-black text-moko-violet">📅 打卡日历</h2>
           <span className="text-sm text-gray-500">坚持每天三科打卡，日历越来越绿！</span>
         </div>
         <CheckinCalendar days={calDays} />
-      </div>
+      </ClayCard>
 
       {/* 🌳 成长树 */}
       <h2 className="text-2xl font-black text-moko-violet mb-3">🌳 我的成长树</h2>
@@ -212,7 +213,7 @@ export default async function RecordPage() {
 
       {/* 📔 萌可成长日记 */}
       <h2 className="text-2xl font-black text-moko-violet mb-3">📔 萌可成长日记</h2>
-      <div className="card-moko mb-8">
+      <ClayCard theme="gold" className="mb-8">
         {diary.length === 0 ? (
           <EmptyState
             emoji="📔"
@@ -235,7 +236,7 @@ export default async function RecordPage() {
             ))}
           </ol>
         )}
-      </div>
+      </ClayCard>
 
       <h2 className="text-2xl font-black text-moko-violet mb-3">积分明细</h2>
       <div className="space-y-2 mb-8">
@@ -257,21 +258,23 @@ export default async function RecordPage() {
             else label = src.replace(/-/g, ' ');
           }
           return (
-            <div key={i} className="card-moko flex justify-between">
+            <ClayCard key={i} className="flex justify-between">
               <span className="font-medium">{label}</span>
               <span className="font-bold text-moko-rose">+{Number(c.points)}</span>
-            </div>
+            </ClayCard>
           );
         })}
         {comps.rows.length === 0 && (
-          <div className="card-moko text-gray-500">还没有记录，快去学习吧！</div>
+          <ClayCard theme="purple" className="text-gray-500">
+            还没有记录，快去学习吧！
+          </ClayCard>
         )}
       </div>
 
       <h2 className="text-2xl font-black text-moko-violet mb-3">兑换记录</h2>
       <div className="space-y-2">
         {redeems.rows.map((r) => (
-          <div key={String(r.id)} className="card-moko flex justify-between">
+          <ClayCard key={String(r.id)} className="flex justify-between">
             <span>{String(r.reward_name)}</span>
             <span
               className={`font-bold ${String(r.status) === 'approved' ? 'text-moko-mint' : String(r.status) === 'rejected' ? 'text-red-400' : 'text-moko-yellow'}`}
@@ -283,9 +286,13 @@ export default async function RecordPage() {
                   ? '已兑换'
                   : '已拒绝'}
             </span>
-          </div>
+          </ClayCard>
         ))}
-        {redeems.rows.length === 0 && <div className="card-moko text-gray-500">还没有兑换记录</div>}
+        {redeems.rows.length === 0 && (
+          <ClayCard theme="purple" className="text-gray-500">
+            还没有兑换记录
+          </ClayCard>
+        )}
       </div>
     </div>
   );

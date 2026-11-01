@@ -7,6 +7,7 @@ import { PINYIN_TONES } from '@/lib/study-data/pinyin';
 
 import { speakPinyin, speakZh } from '@/lib/speak';
 import { trackActivity } from '@/lib/activity';
+import { ClayCard, ClayButton } from '@/components/design-system';
 
 /* 真声母（不含 y/w 零声母改写，拼读阶段先不教） */
 const REAL_INITIALS = [
@@ -209,21 +210,23 @@ export default function PinyinBlendPage() {
 
       {/* 模式切换 */}
       <div className="flex gap-2 mb-6">
-        <button
+        <ClayButton
           onClick={() => switchMode('blend')}
-          className={`flex-1 py-3 rounded-2xl font-black ${mode === 'blend' ? 'bg-moko-pink text-white' : 'bg-white text-moko-violet border-2 border-moko-pink'}`}
+          variant={mode === 'blend' ? 'gold' : 'outline'}
+          className="flex-1 py-3 rounded-2xl font-black"
         >
           🔤 拼一拼
-        </button>
-        <button
+        </ClayButton>
+        <ClayButton
           onClick={() => switchMode('pick')}
-          className={`flex-1 py-3 rounded-2xl font-black ${mode === 'pick' ? 'bg-moko-blue text-white' : 'bg-white text-moko-violet border-2 border-moko-blue'}`}
+          variant={mode === 'pick' ? 'brand' : 'outline'}
+          className="flex-1 py-3 rounded-2xl font-black"
         >
           🎯 选一选
-        </button>
+        </ClayButton>
       </div>
 
-      <div className="card-moko">
+      <ClayCard theme="purple">
         {mode === 'blend' ? (
           <div className="text-center py-4">
             <div className="flex items-center justify-center gap-3 mb-6">
@@ -243,24 +246,27 @@ export default function PinyinBlendPage() {
               </div>
             </div>
             <div className="flex flex-wrap justify-center gap-3 mb-4">
-              <button
+              <ClayButton
                 onClick={listenInitial}
-                className="px-5 py-3 rounded-2xl bg-white border-2 border-moko-rose text-moko-rose font-black"
+                variant="outline"
+                className="px-5 py-3 rounded-2xl border-2 border-moko-rose text-moko-rose font-black"
               >
                 🔊 听声母
-              </button>
-              <button
+              </ClayButton>
+              <ClayButton
                 onClick={listenFinal}
-                className="px-5 py-3 rounded-2xl bg-white border-2 border-moko-blue text-moko-blue font-black"
+                variant="outline"
+                className="px-5 py-3 rounded-2xl border-2 border-moko-blue text-moko-blue font-black"
               >
                 🔊 听韵母
-              </button>
-              <button
+              </ClayButton>
+              <ClayButton
                 onClick={listenSyllable}
-                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-moko-pink to-moko-rose text-white font-black text-lg"
+                variant="gold"
+                className="px-6 py-3 rounded-2xl font-black text-lg"
               >
                 🔊 拼一拼
-              </button>
+              </ClayButton>
             </div>
             <p className="text-gray-400 text-sm">
               提示：先听声母、再听韵母，最后点「拼一拼」跟读～
@@ -274,12 +280,13 @@ export default function PinyinBlendPage() {
                 <span className="text-sm text-gray-500 ml-2">声母</span>
               </div>
               <span className="text-3xl font-black text-moko-violet">+ ? =</span>
-              <button
+              <ClayButton
                 onClick={listenSyllable}
-                className="px-5 py-4 rounded-3xl bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black text-lg shadow"
+                variant="gold"
+                className="px-5 py-4 rounded-3xl font-black text-lg shadow"
               >
                 🔊 听一听
-              </button>
+              </ClayButton>
             </div>
             <div className="flex items-center justify-center gap-2 mb-2">
               <span className="text-sm text-gray-400">难度</span>
@@ -295,40 +302,39 @@ export default function PinyinBlendPage() {
               {pickOptions.map((f) => {
                 const chosen = picked === f;
                 const correct = f === cur.final;
-                const cls =
-                  picked == null
-                    ? 'bg-white border-2 border-moko-blue text-moko-blue'
-                    : chosen && correct
-                      ? 'bg-moko-blue text-white'
-                      : chosen && !correct
-                        ? 'bg-red-400 text-white'
-                        : correct
-                          ? 'bg-moko-blue text-white'
-                          : 'bg-white border-2 border-gray-200 text-gray-400';
+                let cls = 'bg-white border-2 border-moko-blue text-moko-blue';
+                if (picked != null) {
+                  if (chosen && correct) cls = 'bg-moko-blue text-white';
+                  else if (chosen && !correct) cls = 'bg-red-400 text-white';
+                  else if (correct) cls = 'bg-moko-blue text-white';
+                  else cls = 'bg-white border-2 border-gray-200 text-gray-400';
+                }
                 return (
-                  <button
+                  <ClayButton
                     key={f}
                     onClick={() => onPick(f)}
                     disabled={picked != null}
                     className={`py-5 rounded-3xl font-black text-3xl shadow ${cls}`}
                   >
                     {f}
-                  </button>
+                  </ClayButton>
                 );
               })}
             </div>
             {msg && <p className="text-center font-black text-moko-violet text-lg mb-2">{msg}</p>}
           </div>
         )}
-      </div>
+      </ClayCard>
 
       <div className="text-center mt-6">
-        <button
+        <ClayButton
           onClick={next}
-          className="px-8 py-4 rounded-3xl bg-moko-violet text-white font-black text-lg shadow hover:scale-105 transition"
+          variant="brand"
+          size="lg"
+          className="px-8 py-4 rounded-3xl font-black text-lg shadow hover:scale-105 transition"
         >
           ➡ 下一题
-        </button>
+        </ClayButton>
       </div>
     </div>
   );

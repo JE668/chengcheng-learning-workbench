@@ -334,8 +334,9 @@ export default function CastlePage() {
 
       {/* ===== 大厅 ===== */}
       {tab === 'hall' && (
-        <div
-          className={`card-moko relative overflow-hidden ${state.shieldEquipped > 0 ? 'shield-glow' : ''}`}
+        <ClayCard
+          theme="gold"
+          className={`relative overflow-hidden ${state.shieldEquipped > 0 ? 'shield-glow' : ''}`}
         >
           <div
             className={`castle-bg rounded-2xl p-4 min-h-[260px] ${state.skin === 'skin_star' ? 'castle-skin-star' : state.skin === 'skin_candy' ? 'castle-skin-candy' : state.skin === 'skin_ocean' ? 'castle-skin-ocean' : state.skin === 'skin_garden' ? 'castle-skin-garden' : state.skin === 'skin_magic' ? 'castle-skin-magic' : 'castle-skin-default'}`}
@@ -410,7 +411,7 @@ export default function CastlePage() {
               只捣蛋萌可溜进城堡捣乱！快在背包用魔法喷雾，和乐美一起把它们捉回去，或请爸爸妈妈补作业。
             </p>
           )}
-        </div>
+        </ClayCard>
       )}
 
       {/* ===== 图鉴（按系列分类） ===== */}
@@ -453,9 +454,10 @@ export default function CastlePage() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {items.map((g) => (
-                    <div
+                    <ClayCard
                       key={g.key}
-                      className={`card-moko text-center ${g.owned ? '' : 'opacity-70'}`}
+                      theme="purple"
+                      className={`text-center ${g.owned ? '' : 'opacity-70'}`}
                     >
                       <MokoAvatar
                         img={g.img}
@@ -469,7 +471,7 @@ export default function CastlePage() {
                       <div className="text-xs text-gray-500">
                         {g.owned ? '已收集 ✅' : '未解锁 🔒'}
                       </div>
-                    </div>
+                    </ClayCard>
                   ))}
                 </div>
               </div>

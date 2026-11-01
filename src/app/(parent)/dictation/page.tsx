@@ -7,6 +7,7 @@ import { ALL_EN_WORDS } from '@/lib/study-data-en';
 import { CHARACTERS } from '@/lib/study-data/characters';
 import { SPLITS } from '@/lib/study-data/math';
 import { GRADE1_CHAR_UNITS } from '@/lib/study-data/units';
+import { ClayCard, ClayButton } from '@/components/design-system';
 
 type Mode = 'char' | 'math' | 'en' | 'ai';
 
@@ -54,6 +55,8 @@ const MODE_META: Record<
     placeholder: '',
   },
 };
+
+const MODE_META_ENTRIES = Object.entries(MODE_META) as [Mode, (typeof MODE_META)[Mode]][];
 
 function rand<T>(arr: T[], n: number): T[] {
   const a = [...arr];
@@ -149,12 +152,14 @@ export default function DictationPage() {
         return;
       }
       // 映射为 QuizItem：prompt 保留题目，answer 是正确选项**文本**（AI 接口语义）
-      const items: Item[] = data.questions.map((q: { prompt: string; options: string[]; answer: string; kind?: string }) => ({
-        prompt: String(q.prompt),
-        answer: String(q.answer),
-        kind: String(q.kind ?? aiSubject),
-        options: Array.isArray(q.options) ? q.options.map(String) : [],
-      }));
+      const items: Item[] = data.questions.map(
+        (q: { prompt: string; options: string[]; answer: string; kind?: string }) => ({
+          prompt: String(q.prompt),
+          answer: String(q.answer),
+          kind: String(q.kind ?? aiSubject),
+          options: Array.isArray(q.options) ? q.options.map(String) : [],
+        })
+      );
       setPreview(items);
       setMsg(`AI 出好 ${items.length} 道题，预览确认后就能布置～`);
     } catch {
@@ -177,7 +182,9 @@ export default function DictationPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: title.trim() || (mode === 'ai' ? 'AI 智能小测验' : `${meta.label}（${items.length} 题）`),
+          title:
+            title.trim() ||
+            (mode === 'ai' ? 'AI 智能小测验' : `${meta.label}（${items.length} 题）`),
           // AI 模式的任务学科跟随所选科目，其余模式沿用 meta.subject
           subject: mode === 'ai' ? AI_SUBJECT_META[aiSubject].taskSubject : meta.subject,
           points,
@@ -212,9 +219,9 @@ export default function DictationPage() {
         选好科目和内容，孩子端会用语音读出来，写完点「会了/还不会」，不会的自动进错题本。
       </p>
 
-      <div className="card-moko mb-4">
+      <ClayCard theme="purple" className="mb-4 p-4">
         <div className="flex gap-2 mb-4">
-          {(Object.keys(MODE_META) as Mode[]).map((m) => (
+          {MODE_META_ENTRIES.map(([m, metaVal]) => (
             <button
               key={m}
               onClick={() => {
@@ -224,7 +231,7 @@ export default function DictationPage() {
               }}
               className={`flex-1 py-3 rounded-2xl font-black ${mode === m ? 'bg-moko-violet text-white' : 'bg-white text-moko-violet border-2 border-moko-purple/20'}`}
             >
-              {MODE_META[m].label}
+              {metaVal.label}
             </button>
           ))}
         </div>
@@ -303,42 +310,43 @@ export default function DictationPage() {
               max={mode === 'ai' ? 5 : 30}
               value={count}
               onChange={(e) =>
-                setCount(
-                  Math.max(1, Math.min(mode === 'ai' ? 5 : 30, Number(e.target.value) || 1))
-                )
+                setCount(Math.max(1, Math.min(mode === 'ai' ? 5 : 30, Number(e.target.value) || 1)))
               }
               className="ml-2 w-16 rounded-xl border-2 border-moko-purple/20 p-1 text-center"
             />
           </label>
           {mode === 'ai' ? (
-            <button
+            <ClayButton
               onClick={generateAi}
               disabled={aiBusy}
-              className="px-4 py-2 rounded-2xl bg-moko-violet text-white font-black shadow hover:scale-105 transition disabled:opacity-50"
+              variant="violet"
+              className="px-4 py-2 rounded-2xl font-black shadow hover:scale-105 transition disabled:opacity-50"
             >
               {aiBusy ? '🤖 AI 出题中…' : '🤖 让 AI 出题'}
-            </button>
+            </ClayButton>
           ) : (
             <>
-              <button
+              <ClayButton
                 onClick={onGenRandom}
-                className="px-4 py-2 rounded-2xl bg-moko-cyan text-white font-black shadow hover:scale-105 transition"
+                variant="mint"
+                className="px-4 py-2 rounded-2xl font-black shadow hover:scale-105 transition"
               >
                 🎲 随机生成 {mode === 'math' ? '口算' : '内容'}
-              </button>
-              <button
+              </ClayButton>
+              <ClayButton
                 onClick={onPreview}
-                className="px-4 py-2 rounded-2xl bg-white border-2 border-moko-violet text-moko-violet font-black hover:scale-105 transition"
+                variant="outline"
+                className="px-4 py-2 rounded-2xl border-2 border-moko-violet text-moko-violet font-black hover:scale-105 transition"
               >
                 👀 预览
-              </button>
+              </ClayButton>
             </>
           )}
         </div>
-      </div>
+      </ClayCard>
 
       {preview.length > 0 && (
-        <div className="card-moko mb-4">
+        <ClayCard theme="purple" className="mb-4 p-4">
           <h2 className="font-black text-moko-violet mb-2">预览（{preview.length} 题）</h2>
           <ul className="text-sm text-gray-600 space-y-2 max-h-64 overflow-auto">
             {preview.map((it, i) => (
@@ -347,8 +355,9 @@ export default function DictationPage() {
                 {it.options && it.options.length > 0 ? (
                   <span className="text-gray-400">
                     {' '}
-                    （{it.options.map((o) => o.replace(/[ABCD][.、\s]*/, '').slice(0, 6)).join(' / ')}…
-                    ✓{it.answer.slice(0, 8)}）
+                    （
+                    {it.options.map((o) => o.replace(/[ABCD][.、\s]*/, '').slice(0, 6)).join(' / ')}
+                    … ✓{it.answer.slice(0, 8)}）
                   </span>
                 ) : mode === 'math' ? (
                   <span className="text-gray-400"> = {it.answer}</span>
@@ -356,10 +365,10 @@ export default function DictationPage() {
               </li>
             ))}
           </ul>
-        </div>
+        </ClayCard>
       )}
 
-      <div className="card-moko mb-4 flex flex-wrap gap-3 items-end">
+      <ClayCard theme="purple" className="mb-4 p-4 flex flex-wrap gap-3 items-end">
         <label className="flex-1 min-w-[160px]">
           <span className="text-sm font-bold text-moko-violet">任务名称</span>
           <input
@@ -379,14 +388,15 @@ export default function DictationPage() {
             className="w-20 mt-1 rounded-2xl border-2 border-moko-purple/20 p-3 text-center text-moko-violet font-bold"
           />
         </label>
-        <button
+        <ClayButton
           onClick={submit}
           disabled={busy}
-          className="px-6 py-3 rounded-2xl bg-gradient-to-r from-moko-rose to-moko-pink text-white font-black shadow hover:scale-105 transition disabled:opacity-50"
+          variant="gold"
+          className="px-6 py-3 rounded-2xl font-black shadow hover:scale-105 transition disabled:opacity-50"
         >
           {busy ? '布置中…' : '📤 布置给孩子'}
-        </button>
-      </div>
+        </ClayButton>
+      </ClayCard>
 
       {msg && (
         <div className="rounded-2xl p-3 bg-moko-gold/15 text-moko-violet font-bold text-center">

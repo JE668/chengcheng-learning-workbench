@@ -6,6 +6,7 @@ import { dateStr, mondayOf, LOCAL_DAY_COL } from '@/lib/date';
 import PrintButton from '@/components/PrintButton';
 import Certificate from '@/components/Certificate';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
+import { ClayCard } from '@/components/design-system';
 
 // 解析 users.cert_pref（JSON 字符串），非法/为空时返回 null
 function parsePref(raw: unknown): { mokoKey: string; theme: string } | null {
@@ -26,7 +27,10 @@ export default async function ReportsPage() {
   if (!user || user.role !== 'parent') redirect('/home');
   const childId0 = await getChildId(user);
   const db = getDb();
-  const childRows = await db.execute({ sql: 'SELECT * FROM users WHERE id = ?', args: [childId0 ?? -1] });
+  const childRows = await db.execute({
+    sql: 'SELECT * FROM users WHERE id = ?',
+    args: [childId0 ?? -1],
+  });
   const c = childRows.rows[0];
   const childId = c ? Number(c.id) : 0;
   const childName = c ? String(c.display_name) : '小朋友';
@@ -41,32 +45,36 @@ export default async function ReportsPage() {
 
   // 四个聚合查询相互无依赖——并行（此前串行 4 个往返，报表页
   // 首屏在 NAS 本地库上也要多吃 3 拍）。有孩子才查；旧表缺失按空集。
-  const [dailyRes, checkinRes, studyRes, resolvedRes] = c ? await Promise.all([
-    db.execute({
-      sql: `SELECT ${LOCAL_DAY_COL} as day, SUM(c.points) as total
+  const [dailyRes, checkinRes, studyRes, resolvedRes] = c
+    ? await Promise.all([
+        db.execute({
+          sql: `SELECT ${LOCAL_DAY_COL} as day, SUM(c.points) as total
             FROM completions c WHERE c.child_id = ? AND ${LOCAL_DAY_COL} BETWEEN ? AND ?
             GROUP BY ${LOCAL_DAY_COL} ORDER BY day DESC`,
-      args: [childId, ws, we],
-    }),
-    db.execute({
-      sql: `SELECT day, COUNT(*) as n FROM daily_checkins WHERE child_id = ? AND day BETWEEN ? AND ? AND status = 'confirmed' GROUP BY day`,
-      args: [childId, ws, we],
-    }),
-    // 本周学习时长（2026-10-17 心跳统计）：分钟/天。旧库无表时为 0，不阻塞报告页。
-    db.execute({
-      sql: `SELECT day, minutes FROM study_sessions WHERE child_id = ? AND day BETWEEN ? AND ? ORDER BY day DESC`,
-      args: [childId, ws, we],
-    }).catch(() => ({ rows: [] as { day: unknown; minutes: unknown }[] })),
-    db.execute({
-      sql: 'SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND resolved = 1',
-      args: [childId],
-    }),
-  ]) : [
-    { rows: [] },
-    { rows: [] },
-    { rows: [] as { day: unknown; minutes: unknown }[] },
-    { rows: [{ n: 0 }] },
-  ];
+          args: [childId, ws, we],
+        }),
+        db.execute({
+          sql: `SELECT day, COUNT(*) as n FROM daily_checkins WHERE child_id = ? AND day BETWEEN ? AND ? AND status = 'confirmed' GROUP BY day`,
+          args: [childId, ws, we],
+        }),
+        // 本周学习时长（2026-10-17 心跳统计）：分钟/天。旧库无表时为 0，不阻塞报告页。
+        db
+          .execute({
+            sql: `SELECT day, minutes FROM study_sessions WHERE child_id = ? AND day BETWEEN ? AND ? ORDER BY day DESC`,
+            args: [childId, ws, we],
+          })
+          .catch(() => ({ rows: [] as { day: unknown; minutes: unknown }[] })),
+        db.execute({
+          sql: 'SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND resolved = 1',
+          args: [childId],
+        }),
+      ])
+    : [
+        { rows: [] },
+        { rows: [] },
+        { rows: [] as { day: unknown; minutes: unknown }[] },
+        { rows: [{ n: 0 }] },
+      ];
 
   const daily = dailyRes;
   const checkinRows = checkinRes;
@@ -92,7 +100,12 @@ export default async function ReportsPage() {
       })
     : { rows: [] };
   const KIND_LABEL: Record<string, string> = {
-    pinyin: '拼音', math: '数学', english: '英语', char: '识字', poem: '古诗', other: '其他',
+    pinyin: '拼音',
+    math: '数学',
+    english: '英语',
+    char: '识字',
+    poem: '古诗',
+    other: '其他',
   };
   const SUBJECT_HINT: Record<string, string> = {
     语文: '多做「拼音拼读乐园」「象形字」「古诗填空」',
@@ -126,33 +139,48 @@ export default async function ReportsPage() {
             { label: '本周积分', value: pointsWeek, color: 'bg-moko-rose' },
             { label: '全勤天数', value: `${fullDays} 天`, color: 'bg-moko-blue' },
             { label: '活跃天数', value: `${activeDays} 天`, color: 'bg-moko-yellow' },
-            { label: '本周学习时长', value: minutesWeek >= 60 ? `${Math.floor(minutesWeek / 60)} 时 ${minutesWeek % 60} 分` : `${minutesWeek} 分`, color: 'bg-moko-mint' },
+            {
+              label: '本周学习时长',
+              value:
+                minutesWeek >= 60
+                  ? `${Math.floor(minutesWeek / 60)} 时 ${minutesWeek % 60} 分`
+                  : `${minutesWeek} 分`,
+              color: 'bg-moko-mint',
+            },
             { label: '累计攻克错题', value: resolvedCount, color: 'bg-moko-purple' },
           ].map((s) => (
-            <div key={s.label} className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}>
+            <div
+              key={s.label}
+              className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}
+            >
               <div className="text-3xl font-black">{s.value}</div>
               <div className="text-xs opacity-90 mt-1">{s.label}</div>
             </div>
           ))}
         </div>
 
-        <div className="card-moko mb-6">
-          <h2 className="text-xl font-bold text-moko-violet mb-3">近 7 天每日积分（{weekLabel}）</h2>
+        <ClayCard theme="purple" className="mb-6 p-4">
+          <h2 className="text-xl font-bold text-moko-violet mb-3">
+            近 7 天每日积分（{weekLabel}）
+          </h2>
           <div className="space-y-3">
             {daily.rows.map((r) => (
               <div key={String(r.day)} className="flex items-center gap-3">
                 <span className="w-24 text-gray-600 text-sm">{String(r.day)}</span>
                 <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-moko-pink to-moko-rose rounded-full" style={{ width: `${Math.min(100, Number(r.total))}%` }}></div>
+                  <div
+                    className="h-full bg-gradient-to-r from-moko-pink to-moko-rose rounded-full"
+                    style={{ width: `${Math.min(100, Number(r.total))}%` }}
+                  ></div>
                 </div>
                 <span className="w-12 text-right font-bold text-moko-rose">{Number(r.total)}</span>
               </div>
             ))}
             {daily.rows.length === 0 && <div className="text-gray-500">本周还没有积分记录</div>}
           </div>
-        </div>
+        </ClayCard>
 
-        <div className="card-moko mb-6">
+        <ClayCard theme="purple" className="mb-6 p-4">
           <h2 className="text-xl font-bold text-moko-violet mb-3">近 7 天学习时长（分钟）</h2>
           <div className="space-y-3">
             {studyTime.rows.length > 0 ? (
@@ -177,9 +205,9 @@ export default async function ReportsPage() {
               </div>
             )}
           </div>
-        </div>
+        </ClayCard>
 
-        <div className="card-moko mb-6">
+        <ClayCard theme="purple" className="mb-6 p-4">
           <h2 className="text-xl font-bold text-moko-violet mb-3">🔍 薄弱点分析</h2>
           {weakness.length === 0 ? (
             <p className="text-gray-500">暂时没有未掌握的错题，孩子的掌握情况很棒！继续保持～</p>
@@ -191,27 +219,35 @@ export default async function ReportsPage() {
                     key={`${w.subject}-${w.kind}`}
                     className="px-3 py-1.5 rounded-full bg-moko-rose/15 text-moko-rose font-bold text-sm"
                   >
-                    {w.subject}·{KIND_LABEL[w.kind] ?? w.kind} <span className="opacity-80">({w.unsolved} 道待练)</span>
+                    {w.subject}·{KIND_LABEL[w.kind] ?? w.kind}{' '}
+                    <span className="opacity-80">({w.unsolved} 道待练)</span>
                   </span>
                 ))}
               </div>
               <ul className="text-gray-600 text-sm space-y-1 list-disc list-inside">
                 {weakness.slice(0, 4).map((w) => (
                   <li key={`${w.subject}-${w.kind}-tip`}>
-                    {w.subject}的{KIND_LABEL[w.kind] ?? w.kind}出现 {w.unsolved} 道还没掌握，建议：{SUBJECT_HINT[w.subject] ?? '针对性多练一练'}。
+                    {w.subject}的{KIND_LABEL[w.kind] ?? w.kind}出现 {w.unsolved} 道还没掌握，建议：
+                    {SUBJECT_HINT[w.subject] ?? '针对性多练一练'}。
                   </li>
                 ))}
               </ul>
-              <p className="text-xs text-gray-400 mt-2">提示：错题本里的题目会按遗忘曲线自动回炉，点「错题复习」就能练。</p>
+              <p className="text-xs text-gray-400 mt-2">
+                提示：错题本里的题目会按遗忘曲线自动回炉，点「错题复习」就能练。
+              </p>
             </>
           )}
-        </div>
+        </ClayCard>
 
-        <div className="card-moko mb-6">
+        <ClayCard theme="purple" className="mb-6 p-4">
           <h2 className="text-xl font-bold text-moko-violet mb-3">🐰 萌可收集进度</h2>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-600 text-sm">已收集 {mokoProgress.owned} / {mokoProgress.total} 只萌可</span>
-            <span className="font-black text-moko-cyan">{Math.round(mokoProgress.percent * 100)}%</span>
+            <span className="text-gray-600 text-sm">
+              已收集 {mokoProgress.owned} / {mokoProgress.total} 只萌可
+            </span>
+            <span className="font-black text-moko-cyan">
+              {Math.round(mokoProgress.percent * 100)}%
+            </span>
           </div>
           <div className="h-5 bg-gray-100 rounded-full overflow-hidden">
             <div
@@ -220,19 +256,29 @@ export default async function ReportsPage() {
             ></div>
           </div>
           <p className="text-xs text-gray-400 mt-2">
-            图鉴共 {mokoProgress.total} 种萌可，按「唯一角色」去重统计（爱心/正正/唱唱等既来自打卡也来自剧情，只算 1 只）。
+            图鉴共 {mokoProgress.total}{' '}
+            种萌可，按「唯一角色」去重统计（爱心/正正/唱唱等既来自打卡也来自剧情，只算 1 只）。
           </p>
-        </div>
+        </ClayCard>
 
-        <div className="card-moko mb-6">
-          <h2 className="text-xl font-bold text-moko-violet mb-2">🏅 已点亮徽章（{earnedBadges.length}/{badges.length}）</h2>
+        <ClayCard theme="purple" className="mb-6 p-4">
+          <h2 className="text-xl font-bold text-moko-violet mb-2">
+            🏅 已点亮徽章（{earnedBadges.length}/{badges.length}）
+          </h2>
           <div className="flex flex-wrap gap-2">
             {earnedBadges.map((b) => (
-              <span key={b.id} className="px-3 py-1.5 rounded-full bg-gradient-to-r from-moko-yellow to-moko-pink text-white font-bold text-sm">{b.emoji} {b.name}</span>
+              <span
+                key={b.id}
+                className="px-3 py-1.5 rounded-full bg-gradient-to-r from-moko-yellow to-moko-pink text-white font-bold text-sm"
+              >
+                {b.emoji} {b.name}
+              </span>
             ))}
-            {earnedBadges.length === 0 && <span className="text-gray-500">还没有徽章，继续加油～</span>}
+            {earnedBadges.length === 0 && (
+              <span className="text-gray-500">还没有徽章，继续加油～</span>
+            )}
           </div>
-        </div>
+        </ClayCard>
 
         <div className="text-center mb-8">
           <PrintButton />
