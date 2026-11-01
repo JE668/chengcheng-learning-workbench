@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { playTts } from '@/lib/speak';
 import { useOfflineStore } from '@/lib/stores';
+import { ClayCard, ClayButton } from '@/components/design-system';
 
 /**
  * 🏫 小老师台词（2026-10-21 ②号内容升级）——固定文案，已进预生成
@@ -112,13 +113,13 @@ export default function ReviewPage() {
           萌可正在翻找你的错题本…
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-3xl p-10 bg-white clay-card clay-theme clay-violet text-center">
+        <ClayCard theme="violet" className="p-10 text-center">
           <div className="text-6xl mb-3">🎉</div>
           <div className="text-xl font-black text-moko-violet">
             萌可们全都学会了，没有要教的题！
           </div>
           <p className="text-gray-500 mt-2">去学科里多学一点，攒更多知识当小老师吧～</p>
-        </div>
+        </ClayCard>
       ) : (
         <>
           <div className="text-sm text-gray-500 mb-3">
@@ -126,7 +127,7 @@ export default function ReviewPage() {
           </div>
           <div className="space-y-3">
             {items.map((it) => (
-              <div key={it.id} className="rounded-2xl p-4 bg-white clay-card">
+              <ClayCard key={it.id} className="p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span>{subjectEmoji[it.subject] || '📘'}</span>
                   <span className="font-bold text-moko-violet">{it.subject}</span>
@@ -189,18 +190,22 @@ export default function ReviewPage() {
                   </div>
                 )}
                 <div className="flex gap-2 mt-3">
-                  <button
+                  <ClayButton
+                    variant="mint"
+                    size="sm"
+                    fullWidth
                     onClick={() => review(it.id, true)}
-                    className="flex-1 py-2 rounded-full bg-green-500 text-white font-bold text-sm active:scale-95 transition"
                   >
                     萌可学会了 ✅
-                  </button>
-                  <button
+                  </ClayButton>
+                  <ClayButton
+                    variant="ghost"
+                    size="sm"
+                    fullWidth
                     onClick={() => review(it.id, false)}
-                    className="flex-1 py-2 rounded-full bg-gray-200 text-gray-600 font-bold text-sm active:scale-95 transition"
                   >
                     萌可没听懂 💡
-                  </button>
+                  </ClayButton>
                 </div>
                 {it.source_module && (
                   <Link
@@ -210,7 +215,7 @@ export default function ReviewPage() {
                     📚 去练同类题
                   </Link>
                 )}
-              </div>
+              </ClayCard>
             ))}
           </div>
         </>
