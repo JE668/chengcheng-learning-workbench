@@ -440,13 +440,19 @@ export default function StoryPage() {
 
       {/* 🌙 晚安模式入口：睡前连播已解锁的故事——慢语速、暗屏、无答题 */}
       {progress && progress.nextIndex >= 0 && (
-        <button
+        <ClayButton
           onClick={() => void startBedtime()}
-          className="mb-6 w-full rounded-2xl p-4 bg-gradient-to-r from-moko-purple to-moko-violet text-white font-black clay-dark hover:scale-[1.02] transition flex items-center justify-center gap-2"
+          variant="brand"
+          size="lg"
+          fullWidth
+          className="mb-6 p-4 text-lg transition hover:scale-[1.02]"
+          style={{ background: 'linear-gradient(to right, #a855f7, #8b5cf6)' }}
         >
           🌙 晚安故事 · 连播 {Math.min(progress.nextIndex + 1, storyChapters.length)} 集
-          <span className="text-xs font-bold opacity-80">慢速 · 无答题 · 播完自动停</span>
-        </button>
+          <span className="block text-xs font-bold opacity-80 mt-1">
+            慢速 · 无答题 · 播完自动停
+          </span>
+        </ClayButton>
       )}
 
       {/* 🌙 晚安模式遮罩：暗屏 + 当前集信息 + 停止按钮。全宽 fixed，

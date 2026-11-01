@@ -154,7 +154,7 @@ export default function TasksPage() {
               <select
                 value={eSubject}
                 onChange={(e) => setESubject(e.target.value)}
-                className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none clay-input"
+                className="w-full rounded-xl h-10 px-4 text-base border-2 border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-moko-pink/20 focus:border-moko-pink transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {SUBJECTS.map((s) => (
                   <option key={s}>{s}</option>
@@ -176,7 +176,7 @@ export default function TasksPage() {
                 <select
                   value={eAssignedTo}
                   onChange={(e) => setEAssignedTo(e.target.value)}
-                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none clay-input"
+                  className="w-full rounded-xl h-10 px-4 text-base border-2 border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-moko-pink/20 focus:border-moko-pink transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
                   <option value="">👨‍👩‍👧 全家（谁都能做）</option>
                   {childrenOpts.map((c) => (
@@ -215,7 +215,7 @@ export default function TasksPage() {
                 <select
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none clay-input"
+                  className="w-full rounded-xl h-10 px-4 text-base border-2 border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-moko-pink/20 focus:border-moko-pink transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
                   {SUBJECTS.map((s) => (
                     <option key={s}>{s}</option>
@@ -237,7 +237,7 @@ export default function TasksPage() {
                   <select
                     value={assignedTo}
                     onChange={(e) => setAssignedTo(e.target.value)}
-                    className="w-full rounded-2xl border-2 border-gray-200 px-4 py-2 focus:border-moko-pink outline-none clay-input"
+                    className="w-full rounded-xl h-10 px-4 text-base border-2 border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-moko-pink/20 focus:border-moko-pink transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                   >
                     <option value="">👨‍👩‍👧 全家（谁都能做）</option>
                     {childrenOpts.map((c) => (
