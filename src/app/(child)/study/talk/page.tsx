@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { speakZh } from '@/lib/speak';
 import { trackActivity } from '@/lib/activity';
+import { ClayCard, ClayButton } from '@/components/design-system';
 
 interface Scene {
   id: string;
@@ -15,12 +16,48 @@ interface Scene {
 
 /* 内置若干生活场景（emoji 组合插画，无需外部图片资源） */
 const SCENES: Scene[] = [
-  { id: 'kite', emoji: '🧒🌳🌤️🪁', title: '放风筝', questions: ['谁在放风筝？', '他在哪里？', '他在做什么？'], example: '小男孩在公园的草地上放风筝。' },
-  { id: 'cat', emoji: '🐱🥣🏠', title: '小猫吃饭', questions: ['这是谁？', '它在做什么？', '它喜欢吃什么？'], example: '小花猫在厨房里吃鱼。' },
-  { id: 'school', emoji: '🧒🎒🏫', title: '去上学', questions: ['谁去上学？', '他背着什么？', '他去哪里？'], example: '小朋友背着书包去学校。' },
-  { id: 'rain', emoji: '🌧️☔🧒', title: '下雨了', questions: ['天气怎么样？', '小朋友拿着什么？', '他要去哪里？'], example: '下雨了，小朋友打着伞回家。' },
-  { id: 'fruit', emoji: '🍎🍊🧒', title: '水果摊', questions: ['图上有什么水果？', '谁在看水果？', '你想吃什么？'], example: '小女孩在水果摊前看红红的苹果。' },
-  { id: 'park', emoji: '👵🧒🌸', title: '和奶奶散步', questions: ['谁和谁在一起？', '他们在哪里？', '他们在做什么？'], example: '小朋友和奶奶在花园里散步。' },
+  {
+    id: 'kite',
+    emoji: '🧒🌳🌤️🪁',
+    title: '放风筝',
+    questions: ['谁在放风筝？', '他在哪里？', '他在做什么？'],
+    example: '小男孩在公园的草地上放风筝。',
+  },
+  {
+    id: 'cat',
+    emoji: '🐱🥣🏠',
+    title: '小猫吃饭',
+    questions: ['这是谁？', '它在做什么？', '它喜欢吃什么？'],
+    example: '小花猫在厨房里吃鱼。',
+  },
+  {
+    id: 'school',
+    emoji: '🧒🎒🏫',
+    title: '去上学',
+    questions: ['谁去上学？', '他背着什么？', '他去哪里？'],
+    example: '小朋友背着书包去学校。',
+  },
+  {
+    id: 'rain',
+    emoji: '🌧️☔🧒',
+    title: '下雨了',
+    questions: ['天气怎么样？', '小朋友拿着什么？', '他要去哪里？'],
+    example: '下雨了，小朋友打着伞回家。',
+  },
+  {
+    id: 'fruit',
+    emoji: '🍎🍊🧒',
+    title: '水果摊',
+    questions: ['图上有什么水果？', '谁在看水果？', '你想吃什么？'],
+    example: '小女孩在水果摊前看红红的苹果。',
+  },
+  {
+    id: 'park',
+    emoji: '👵🧒🌸',
+    title: '和奶奶散步',
+    questions: ['谁和谁在一起？', '他们在哪里？', '他们在做什么？'],
+    example: '小朋友和奶奶在花园里散步。',
+  },
 ];
 
 export default function TalkPage() {
@@ -86,7 +123,9 @@ export default function TalkPage() {
       mrRef.current = mr;
       setRecording(true);
     } catch {
-      setMicError('没能打开麦克风（需要在 https 或 localhost 下访问，并已允许麦克风权限）。你可以先用文字把说的话记下来～');
+      setMicError(
+        '没能打开麦克风（需要在 https 或 localhost 下访问，并已允许麦克风权限）。你可以先用文字把说的话记下来～'
+      );
     }
   };
   const stopRec = () => {
@@ -97,11 +136,15 @@ export default function TalkPage() {
 
   return (
     <div className="relative max-w-3xl mx-auto min-h-screen p-4 fade-up">
-      <Link href="/study" className="text-sm text-moko-rose font-bold">‹ 返回学习</Link>
+      <Link href="/study" className="text-sm text-moko-rose font-bold">
+        ‹ 返回学习
+      </Link>
       <h1 className="page-title mt-2 mb-1">🗣️ 看图说话</h1>
-      <p className="text-gray-500 mb-4">看看下面的图，试着说 3 句话吧！说给爸爸妈妈听，也可以录下来回放。</p>
+      <p className="text-gray-500 mb-4">
+        看看下面的图，试着说 3 句话吧！说给爸爸妈妈听，也可以录下来回放。
+      </p>
 
-      <div className="card-moko">
+      <ClayCard theme="violet" className="text-center py-6">
         <div className="text-center">
           <div className="text-7xl mb-3">{scene.emoji}</div>
           <div className="text-xl font-black text-moko-violet mb-4">场景：{scene.title}</div>
@@ -115,7 +158,9 @@ export default function TalkPage() {
           </ul>
         </div>
 
-        <label className="block text-sm text-gray-500 mb-1">我说的话（让爸爸妈妈帮忙记下来）：</label>
+        <label className="block text-sm text-gray-500 mb-1">
+          我说的话（让爸爸妈妈帮忙记下来）：
+        </label>
         <textarea
           value={said}
           onChange={(e) => setSaid(e.target.value)}
@@ -125,21 +170,38 @@ export default function TalkPage() {
         />
 
         <div className="flex flex-wrap gap-3 mt-4">
-          <button onClick={readExample} className="px-5 py-3 rounded-2xl bg-gradient-to-r from-moko-pink to-moko-rose text-white font-black">🔊 听范文</button>
+          <ClayButton variant="brand" size="lg" onClick={readExample}>
+            🔊 听范文
+          </ClayButton>
           {!recording ? (
-            <button onClick={startRec} className="px-5 py-3 rounded-2xl bg-white border-2 border-moko-blue text-moko-blue font-black">🎤 开始录音</button>
+            <ClayButton variant="brand" size="lg" onClick={startRec}>
+              🎤 开始录音
+            </ClayButton>
           ) : (
-            <button onClick={stopRec} className="px-5 py-3 rounded-2xl bg-red-500 text-white font-black">⏹ 停止录音</button>
+            <ClayButton variant="destructive" size="lg" onClick={stopRec}>
+              ⏹ 停止录音
+            </ClayButton>
           )}
           {audioUrl && (
-            <a href={audioUrl} target="_blank" rel="noreferrer" className="px-5 py-3 rounded-2xl bg-moko-blue text-white font-black">▶ 回放我的声音</a>
+            <ClayButton
+              variant="outline"
+              size="lg"
+              as="a"
+              href={audioUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              ▶ 回放我的声音
+            </ClayButton>
           )}
         </div>
         {micError && <p className="text-sm text-red-500 mt-2">{micError}</p>}
-      </div>
+      </ClayCard>
 
       <div className="text-center mt-6">
-        <button onClick={next} className="px-8 py-4 rounded-3xl bg-moko-violet text-white font-black text-lg shadow hover:scale-105 transition">➡ 换一个场景</button>
+        <ClayButton variant="brand" size="xl" onClick={next}>
+          ➡ 换一个场景
+        </ClayButton>
       </div>
     </div>
   );
