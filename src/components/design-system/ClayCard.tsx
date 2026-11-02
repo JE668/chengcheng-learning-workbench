@@ -11,15 +11,32 @@ import { cn } from '@/components/atomic/utils';
  * - 圆角 1.75rem (28px) → rounded-4xl
  * - 无 border，三重阴影表达充气感
  * - 主题色由 --clay-h / --clay-d 控制，类名 clay-pink | clay-violet | clay-gold | clay-cyan | clay-blue | clay-dark
+ * - 支持渐变主题：gradient-pink-violet, gradient-gold-yellow, gradient-violet-purple, gradient-mint-emerald, gradient-pink-rose, gradient-blue-sky
  * - 按压态同步收紧阴影 + scale(0.97)
  *
  * 用法：
  *   <ClayCard theme="violet" className="p-8">内容</ClayCard>
  *   <ClayCard theme="gold" hoverable>可悬浮的卡片</ClayCard>
+ *   <ClayCard theme="gradient-gold-yellow" className="p-8">渐变卡片</ClayCard>
+ *   <ClayCard theme="gradient-pink-violet" as={Link} href="/path">渐变链接卡片</ClayCard>
  */
 interface ClayCardProps extends React.HTMLAttributes<HTMLDivElement> {
-  /** 主题色：对应 globals.css 的 .clay-* 类 */
-  theme?: 'pink' | 'violet' | 'gold' | 'cyan' | 'blue' | 'dark';
+  /** 主题色：对应 globals.css 的 .clay-* 类，或渐变主题 */
+  theme?:
+    | 'pink'
+    | 'violet'
+    | 'gold'
+    | 'cyan'
+    | 'blue'
+    | 'dark'
+    | 'gradient-pink-violet'
+    | 'gradient-gold-yellow'
+    | 'gradient-violet-purple'
+    | 'gradient-mint-emerald'
+    | 'gradient-pink-rose'
+    | 'gradient-blue-sky'
+    | 'gradient-purple-violet'
+    | 'gradient-rose-amber';
   /** 是否启用悬浮/按压交互（默认 false，纯展示卡片） */
   hoverable?: boolean;
   /** 额外 className，会合并到基础 clay-card 之后 */
@@ -37,6 +54,14 @@ const THEME_MAP: Record<NonNullable<ClayCardProps['theme']>, string> = {
   cyan: 'clay-cyan',
   blue: 'clay-blue',
   dark: 'clay-dark',
+  'gradient-pink-violet': 'clay-gradient-pink-violet',
+  'gradient-gold-yellow': 'clay-gradient-gold-yellow',
+  'gradient-violet-purple': 'clay-gradient-violet-purple',
+  'gradient-mint-emerald': 'clay-gradient-mint-emerald',
+  'gradient-pink-rose': 'clay-gradient-pink-rose',
+  'gradient-blue-sky': 'clay-gradient-blue-sky',
+  'gradient-purple-violet': 'clay-gradient-purple-violet',
+  'gradient-rose-amber': 'clay-gradient-rose-amber',
 };
 
 const ClayCard = React.forwardRef<HTMLDivElement, ClayCardProps>(

@@ -99,8 +99,8 @@
   --radius-full: 9999px;
 
   /* ===== 字体 ===== */
-  --font-sans: "Noto Sans SC", "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-sans: 'Noto Sans SC', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
@@ -233,7 +233,9 @@ body {
     8px 8px 24px rgba(var(--clay-h, 255, 111, 165), 0.5),
     inset 6px 6px 14px rgba(255, 255, 255, 0.6),
     inset -6px -6px 14px rgba(var(--clay-d, 244, 114, 182), 0.3);
-  transition: transform 140ms ease, box-shadow 140ms ease;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
 }
 .clay-card:active {
   transform: scale(0.97);
@@ -241,6 +243,123 @@ body {
     4px 4px 12px rgba(var(--clay-h, 255, 111, 165), 0.42),
     inset 3px 3px 10px rgba(255, 255, 255, 0.5),
     inset -3px -3px 10px rgba(var(--clay-d, 244, 114, 182), 0.38);
+}
+
+/* ============================================================================
+   🌈 ClayCard 渐变主题（2026-11-02 新增）
+   用于 daily-practice 等需要渐变背景的卡片
+   ============================================================================ */
+.clay-gradient-pink-violet {
+  --clay-h: 255, 111, 165;
+  --clay-d: 244, 114, 182;
+  background: linear-gradient(to right, #ec4899, #a855f7);
+}
+.clay-gradient-gold-yellow {
+  --clay-h: 252, 211, 77;
+  --clay-d: 202, 155, 20;
+  background: linear-gradient(to right, #fcd34d, #fde047);
+}
+.clay-gradient-violet-purple {
+  --clay-h: 167, 139, 250;
+  --clay-d: 124, 96, 220;
+  background: linear-gradient(to right, #a855f7, #9333ea);
+}
+.clay-gradient-mint-emerald {
+  --clay-h: 74, 222, 128;
+  --clay-d: 34, 160, 93;
+  background: linear-gradient(to right, #a7f3d0, #6ee7b7);
+}
+.clay-gradient-pink-rose {
+  --clay-h: 255, 111, 165;
+  --clay-d: 244, 114, 182;
+  background: linear-gradient(to right, #f472b6, #f43f5e);
+}
+.clay-gradient-blue-sky {
+  --clay-h: 56, 189, 248;
+  --clay-d: 14, 140, 200;
+  background: linear-gradient(to right, #38bdf8, #0ea5e9);
+}
+.clay-gradient-purple-violet {
+  --clay-h: 167, 139, 250;
+  --clay-d: 124, 96, 220;
+  background: linear-gradient(to right, #9333ea, #a855f7);
+}
+.clay-gradient-rose-amber {
+  --clay-h: 255, 111, 165;
+  --clay-d: 244, 114, 182;
+  background: linear-gradient(to right, #f43f5e, #f59e0b);
+}
+.clay-gradient-pink-purple {
+  --clay-h: 255, 111, 165;
+  --clay-d: 244, 114, 182;
+  background: linear-gradient(to right, #f472b6, #a855f7);
+}
+.clay-gradient-yellow-amber {
+  --clay-h: 252, 211, 77;
+  --clay-d: 202, 155, 20;
+  background: linear-gradient(to right, #fcd34d, #f59e0b);
+}
+
+/* 渐变卡片基础样式 */
+.clay-card[class*='clay-gradient-'] {
+  color: white;
+  box-shadow:
+    8px 8px 24px rgba(0, 0, 0, 0.15),
+    inset 6px 6px 14px rgba(255, 255, 255, 0.3),
+    inset -6px -6px 14px rgba(0, 0, 0, 0.15);
+}
+.clay-card[class*='clay-gradient-']:active {
+  transform: scale(0.97);
+  box-shadow:
+    4px 4px 12px rgba(0, 0, 0, 0.25),
+    inset 3px 3px 10px rgba(255, 255, 255, 0.3),
+    inset -3px -3px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* 具体渐变主题的背景色 */
+.clay-gradient-pink-violet {
+  background: linear-gradient(to right, #ec4899, #a855f7);
+}
+.clay-gradient-gold-yellow {
+  background: linear-gradient(to right, #fcd34d, #fde047);
+}
+.clay-gradient-violet-purple {
+  background: linear-gradient(to right, #a855f7, #9333ea);
+}
+.clay-gradient-mint-emerald {
+  background: linear-gradient(to right, #a7f3d0, #6ee7b7);
+}
+.clay-gradient-pink-rose {
+  background: linear-gradient(to right, #f472b6, #f43f5e);
+}
+.clay-gradient-blue-sky {
+  background: linear-gradient(to right, #38bdf8, #0ea5e9);
+}
+.clay-gradient-purple-violet {
+  background: linear-gradient(to right, #9333ea, #a855f7);
+}
+.clay-gradient-rose-amber {
+  background: linear-gradient(to right, #f43f5e, #f59e0b);
+}
+.clay-gradient-pink-purple {
+  background: linear-gradient(to right, #f472b6, #a855f7);
+}
+.clay-gradient-yellow-amber {
+  background: linear-gradient(to right, #fcd34d, #f59e0b);
+}
+
+/* 文本颜色修正：渐变卡片内文本默认白色，必要时可用 .text-white/.text-gray-100 覆盖 */
+.clay-gradient-pink-violet,
+.clay-gradient-gold-yellow,
+.clay-gradient-violet-purple,
+.clay-gradient-mint-emerald,
+.clay-gradient-pink-rose,
+.clay-gradient-blue-sky,
+.clay-gradient-purple-violet,
+.clay-gradient-rose-amber,
+.clay-gradient-pink-purple,
+.clay-gradient-yellow-amber {
+  color: white;
 }
 
 /* 黏土按钮：主行动按钮（粘土比卡薄，阴影强度略降） */
@@ -251,7 +370,9 @@ body {
     6px 6px 18px rgba(var(--clay-h, 167, 139, 250), 0.5),
     inset 4px 4px 10px rgba(255, 255, 255, 0.5),
     inset -4px -4px 10px rgba(var(--clay-d, 124, 96, 220), 0.3);
-  transition: transform 140ms ease, box-shadow 140ms ease;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
 }
 .clay-btn:active {
   transform: scale(0.96);
@@ -262,11 +383,26 @@ body {
 }
 
 /* 主题色变量：clay-card / clay-btn 消费。H=亮色相（外阴影），D=深色相（内阴影） */
-.clay-pink   { --clay-h: 255, 111, 165; --clay-d: 244, 114, 182; }
-.clay-violet { --clay-h: 167, 139, 250; --clay-d: 124, 96, 220; }
-.clay-gold   { --clay-h: 252, 211, 77;  --clay-d: 202, 155, 20; }
-.clay-cyan   { --clay-h: 74, 222, 128;  --clay-d: 34, 160, 93; }
-.clay-blue   { --clay-h: 56, 189, 248;  --clay-d: 14, 140, 200; }
+.clay-pink {
+  --clay-h: 255, 111, 165;
+  --clay-d: 244, 114, 182;
+}
+.clay-violet {
+  --clay-h: 167, 139, 250;
+  --clay-d: 124, 96, 220;
+}
+.clay-gold {
+  --clay-h: 252, 211, 77;
+  --clay-d: 202, 155, 20;
+}
+.clay-cyan {
+  --clay-h: 74, 222, 128;
+  --clay-d: 34, 160, 93;
+}
+.clay-blue {
+  --clay-h: 56, 189, 248;
+  --clay-d: 14, 140, 200;
+}
 
 /* ============================================================================
    🍭 深色黏土表面（2026-10-19 · 左侧导航栏方案 A · 按用户反馈加深一档）
@@ -288,7 +424,9 @@ body {
   box-shadow:
     inset 4px 4px 10px rgba(76, 29, 149, 0.28),
     inset -3px -3px 8px rgba(216, 180, 254, 0.14);
-  transition: transform 140ms ease, box-shadow 140ms ease;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
 }
 .clay-nav-item:active {
   transform: scale(0.96) translateX(2px);
@@ -303,7 +441,9 @@ body {
     2px 2px 8px rgba(88, 28, 135, 0.4),
     inset 3px 3px 8px rgba(255, 255, 255, 0.9),
     inset -3px -3px 8px rgba(244, 114, 182, 0.3);
-  transition: transform 140ms ease, box-shadow 140ms ease;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
 }
 .clay-nav-item-active:active {
   transform: scale(0.96);
@@ -317,7 +457,10 @@ body {
 }
 
 /* 最小触控区域 */
-.tap { min-height: 44px; min-width: 44px; }
+.tap {
+  min-height: 44px;
+  min-width: 44px;
+}
 
 /* 轻量标签 */
 .chip {
@@ -337,51 +480,109 @@ body {
   background: var(--color-brand-brave);
   animation: mokoBounce 1s infinite ease-in-out;
 }
-.moko-loader > span:nth-child(2) { animation-delay: 0.15s; background: var(--color-brand-wisdom); }
-.moko-loader > span:nth-child(3) { animation-delay: 0.3s; background: var(--color-brand-love); }
+.moko-loader > span:nth-child(2) {
+  animation-delay: 0.15s;
+  background: var(--color-brand-wisdom);
+}
+.moko-loader > span:nth-child(3) {
+  animation-delay: 0.3s;
+  background: var(--color-brand-love);
+}
 @keyframes mokoBounce {
-  0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
-  40% { transform: scale(1); opacity: 1; }
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* ============ 平板横屏排版优化 ============ */
 @media (orientation: landscape) and (min-width: 1024px) {
-  .max-w-2xl { max-width: min(60rem, 94vw); }
-  .max-w-4xl { max-width: min(72rem, 94vw); }
-  main { padding-left: max(2rem, env(safe-area-inset-left)); padding-right: max(2rem, env(safe-area-inset-right)); }
+  .max-w-2xl {
+    max-width: min(60rem, 94vw);
+  }
+  .max-w-4xl {
+    max-width: min(72rem, 94vw);
+  }
+  main {
+    padding-left: max(2rem, env(safe-area-inset-left));
+    padding-right: max(2rem, env(safe-area-inset-right));
+  }
 }
 
 /* ============ 统一设计语言 ============ */
 
-.page-title { @apply text-3xl font-black text-[var(--color-brand-wisdom)]; }
-.section-title { @apply text-xl font-black text-[var(--color-brand-wisdom)]; }
-.subtle { @apply text-sm text-[var(--color-text-tertiary)]; }
+.page-title {
+  @apply text-3xl font-black text-[var(--color-brand-wisdom)];
+}
+.section-title {
+  @apply text-xl font-black text-[var(--color-brand-wisdom)];
+}
+.subtle {
+  @apply text-sm text-[var(--color-text-tertiary)];
+}
 
 .btn {
   @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-extrabold shadow-lg transition transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
 }
-.btn-primary { @apply bg-gradient-to-r from-pink-500 to-rose-500 text-white; }
-.btn-gold { @apply bg-gradient-to-r from-yellow-400 to-yellow-300 text-white; }
-.btn-violet { @apply bg-gradient-to-r from-purple-500 to-violet-500 text-white; }
-.btn-mint { @apply bg-gradient-to-r from-emerald-400 to-cyan-400 text-white; }
-.btn-ghost { @apply bg-white text-purple-600 shadow; }
+.btn-primary {
+  @apply bg-gradient-to-r from-pink-500 to-rose-500 text-white;
+}
+.btn-gold {
+  @apply bg-gradient-to-r from-yellow-400 to-yellow-300 text-white;
+}
+.btn-violet {
+  @apply bg-gradient-to-r from-purple-500 to-violet-500 text-white;
+}
+.btn-mint {
+  @apply bg-gradient-to-r from-emerald-400 to-cyan-400 text-white;
+}
+.btn-ghost {
+  @apply bg-white text-purple-600 shadow;
+}
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
-.fade-up { animation: fadeUp 0.5s ease-out both; }
-.fade-up-slow { animation: fadeUp 0.8s ease-out both; }
+.fade-up {
+  animation: fadeUp 0.5s ease-out both;
+}
+.fade-up-slow {
+  animation: fadeUp 0.8s ease-out both;
+}
 @media (prefers-reduced-motion: reduce) {
-  .fade-up, .fade-up-slow { animation: none; opacity: 1; transform: none; }
+  .fade-up,
+  .fade-up-slow {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .empty-state {
   @apply flex flex-col items-center justify-center text-center py-12 px-6 text-gray-400;
 }
-.empty-state .es-emoji { @apply text-5xl mb-3; }
-.empty-state .es-title { @apply font-black text-purple-600 text-lg; }
-.empty-state .es-desc { @apply text-sm mt-1 max-w-xs; }
+.empty-state .es-emoji {
+  @apply text-5xl mb-3;
+}
+.empty-state .es-title {
+  @apply font-black text-purple-600 text-lg;
+}
+.empty-state .es-desc {
+  @apply text-sm mt-1 max-w-xs;
+}
 
 /* 孩子端环境光（2026-10-19 方案 A 调和）：与黏土底色 #fff5f0 同族的
    暖粉/紫/金光斑。此前 alpha 0.20-0.22 的中性光斑叠在奶油粉底上，
@@ -393,14 +594,30 @@ body {
     radial-gradient(circle at 50% 102%, rgba(255, 214, 165, 0.16), transparent 46%);
 }
 
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: #FFF7ED; }
-::-webkit-scrollbar-thumb { background: #FF8FC6; border-radius: 4px; }
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #fff7ed;
+}
+::-webkit-scrollbar-thumb {
+  background: #ff8fc6;
+  border-radius: 4px;
+}
 
-body { padding-top: env(safe-area-inset-top); }
+body {
+  padding-top: env(safe-area-inset-top);
+}
 
-.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-.no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
 
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 80px);
@@ -412,46 +629,91 @@ body { padding-top: env(safe-area-inset-top); }
 
 .castle-bg {
   background:
-    radial-gradient(circle at 20% 20%, rgba(255,255,255,.6), transparent 40%),
-    radial-gradient(circle at 80% 30%, rgba(255,215,250,.7), transparent 45%),
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.6), transparent 40%),
+    radial-gradient(circle at 80% 30%, rgba(255, 215, 250, 0.7), transparent 45%),
     linear-gradient(160deg, #ede9fe 0%, #fae8ff 45%, #e0f2fe 100%);
-  box-shadow: inset 0 0 40px rgba(192,132,252,.25);
+  box-shadow: inset 0 0 40px rgba(192, 132, 252, 0.25);
 }
 
 /* 城堡皮肤样式保持原有... */
-.castle-skin-star { /* ... */ }
-.castle-skin-candy { /* ... */ }
-.castle-skin-default { /* ... */ }
-.castle-skin-ocean { /* ... */ }
-.castle-skin-garden { /* ... */ }
-.castle-skin-magic { /* ... */ }
+.castle-skin-star {
+  /* ... */
+}
+.castle-skin-candy {
+  /* ... */
+}
+.castle-skin-default {
+  /* ... */
+}
+.castle-skin-ocean {
+  /* ... */
+}
+.castle-skin-garden {
+  /* ... */
+}
+.castle-skin-magic {
+  /* ... */
+}
 
 @keyframes rainbowShift {
-  0% { border-color: #ef4444; }
-  16% { border-color: #f97316; }
-  33% { border-color: #eab308; }
-  50% { border-color: #22c55e; }
-  66% { border-color: #3b82f6; }
-  83% { border-color: #a855f7; }
-  100% { border-color: #ef4444; }
+  0% {
+    border-color: #ef4444;
+  }
+  16% {
+    border-color: #f97316;
+  }
+  33% {
+    border-color: #eab308;
+  }
+  50% {
+    border-color: #22c55e;
+  }
+  66% {
+    border-color: #3b82f6;
+  }
+  83% {
+    border-color: #a855f7;
+  }
+  100% {
+    border-color: #ef4444;
+  }
 }
-.rainbow-ring { animation: rainbowShift 3s linear infinite; }
+.rainbow-ring {
+  animation: rainbowShift 3s linear infinite;
+}
 
 /* 彩虹渐变背景（用于 7 天连续打卡） */
 .rainbow-gradient {
-  background: linear-gradient(135deg, #ef4444 0%, #f97316 16%, #eab308 33%, #22c55e 50%, #3b82f6 66%, #8b5cf6 83%, #ec4899 100%);
+  background: linear-gradient(
+    135deg,
+    #ef4444 0%,
+    #f97316 16%,
+    #eab308 33%,
+    #22c55e 50%,
+    #3b82f6 66%,
+    #8b5cf6 83%,
+    #ec4899 100%
+  );
   background-size: 200% 200%;
   animation: rainbowShift 3s linear infinite;
 }
 
-.crown-glow { box-shadow: 0 0 15px rgba(234,179,8,.5), 0 0 30px rgba(234,179,8,.3); }
+.crown-glow {
+  box-shadow:
+    0 0 15px rgba(234, 179, 8, 0.5),
+    0 0 30px rgba(234, 179, 8, 0.3);
+}
 
 /* 🎠 萌可大集合跑马灯：无限循环从右往左匀速滚动。
    用 flex 首尾相接（渲染两份数组）+ 负 margin 消除拼接缝。
    prefers-reduced-motion 下由组件内降级为静态网格。 */
 @keyframes mokoMarquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 .moko-marquee-track {
   display: flex;
@@ -464,94 +726,213 @@ body { padding-top: env(safe-area-inset-top); }
   animation-play-state: paused;
 }
 @media (prefers-reduced-motion: reduce) {
-  .moko-marquee-track { animation: none; }
+  .moko-marquee-track {
+    animation: none;
+  }
 }
 
 @keyframes mokoWalk {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-4px) rotate(-2deg); }
-  75% { transform: translateY(-2px) rotate(2deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-4px) rotate(-2deg);
+  }
+  75% {
+    transform: translateY(-2px) rotate(2deg);
+  }
 }
-.moko-walk { animation: mokoWalk 3s ease-in-out infinite; }
+.moko-walk {
+  animation: mokoWalk 3s ease-in-out infinite;
+}
 
 @keyframes mokoPop {
-  0% { transform: scale(0) rotate(-30deg); opacity: 0; }
-  60% { transform: scale(1.15) rotate(8deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
+  0% {
+    transform: scale(0) rotate(-30deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) rotate(8deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
 }
-.moko-enter { animation: mokoPop .6s ease-out; }
+.moko-enter {
+  animation: mokoPop 0.6s ease-out;
+}
 
 @keyframes troubleFly {
-  0% { transform: translate(-150px, -100px) rotate(-15deg) scale(.8); }
-  40% { transform: translate(0, 0) rotate(10deg) scale(1.1); }
-  55% { transform: translate(-8px, 5px) rotate(-10deg) scale(1.05); }
-  70% { transform: translate(4px, -3px) rotate(6deg); }
-  100% { transform: translate(-150px, -100px) rotate(-15deg) scale(.8); }
+  0% {
+    transform: translate(-150px, -100px) rotate(-15deg) scale(0.8);
+  }
+  40% {
+    transform: translate(0, 0) rotate(10deg) scale(1.1);
+  }
+  55% {
+    transform: translate(-8px, 5px) rotate(-10deg) scale(1.05);
+  }
+  70% {
+    transform: translate(4px, -3px) rotate(6deg);
+  }
+  100% {
+    transform: translate(-150px, -100px) rotate(-15deg) scale(0.8);
+  }
 }
-.trouble-fly { animation: troubleFly 2.6s ease-in-out infinite; filter: hue-rotate(-20deg) saturate(1.2); }
+.trouble-fly {
+  animation: troubleFly 2.6s ease-in-out infinite;
+  filter: hue-rotate(-20deg) saturate(1.2);
+}
 
 @keyframes mokoShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-3px) rotate(-2deg); }
-  75% { transform: translateX(3px) rotate(2deg); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px) rotate(-2deg);
+  }
+  75% {
+    transform: translateX(3px) rotate(2deg);
+  }
 }
-.moko-sad { filter: grayscale(.92) brightness(.82); animation: mokoShake .5s ease-in-out infinite; }
+.moko-sad {
+  filter: grayscale(0.92) brightness(0.82);
+  animation: mokoShake 0.5s ease-in-out infinite;
+}
 
 @keyframes shieldPulse {
-  0%, 100% { box-shadow: 0 0 0 4px rgba(96,165,250,.4), 0 0 24px 4px rgba(96,165,250,.5); }
-  50% { box-shadow: 0 0 0 9px rgba(96,165,250,.6), 0 0 44px 12px rgba(96,165,250,.85); }
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 4px rgba(96, 165, 250, 0.4),
+      0 0 24px 4px rgba(96, 165, 250, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 0 9px rgba(96, 165, 250, 0.6),
+      0 0 44px 12px rgba(96, 165, 250, 0.85);
+  }
 }
-.shield-glow { animation: shieldPulse 2s ease-in-out infinite; border-radius: 1.5rem; }
+.shield-glow {
+  animation: shieldPulse 2s ease-in-out infinite;
+  border-radius: 1.5rem;
+}
 
 @keyframes sparkle {
-  0% { background-position: 0% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
-.prosperity-sparkle { background-size: 200% 100%; animation: sparkle 3s linear infinite; }
+.prosperity-sparkle {
+  background-size: 200% 100%;
+  animation: sparkle 3s linear infinite;
+}
 
 /* ============================================================================
    捕捉演出
    ============================================================================ */
 
 @keyframes ray {
-  0% { transform: translate(-50%, -50%) scale(.6); opacity: .25; }
-  50% { transform: translate(-50%, -50%) scale(1.15); opacity: .9; }
-  100% { transform: translate(-50%, -50%) scale(.95); opacity: .5; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0.5;
+  }
 }
 
 @keyframes mokoCaptureGlow {
-  0%, 100% { box-shadow: 0 0 0 8px rgba(253,224,71,.45), 0 0 30px 9px rgba(251,146,60,.55); }
-  50% { box-shadow: 0 0 0 16px rgba(253,224,71,.65), 0 0 52px 16px rgba(251,146,60,.85); }
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 8px rgba(253, 224, 71, 0.45),
+      0 0 30px 9px rgba(251, 146, 60, 0.55);
+  }
+  50% {
+    box-shadow:
+      0 0 0 16px rgba(253, 224, 71, 0.65),
+      0 0 52px 16px rgba(251, 146, 60, 0.85);
+  }
 }
-.moko-capture-glow { animation: mokoCaptureGlow 1.6s ease-in-out infinite; }
+.moko-capture-glow {
+  animation: mokoCaptureGlow 1.6s ease-in-out infinite;
+}
 
 /* ============================================================================
    Dashboard 萌可大合照背景
    ============================================================================ */
 
 @keyframes mokoFloat {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-14px) rotate(2deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(2deg);
+  }
 }
-.float-moko { animation: mokoFloat 5s ease-in-out infinite; }
+.float-moko {
+  animation: mokoFloat 5s ease-in-out infinite;
+}
 
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
-.animate-slide-up { animation: slideUp 0.3s ease-out; }
-.dashboard-bg { background: linear-gradient(180deg, rgba(255,247,237,0.92) 0%, rgba(255,247,237,0.7) 100%); }
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+.dashboard-bg {
+  background: linear-gradient(180deg, rgba(255, 247, 237, 0.92) 0%, rgba(255, 247, 237, 0.7) 100%);
+}
 
 /* ============================================================================
    可打印奖状
    ============================================================================ */
 
-@page { size: A4 landscape; margin: 10mm; }
+@page {
+  size: A4 landscape;
+  margin: 10mm;
+}
 @media print {
-  body * { visibility: hidden; }
-  #print-cert, #print-cert * { visibility: visible; }
-  #print-cert { position: absolute; left: 0; top: 0; width: 277mm; min-height: 190mm; border-width: 6px; box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .no-print { display: none !important; }
+  body * {
+    visibility: hidden;
+  }
+  #print-cert,
+  #print-cert * {
+    visibility: visible;
+  }
+  #print-cert {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 277mm;
+    min-height: 190mm;
+    border-width: 6px;
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .no-print {
+    display: none !important;
+  }
 }
 
 /* ============================================================================
@@ -559,19 +940,40 @@ body { padding-top: env(safe-area-inset-top); }
    ============================================================================ */
 
 @keyframes celebratePop {
-  0% { transform: scale(0) rotate(-180deg); opacity: 0; }
-  60% { transform: scale(1.3) rotate(10deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.3) rotate(10deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
 }
 @keyframes confettiFall {
-  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
 }
-.celebrate-pop { animation: celebratePop 0.8s ease-out both; }
+.celebrate-pop {
+  animation: celebratePop 0.8s ease-out both;
+}
 .confetti {
-  position: fixed; width: 10px; height: 10px; border-radius: 2px;
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
   animation: confettiFall 3s ease-in forwards;
-  pointer-events: none; z-index: 100;
+  pointer-events: none;
+  z-index: 100;
 }
 
 /* ============================================================================
@@ -579,18 +981,36 @@ body { padding-top: env(safe-area-inset-top); }
    ============================================================================ */
 
 @keyframes starBurst {
-  0% { transform: scale(0) rotate(0); opacity: 0; }
-  50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
-  100% { transform: scale(1) rotate(360deg); opacity: 0.8; }
+  0% {
+    transform: scale(0) rotate(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.5) rotate(180deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 0.8;
+  }
 }
-.star-burst { animation: starBurst 1s ease-out both; }
+.star-burst {
+  animation: starBurst 1s ease-out both;
+}
 
 /* 萌可算法板块 - 慢速弹跳（用于萌可角色） */
 @keyframes bounceSlow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
-.animate-bounce-slow { animation: bounceSlow 2s ease-in-out infinite; }
+.animate-bounce-slow {
+  animation: bounceSlow 2s ease-in-out infinite;
+}
 /* ============================================================
    纯 CSS 动效（替代 framer-motion）
    背景：framer-motion 会被 webpack 提进 vendors 公共块，而根布局依赖该块 ——
@@ -601,70 +1021,152 @@ body { padding-top: env(safe-area-inset-top); }
 
 /* 页面进入（替代 PageTransition 的 enter 变体） */
 @keyframes pageEnter {
-  from { opacity: 0; transform: translateY(12px) scale(0.995); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
-.page-enter { animation: pageEnter 0.28s ease-out both; }
+.page-enter {
+  animation: pageEnter 0.28s ease-out both;
+}
 
 /* 页面切换时的萌可飞行装饰（替代 PageTransition 的 motion.img 关键帧） */
 @keyframes mokoFly {
-  0%   { opacity: 0; transform: translate(-20vw, 30vh) scale(0) rotate(0deg); }
-  20%  { opacity: 1; transform: translate(10vw, 26vh) scale(1) rotate(180deg); }
-  80%  { opacity: 1; transform: translate(80vw, 34vh) scale(0.9) rotate(600deg); }
-  100% { opacity: 0; transform: translate(120vw, 40vh) scale(0.8) rotate(720deg); }
+  0% {
+    opacity: 0;
+    transform: translate(-20vw, 30vh) scale(0) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(10vw, 26vh) scale(1) rotate(180deg);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(80vw, 34vh) scale(0.9) rotate(600deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(120vw, 40vh) scale(0.8) rotate(720deg);
+  }
 }
-.moko-fly { animation: mokoFly 1.2s ease-out both; }
+.moko-fly {
+  animation: mokoFly 1.2s ease-out both;
+}
 
 /* 逐个浮现（替代 whileInView 的入场；配合内联 animation-delay 做错峰） */
-.reveal-up { animation: fadeUp 0.45s ease-out both; }
+.reveal-up {
+  animation: fadeUp 0.45s ease-out both;
+}
 
 /* 悬停摇摆（替代 whileHover 的 rotate 摆动） */
 @keyframes mokoWobble {
-  0%, 100% { transform: rotate(0deg); }
-  25%      { transform: rotate(-5deg); }
-  75%      { transform: rotate(5deg); }
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
 }
-.moko-wobble:hover { animation: mokoWobble 0.5s ease-in-out; }
+.moko-wobble:hover {
+  animation: mokoWobble 0.5s ease-in-out;
+}
 
 /* 礼花/星光迸发（替代 StarBurst 的逐粒子 tween） */
 @keyframes burstOut {
-  0%   { opacity: 1; transform: translate(0, 0) scale(0.4); }
-  70%  { opacity: 0.9; }
-  100% { opacity: 0; transform: translate(var(--bx, 0), var(--by, 0)) scale(1.1); }
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.4);
+  }
+  70% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--bx, 0), var(--by, 0)) scale(1.1);
+  }
 }
-.burst-piece { animation: burstOut var(--bdur, 900ms) cubic-bezier(0.2, 0.6, 0.3, 1) both; }
+.burst-piece {
+  animation: burstOut var(--bdur, 900ms) cubic-bezier(0.2, 0.6, 0.3, 1) both;
+}
 
 /* 通用进出场（替代 Toast 的 AnimatePresence 进出） */
 @keyframes toastIn {
-  from { opacity: 0; transform: translateY(12px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
-.toast-in { animation: toastIn 0.22s ease-out both; }
+.toast-in {
+  animation: toastIn 0.22s ease-out both;
+}
 
 /* 底部导航萌可头像：悬停放大 + 摇摆（替代 whileHover 的 scale+rotate 数组） */
 @keyframes navWobble {
-  0%, 100% { transform: scale(1.15) rotate(0deg); }
-  25%      { transform: scale(1.15) rotate(-8deg); }
-  75%      { transform: scale(1.15) rotate(8deg); }
+  0%,
+  100% {
+    transform: scale(1.15) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.15) rotate(-8deg);
+  }
+  75% {
+    transform: scale(1.15) rotate(8deg);
+  }
 }
-.nav-avatar { transition: transform 0.3s ease; }
-.group:hover .nav-avatar { animation: navWobble 0.45s ease-in-out; }
+.nav-avatar {
+  transition: transform 0.3s ease;
+}
+.group:hover .nav-avatar {
+  animation: navWobble 0.45s ease-in-out;
+}
 
 /* 通用「弹出」（替代 initial={{scale:0}} → animate={{scale:1}}） */
 @keyframes popIn {
-  from { transform: scale(0); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
-.pop-in { animation: popIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.pop-in {
+  animation: popIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
 
 /* 星星结算的彩带下落（名字与既有 confettiFall 区分开，避免互相覆盖） */
 @keyframes starConfetti {
-  0%   { transform: translateY(-50px) rotate(var(--cr, 0deg)); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { transform: translateY(120vh) rotate(calc(var(--cr, 0deg) + 720deg)); opacity: 0; }
+  0% {
+    transform: translateY(-50px) rotate(var(--cr, 0deg));
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(120vh) rotate(calc(var(--cr, 0deg) + 720deg));
+    opacity: 0;
+  }
 }
-.confetti-piece { animation: starConfetti 3s linear both; }
+.confetti-piece {
+  animation: starConfetti 3s linear both;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .page-enter,

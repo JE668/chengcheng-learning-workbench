@@ -186,19 +186,15 @@ export default async function DashboardPage() {
          * 原先是「已发布任务」「待审核兑换」（5 字）→ 已各去掉一个字。
          */}
         {[
-          { label: '孩子积分', value: points, color: 'bg-moko-rose' },
-          { label: '发布任务', value: Number(tasks.rows[0]?.n || 0), color: 'bg-moko-blue' },
-          { label: '完成次数', value: Number(comps.rows[0]?.n || 0), color: 'bg-moko-yellow' },
-          { label: '待审兑换', value: Number(pending.rows[0]?.n || 0), color: 'bg-moko-purple' },
+          { label: '孩子积分', value: points, theme: 'rose' },
+          { label: '发布任务', value: Number(tasks.rows[0]?.n || 0), theme: 'blue' },
+          { label: '完成次数', value: Number(comps.rows[0]?.n || 0), theme: 'gold' },
+          { label: '待审兑换', value: Number(pending.rows[0]?.n || 0), theme: 'purple' },
         ].map((s) => (
-          <div
-            key={s.label}
-            className={`rounded-3xl p-4 shadow-lg border-2 border-white/40 text-center ${s.color} text-white`}
-          >
+          <ClayCard key={s.label} theme={s.theme} className="p-4 text-center">
             <div className="text-4xl font-black">{s.value}</div>
-            {/* whitespace-nowrap 是兜底：万一以后又写了长标签，宁可溢出也不要词中折断 */}
-            <div className="text-sm opacity-90 whitespace-nowrap">{s.label}</div>
-          </div>
+            <div className="text-sm opacity-90 mt-1">{s.label}</div>
+          </ClayCard>
         ))}
       </div>
 
