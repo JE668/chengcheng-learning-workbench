@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ClayCard } from '@/components/design-system';
 import type { Task, Subject } from '@/lib/types';
 import { speakZh, speakEn } from '@/lib/speak';
 import { logMistake } from '@/lib/mistake-log';
@@ -47,7 +48,9 @@ function parseQuiz(desc: string | undefined): QuizData | null {
     const o = JSON.parse(desc);
     // 必须每题都带 options 才按选择题渲染，否则退回普通任务展示
     if (o && o.__kind === 'quiz' && Array.isArray(o.items) && o.items.length > 0) {
-      const ok = (o.items as DictItem[]).every((q) => Array.isArray(q.options) && q.options.length >= 2);
+      const ok = (o.items as DictItem[]).every(
+        (q) => Array.isArray(q.options) && q.options.length >= 2
+      );
       if (ok) return o as QuizData;
     }
   } catch {
@@ -102,19 +105,19 @@ function DictationCard({ task, data, onDone }: { task: Task; data: DictData; onD
 
   if (done) {
     return (
-      <div className="card-moko text-center">
+      <ClayCard theme="violet" className="text-center">
         <div className="text-4xl mb-2">🎉</div>
         <h3 className="section-title">听写完成！</h3>
         <p className="text-gray-600 mt-1">
           会了 {correct} 个，还不会 {wrong} 个（已放进错题本，记得复习哦）
         </p>
         <div className="text-xs text-moko-rose font-bold mt-2">🎯 获得 {task.points} 积分</div>
-      </div>
+      </ClayCard>
     );
   }
 
   return (
-    <div className="card-moko">
+    <ClayCard theme="violet" className="">
       <div className="flex items-center justify-between mb-2">
         <span
           className={`text-xs font-bold px-2 py-0.5 rounded-full ${SUBJECT_COLOR[task.subject]}`}
@@ -154,7 +157,7 @@ function DictationCard({ task, data, onDone }: { task: Task; data: DictData; onD
           ❌ 还不会
         </button>
       </div>
-    </div>
+    </ClayCard>
   );
 }
 
@@ -202,21 +205,24 @@ function QuizCard({ task, data, onDone }: { task: Task; data: QuizData; onDone: 
 
   if (done) {
     return (
-      <div className="card-moko text-center">
+      <ClayCard theme="violet" className="text-center">
         <div className="text-4xl mb-2">{right === total ? '🏆' : '🎉'}</div>
         <h3 className="section-title">小测验完成！</h3>
         <p className="text-gray-600 mt-1">
-          答对 {right} 题{wrong > 0 ? `，答错 ${wrong} 题（已放进错题本，记得复习哦）` : '，全对真棒！'}
+          答对 {right} 题
+          {wrong > 0 ? `，答错 ${wrong} 题（已放进错题本，记得复习哦）` : '，全对真棒！'}
         </p>
         <div className="text-xs text-moko-rose font-bold mt-2">🎯 获得 {task.points} 积分</div>
-      </div>
+      </ClayCard>
     );
   }
 
   return (
-    <div className="card-moko">
+    <ClayCard theme="violet" className="">
       <div className="flex items-center justify-between mb-2">
-        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${SUBJECT_COLOR[task.subject]}`}>
+        <span
+          className={`text-xs font-bold px-2 py-0.5 rounded-full ${SUBJECT_COLOR[task.subject]}`}
+        >
           {task.subject}·小测验
         </span>
         <span className="font-black text-moko-rose">
@@ -254,7 +260,7 @@ function QuizCard({ task, data, onDone }: { task: Task; data: QuizData; onDone: 
           );
         })}
       </div>
-    </div>
+    </ClayCard>
   );
 }
 
@@ -301,7 +307,7 @@ export default function ChildTaskList({
         </div>
       )}
 
-      <div className="card-moko">
+      <ClayCard theme="violet" className="">
         <div className="flex items-center justify-between mb-2">
           <span className="font-bold text-moko-violet">完成进度</span>
           <span className="font-black text-moko-rose">
@@ -317,7 +323,7 @@ export default function ChildTaskList({
         <div className="mt-2 text-sm text-gray-500">
           当前积分：<span className="font-black text-moko-rose">{points}</span>
         </div>
-      </div>
+      </ClayCard>
 
       <div className="flex gap-2 flex-wrap">
         {FILTERS.map((s) => (
@@ -336,9 +342,9 @@ export default function ChildTaskList({
       </div>
 
       {shown.length === 0 ? (
-        <div className="card-moko text-gray-500 text-center py-10">
+        <ClayCard theme="violet" className="text-gray-500 text-center py-10">
           还没有任务哦，等爸爸妈妈布置吧～ 🐣
-        </div>
+        </ClayCard>
       ) : (
         shown.map((t) => {
           const dict = parseDictation(t.description);
@@ -350,7 +356,7 @@ export default function ChildTaskList({
             return <DictationCard key={t.id} task={t} data={dict} onDone={() => complete(t)} />;
           }
           return (
-            <div key={t.id} className="card-moko">
+            <ClayCard key={t.id} theme="violet" className="">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -379,7 +385,7 @@ export default function ChildTaskList({
                   {t.completed ? '已完成 ✓' : '完成'}
                 </button>
               </div>
-            </div>
+            </ClayCard>
           );
         })
       )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ClayButton } from '@/components/design-system';
 
 type Status = 'pending' | 'approved' | 'rejected';
 
@@ -33,20 +34,17 @@ export default function CertApproveClient({
     <div className="flex items-center gap-2">
       {status === 'pending' && (
         <>
-          <button
-            onClick={() => decide('approved')}
-            disabled={busy}
-            className="btn btn-mint text-sm disabled:opacity-60"
-          >
+          <ClayButton variant="mint" size="sm" onClick={() => decide('approved')} disabled={busy}>
             通过并颁发
-          </button>
-          <button
+          </ClayButton>
+          <ClayButton
+            variant="destructive"
+            size="sm"
             onClick={() => decide('rejected')}
             disabled={busy}
-            className="btn bg-gray-300 text-white text-sm disabled:opacity-60"
           >
             暂不通过
-          </button>
+          </ClayButton>
         </>
       )}
       {status === 'approved' && <span className="text-moko-mint font-bold">✅ 已颁发</span>}

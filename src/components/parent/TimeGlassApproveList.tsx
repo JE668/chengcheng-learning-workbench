@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ClayCard } from '@/components/design-system';
 
 /**
  * 家长端时光沙漏申请审批列表。
@@ -45,14 +46,12 @@ export default function TimeGlassApproveList({
   if (list.length === 0) return null;
 
   return (
-    <div className="card-moko mt-6">
+    <ClayCard theme="violet" className="mt-6">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-2xl">⏳</span>
         <h2 className="text-xl font-bold text-moko-violet">时光沙漏申请</h2>
       </div>
-      {msg && (
-        <div className="text-sm font-bold text-moko-rose mb-2">{msg}</div>
-      )}
+      {msg && <div className="text-sm font-bold text-moko-rose mb-2">{msg}</div>}
       <div className="space-y-3">
         {list.map((req) => (
           <div
@@ -66,9 +65,7 @@ export default function TimeGlassApproveList({
                   ? `孩子申请时光沙漏补 ${extractDay(req.text) || '打卡'}`
                   : '孩子申请了时光沙漏'}
               </div>
-              <div className="text-xs text-gray-500">
-                申请时间：{req.createdAt}
-              </div>
+              <div className="text-xs text-gray-500">申请时间：{req.createdAt}</div>
               <div className="text-xs text-gray-400 mt-0.5">
                 批准后孩子背包会收到 1 个时光沙漏，可用于补打卡、恢复萌可心情
               </div>
@@ -90,6 +87,6 @@ export default function TimeGlassApproveList({
           </div>
         ))}
       </div>
-    </div>
+    </ClayCard>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ClayCard } from '@/components/design-system';
 import type { ModuleProgressRow } from '@/lib/progress-store';
 
 const SUBJ_META: Record<string, { label: string; color: string; text: string; emoji: string }> = {
@@ -31,7 +32,11 @@ export default function GrowthTree({ progressData }: GrowthTreeProps) {
       // 使用 RSC 传入的数据
       const m: Record<string, P> = {};
       progressData.forEach((it) => {
-        m[`${it.subject}:${it.moduleKey}`] = { stars: it.stars || 0, rounds: it.rounds || 0, lastPlayed: it.lastPlayed || 0 };
+        m[`${it.subject}:${it.moduleKey}`] = {
+          stars: it.stars || 0,
+          rounds: it.rounds || 0,
+          lastPlayed: it.lastPlayed || 0,
+        };
       });
       setData(m);
       setLoaded(true);
@@ -42,15 +47,29 @@ export default function GrowthTree({ progressData }: GrowthTreeProps) {
     let active = true;
     fetch('/api/module-progress')
       .then((r) => r.json())
-      .then((res: { items?: { subject: string; moduleKey: string; stars: number; rounds: number; lastPlayed: number }[] }) => {
-        if (!active) return;
-        const m: Record<string, P> = {};
-        (res.items || []).forEach((it) => {
-          m[`${it.subject}:${it.moduleKey}`] = { stars: it.stars || 0, rounds: it.rounds || 0, lastPlayed: it.lastPlayed || 0 };
-        });
-        setData(m);
-        setLoaded(true);
-      })
+      .then(
+        (res: {
+          items?: {
+            subject: string;
+            moduleKey: string;
+            stars: number;
+            rounds: number;
+            lastPlayed: number;
+          }[];
+        }) => {
+          if (!active) return;
+          const m: Record<string, P> = {};
+          (res.items || []).forEach((it) => {
+            m[`${it.subject}:${it.moduleKey}`] = {
+              stars: it.stars || 0,
+              rounds: it.rounds || 0,
+              lastPlayed: it.lastPlayed || 0,
+            };
+          });
+          setData(m);
+          setLoaded(true);
+        }
+      )
       .catch(() => {
         if (active) setLoaded(true);
       });
@@ -60,7 +79,14 @@ export default function GrowthTree({ progressData }: GrowthTreeProps) {
   }, [progressData]);
   // 动态读取 STUDY_MODULES，避免 SSR 阶段访问 window
   const [summary, setSummary] = useState({
-    per: [] as { s: string; total: number; mastered: number; got: number; count: number; mods: { key: string; label: string; emoji: string }[] }[],
+    per: [] as {
+      s: string;
+      total: number;
+      mastered: number;
+      got: number;
+      count: number;
+      mods: { key: string; label: string; emoji: string }[];
+    }[],
     totalStars: 0,
     totalMastered: 0,
     week: 0,
@@ -85,11 +111,20 @@ export default function GrowthTree({ progressData }: GrowthTreeProps) {
             if (p.stars > 0) got += 1;
           }
         });
-        return { s, total, mastered, got, count: mods.length, mods: mods.map((md: any) => ({ key: md.key, label: md.label, emoji: md.emoji })) };
+        return {
+          s,
+          total,
+          mastered,
+          got,
+          count: mods.length,
+          mods: mods.map((md: any) => ({ key: md.key, label: md.label, emoji: md.emoji })),
+        };
       });
       const totalStars = perCalc.reduce((a, b) => a + b.total, 0);
       const totalMastered = perCalc.reduce((a, b) => a + b.mastered, 0);
-      const week = Object.values(data).filter((p) => p.lastPlayed && Date.now() - p.lastPlayed < 7 * 864e5).length;
+      const week = Object.values(data).filter(
+        (p) => p.lastPlayed && Date.now() - p.lastPlayed < 7 * 864e5
+      ).length;
       const strongest = perCalc.slice().sort((a, b) => b.total - a.total)[0]?.s || '';
       // 本周新学会：近 7 天内有练习记录且至少拿到 1 星的模块
       const newThisWeek: { emoji: string; label: string; subject: string; stars: number }[] = [];
@@ -110,31 +145,35 @@ export default function GrowthTree({ progressData }: GrowthTreeProps) {
   }, [data]);
 
   if (!loaded) {
-    return <div className="card-moko text-center text-gray-500 py-6">正在长出成长树…</div>;
+    return (
+      <ClayCard theme="violet" className="text-center text-gray-500 py-6">
+        正在长出成长树…
+      </ClayCard>
+    );
   }
 
   return (
     <div>
       {/* 统计条 */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        <div className="card-moko text-center">
+        <ClayCard theme="violet" className="text-center">
           <div className="text-3xl font-black text-moko-gold">🌟 {summary.totalStars}</div>
           <div className="text-gray-500 text-sm">收集星星</div>
-        </div>
-        <div className="card-moko text-center">
+        </ClayCard>
+        <ClayCard theme="violet" className="text-center">
           <div className="text-3xl font-black text-moko-rose">🏅 {summary.totalMastered}</div>
           <div className="text-gray-500 text-sm">满星模块</div>
-        </div>
-        <div className="card-moko text-center">
+        </ClayCard>
+        <ClayCard theme="violet" className="text-center">
           <div className="text-3xl font-black text-moko-blue">🌱 {summary.week}</div>
           <div className="text-gray-500 text-sm">本周在学</div>
-        </div>
-        <div className="card-moko text-center">
+        </ClayCard>
+        <ClayCard theme="violet" className="text-center">
           <div className="text-3xl font-black text-moko-violet">
             {summary.strongest ? SUBJ_META[summary.strongest]?.emoji : '—'}
           </div>
           <div className="text-gray-500 text-sm">最强学科</div>
-        </div>
+        </ClayCard>
       </div>
 
       {/* 成长树 */}
@@ -149,11 +188,15 @@ export default function GrowthTree({ progressData }: GrowthTreeProps) {
             return (
               <div key={subj.s} className="flex flex-col items-center">
                 {/* 树冠 */}
-                <div className={`w-20 h-20 rounded-full ${meta.color} flex items-center justify-center text-3xl shadow-lg border-4 border-white`}>
+                <div
+                  className={`w-20 h-20 rounded-full ${meta.color} flex items-center justify-center text-3xl shadow-lg border-4 border-white`}
+                >
                   {meta.emoji}
                 </div>
                 <div className={`mt-1 font-black ${meta.text}`}>{meta.label}</div>
-                <div className="text-xs text-gray-500 mb-2">{subj.got}/{subj.count} 个模块 · {subj.total}★</div>
+                <div className="text-xs text-gray-500 mb-2">
+                  {subj.got}/{subj.count} 个模块 · {subj.total}★
+                </div>
                 {/* 叶子 */}
                 <div className="flex flex-wrap gap-1 justify-center">
                   {subj.mods.map((md) => {
@@ -181,7 +224,9 @@ export default function GrowthTree({ progressData }: GrowthTreeProps) {
           <div className="w-8 h-10 bg-gradient-to-b from-amber-700 to-amber-900 rounded-b-xl" />
         </div>
         <div className="h-2 bg-green-300 rounded-full opacity-70 mt-1" />
-        <p className="text-center text-xs text-gray-500 mt-2">每认真玩一个模块，树上就会多一片发光的叶子；集满三颗星，叶子就熟透啦！</p>
+        <p className="text-center text-xs text-gray-500 mt-2">
+          每认真玩一个模块，树上就会多一片发光的叶子；集满三颗星，叶子就熟透啦！
+        </p>
         {/* 本周新学会：不只看星数，还展示最近真正学进去的内容 */}
         {summary.newThisWeek.length > 0 && (
           <div className="mt-4 rounded-2xl p-4 bg-white/70 border border-green-200">

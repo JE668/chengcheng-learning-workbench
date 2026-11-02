@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { ClayCard } from '@/components/design-system';
 import { useRouter } from 'next/navigation';
 import { formatBackfillDayLabel } from '@/lib/backfill-date';
 import { useOfflineStore } from '@/lib/stores';
@@ -82,14 +83,17 @@ export default function ParentCastlePanel() {
 
   if (!state)
     return (
-      <div className="card-moko text-center text-moko-violet flex flex-col items-center justify-center gap-2">
+      <ClayCard
+        theme="violet"
+        className="text-center text-moko-violet flex flex-col items-center justify-center gap-2"
+      >
         <span className="moko-loader">
           <span></span>
           <span></span>
           <span></span>
         </span>
         城堡数据加载中…
-      </div>
+      </ClayCard>
     );
 
   return (
@@ -119,7 +123,7 @@ export default function ParentCastlePanel() {
       )}
 
       {/* 今日打卡（由「今日一练」自动完成，家长端只读） */}
-      <div className="card-moko">
+      <ClayCard theme="violet" className="">
         <h2 className="text-lg font-black text-moko-violet mb-1">🌟 今日学习打卡</h2>
         <p className="text-xs text-gray-500 mb-3">
           孩子完成「今日一练」三科全对即自动打卡，无需家长确认。
@@ -141,11 +145,11 @@ export default function ParentCastlePanel() {
             );
           })}
         </div>
-      </div>
+      </ClayCard>
 
       {/* 补作业（过去未完成） */}
       {state.missedDays.length > 0 && (
-        <div className="card-moko">
+        <ClayCard theme="violet" className="">
           <h2 className="text-lg font-black text-moko-violet mb-2">🛠️ 补作业（过去未完成日期）</h2>
           <p className="text-xs text-gray-500 mb-2">
             补完某天三科并确认后，孩子会收到乐美送来的魔法喷雾，用来把捣蛋萌可捉回。
@@ -182,7 +186,7 @@ export default function ParentCastlePanel() {
               </div>
             ))}
           </div>
-        </div>
+        </ClayCard>
       )}
       {/* 送时光沙漏（家长直接赠送，不消耗孩子资源） */}
       <div className="rounded-3xl p-4 shadow-lg border-2 border-moko-violet/20 bg-moko-violet/5 flex items-center gap-3">

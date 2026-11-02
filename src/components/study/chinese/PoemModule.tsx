@@ -4,6 +4,7 @@
 // 会把全部 ~110KB 数据打进 chunk，见拆分前的 ChineseModules 原注释）。
 
 import { useState } from 'react';
+import { ClayButton } from '@/components/design-system';
 import { POEMS, type PoemItem } from '@/lib/study-data/poems';
 import { speakZh } from '@/lib/speak';
 import { RepeatMachine } from '@/components/study/RepeatMachine';
@@ -62,12 +63,14 @@ function PoemCard({ item }: { item: PoemItem }) {
         ))}
       </p>
       <div className="flex gap-2 mt-3">
-        <button
+        <ClayButton
+          variant="violet"
+          size="sm"
+          fullWidth
           onClick={() => speakZh(item.lines.join(''))}
-          className="flex-1 btn btn-violet text-sm"
         >
           🔊 朗读古诗
-        </button>
+        </ClayButton>
         {recording ? (
           <button
             onClick={stopRecite}

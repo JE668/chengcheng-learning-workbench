@@ -3,10 +3,16 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { speakZh, speakEn, playTtsEnd } from '@/lib/speak';
 import { sfxCorrect, sfxWrong } from '@/lib/sfx';
-import { pickMokoLine, MokoPraiseBanner } from '@/components/study/MokoPraise';
+import { pickMokoLine } from '@/components/study/MokoPraise';
 import { useMistakeLogger } from '@/lib/mistake-logger';
 import { useModuleProgress } from '@/lib/module-progress';
 import { useStudyContext } from '@/lib/study-context';
+import {
+  QuizHeader,
+  QuizOptions,
+  RoundSummary,
+  CorrectFeedback,
+} from '@/components/study/StudyQuiz.parts';
 
 /** 一道选择题：prompt 为题目展示（可含 emoji / JSX），options 含正确项，answer 为正确项文本 */
 export interface QuizItem {
@@ -96,7 +102,7 @@ export function StudyQuiz({
   const [roundDone, setRoundDone] = useState(false);
   const [roundStars, setRoundStars] = useState(0);
   const [roundAcc, setRoundAcc] = useState(0);
-  // 使用 initialProgress 初始化显示用星数
+  // 使用 initialStars 初始化显示用星数
   const [displayStars, setDisplayStars] = useState(initialStars);
   const attemptsRef = useRef(0);
   const rightRef = useRef(0);
@@ -187,7 +193,7 @@ export function StudyQuiz({
       } else {
         // 等萌可把这句夸夸读完，再切下一题并朗读新题，避免被新题朗读盖住
         void waitSpeechEnd(
-          playTtsEnd(`爱心萌可说：${line} 啾～`, 'zh', { wsRate: 0.85, preferStatic: true }),
+          playTtsEnd(`${line}`, 'zh', { wsRate: 0.85, preferStatic: true }),
           4500
         ).then(() => {
           if (feedbackGen.current === gen) next();
@@ -206,7 +212,7 @@ export function StudyQuiz({
       });
       // 等萌可鼓励读完再撤掉反馈条（期间选项禁用，孩子不会误触重做导致两句叠加）
       void waitSpeechEnd(
-        playTtsEnd(`爱心萌可说：${line} 啾～`, 'zh', { wsRate: 0.85, preferStatic: true }),
+        playTtsEnd(`${line}`, 'zh', { wsRate: 0.85, preferStatic: true }),
         4500
       ).then(() => {
         if (feedbackGen.current === gen) setPicked(null);
@@ -219,86 +225,37 @@ export function StudyQuiz({
   // 本轮结算封面
   if (roundDone) {
     return (
-      <div className="space-y-4">
-        <div className="rounded-2xl p-6 bg-white shadow-lg border-2 border-moko-yellow/40 text-center">
-          <div className="text-3xl font-black text-moko-violet mb-2">🎉 本轮闯关结束！</div>
-          <div className="flex justify-center gap-1 text-4xl mb-2">
-            {[0, 1, 2].map((i) => (
-              <span key={i} className={i < roundStars ? 'text-yellow-400' : 'text-gray-200'}>
-                ★
-              </span>
-            ))}
-          </div>
-          <p className="text-gray-600 mb-2">
-            正确率 {roundAcc}%，共答 {attemptsRef.current} 题
-          </p>
-          {/* ⚠️ 原先这一屏只显示「本轮」星数，而下面那句承诺写着「星星会留在封面上」。
-              displayStars 一直在按 max 累积封面星数却从未被渲染 —— 孩子看不到
-              「留在封面上」到底是多少。这里显式出来，让承诺有落点。
-              取 max 而非本轮值：历史最佳不会被某次失误抹掉（与 hook 的策略一致）。 */}
-          <p className="text-sm text-moko-violet font-bold mb-3">
-            🏰 封面累计：
-            <span className="text-yellow-400">{'★'.repeat(displayStars)}</span>
-            <span className="text-gray-300">{'☆'.repeat(Math.max(0, 3 - displayStars))}</span>
-          </p>
-          <button
-            onClick={continueRound}
-            className="px-6 py-2 rounded-full bg-moko-yellow text-white font-bold text-sm active:scale-95 transition"
-          >
-            再来一轮 ›
-          </button>
-        </div>
-        <div className={`rounded-2xl p-3 ${color} text-white text-center text-sm font-bold shadow`}>
-          星星会留在封面上，慢慢集满三颗吧～
-        </div>
-      </div>
+      <RoundSummary
+        roundStars={roundStars}
+        roundAcc={roundAcc}
+        attempts={attemptsRef.current}
+        displayStars={displayStars}
+        color={color}
+        onContinue={continueRound}
+      />
     );
   }
 
   return (
     <div className="space-y-4">
       <div className="rounded-2xl p-5 bg-white shadow-lg border-2 border-moko-blue/10">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-bold text-gray-400">
-            已答对 {rightCount} · 正确率 {progressPct}%
-            {moduleKey
-              ? ` · 本轮第 ${Math.min(questionsAnswered + 1, roundSize)}/${roundSize} 题`
-              : ''}
-          </span>
-          {item.speak || item.speakEn ? (
-            <button
-              onClick={() =>
-                item.speak ? speakZh(item.speak) : item.speakEn && speakEn(item.speakEn)
-              }
-              className="text-xs px-3 py-1 rounded-full bg-moko-yellow text-white font-bold active:scale-95 transition"
-            >
-              🔊 听题目
-            </button>
-          ) : null}
-        </div>
+        <QuizHeader
+          rightCount={rightCount}
+          progressPct={progressPct}
+          moduleKey={moduleKey}
+          questionsAnswered={questionsAnswered}
+          roundSize={roundSize}
+          item={item}
+          onSpeak={() => (item.speak ? speakZh(item.speak) : item.speakEn && speakEn(item.speakEn))}
+        />
         <div className="text-center mb-4 text-lg font-bold text-gray-700">{item.prompt}</div>
-        <div className="grid grid-cols-2 gap-3">
-          {options.map((opt) => {
-            const isAnswer = opt === item.answer;
-            const isPicked = opt === picked;
-            let cls = `bg-white ${textColor} border-2 border-moko-blue/30`;
-            if (picked) {
-              if (isAnswer) cls = 'bg-green-100 text-green-700 border-2 border-green-500';
-              else if (isPicked) cls = 'bg-red-100 text-red-600 border-2 border-red-500';
-              else cls = `bg-white ${textColor} border-2 border-moko-blue/30 opacity-50`;
-            }
-            return (
-              <button
-                key={opt}
-                disabled={!!picked}
-                onClick={() => pick(opt)}
-                className={`py-4 rounded-2xl font-black text-2xl shadow active:scale-95 transition disabled:cursor-default ${cls}`}
-              >
-                {opt}
-              </button>
-            );
-          })}
-        </div>
+        <QuizOptions
+          options={options}
+          answer={item.answer}
+          picked={picked}
+          textColor={textColor}
+          onPick={pick}
+        />
         {picked && (
           <CorrectFeedback
             subject={subject}
@@ -311,46 +268,6 @@ export function StudyQuiz({
       <div className={`rounded-2xl p-3 ${color} text-white text-center text-sm font-bold shadow`}>
         换一题继续练，闯关不嫌多～
       </div>
-    </div>
-  );
-}
-
-/**
- * 答题后的文字反馈：镇守萌可用它的性格口头禅给小朋友贴心的答对 / 答错反馈。
- * line 来自语音选中的同一句（pick() 里 pickMokoLine 返回），保证「听到的 = 看到的」。
- */
-function CorrectFeedback({
-  subject,
-  ok,
-  item,
-  line,
-}: {
-  subject: string;
-  ok: boolean;
-  item: QuizItem;
-  line: string;
-}) {
-  return (
-    <div className="space-y-1">
-      {ok && (
-        <div className="flex justify-center gap-1.5 my-1">
-          {['⭐', '🌟', '✨'].map((s, i) => (
-            <span
-              key={i}
-              className="text-2xl animate-bounce"
-              style={{ animationDelay: `${i * 0.15}s` }}
-            >
-              {s}
-            </span>
-          ))}
-        </div>
-      )}
-      <MokoPraiseBanner
-        subject={subject}
-        ok={ok}
-        text={line || (ok ? '真棒！' : '没关系，再试试～')}
-      />
-      {!ok && <p className="text-center text-xs text-gray-500 mt-1">正确答案是「{item.answer}」</p>}
     </div>
   );
 }

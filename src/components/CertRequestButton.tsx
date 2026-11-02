@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ClayButton } from '@/components/design-system';
 
 type Status = 'pending' | 'approved' | 'rejected' | null;
 
@@ -55,13 +56,9 @@ export default function CertRequestButton({ initialStatus }: { initialStatus: St
       {status === 'rejected' && (
         <span className="text-gray-500 text-sm">上次没通过，再努力一周再来申请吧～</span>
       )}
-      <button
-        onClick={apply}
-        disabled={busy}
-        className="btn btn-primary disabled:opacity-60"
-      >
+      <ClayButton variant="brand" onClick={apply} disabled={busy}>
         {busy ? '提交中…' : '🎖️ 申请颁发奖状'}
-      </button>
+      </ClayButton>
       <span className="text-gray-400 text-xs">（提交后由爸爸妈妈审批，通过才能拿到奖状哦）</span>
     </div>
   );

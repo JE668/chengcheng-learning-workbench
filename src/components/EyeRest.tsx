@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { ClayButton } from '@/components/design-system';
 
 const DURATIONS = [10, 15, 20, 30, 40];
 const STORE_ENABLED = 'eyeRestEnabled';
@@ -73,19 +74,37 @@ export default function EyeRest() {
           title="护眼休息提醒设置"
         >
           <span>👀</span>
-          {enabled ? <span>{mm}:{ss}</span> : <span className="text-gray-400">已关</span>}
+          {enabled ? (
+            <span>
+              {mm}:{ss}
+            </span>
+          ) : (
+            <span className="text-gray-400">已关</span>
+          )}
         </button>
       )}
 
       {/* 设置弹层 */}
       {showSettings && !showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowSettings(false)}>
-          <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setShowSettings(false)}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="section-title mb-3">👀 护眼休息提醒</h3>
-            <p className="text-sm text-gray-500 mb-4">学习一会儿就让眼睛休息一下，保护视力～（20-20-20 法则：每 20 分钟，看 20 英尺外 20 秒）</p>
+            <p className="text-sm text-gray-500 mb-4">
+              学习一会儿就让眼睛休息一下，保护视力～（20-20-20 法则：每 20 分钟，看 20 英尺外 20
+              秒）
+            </p>
             <div className="flex items-center justify-between mb-4">
               <span className="font-bold text-moko-violet">提醒开关</span>
-              <button onClick={toggleEnabled} className={`px-4 py-1.5 rounded-full font-bold text-sm ${enabled ? 'bg-moko-mint text-white' : 'bg-gray-200 text-gray-500'}`}>
+              <button
+                onClick={toggleEnabled}
+                className={`px-4 py-1.5 rounded-full font-bold text-sm ${enabled ? 'bg-moko-mint text-white' : 'bg-gray-200 text-gray-500'}`}
+              >
                 {enabled ? '已开启' : '已关闭'}
               </button>
             </div>
@@ -93,13 +112,26 @@ export default function EyeRest() {
               <div className="font-bold text-moko-violet mb-2">每隔多久提醒</div>
               <div className="flex gap-2">
                 {DURATIONS.map((d) => (
-                  <button key={d} onClick={() => changeMinutes(d)} className={`flex-1 py-2 rounded-2xl font-bold text-sm ${minutes === d ? 'bg-moko-rose text-white' : 'bg-gray-100 text-gray-600'}`}>
+                  <button
+                    key={d}
+                    onClick={() => changeMinutes(d)}
+                    className={`flex-1 py-2 rounded-2xl font-bold text-sm ${minutes === d ? 'bg-moko-rose text-white' : 'bg-gray-100 text-gray-600'}`}
+                  >
                     {d} 分
                   </button>
                 ))}
               </div>
             </div>
-            <button onClick={() => { resetTimer(); setShowSettings(false); }} className="w-full btn btn-violet">确定</button>
+            <ClayButton
+              variant="violet"
+              fullWidth
+              onClick={() => {
+                resetTimer();
+                setShowSettings(false);
+              }}
+            >
+              确定
+            </ClayButton>
           </div>
         </div>
       )}

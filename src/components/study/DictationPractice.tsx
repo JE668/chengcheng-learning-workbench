@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ClayCard } from '@/components/design-system';
 
 import { CHARACTERS } from '@/lib/study-data/characters';
 import { GRADE1_CHAR_UNITS } from '@/lib/study-data/units';
@@ -164,7 +165,7 @@ export default function DictationPractice() {
 
   if (phase === 'setup') {
     return (
-      <div className="card-moko space-y-4">
+      <ClayCard theme="violet" className="space-y-4">
         <div className="flex gap-2">
           {(['char', 'pinyin'] as Mode[]).map((m) => (
             <button
@@ -215,7 +216,7 @@ export default function DictationPractice() {
           {mode === 'pinyin' ? '听读音，写出拼音（声调可省略）' : '听读音，写出听到的字或词'}
           {' · '}写错的小题会自动进复习本
         </p>
-      </div>
+      </ClayCard>
     );
   }
 

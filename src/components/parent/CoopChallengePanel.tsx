@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ClayCard } from '@/components/design-system';
 
 /**
  * 🤝 每日组队挑战面板（家长看板用，2026-10-17）：
@@ -70,7 +71,7 @@ export default function CoopChallengePanel() {
   };
 
   return (
-    <div className="card-moko mb-6">
+    <ClayCard theme="violet" className="mb-6">
       <h2 className="text-xl font-black text-moko-violet mb-3">🤝 今日组队挑战</h2>
       {!loaded ? (
         <p className="text-gray-500 text-sm">加载中…</p>
@@ -119,6 +120,6 @@ export default function CoopChallengePanel() {
         </>
       )}
       {msg && <p className="mt-3 text-sm font-bold text-moko-rose">{msg}</p>}
-    </div>
+    </ClayCard>
   );
 }

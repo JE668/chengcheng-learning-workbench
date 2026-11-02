@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { storyChapters } from '@/lib/story';
 import { STUDY_MODULES, type StudySubject } from '@/lib/study-modules';
 import { mokoImgByName } from '@/lib/moko-imgs';
@@ -10,20 +8,26 @@ import { mokoCollectionByName } from '@/lib/moko-collection';
 import { playTtsEnd, prefetchStaticAudio } from '@/lib/speak';
 import { CaptureMoment, type CapturePayload } from '@/components/CaptureMoment';
 import { useOfflineStore } from '@/lib/stores';
-import { ClayCard, ClayButton } from '@/components/design-system';
+import { ClayCard } from '@/components/design-system';
 
-interface Progress {
-  captured: string[];
-  read: string[];
-  quiz: string[];
-  nextIndex: number;
-  total: number;
-  allDone: boolean;
-  tickets: number;
-}
+import { StoryHeader } from './components/StoryHeader';
+import { BedtimeOverlay } from './components/BedtimeMode';
+import {
+  StoryChapterLocked,
+  StoryChapterHeader,
+  StoryReadingPanel,
+  StoryChapterActions,
+  StoryAllDone,
+  StoryBedtimeEntry,
+  StoryLoading,
+  chapterTheme,
+} from './components/StoryChapterCard';
+import type { StoryProgress } from './components/types';
+
+type Chapter = (typeof storyChapters)[number];
 
 export default function StoryPage() {
-  const [progress, setProgress] = useState<Progress | null>(null);
+  const [progress, setProgress] = useState<StoryProgress | null>(null);
   const [active, setActive] = useState<string | null>(null); // 正在展开阅读章节
   const [narrating, setNarrating] = useState<string | null>(null); // 正在自动朗读的章节
   const [readPara, setReadPara] = useState(-1); // 当前朗读到第几段（-1=未朗读，paragraphs.length=正在读 tip）
@@ -32,7 +36,7 @@ export default function StoryPage() {
   // 更慢语速（0.6）、无答题、暗屏遮罩、读完自动停。孩子睡前听故事是
   // 真实高频场景，故事 TTS 已全量预生成（弱网/断网也秒响）。
   const [bedtime, setBedtime] = useState(false);
-  const [bedtimeCh, setBedtimeCh] = useState<(typeof storyChapters)[number] | null>(null);
+  const [bedtimeCh, setBedtimeCh] = useState<Chapter | null>(null);
   const bedtimeAbort = useRef(false);
   const [quizSet, setQuizSet] = useState<Set<string>>(new Set());
   const [capturing, setCapturing] = useState(false);
@@ -43,8 +47,6 @@ export default function StoryPage() {
   const [quizSpeaking, setQuizSpeaking] = useState(false);
   // 答题反馈必须**按章节**存，不能用单一 boolean：storyChapters.map 一次渲染全部章节，
   // 一个全局标志会在孩子切换到下一集时串味（上一集答错的红字飘到新章节）。
-  // quizRight 此前完全没被读取 —— 「答对啦」那一块只判了 open && isQuiz，
-  // 等于没有用「答对」这个事实。
   const [quizWrongFor, setQuizWrongFor] = useState<string | null>(null);
   const [quizRightFor, setQuizRightFor] = useState<string | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
@@ -99,7 +101,7 @@ export default function StoryPage() {
   }, []);
 
   /** 模块绑定章节的解锁判定 + 展示用模块名 */
-  function moduleInfo(c: (typeof storyChapters)[number]) {
+  function moduleInfo(c: Chapter) {
     const mod = c.module;
     if (!mod) return null;
     const list = STUDY_MODULES[mod.subject as StudySubject] ?? [];
@@ -145,7 +147,7 @@ export default function StoryPage() {
   }
 
   /** 顺序朗读整集：一段一段读，读完标记已读并解锁捕捉 */
-  async function startNarration(c: (typeof storyChapters)[number]) {
+  async function startNarration(c: Chapter) {
     if (narrating) stopNarration();
     setNarrating(c.id);
     setReadPara(0);
@@ -208,7 +210,7 @@ export default function StoryPage() {
   }
 
   /** 顺序朗读题目 + 每个选项（照顾还不识字的孩子）。优先读「给这个孩子」的题 */
-  async function speakQuiz(c: (typeof storyChapters)[number]) {
+  async function speakQuiz(c: Chapter) {
     const quiz = childQuiz[c.id] ?? c.quiz;
     if (!quiz || quizSpeaking) return;
     setQuizSpeaking(true);
@@ -280,7 +282,7 @@ export default function StoryPage() {
   }
 
   /** 展开/收起 */
-  function toggleOpen(c: (typeof storyChapters)[number]) {
+  function toggleOpen(c: Chapter) {
     stopNarration();
     stopQuiz();
     // 只在**收起**当前章节时清掉它的答题反馈：展开别的一集不该把这一集的结果抹掉
@@ -305,7 +307,7 @@ export default function StoryPage() {
   }
 
   /** 提交小问题答案：答对才解锁捕捉 */
-  async function answerQuiz(c: (typeof storyChapters)[number], idx: number) {
+  async function answerQuiz(c: Chapter, idx: number) {
     stopQuiz();
     setQuizWrongFor(null);
     setQuizRightFor(null);
@@ -386,111 +388,32 @@ export default function StoryPage() {
   }, [active, readSet, quizSet]);
 
   if (!progress) {
-    return (
-      <div className="max-w-3xl mx-auto py-20 text-center">
-        {loadErr ? (
-          <div className="space-y-4">
-            <p className="text-gray-500 font-bold">😣 {loadErr}</p>
-            <button
-              onClick={load}
-              className="px-6 py-2.5 rounded-full bg-moko-violet text-white font-bold shadow hover:scale-105 transition"
-            >
-              重新加载
-            </button>
-          </div>
-        ) : (
-          <div className="text-gray-400">故事加载中…</div>
-        )}
-      </div>
-    );
+    return <StoryLoading loadErr={loadErr} onRetry={load} />;
   }
 
   return (
     <div className="max-w-3xl mx-auto pb-28">
-      <div className="flex items-center gap-3 mb-4">
-        <Link href="/games" className="text-moko-violet font-bold hover:underline">
-          ‹ 游戏乐园
-        </Link>
-      </div>
-      <h1 className="page-title mb-2">📜 萌可剧情</h1>
-      <p className="text-gray-600 mb-2">
-        跟着乐美公主的领航故事，一集一集认识并捕捉萌可。已捕捉
-        <span className="font-black text-moko-rose"> {progress.captured.length} </span>/{' '}
-        {progress.total} 只。
-      </p>
-      <p className="text-xs text-gray-500 mb-2">
-        流程：听故事 → 答对小问题 → 捕捉萌可（第 2 集起还要用 1 张捕捉券）
-      </p>
-      <div className="mb-3 flex items-center gap-2 flex-wrap">
-        <span className="inline-flex items-center gap-1 rounded-full bg-moko-gold/15 text-moko-gold font-black px-3 py-1 text-sm">
-          🎟️ 捕捉券 ×{progress.tickets}
-        </span>
-        {progress.tickets === 0 && (
-          <span className="text-xs text-gray-500">
-            做「萌可闯关」练习可攒捕捉券，用来解锁下一集
-          </span>
-        )}
-      </div>
-      <div className="h-2 rounded-full bg-gray-200 overflow-hidden mb-6">
-        <div
-          className="h-full bg-gradient-to-r from-moko-pink to-moko-rose transition-all"
-          style={{ width: `${(progress.captured.length / progress.total) * 100}%` }}
-        />
-      </div>
+      <StoryHeader
+        capturedCount={progress.captured.length}
+        total={progress.total}
+        tickets={progress.tickets}
+      />
 
       {/* 🌙 晚安模式入口：睡前连播已解锁的故事——慢语速、暗屏、无答题 */}
-      {progress && progress.nextIndex >= 0 && (
-        <ClayButton
-          onClick={() => void startBedtime()}
-          variant="brand"
-          size="lg"
-          fullWidth
-          className="mb-6 p-4 text-lg transition hover:scale-[1.02]"
-          style={{ background: 'linear-gradient(to right, #a855f7, #8b5cf6)' }}
-        >
-          🌙 晚安故事 · 连播 {Math.min(progress.nextIndex + 1, storyChapters.length)} 集
-          <span className="block text-xs font-bold opacity-80 mt-1">
-            慢速 · 无答题 · 播完自动停
-          </span>
-        </ClayButton>
+      {progress.nextIndex >= 0 && (
+        <StoryBedtimeEntry
+          count={Math.min(progress.nextIndex + 1, storyChapters.length)}
+          onStart={() => void startBedtime()}
+        />
       )}
 
-      {/* 🌙 晚安模式遮罩：暗屏 + 当前集信息 + 停止按钮。全宽 fixed，
-          不依赖页面结构；pointer-events 只在卡片上，点遮罩即停。 */}
+      {/* 🌙 晚安模式遮罩 */}
       {bedtime && (
-        <div
-          className="fixed inset-0 z-[70] bg-gradient-to-b from-[#1a1a2e]/92 to-[#2d2d44]/96 flex items-center justify-center p-6"
-          onClick={stopBedtime}
-        >
-          <div
-            className="max-w-md w-full text-center space-y-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="text-6xl">🌙</div>
-            <div className="text-white/60 text-sm font-bold tracking-widest">晚安故事</div>
-            {bedtimeCh && (
-              <>
-                <div className="text-2xl font-black text-white leading-snug">
-                  {bedtimeCh.emoji} {bedtimeCh.title}
-                </div>
-                <div className="text-white/50 text-sm">{bedtimeCh.mokoName} 陪程程入睡</div>
-                <div className="mx-auto w-20 h-20 rounded-full overflow-hidden ring-4 ring-white/20 opacity-90">
-                  <Image
-                    src={mokoImgByName[bedtimeCh.mokoName] || '/moko/lemei.webp'}
-                    alt={bedtimeCh.mokoName}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </>
-            )}
-            <ClayButton variant="brand" size="lg" onClick={stopBedtime}>
-              ⏹ 停止，程程要睡觉啦
-            </ClayButton>
-            <div className="text-white/30 text-xs">连播中 · 点击屏幕任意处也可以停止</div>
-          </div>
-        </div>
+        <BedtimeOverlay
+          chapter={bedtimeCh}
+          img={(bedtimeCh && mokoImgByName[bedtimeCh.mokoName]) || ''}
+          onStop={stopBedtime}
+        />
       )}
 
       {toast && (
@@ -513,275 +436,57 @@ export default function StoryPage() {
           const isNarrating = narrating === c.id;
 
           if (isLocked || lockedByModule) {
-            return (
-              <ClayCard key={c.id} theme="secondary" className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gray-300 flex items-center justify-center text-2xl">
-                  🔒
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-black text-gray-500">
-                    第 {i + 1} 集 · {c.title}
-                  </div>
-                  {lockedByModule && mod ? (
-                    <div className="text-xs text-moko-violet mt-1">
-                      先去「{mod.label}」拿一颗⭐，就能解锁这一集～
-                      <Link
-                        href={mod.href}
-                        className="ml-1 inline-block px-2 py-0.5 rounded-full bg-moko-violet/15 text-moko-violet font-bold hover:bg-moko-violet/25 transition"
-                      >
-                        去学习
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="text-xs text-gray-400 mt-1">
-                      先捕捉上一集的萌可，就能解锁这一集～
-                    </div>
-                  )}
-                </div>
-              </ClayCard>
-            );
+            return <StoryChapterLocked key={c.id} index={i} chapter={c} mod={mod} />;
           }
 
           return (
-            <ClayCard
-              key={c.id}
-              theme={
-                c.gradient === 'from-moko-pink to-moko-purple'
-                  ? 'pink'
-                  : c.gradient === 'from-moko-yellow to-moko-yellow'
-                    ? 'gold'
-                    : c.gradient === 'from-moko-blue to-moko-blue'
-                      ? 'blue'
-                      : 'violet'
-              }
-              className="p-5"
-            >
-              <div className="flex items-center gap-4">
-                {img ? (
-                  <Image
-                    src={img}
-                    alt={c.mokoName}
-                    width={64}
-                    height={64}
-                    className="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-white/30 flex items-center justify-center text-3xl">
-                    {c.emoji}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="font-black text-lg">
-                    第 {i + 1} 集 · {c.title}
-                  </div>
-                  <div className="text-sm opacity-90">
-                    {c.scene} · 主角 {c.mokoName}
-                  </div>
-                </div>
-                {isCaptured && (
-                  <span className="text-sm font-bold bg-white/25 px-3 py-1 rounded-full">
-                    ✅ 已捕捉
-                  </span>
-                )}
-                {!isCaptured && isQuiz && (
-                  <span className="text-sm font-bold bg-white/25 px-3 py-1 rounded-full">
-                    📖 已读·已答
-                  </span>
-                )}
-                {!isCaptured && isRead && !isQuiz && (
-                  <span className="text-sm font-bold bg-white/25 px-3 py-1 rounded-full">
-                    📖 已读
-                  </span>
-                )}
-              </div>
+            <ClayCard key={c.id} theme={chapterTheme(c.gradient)} className="p-5">
+              <StoryChapterHeader
+                chapter={c}
+                index={i}
+                img={img}
+                isCaptured={isCaptured}
+                isRead={isRead}
+                isQuiz={isQuiz}
+              />
 
-              {open && (
-                <div className="mt-4 bg-white/95 text-gray-700 rounded-2xl p-4">
-                  {isNarrating && (
-                    <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-moko-violet/10 text-moko-violet font-bold px-3 py-1 text-sm">
-                      🔊 正在读故事…
-                    </div>
-                  )}
-                  {c.paragraphs.map((p, k) => (
-                    <p
-                      key={k}
-                      className={`mb-2 leading-relaxed transition ${isNarrating && readPara === k ? 'bg-moko-yellow/30 rounded-lg px-2 -mx-2 font-bold text-moko-violet' : ''}`}
-                    >
-                      {p}
-                    </p>
-                  ))}
-                  {c.tip && (
-                    <p
-                      className={`text-sm text-moko-violet font-semibold mt-2 transition ${isNarrating && readPara === c.paragraphs.length ? 'bg-moko-yellow/30 rounded-lg px-2 -mx-2' : ''}`}
-                    >
-                      💡 {c.tip}
-                    </p>
-                  )}
+              <StoryReadingPanel
+                chapter={c}
+                open={open}
+                isRead={isRead}
+                isQuiz={isQuiz}
+                isNarrating={isNarrating}
+                readPara={readPara}
+                quiz={childQuiz[c.id] ?? c.quiz}
+                quizSpeaking={quizSpeaking}
+                quizWrongFor={quizWrongFor === c.id}
+                quizRightFor={quizRightFor === c.id}
+                onSpeakQuiz={() => speakQuiz(c)}
+                onAnswer={(k) => void answerQuiz(c, k)}
+                onSpeakOne={(text) => void speakOne(text)}
+              />
 
-                  {/* —— 读完故事，弹出小问题（答对才能捕捉） —— */}
-                  {open &&
-                    isRead &&
-                    !isQuiz &&
-                    (childQuiz[c.id] || c.quiz) &&
-                    (() => {
-                      const quiz = childQuiz[c.id] ?? c.quiz!;
-                      return (
-                        <div className="mt-4 rounded-2xl bg-moko-gold/10 border-2 border-moko-gold/30 p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-black text-moko-violet">❓ 小问题</span>
-                            {quizSpeaking && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-moko-violet/10 text-moko-violet text-xs font-bold px-2 py-0.5">
-                                🔊 正在读题…
-                              </span>
-                            )}
-                            <button
-                              onClick={() => speakQuiz(c)}
-                              className="ml-auto text-xs px-3 py-1 rounded-full bg-moko-violet/10 text-moko-violet font-bold hover:bg-moko-violet/20 transition"
-                            >
-                              🔊 再听一遍
-                            </button>
-                          </div>
-                          <p className="font-bold text-gray-800 mb-3 leading-relaxed">{quiz.q}</p>
-                          <div className="grid grid-cols-1 gap-2">
-                            {quiz.options.map((opt, k) => (
-                              <div key={k} className="flex items-center gap-2">
-                                <button
-                                  onClick={() => answerQuiz(c, k)}
-                                  className="flex-1 text-left px-4 py-2.5 rounded-xl bg-white border-2 border-moko-violet/30 font-bold text-gray-800 hover:bg-moko-violet/10 hover:border-moko-violet transition"
-                                >
-                                  {opt}
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    speakOne(opt);
-                                  }}
-                                  className="px-3 py-2.5 rounded-xl bg-moko-violet/10 text-moko-violet font-bold hover:bg-moko-violet/20 transition"
-                                  aria-label="听这个选项"
-                                >
-                                  🔊
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                          {quizWrongFor === c.id && (
-                            <p className="mt-3 text-sm font-bold text-moko-rose">
-                              😊 再想想看，选另一个试试吧～
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })()}
-
-                  {/* 答对：quizRightFor 才代表「刚刚这道题答对了」；isQuiz 只是「这一集已解锁过」，
-                      答题框靠它切换是对的，但鼓励语应只在刚答对的那一刻出现。 */}
-                  {open && isQuiz && quizRightFor === c.id && (
-                    <div className="mt-4 mb-1 inline-flex items-center gap-2 rounded-full bg-moko-rose/10 text-moko-rose font-bold px-3 py-1 text-sm">
-                      ✅ 小问题答对啦，可以捕捉咯！
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="mt-4 flex gap-3 flex-wrap">
-                <button
-                  onClick={() => toggleOpen(c)}
-                  className="px-5 py-2 rounded-full bg-white/25 font-bold hover:bg-white/35 transition"
-                >
-                  {open ? '收起故事' : isRead ? '📖 再读一遍' : '📖 读这一集'}
-                </button>
-
-                {/* 已展开且已读：提供「再听一遍」 */}
-                {open && isRead && !isNarrating && (
-                  <button
-                    onClick={() => startNarration(c)}
-                    className="px-5 py-2 rounded-full bg-white/25 font-bold hover:bg-white/35 transition"
-                  >
-                    🔊 再听一遍
-                  </button>
-                )}
-
-                {/* —— 捕捉门槛：必须先读完故事 —— */}
-                {isNext && !isCaptured && !isRead && (
-                  <button
-                    disabled
-                    className="px-5 py-2 rounded-full bg-white/40 text-white/80 font-black cursor-not-allowed"
-                  >
-                    {isNarrating ? '🎧 正在读故事…' : '🔒 先听故事'}
-                  </button>
-                )}
-                {isNext && !isCaptured && !isRead && !isNarrating && (
-                  <p className="text-xs text-white/90 w-full mt-1">
-                    {i === 0
-                      ? '点「读这一集」，听完故事就能答题啦～'
-                      : '先读完故事，并用捕捉券解锁这一集哦～'}
-                  </p>
-                )}
-
-                {/* —— 读完但还没答对：先答题 —— */}
-                {isNext && !isCaptured && isRead && !isQuiz && (
-                  <button
-                    disabled
-                    className="px-5 py-2 rounded-full bg-white/40 text-white/80 font-black cursor-not-allowed"
-                  >
-                    ❓ 先回答小问题
-                  </button>
-                )}
-                {isNext && !isCaptured && isRead && !isQuiz && (
-                  <p className="text-xs text-white/90 w-full mt-1">
-                    故事听完啦，先答对下面的小问题，就能捕捉萌可～
-                  </p>
-                )}
-
-                {/* 已读已答但缺券（非首集）：去赚券 */}
-                {isNext && !isCaptured && isQuiz && i > 0 && progress.tickets === 0 && (
-                  <Link
-                    href="/daily-practice"
-                    className="px-5 py-2 rounded-full bg-white/90 text-moko-violet font-black shadow hover:scale-105 transition"
-                  >
-                    🎯 去赚捕捉券
-                  </Link>
-                )}
-
-                {/* 已读已答且有资格：直接捕捉 */}
-                {isNext && !isCaptured && isQuiz && (i === 0 || progress.tickets > 0) && (
-                  <ClayButton
-                    variant="brand"
-                    size="sm"
-                    disabled={capturing}
-                    onClick={() => capture(c.id)}
-                  >
-                    {capturing ? '捕捉中…' : `✨ 捕捉${c.mokoName}！`}
-                  </ClayButton>
-                )}
-
-                {isCaptured && (
-                  <Link
-                    href="/castle"
-                    className="px-5 py-2 rounded-full bg-white/25 font-bold hover:bg-white/35 transition"
-                  >
-                    去城堡看看 ›
-                  </Link>
-                )}
-              </div>
+              <StoryChapterActions
+                chapter={c}
+                index={i}
+                open={open}
+                isRead={isRead}
+                isQuiz={isQuiz}
+                isCaptured={isCaptured}
+                isNext={isNext}
+                isNarrating={isNarrating}
+                capturing={capturing}
+                tickets={progress.tickets}
+                onToggle={() => toggleOpen(c)}
+                onNarrate={() => void startNarration(c)}
+                onCapture={() => void capture(c.id)}
+              />
             </ClayCard>
           );
         })}
       </div>
 
-      {progress.allDone && (
-        <div className="mt-8 rounded-3xl p-6 text-center bg-gradient-to-r from-moko-gold to-moko-yellow text-white shadow-xl">
-          <div className="text-4xl mb-2">🏆</div>
-          <div className="text-xl font-black">哇，你捕捉了全部萌可！</div>
-          <div className="text-sm opacity-90 mt-1">打开图鉴，看看谁在城堡里等你回家～</div>
-          <Link
-            href="/castle"
-            className="inline-block mt-3 px-6 py-2 rounded-full bg-white text-moko-violet font-black shadow"
-          >
-            🏰 进入城堡
-          </Link>
-        </div>
-      )}
+      {progress.allDone && <StoryAllDone total={progress.total} />}
 
       {justCaught && <CaptureMoment data={justCaught} onClose={() => setJustCaught(null)} />}
     </div>

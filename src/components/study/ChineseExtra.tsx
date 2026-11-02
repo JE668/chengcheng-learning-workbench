@@ -1,6 +1,7 @@
 'use client';
 
 import { TEXTS, type TextItem } from '@/lib/study-data/texts';
+import { ClayButton } from '@/components/design-system';
 import { GRADE1_CHAR_UNITS, type CharUnit } from '@/lib/study-data/units';
 
 import { speakZh } from '@/lib/speak';
@@ -62,9 +63,9 @@ function TextCard({ item }: { item: TextItem }) {
         <h3 className="section-title">
           {item.emoji} {item.title}
         </h3>
-        <button onClick={() => speakZh(item.lines.join(''))} className="btn btn-violet text-sm">
+        <ClayButton variant="violet" size="sm" onClick={() => speakZh(item.lines.join(''))}>
           🔊 读全文
-        </button>
+        </ClayButton>
       </div>
       <div className="space-y-1">
         {item.lines.map((line, i) => (

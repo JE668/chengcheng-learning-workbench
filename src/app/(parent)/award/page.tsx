@@ -60,7 +60,7 @@ export default async function ParentCertPage() {
       <ClayCard theme="purple" className="p-4 mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-black text-moko-violet">奖状预览</h2>
-          <PrintButton className="btn btn-gold text-sm" />
+          <PrintButton variant="gold" className="text-sm" />
         </div>
         <Certificate data={data} editable={false} initialPref={initialPref} />
       </ClayCard>

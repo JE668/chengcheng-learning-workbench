@@ -43,7 +43,72 @@ const MAX_RETRIES = 5;
  *     整队一起重放极易撞上，按原逻辑会被直接丢弃——孩子兑换的东西凭空消失。
  * 其余 4xx（400 参数非法 / 404 资源不存在 / 409 前置条件不满足）才是真·永久失败。
  */
-const DISCARD_STATUSES = new Set([400, 404, 409]);
+export const DISCARD_STATUSES = new Set([400, 404, 409]);
+
+export type OfflineActionType =
+  | 'checkin'
+  | 'mistake'
+  | 'harvest'
+  | 'use-item'
+  | 'buy'
+  | 'story-capture'
+  | 'mistake-review'
+  | 'confirm'
+  | 'wish';
+
+/**
+ * 把一个离线动作翻译成具体的 fetch 调用参数（url + init）。
+ * 集中在此，供 flushOfflineQueue 与 api-client（网络失败入队重放）共用，
+ * 保证「首次请求」和「离线重放」打的是同一个端点、带同一套幂等 payload。
+ *
+ * 返回 { url, init } 而不是 Request：Node/测试环境的 `new Request()` 不接受
+ * 相对 url（Invalid URL），而 flush/api-client 都用相对路径，故直接给 url+init。
+ */
+export function buildOfflineRequest(action: {
+  type: string;
+  payload: Record<string, any>;
+}): { url: string; init: RequestInit } | null {
+  const P = action.payload ?? {};
+  const json = (body: unknown): RequestInit => ({
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  switch (action.type) {
+    case 'checkin':
+      return { url: '/api/daily-practice', init: json({ answers: P.answers }) };
+    case 'mistake':
+      return { url: '/api/mistakes', init: json(P) };
+    case 'harvest':
+      return { url: '/api/castle/harvest', init: { method: 'POST' } };
+    case 'use-item':
+      return {
+        url: '/api/castle/use-item',
+        init: json({ itemKey: P.itemKey, day: P.day, subject: P.subject }),
+      };
+    case 'buy':
+      return { url: '/api/castle/buy', init: json({ itemKey: P.itemKey }) };
+    case 'story-capture':
+      return { url: '/api/story/capture', init: json({ chapterId: P.chapterId }) };
+    case 'mistake-review':
+      return { url: '/api/mistakes/review', init: json({ id: P.id, correct: P.correct }) };
+    case 'confirm':
+      return { url: '/api/castle/confirm', init: json({ day: P.day, subject: P.subject }) };
+    case 'wish':
+      // clientRef 必须随 payload 透传——首次请求与重放共用同一个 ref，
+      // 服务端 (child_id, client_ref) 唯一索引才能真正去重（migrations v23）。
+      return { url: '/api/wishes', init: json({ text: P.text, clientRef: P.clientRef }) };
+    default:
+      // 未支持的类型：交由调用方保留在队列，不冒然丢弃
+      return null;
+  }
+}
+
+export interface FlushResult {
+  flushed: number;
+  dropped: number;
+}
 
 /**
  * 重放离线队列。返回本轮同步详情：成功数与**丢弃数**。
@@ -52,11 +117,6 @@ const DISCARD_STATUSES = new Set([400, 404, 409]);
  * 实际没有，是最伤信任的失败形态（2026-10-17 补提示）。
  * 网络仍不可用时在首个失败处停止（后续动作留到下次），避免徒劳重试。
  */
-export interface FlushResult {
-  flushed: number;
-  dropped: number;
-}
-
 export async function flushOfflineQueue(): Promise<FlushResult> {
   const { queue, removeAction, incrementRetry, setLastSync } = useOfflineStore.getState();
   if (queue.length === 0) return { flushed: 0, dropped: 0 };
@@ -73,67 +133,12 @@ export async function flushOfflineQueue(): Promise<FlushResult> {
     }
 
     try {
-      let res: Response;
-      if (action.type === 'checkin') {
-        res = await fetch('/api/daily-practice', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ answers: action.payload.answers }),
-        });
-      } else if (action.type === 'mistake') {
-        res = await fetch('/api/mistakes', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(action.payload),
-        });
-      } else if (action.type === 'harvest') {
-        res = await fetch('/api/castle/harvest', { method: 'POST' });
-      } else if (action.type === 'use-item') {
-        res = await fetch('/api/castle/use-item', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            itemKey: action.payload.itemKey,
-            day: action.payload.day,
-            subject: action.payload.subject,
-          }),
-        });
-      } else if (action.type === 'buy') {
-        res = await fetch('/api/castle/buy', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ itemKey: action.payload.itemKey }),
-        });
-      } else if (action.type === 'story-capture') {
-        res = await fetch('/api/story/capture', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ chapterId: action.payload.chapterId }),
-        });
-      } else if (action.type === 'mistake-review') {
-        res = await fetch('/api/mistakes/review', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ id: action.payload.id, correct: action.payload.correct }),
-        });
-      } else if (action.type === 'confirm') {
-        res = await fetch('/api/castle/confirm', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ day: action.payload.day, subject: action.payload.subject }),
-        });
-      } else if (action.type === 'wish') {
-        // clientRef 必须随 payload 透传——首次请求与重放共用同一个 ref，
-        // 服务端 (child_id, client_ref) 唯一索引才能真正去重（migrations v23）。
-        res = await fetch('/api/wishes', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ text: action.payload.text, clientRef: action.payload.clientRef }),
-        });
-      } else {
-        // 未支持的类型：保留，跳过
+      const target = buildOfflineRequest(action);
+      if (!target) {
+        // 未支持的类型：保留，跳过（交给将来新增的分支处理）
         continue;
       }
+      const res = await fetch(target.url, target.init);
 
       if (res.ok) {
         removeAction(action.id);

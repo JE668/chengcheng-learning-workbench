@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { ClayCard } from '@/components/design-system';
 import Link from 'next/link';
 import { GuideModal } from '@/components/GuideModal';
 import { EmptyState } from '@/components/EmptyState';
@@ -15,18 +16,68 @@ import type {
 } from '@/lib/daily-practice';
 import { sfxComplete, sfxWrong, sfxCorrect } from '@/lib/sfx';
 const KIND_META: Record<string, { label: string; grad: string; icon: string; subject: string }> = {
-  pinyin: { label: '语文 · 拼音', grad: 'from-moko-pink to-moko-rose', icon: '🔤', subject: '语文' },
-  dictation: { label: '语文 · 听写', grad: 'from-moko-pink to-moko-rose', icon: '✍️', subject: '语文' },
+  pinyin: {
+    label: '语文 · 拼音',
+    grad: 'from-moko-pink to-moko-rose',
+    icon: '🔤',
+    subject: '语文',
+  },
+  dictation: {
+    label: '语文 · 听写',
+    grad: 'from-moko-pink to-moko-rose',
+    icon: '✍️',
+    subject: '语文',
+  },
   math: { label: '数学 · 口算', grad: 'from-moko-blue to-sky-400', icon: '🔢', subject: '数学' },
-  english: { label: '英语 · 听音', grad: 'from-moko-yellow to-amber-300', icon: '🔤', subject: '英语' },
-  mistake: { label: '错题重练', grad: 'from-moko-violet to-purple-400', icon: '🔁', subject: '语文' },
-  poem: { label: '语文 · 古诗', grad: 'from-moko-purple to-moko-violet', icon: '🌙', subject: '语文' },
-  'chinese-quiz': { label: '语文 · 识字', grad: 'from-moko-pink to-moko-rose', icon: '💡', subject: '语文' },
-  antonym: { label: '语文 · 反义词', grad: 'from-moko-pink to-moko-rose', icon: '🔄', subject: '语文' },
-  proverb: { label: '语文 · 谚语', grad: 'from-moko-pink to-moko-rose', icon: '📜', subject: '语文' },
-  riddle: { label: '语文 · 谜语', grad: 'from-moko-pink to-moko-rose', icon: '🧩', subject: '语文' },
+  english: {
+    label: '英语 · 听音',
+    grad: 'from-moko-yellow to-amber-300',
+    icon: '🔤',
+    subject: '英语',
+  },
+  mistake: {
+    label: '错题重练',
+    grad: 'from-moko-violet to-purple-400',
+    icon: '🔁',
+    subject: '语文',
+  },
+  poem: {
+    label: '语文 · 古诗',
+    grad: 'from-moko-purple to-moko-violet',
+    icon: '🌙',
+    subject: '语文',
+  },
+  'chinese-quiz': {
+    label: '语文 · 识字',
+    grad: 'from-moko-pink to-moko-rose',
+    icon: '💡',
+    subject: '语文',
+  },
+  antonym: {
+    label: '语文 · 反义词',
+    grad: 'from-moko-pink to-moko-rose',
+    icon: '🔄',
+    subject: '语文',
+  },
+  proverb: {
+    label: '语文 · 谚语',
+    grad: 'from-moko-pink to-moko-rose',
+    icon: '📜',
+    subject: '语文',
+  },
+  riddle: {
+    label: '语文 · 谜语',
+    grad: 'from-moko-pink to-moko-rose',
+    icon: '🧩',
+    subject: '语文',
+  },
 };
-const FALLBACK_META = { label: '今日练习', grad: 'from-moko-violet to-moko-purple', icon: '📝', subject: '语文' };
+const FALLBACK_META = {
+  label: '今日练习',
+  grad: 'from-moko-violet to-moko-purple',
+  icon: '📝',
+  subject: '语文',
+};
 
 async function autoPlay(q?: PracticeQuestion) {
   if (!q) return;
@@ -117,7 +168,8 @@ export default function DailyPracticePage() {
     for (const q of data.questions) {
       if (q.kind === 'pinyin' && q.audioText)
         items.push({ text: q.audioText, lang: 'zh', rate: toEdgeRate(0.6) });
-      else if (q.kind === 'english' && q.word) items.push({ text: q.word, lang: 'en', rate: '+0%' });
+      else if (q.kind === 'english' && q.word)
+        items.push({ text: q.word, lang: 'en', rate: '+0%' });
       else if (q.kind === 'dictation' && q.han)
         items.push({ text: q.han, lang: 'zh', rate: toEdgeRate(0.6) });
       else if (q.kind === 'mistake' && q.speakText)
@@ -156,7 +208,10 @@ export default function DailyPracticePage() {
       // 语音用 void 不阻塞 UI；playTtsEnd 是「读完再停」语义，但这里不 await——
       // 答错重选是高频交互，卡住等语音会打断手感。
       // 错题救护叙事：mistake 题答对 = 镇守萌可把捣蛋鬼送回家，答错 = 捣蛋鬼又溜回来。
-      const subject = q.kind === 'mistake' && q.subject ? q.subject : (KIND_META[q.kind] ?? FALLBACK_META).subject;
+      const subject =
+        q.kind === 'mistake' && q.subject
+          ? q.subject
+          : (KIND_META[q.kind] ?? FALLBACK_META).subject;
       const ok = optionIndex === q.answer;
       const text =
         q.kind === 'mistake'
@@ -176,7 +231,10 @@ export default function DailyPracticePage() {
       } catch {}
       const m = getMokoPraise(subject);
       setTimeout(() => {
-        void playTts(`${m.name}说：${text} ${ok ? m.sign : ''}`, 'zh', { wsRate: 0.85, preferStatic: true });
+        void playTts(`${m.name}说：${text} ${ok ? m.sign : ''}`, 'zh', {
+          wsRate: 0.85,
+          preferStatic: true,
+        });
       }, 350);
     },
     // selected 走函数式更新，无需列入依赖；q/idx 变化需重建
@@ -258,7 +316,10 @@ export default function DailyPracticePage() {
   if (offlineQueued) {
     return (
       <div className="max-w-2xl mx-auto p-6">
-        <div className="card-moko text-center p-8 bg-gradient-to-br from-moko-violet to-moko-purple text-white">
+        <ClayCard
+          theme="gradient-violet-purple"
+          className="text-center p-8 bg-gradient-to-br from-moko-violet to-moko-purple text-white"
+        >
           <div className="text-6xl mb-3">📡</div>
           <h2 className="text-3xl font-black mb-2">打卡已离线保存</h2>
           <p className="text-lg opacity-90">
@@ -272,7 +333,7 @@ export default function DailyPracticePage() {
               返回首页
             </Link>
           </div>
-        </div>
+        </ClayCard>
       </div>
     );
   }
@@ -282,7 +343,10 @@ export default function DailyPracticePage() {
   if (data?.completed && !result) {
     return (
       <div className="max-w-2xl mx-auto p-6">
-        <div className="card-moko text-center p-8 bg-gradient-to-br from-moko-gold to-moko-yellow text-white">
+        <ClayCard
+          theme="gradient-gold-yellow"
+          className="text-center p-8 bg-gradient-to-br from-moko-gold to-moko-yellow text-white"
+        >
           <div className="text-6xl mb-3">🌟</div>
           <h2 className="text-3xl font-black mb-2">今天的一练完成啦！</h2>
           <p className="text-lg opacity-90">三科打卡已自动完成，萌可们超开心～</p>
@@ -304,7 +368,7 @@ export default function DailyPracticePage() {
               去看城堡
             </Link>
           </div>
-        </div>
+        </ClayCard>
         {/* 使用时光沙漏再做一次 */}
         {hasTimeGlass && (
           <div className="mt-4 rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-violet/20 text-center">
@@ -358,7 +422,7 @@ export default function DailyPracticePage() {
       return (
         <div className="max-w-2xl mx-auto p-6">
           {/* 🎓 今日一练报告卡 */}
-          <div className="card-moko overflow-hidden">
+          <ClayCard theme="violet" className="overflow-hidden">
             {/* 头部渐变 */}
             <div className="bg-gradient-to-r from-moko-pink via-moko-rose to-moko-purple p-6 text-white text-center">
               <div className="text-5xl mb-2">🎓</div>
@@ -440,7 +504,7 @@ export default function DailyPracticePage() {
                 </div>
               )}
             </div>
-          </div>
+          </ClayCard>
           <div className="flex gap-3 justify-center mt-5">
             <Link
               href="/home"
@@ -461,7 +525,10 @@ export default function DailyPracticePage() {
     // 部分完成 → 按科展示 + 继续练习
     return (
       <div className="max-w-2xl mx-auto p-6">
-        <div className="card-moko text-center p-8 bg-gradient-to-br from-moko-gold to-moko-yellow text-white">
+        <ClayCard
+          theme="gradient-gold-yellow"
+          className="text-center p-8 bg-gradient-to-br from-moko-gold to-moko-yellow text-white"
+        >
           <div className="text-6xl mb-3">💪</div>
           <h2 className="text-3xl font-black mb-2">这一科完成啦，继续加油！</h2>
           <p className="text-lg opacity-90">每做对一科，就解锁一只萌可～把没过的也补上吧！</p>
@@ -499,7 +566,7 @@ export default function DailyPracticePage() {
               先回首页逛逛 ›
             </Link>
           </div>
-        </div>
+        </ClayCard>
       </div>
     );
   }
@@ -565,7 +632,7 @@ export default function DailyPracticePage() {
       )}
 
       {/* 题目卡片 */}
-      <div className={`card-moko p-6 bg-gradient-to-br ${meta.grad} text-white`}>
+      <ClayCard className={`p-6 bg-gradient-to-br ${meta.grad} text-white`}>
         <div className="text-center mb-4">
           {q.kind === 'pinyin' && (
             <>
@@ -710,12 +777,16 @@ export default function DailyPracticePage() {
         {/* 🧸 镇守萌可的口头禅反馈：与上面两句互补——上面是规则提示/解析，这里是伙伴情绪 */}
         {praise && (
           <MokoPraiseBanner
-            subject={q.kind === 'mistake' && q.subject ? q.subject : (KIND_META[q.kind] ?? FALLBACK_META).subject}
+            subject={
+              q.kind === 'mistake' && q.subject
+                ? q.subject
+                : (KIND_META[q.kind] ?? FALLBACK_META).subject
+            }
             ok={praise.ok}
             text={praise.text}
           />
         )}
-      </div>
+      </ClayCard>
 
       {/* 导航 */}
       <div className="flex justify-between mt-5">

@@ -16,6 +16,13 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const SRC = readFileSync(join(process.cwd(), 'src/app/(child)/story/page.tsx'), 'utf8');
+// 2026-11 技术债清理：答题反馈的**渲染**逻辑抽到了 StoryChapterCard 子组件，
+// 状态（quizWrongFor/quizRightFor）仍留在 page.tsx，并在调用处以 `=== c.id`
+// 归一化成布尔 prop 传入（per-chapter 隔离由此保证）。渲染相关断言读子组件。
+const PANEL = readFileSync(
+  join(process.cwd(), 'src/app/(child)/story/components/StoryChapterCard.tsx'),
+  'utf8'
+);
 
 describe('故事页 · 答题反馈按章节隔离', () => {
   it('不得再用单一 boolean 存答题反馈（会跨章节串味）', () => {
@@ -25,11 +32,11 @@ describe('故事页 · 答题反馈按章节隔离', () => {
   });
 
   it('「答对啦」必须以 quizRightFor 为条件，而不是只看 isQuiz', () => {
-    expect(SRC).toMatch(/open && isQuiz && quizRightFor === c\.id/);
+    expect(PANEL).toMatch(/isQuiz && quizRightFor &&/);
   });
 
-  it('答错的提示按章节限定', () => {
-    expect(SRC).toMatch(/quizWrongFor === c\.id/);
+  it('答错的提示按章节限定（调用处以 === c.id 归一化为布尔 prop）', () => {
+    expect(SRC).toMatch(/quizWrongFor=\{quizWrongFor === c\.id\}/);
   });
 
   it('收起章节时才清反馈，展开别的一集不应抹掉已有结果', () => {
