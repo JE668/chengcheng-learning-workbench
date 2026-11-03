@@ -8,7 +8,7 @@ import type { NextRequest } from 'next/server';
  * 本中间件只做一层统一拦截——未带 session cookie 的请求，页面跳 /login、API 直接 401，
  * 把「漏写鉴权」的概率降到最低，也避免出现「能进页面却 401」的不一致。
  *
- * 不做 DB 查询（middleware 跑在 Edge，也不应碰 DB），仅检查 cookie 是否存在；
+ * 不做 DB 查询（proxy 跑在 Node.js runtime，也不应碰 DB），仅检查 cookie 是否存在；
  * 伪造 cookie 会被后续 getCurrentUser 拦下，安全边界不变。
  *
  * 媒体资源（/textbooks、/raz）不做逐字节鉴权、直接公开直出：
@@ -41,10 +41,10 @@ function isPublicApi(pathname: string): boolean {
  * 而本项目全部写操作都是 POST，于是构造一个指向 `/api/castle/grant` 的跨站表单，
  * 即可借家长的登录态造币 / 发道具。
  *
- * ## 为什么放在 middleware 而不是每个 route
- * 52 个路由逐个加检查必然漏；middleware 是**唯一必经的咽喉**，一次实现覆盖全部写操作，
+ * ## 为什么放在 proxy 而不是每个 route
+ * 52 个路由逐个加检查必然漏；proxy 是**唯一必经的咽喉**，一次实现覆盖全部写操作，
  * 新增路由默认受保护（与本文件既有的鉴权思路一致）。
- * 它也天然不影响单测 —— 单测直接 import handler 调用，不经过 middleware。
+ * 它也天然不影响单测 —— 单测直接 import handler 调用，不经过 proxy。
  *
  * ## 判定顺序（任一命中即放行）
  * 1. 安全方法（GET/HEAD/OPTIONS）—— 按 HTTP 语义不改变状态，不校验。
@@ -90,14 +90,14 @@ function isCrossSiteRequest(req: NextRequest): boolean {
   }
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasSession = req.cookies.has(COOKIE_NAME);
 
   // 媒体资源（课本 PDF / RAZ 音视频）：不做登录软闸，避免跨设备/反代下黑屏。
   //
-  // ⚠️ Next 15.5 实测：静态扩展名（.mp4/.pdf 等）的请求会**跳过 middleware**
-  //（matcher 显式纳入 /raz/:path* 也拦不到），这个分支只对无扩展名的 /raz/* 生效。
+  // ⚠️ Next 15.5 实测：静态扩展名（.mp4/.pdf 等）的请求会**跳过 proxy**
+  //（matcher 显式纳入 /raz/:path* 也拦不到），这个分支只对无扆展名的 /raz/* 生效。
   // 媒体的实际供出已改由 mediaUrl 直接指向 /api/media（route handler 完全掌控响应、
   // 永不回 304、Range/206 齐全），详见 src/lib/media.ts 的注释。
   if (MEDIA_PREFIXES.some((p) => pathname.startsWith(p))) {

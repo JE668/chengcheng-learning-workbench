@@ -8,7 +8,7 @@
  * 修复：middleware 对所有非安全方法做跨站判定（Sec-Fetch-Site 优先，回退 Origin vs Host）。
  */
 import { describe, expect, it } from 'vitest';
-import { middleware } from '@/middleware';
+import { proxy } from '@/proxy';
 import type { NextRequest } from 'next/server';
 
 function makeReq(opts: {
@@ -29,9 +29,9 @@ function makeReq(opts: {
   }) as unknown as NextRequest;
 }
 
-/** middleware 需要 nextUrl / cookies，取中间件关心的最小面即可。 */
+/** proxy 需要 nextUrl / cookies，取关心的最小面即可。 */
 function withNextBits(req: NextRequest, path: string, hasSession: boolean): NextRequest {
-  const url = new URL('http://x' + path);
+  const _url = new URL('http://x' + path);
   Object.defineProperty(req, 'nextUrl', {
     value: {
       pathname: path,
@@ -52,7 +52,7 @@ function withNextBits(req: NextRequest, path: string, hasSession: boolean): Next
 function run(opts: Parameters<typeof makeReq>[0], hasSession = true) {
   const path = opts.path ?? '/api/castle/grant';
   const req = withNextBits(makeReq(opts), path, hasSession);
-  return middleware(req);
+  return proxy(req);
 }
 
 describe('CSRF · 跨站写请求必须被拒绝', () => {
