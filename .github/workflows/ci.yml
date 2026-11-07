@@ -130,19 +130,7 @@ jobs:
           NODE_ENV: production
 
       - name: 性能预算检查
-        run: |
-          # 检查 JS bundle 大小不超过预算
-          # 实际 First Load JS 约 87KB，但 .next/static/chunks 总计约 4MB（含动态导入）
-          # 预算设为 5000KB 防止失控增长，同时允许正常的代码分割
-          BUDGET_KB=5000
-          # 修正：使用 ls -l 获取文件大小，兼容 macOS 和 Linux
-          ACTUAL_KB=$(find .next/static/chunks -name "*.js" -type f -exec ls -l {} + 2>/dev/null | awk '{sum+=$5} END {print int(sum/1024)}')
-          echo "Total client chunks: ${ACTUAL_KB}KB (budget: ${BUDGET_KB}KB)"
-          if [ "$ACTUAL_KB" -gt "$BUDGET_KB" ]; then
-            echo "❌ Bundle size exceeds budget!"
-            exit 1
-          fi
-          echo "✅ Bundle size within budget"
+        run: node scripts/check-perf-budget.mjs
 
       - name: API 路由鉴权自动检查
         run: |

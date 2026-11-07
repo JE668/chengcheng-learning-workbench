@@ -116,7 +116,7 @@
 | 认证     | 自定义 session cookie（bcrypt 哈希，家长/孩子双角色，7天过期）                                                                                                                                        |
 | 状态管理 | Zustand（含离线打卡：断网时排队，重连后自动同步）                                                                                                                                                     |
 | TTS      | 四层策略：**预生成本地 MP3（零延迟）** → Web Speech 严格 → Web Speech 宽松 → Python edge-tts 持久化进程；1481 条静态内容（汉字/单词/古诗/故事全文）离线内置，动态文本批量预取 + localStorage 持久缓存 |
-| 测试     | Vitest（1081 用例 / 129 个测试文件）+ Playwright E2E（5 spec / 36 用例，已纳入 CI 门禁）+ axe-core 无障碍；ESLint 0 警告，TypeScript strict 0 错误                                                    |
+| 测试     | Vitest（1086 用例 / 131 个测试文件）+ Playwright E2E（5 spec / 36 用例，已纳入 CI 门禁）+ axe-core 无障碍；ESLint 0 警告，TypeScript strict 0 错误                                                    |
 | 部署     | GitHub Actions → Docker 多阶段构建（~550MB）→ GHCR；面向飞牛 NAS 等自托管环境                                                                                                                         |
 
 ## ✨ 特色功能
@@ -194,8 +194,9 @@ docker run -d -p 3000:3000 \
 | `pnpm lint`          | ESLint 检查                                                             |
 | `pnpm format`        | Prettier 格式化全仓                                                     |
 | `pnpm verify`        | 一键自检：`typecheck + lint + test`（新机器先跑这条确认环境正常）       |
-| `pnpm test`          | 运行单元测试（Vitest，1081 用例）                                       |
+| `pnpm test`          | 运行单元测试（Vitest，1086 用例）                                       |
 | `pnpm test:coverage` | 运行单元测试并输出覆盖率（阈值不达标会失败）                            |
+| `pnpm check:perf`    | 按真实路由检查首屏 JS 预算（先执行一次 `pnpm build`）                   |
 | `pnpm e2e`           | 运行 Playwright E2E（36 个用例；macOS 13 见下方说明）                   |
 | `pnpm seed`          | **写入**默认账号（parent / 12345678、cara / 0000）并补齐缺失的表        |
 
