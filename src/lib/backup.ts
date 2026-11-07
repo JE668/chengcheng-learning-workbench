@@ -26,7 +26,26 @@ function dbPath(): string | null {
 
 const DB_FILE = dbPath();
 const BACKUP_DIR = DB_FILE ? path.join(path.dirname(DB_FILE), 'backups') : '/data/backups';
-const KEEP_COUNT = Math.max(1, Number(process.env.BACKUP_KEEP_COUNT ?? 14));
+const DEFAULT_KEEP_COUNT = 14;
+/**
+ * 保留份数：BACKUP_KEEP_COUNT，默认 14，下限 1。
+ *
+ * 不能写成 `Math.max(1, Number(process.env.BACKUP_KEEP_COUNT ?? 14))`：
+ * 配置写成 'abc' / 空串时 Number → NaN，而 **Math.max(1, NaN) 仍是 NaN**；
+ * 更糟的是 pruneBackups 里的 `statted.slice(KEEP_COUNT)`，
+ * Array.prototype.slice(NaN) 等价 slice(0) —— 返回**整个数组**，
+ * 于是所有历史备份都被判成「超出保留份数」，一次备份就全删光。
+ * （docker run 漏带 -e BACKUP_KEEP_COUNT 或传了空值就会触发，且不影响
+ *  backupDatabase 返回 ok:true，属于「备份成功、把备份删了」的双重静默。）
+ * 因此这里显式把「非有限数」退回默认值，而不是让 NaN 流进 slice()。
+ */
+const KEEP_COUNT = (() => {
+  const raw = process.env.BACKUP_KEEP_COUNT;
+  if (raw === undefined || raw.trim() === '') return DEFAULT_KEEP_COUNT;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return DEFAULT_KEEP_COUNT;
+  return Math.max(1, Math.floor(n));
+})();
 
 export interface BackupFile {
   name: string;
@@ -54,7 +73,10 @@ function msg(e: unknown): string {
 /** 备份一次数据库到 BACKUP_DIR/local-<时间戳>.db。 */
 export async function backupDatabase(): Promise<BackupResult> {
   if (!DB_FILE) {
-    return { ok: false, error: '仅支持本地文件库（TURSO_URL=file:...）备份，云端 Turso 请用平台快照' };
+    return {
+      ok: false,
+      error: '仅支持本地文件库（TURSO_URL=file:...）备份，云端 Turso 请用平台快照',
+    };
   }
   await fs.mkdir(BACKUP_DIR, { recursive: true });
   const name = `local-${stamp()}.db`;
@@ -96,7 +118,7 @@ async function pruneBackups(): Promise<void> {
       const p = path.join(BACKUP_DIR, n);
       const st = await fs.stat(p).catch(() => null);
       return { n, p, t: st ? st.mtimeMs : 0 };
-    }),
+    })
   );
   statted.sort((a, b) => b.t - a.t);
   for (const f of statted.slice(KEEP_COUNT)) {
