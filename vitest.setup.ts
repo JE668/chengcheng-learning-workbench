@@ -73,19 +73,34 @@ Object.defineProperty(globalThis, 'matchMedia', {
   })),
 });
 
-// Mock ResizeObserver
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+// Next 的 Link 会执行 `new IntersectionObserver(...)`；这里必须是可构造的
+// class，而不是普通的 vi.fn()，否则 jsdom 里渲染 Link 会直接抛 TypeError。
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
 
-// Mock IntersectionObserver
-global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+class MockIntersectionObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() {
+    return [];
+  }
+}
+
+Object.defineProperty(globalThis, 'ResizeObserver', {
+  configurable: true,
+  writable: true,
+  value: MockResizeObserver,
+});
+
+Object.defineProperty(globalThis, 'IntersectionObserver', {
+  configurable: true,
+  writable: true,
+  value: MockIntersectionObserver,
+});
 
 // Mock speechSynthesis
 Object.defineProperty(globalThis, 'speechSynthesis', {

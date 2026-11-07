@@ -188,7 +188,6 @@ export default async function HomePage() {
             key={s.label}
             theme={s.theme}
             className="p-4 text-center hoverable cursor-pointer"
-            as={Link}
             href={s.href}
           >
             <div className="text-3xl mb-1">{s.icon}</div>
@@ -239,7 +238,7 @@ export default async function HomePage() {
               </Link>
             </div>
           ) : (
-            <ClayButton variant="gold" size="xl" fullWidth as={Link} href="/daily-practice">
+            <ClayButton variant="gold" size="xl" fullWidth href="/daily-practice">
               ▶ 开始今日一练（语文 · 数学 · 英语）
             </ClayButton>
           )}

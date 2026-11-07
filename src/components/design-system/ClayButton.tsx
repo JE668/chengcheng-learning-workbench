@@ -132,6 +132,11 @@ interface ClayButtonProps
   asChild?: boolean;
   /** 作为其他元素渲染（如 <Link>） */
   as?: React.ElementType;
+  /**
+   * 链接地址。服务端组件传给客户端组件时只能传可序列化数据，不能传
+   * `as={Link}` 这样的组件函数；传 href 后由本组件统一渲染 Next Link。
+   */
+  href?: string;
   // Allow additional attributes like href when used as Link
   [key: string]: any;
 }
@@ -150,19 +155,24 @@ const ClayButton = React.forwardRef<HTMLButtonElement, ClayButtonProps>(
       disabled,
       children,
       as,
+      href,
       ...props
     },
     ref
   ) => {
     const isLoading = loading || disabled;
-    const Comp = asChild ? Slot : (as ?? 'button');
-    const isLink = as === Link || (typeof as === 'object' && (as as any).displayName === 'Link');
+    const Comp = asChild ? Slot : (as ?? (href ? Link : 'button'));
+    const isLink =
+      Comp === Link ||
+      as === Link ||
+      (typeof as === 'object' && (as as any).displayName === 'Link');
 
     return (
       <Comp
         ref={isLink ? undefined : ref}
         className={cn(clayButtonVariants({ variant, size, fullWidth, loading }), className)}
-        disabled={isLoading || disabled}
+        href={href}
+        disabled={isLink ? undefined : isLoading || disabled}
         aria-busy={isLoading}
         aria-disabled={isLoading || disabled}
         {...props}

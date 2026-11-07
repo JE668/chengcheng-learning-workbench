@@ -18,7 +18,7 @@ import { cn } from '@/components/atomic/utils';
  *   <ClayCard theme="violet" className="p-8">内容</ClayCard>
  *   <ClayCard theme="gold" hoverable>可悬浮的卡片</ClayCard>
  *   <ClayCard theme="gradient-gold-yellow" className="p-8">渐变卡片</ClayCard>
- *   <ClayCard theme="gradient-pink-violet" as={Link} href="/path">渐变链接卡片</ClayCard>
+ *   <ClayCard theme="gradient-pink-violet" href="/path">链接卡片</ClayCard>
  */
 interface ClayCardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** 主题色：对应 globals.css 的 .clay-* 类，或渐变主题 */
@@ -43,6 +43,11 @@ interface ClayCardProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   /** 作为其他元素渲染（如 <Link>、<section>、<article>） */
   as?: React.ElementType;
+  /**
+   * 链接地址。服务端组件传给客户端组件时只能传可序列化数据，不能传
+   * `as={Link}` 这样的组件函数；传 href 后由本组件统一渲染 Next Link。
+   */
+  href?: string;
   // Allow additional attributes like href when used as Link
   [key: string]: any;
 }
@@ -65,10 +70,8 @@ const THEME_MAP: Record<NonNullable<ClayCardProps['theme']>, string> = {
 };
 
 const ClayCard = React.forwardRef<HTMLDivElement, ClayCardProps>(
-  (
-    { theme = 'violet', hoverable = false, className, as: Component = 'div', children, ...props },
-    ref
-  ) => {
+  ({ theme = 'violet', hoverable = false, className, as, href, children, ...props }, ref) => {
+    const Component = as ?? (href ? Link : 'div');
     const base = cn(
       'clay-card',
       theme ? (THEME_MAP as Record<string, string>)[theme] : undefined,
@@ -84,7 +87,7 @@ const ClayCard = React.forwardRef<HTMLDivElement, ClayCardProps>(
       (typeof Component === 'object' && (Component as any).displayName === 'Link');
 
     return (
-      <Component ref={isLink ? undefined : ref} className={base} {...props}>
+      <Component ref={isLink ? undefined : ref} className={base} href={href} {...props}>
         {children}
       </Component>
     );

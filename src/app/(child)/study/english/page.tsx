@@ -83,12 +83,7 @@ export default async function EnglishStudyPage() {
               {RAZ_ALL_WORDS.length} 个核心词汇 · {Object.keys(RAZ_VOCAB).length} 个主题分类 ·
               听音认词（绘本阅读见「课本」页）
             </p>
-            <ClayCard
-              theme="violet"
-              as={Link}
-              href="/study/english/raz-vocab"
-              className="hoverable"
-            >
+            <ClayCard theme="violet" href="/study/english/raz-vocab" className="hoverable">
               <div className="p-4 bg-gradient-to-br from-moko-purple to-moko-violet">
                 <div className="text-3xl mb-1">🔤</div>
                 <h3 className="font-black text-white">词汇练习</h3>

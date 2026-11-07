@@ -42,13 +42,7 @@ export default function GamesPage() {
       </Link>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {games.map((g) => (
-          <ClayCard
-            key={g.id}
-            theme="violet"
-            className="flex flex-col"
-            as={Link}
-            href={`/games/${g.id}`}
-          >
+          <ClayCard key={g.id} theme="violet" className="flex flex-col" href={`/games/${g.id}`}>
             <div className="flex-1 flex flex-col">
               <Image
                 src={mokoChars[g.mokoKey]?.img || '/moko/lemei.webp'}

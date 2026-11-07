@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { ALGORITHM_TOPICS } from '@/lib/algorithm/topics';
 import { MokoGroupBg } from '@/components/moko-bg';
 import { FadeIn } from '@/components/algorithm/LazyMotion';
@@ -14,7 +13,7 @@ export function AlgorithmHomeClient() {
 
       {/* 头部 */}
       <div className="mb-6 flex items-center gap-3">
-        <ClayCard as={Link} href="/home" className="text-moko-violet font-bold hover:underline">
+        <ClayCard href="/home" className="text-moko-violet font-bold hover:underline">
           ‹ 萌可小屋
         </ClayCard>
       </div>
@@ -52,7 +51,6 @@ export function AlgorithmHomeClient() {
 
       {/* 错题本入口 */}
       <ClayCard
-        as={Link}
         href="/algorithm/mistakes"
         className="block mb-6 bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-4 shadow border-2 border-orange-200 hover:border-orange-300 hover:scale-[1.01] transition"
       >
@@ -72,7 +70,6 @@ export function AlgorithmHomeClient() {
         {ALGORITHM_TOPICS.map((topic, idx) => (
           <FadeIn key={topic.id} delay={idx * 0.08} duration={0.3}>
             <ClayCard
-              as={Link}
               href={`/algorithm/${topic.id}`}
               className={`block rounded-3xl overflow-hidden shadow-lg border-2 border-white/40 bg-gradient-to-r ${topic.moko.color} text-white hover:scale-[1.02] active:scale-[0.98] transition`}
             >
