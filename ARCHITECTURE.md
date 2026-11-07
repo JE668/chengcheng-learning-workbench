@@ -134,18 +134,18 @@ src/
 
 | 层级      | 工具                                | 说明                                                                                  |
 | --------- | ----------------------------------- | ------------------------------------------------------------------------------------- |
-| 单元/集成 | Vitest（1086 用例，131 个测试文件） | 领域逻辑、算法、Store、迁移（`file::memory:` 隔离，不碰真实 DB）                      |
+| 单元/集成 | Vitest（1092 用例，132 个测试文件） | 领域逻辑、算法、Store、迁移（`file::memory:` 隔离，不碰真实 DB）                      |
 | E2E       | Playwright                          | 关键用户流程（tests/e2e/，5 个 spec）。前置条件不满足的用例**显式 skip** 而非静默通过 |
 | 可访问性  | axe-core                            | `atomic/a11y.test.tsx` + `test-axe.mjs`                                               |
 
 命令：`pnpm test` / `pnpm test:coverage` / `pnpm e2e`。生产构建后可用
-`pnpm check:perf` 检查 Next 路由级首屏 JS 预算；统计文件缺失、登记路由消失或任一
-核心路由超预算都会 fail-closed，不再只看所有 chunk 的总和。
+`pnpm check:perf` 检查 Next 路由级首屏 JS 预算；路由清单、客户端引用清单或引用的
+chunk 任一缺失，或任一核心路由超预算，都会 fail-closed，不再只看所有 chunk 的总和。
 
 <!-- 上面这些数字（用例数 / 测试文件数 / API 路由数 / 页面数）是会过期的。
-     重新统计（2026-11-08 校准：1086 用例、131 个测试文件、58 条 API 路由、43 个页面）：
+     重新统计（2026-11-08 校准：1092 用例、132 个测试文件、58 条 API 路由、43 个页面）：
        pnpm vitest run                        # 末行即用例总数
-       find src -name '*.test.ts*' | wc -l    # 测试文件数
+       find src scripts -type f \( -name '*.test.ts' -o -name '*.test.tsx' -o -name '*.test.mjs' \) | wc -l
        find src/app/api -name route.ts | wc -l
        find src/app -name page.tsx | wc -l
      改动测试或路由时顺手更新，别攒到"文档同步周"。 -->

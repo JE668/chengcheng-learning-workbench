@@ -10,8 +10,8 @@
  * 它和「用户打开页面要下载多少 JS」几乎不相关。
  *
  * 现在改成两层：
- *   1. **按路由首屏**：读 Next 构建产物 `.next/diagnostics/route-bundle-stats.json`
- *      的 `firstLoadUncompressedJsBytes`，对核心路由逐个设上限。这是真回归信号。
+ *   1. **按路由首屏**：从 Next 的 app path 清单和路由客户端引用清单中
+ *      还原该路由的 page / layout chunk，对核心路由逐个设上限。这是真回归信号。
  *   2. **总量兜底**：把所有 chunk 加总，只防「代码量失控翻倍」，阈值给得宽。
  *
  * ## 口径说明
@@ -20,41 +20,45 @@
  * 不允许悄悄变大。压缩后大小的相对变化与它基本同向。
  *
  * ## 失败策略
- * - 统计文件缺失 → 失败（fail-closed）。旧脚本在没有任何 chunk 时会算出 0 并通过，
+ * - 构建清单缺失 → 失败（fail-closed）。旧脚本在没有任何 chunk 时会算出 0 并通过，
  *   构建产物路径一变就等于门禁消失。
  * - 预算里登记的路由没出现在产物里 → 失败（路由被删/改名要显式改预算）。
+ * - 清单引用的 chunk 不存在 → 失败（不把坏产物当成 0 字节）。
  * - 任何路由超预算 → 失败，并打印超出的路由与差额。
  *
  * 基线更新：确认增长是功能需要后，改 ROUTE_BUDGET_KB / STUDY_BUDGET_KB，
  * 并在提交信息里写明原因。
+ *
+ * Next 16 的 `route-bundle-stats.json` 只在 Turbopack 构建时写入；本项目
+ * 使用 `next build --webpack`。因此这里直接读取 webpack 清单，既不会依赖
+ * 诊断文件，也不会误读上一次构建留下的陈旧统计。
  */
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { statSync } from 'node:fs';
+import { collectRouteStats, evaluateBudgets, walkJsFiles } from './perf-budget-lib.mjs';
 
 const CHUNKS_DIR = '.next/static/chunks';
-const STATS_FILE = '.next/diagnostics/route-bundle-stats.json';
 
 /**
  * 核心路由首屏预算（KB，uncompressed）。
- * 2026-11-08 实测值 + 约 5% 余量，取整：
- *   /                508
- *   /home            860
- *   /daily-practice  769
- *   /castle          870
- *   /login           549
- *   /mistakes       1493
+ * 2026-11-08 webpack 构建实测值 + 约 5% 余量，向上取整：
+ *   /                551
+ *   /home            885
+ *   /daily-practice  791
+ *   /castle          896
+ *   /login           562
+ *   /mistakes       1518
  */
 const ROUTE_BUDGET_KB = {
-  '/': 560,
-  '/home': 900,
-  '/daily-practice': 810,
-  '/castle': 915,
-  '/login': 580,
-  '/mistakes': 1570,
+  '/': 580,
+  '/home': 930,
+  '/daily-practice': 835,
+  '/castle': 945,
+  '/login': 595,
+  '/mistakes': 1595,
 };
 
-/** 学习 Hub 与三科页共用同一套大体积模块，单独留更宽的余量（实测 1664~1670）。 */
-const STUDY_BUDGET_KB = 1755;
+/** 学习 Hub 与三科页共用同一套大体积模块（实测 1697~1703）。 */
+const STUDY_BUDGET_KB = 1790;
 const STUDY_ROUTES = ['/study', '/study/chinese', '/study/math', '/study/english'];
 
 /** 所有 chunk 之和的兜底（2026-11-08 实测 5097KB）。 */
@@ -65,64 +69,37 @@ function fail(lines) {
   process.exit(1);
 }
 
-function walk(dir) {
-  if (!existsSync(dir)) return [];
-  const out = [];
-  for (const name of readdirSync(dir)) {
-    const p = join(dir, name);
-    const st = statSync(p);
-    if (st.isDirectory()) out.push(...walk(p));
-    else if (st.isFile() && p.endsWith('.js')) out.push({ path: p, bytes: st.size });
-  }
-  return out;
-}
-
-if (!existsSync(STATS_FILE)) {
-  fail([
-    `❌ 找不到 ${STATS_FILE}`,
-    '   按 fail-closed 处理：没有统计数据就不算通过预算。',
-    '   这通常意味着 Next 版本变了、产物布局变了，或 build 没跑成。',
-    '   先确认构建成功，再按新产物路径修改本脚本（不要直接删掉这项检查）。',
-  ]);
-}
-
-const chunks = walk(CHUNKS_DIR);
-if (chunks.length === 0) {
+const chunkFiles = walkJsFiles(CHUNKS_DIR);
+if (chunkFiles.length === 0) {
   fail([`❌ ${CHUNKS_DIR} 下一个 JS chunk 都没有，构建产物不完整，按 fail-closed 判失败。`]);
 }
-const totalKb = chunks.reduce((s, f) => s + f.bytes, 0) / 1024;
+const totalKb = chunkFiles.reduce((sum, filePath) => sum + statSync(filePath).size, 0) / 1024;
 
-const stats = JSON.parse(readFileSync(STATS_FILE, 'utf8'));
-if (!Array.isArray(stats)) {
+const budgets = { ...ROUTE_BUDGET_KB };
+for (const route of STUDY_ROUTES) budgets[route] = STUDY_BUDGET_KB;
+
+let result;
+try {
+  const stats = collectRouteStats({
+    distDir: '.next',
+    routes: Object.keys(budgets),
+  });
+  result = evaluateBudgets({
+    stats,
+    budgets,
+    totalKb,
+    totalBudgetKb: TOTAL_BUDGET_KB,
+  });
+} catch (error) {
   fail([
-    `❌ ${STATS_FILE} 结构变化：期望数组，实际 ${typeof stats}。`,
-    '   按 fail-closed 判失败。',
+    `❌ 性能预算无法计算：${error instanceof Error ? error.message : String(error)}`,
+    '   按 fail-closed 处理，不把缺失或损坏的构建清单当成通过。',
   ]);
 }
 
-const budgets = [
-  ...STUDY_ROUTES.map((r) => [r, STUDY_BUDGET_KB]),
-  ...Object.entries(ROUTE_BUDGET_KB),
-];
-const rows = [];
-const missing = [];
-const over = [];
-
-for (const [route, budgetKb] of budgets) {
-  const hit = stats.find((r) => r.route === route);
-  if (!hit || typeof hit.firstLoadUncompressedJsBytes !== 'number') {
-    missing.push(`${route}（预算 ${budgetKb}KB）`);
-    continue;
-  }
-  const kb = hit.firstLoadUncompressedJsBytes / 1024;
-  rows.push({ route, kb, budgetKb });
-  if (kb > budgetKb) over.push({ route, kb, budgetKb, delta: kb - budgetKb });
-}
-
-rows.sort((a, b) => b.kb - a.kb);
 console.log('核心路由首屏 JS（uncompressed）：');
 console.log('  route'.padEnd(22) + 'actual'.padStart(9) + 'budget'.padStart(9) + '  headroom');
-for (const r of rows) {
+for (const r of result.rows) {
   const mark = r.kb > r.budgetKb ? '❌' : '✅';
   console.log(
     `  ${r.route.padEnd(20)}${r.kb.toFixed(0).padStart(7)}KB${r.budgetKb.toFixed(0).padStart(7)}KB  ` +
@@ -131,24 +108,28 @@ for (const r of rows) {
 }
 console.log(
   `\n全部 chunk 合计：${totalKb.toFixed(0)}KB / ${TOTAL_BUDGET_KB}KB ` +
-    `(${chunks.length} 个文件，仅兜底，不代表首屏)`
+    `(${chunkFiles.length} 个文件，仅兜底，不代表首屏)`
 );
 
 const problems = [];
-if (missing.length) {
-  problems.push(...missing.map((m) => `❌ 预算登记的路由在产物中缺失：${m}`));
-}
-if (over.length) {
+if (result.missing.length) {
   problems.push(
-    ...over.map(
+    ...result.missing.map(
+      (item) => `❌ 预算登记的路由在产物中缺失：${item.route}（预算 ${item.budgetKb}KB）`
+    )
+  );
+}
+if (result.over.length) {
+  problems.push(
+    ...result.over.map(
       (o) =>
         `❌ ${o.route} 首屏超预算 ${o.delta.toFixed(0)}KB（${o.kb.toFixed(0)} > ${o.budgetKb}KB）`
     )
   );
 }
-if (totalKb > TOTAL_BUDGET_KB) {
+if (result.totalOverKb > 0) {
   problems.push(
-    `❌ chunk 总量超兜底预算 ${(totalKb - TOTAL_BUDGET_KB).toFixed(0)}KB` +
+    `❌ chunk 总量超兜底预算 ${result.totalOverKb.toFixed(0)}KB` +
       `（${totalKb.toFixed(0)} > ${TOTAL_BUDGET_KB}KB）`
   );
 }
