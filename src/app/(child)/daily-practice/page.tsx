@@ -1,83 +1,31 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { ClayCard } from '@/components/design-system';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { ClayCard } from '@/components/design-system';
 import { GuideModal } from '@/components/GuideModal';
-import { EmptyState } from '@/components/EmptyState';
-import { ClockFace } from '@/components/study/ClockFace';
-import { playTts, prefetchTtsBatch, toEdgeRate } from '@/lib/speak';
-import { pickMokoLine, getMokoPraise, MokoPraiseBanner } from '@/components/study/MokoPraise';
-import { useOfflineStore } from '@/lib/stores';
+import { getMokoPraise, pickMokoLine } from '@/components/study/MokoPraise';
 import type {
   PracticeDayRecord,
   PracticeQuestion,
   PracticeSubmitResult,
 } from '@/lib/daily-practice';
-import { sfxComplete, sfxWrong, sfxCorrect } from '@/lib/sfx';
-const KIND_META: Record<string, { label: string; grad: string; icon: string; subject: string }> = {
-  pinyin: {
-    label: '语文 · 拼音',
-    grad: 'from-moko-pink to-moko-rose',
-    icon: '🔤',
-    subject: '语文',
-  },
-  dictation: {
-    label: '语文 · 听写',
-    grad: 'from-moko-pink to-moko-rose',
-    icon: '✍️',
-    subject: '语文',
-  },
-  math: { label: '数学 · 口算', grad: 'from-moko-blue to-sky-400', icon: '🔢', subject: '数学' },
-  english: {
-    label: '英语 · 听音',
-    grad: 'from-moko-yellow to-amber-300',
-    icon: '🔤',
-    subject: '英语',
-  },
-  mistake: {
-    label: '错题重练',
-    grad: 'from-moko-violet to-purple-400',
-    icon: '🔁',
-    subject: '语文',
-  },
-  poem: {
-    label: '语文 · 古诗',
-    grad: 'from-moko-purple to-moko-violet',
-    icon: '🌙',
-    subject: '语文',
-  },
-  'chinese-quiz': {
-    label: '语文 · 识字',
-    grad: 'from-moko-pink to-moko-rose',
-    icon: '💡',
-    subject: '语文',
-  },
-  antonym: {
-    label: '语文 · 反义词',
-    grad: 'from-moko-pink to-moko-rose',
-    icon: '🔄',
-    subject: '语文',
-  },
-  proverb: {
-    label: '语文 · 谚语',
-    grad: 'from-moko-pink to-moko-rose',
-    icon: '📜',
-    subject: '语文',
-  },
-  riddle: {
-    label: '语文 · 谜语',
-    grad: 'from-moko-pink to-moko-rose',
-    icon: '🧩',
-    subject: '语文',
-  },
-};
-const FALLBACK_META = {
-  label: '今日练习',
-  grad: 'from-moko-violet to-moko-purple',
-  icon: '📝',
-  subject: '语文',
-};
+import { sfxComplete, sfxCorrect, sfxWrong } from '@/lib/sfx';
+import { playTts, prefetchTtsBatch, toEdgeRate } from '@/lib/speak';
+import { useOfflineStore } from '@/lib/stores';
+import { AnswerOptions, type Praise } from './components/AnswerOptions';
+import { CheckInSubmit } from './components/CheckInSubmit';
+import { PracticeCompleted } from './components/PracticeCompleted';
+import { getQuestionMeta, getQuestionSubject } from './components/practice-meta';
+import { PracticeProgress } from './components/PracticeProgress';
+import { PracticeResult } from './components/PracticeResult';
+import {
+  PracticeEmpty,
+  PracticeLoadError,
+  PracticeLoading,
+  PracticeOfflineQueued,
+} from './components/PracticeStates';
+import { QuestionPrompt } from './components/QuestionPrompt';
 
 async function autoPlay(q?: PracticeQuestion) {
   if (!q) return;
@@ -102,41 +50,33 @@ export default function DailyPracticePage() {
   const [offlineQueued, setOfflineQueued] = useState(false);
   // 时光沙漏：是否拥有（已完成态下显示「再做一次」按钮用）
   const [hasTimeGlass, setHasTimeGlass] = useState(false);
-  /** 加载失败的原因。与「今天没有练习」必须区分开，见下方 load() 注释。 */
+  /** 加载失败的原因。与「今天没有练习」必须区分开不只显示空状态。 */
   const [loadError, setLoadError] = useState<string | null>(null);
   /**
-   * 🧸 镇守萌可的答题反馈（2026-10-18 结合度深化）：
+   * 🧸 镇守萌可的答题反馈：
    * 当前题答对/答错时由三科镇守萌可（爱心/正正/唱唱）出口头禅。
    * 文案与语音取自同一句（pickMokoLine），保证「听到的=看到的」。
-   * 重选/切题时清掉，横幅只活在答题反馈那一瞬。
    */
-  const [praise, setPraise] = useState<{ ok: boolean; text: string } | null>(null);
+  const [praise, setPraise] = useState<Praise | null>(null);
 
   /**
    * 拉取今日练习。
    *
-   * ⚠️ 这里原本是 `try { fetch; setData } finally { setLoading(false) }` —— **没有 catch**，
-   * 也没有校验响应。后果是：
-   *   · 请求失败 / 返回 {error} / JSON 解析失败 → data 保持 null
-   *   · 渲染时 `q` 为 undefined → 落到下面「今天暂时没有练习哦～」的空状态
-   * 于是**接口出错被伪装成「今天本来就没题」**：孩子以为今天不用练，家长也看不出异常；
-   * e2e 里则表现为「找不到攻略按钮」这种看不出真因的失败（实测 CI 上就是这样，
-   * 而且三次重试全挂 —— 因为状态是持久的，重试不会自愈）。
-   *
-   * 现在把失败单独暴露出来，并给一个「重试」入口。
+   * 请求失败、返回 error 或 JSON 形状不对时必须进入 loadError，
+   * 不能伪装成「今天本来就没有题」。
    */
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
-      const r = await fetch('/api/daily-practice');
-      const j = await r.json().catch(() => null);
-      if (!r.ok || !j || !Array.isArray(j.questions)) {
-        setLoadError(j?.error || `题目加载失败（HTTP ${r.status}）`);
+      const response = await fetch('/api/daily-practice');
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload || !Array.isArray(payload.questions)) {
+        setLoadError(payload?.error || `题目加载失败（HTTP ${response.status}）`);
         return;
       }
-      setData(j);
-      setSelected(new Array(j.questions.length).fill(-1));
+      setData(payload);
+      setSelected(new Array(payload.questions.length).fill(-1));
     } catch {
       setLoadError('网络好像走神了，请稍后再试');
     } finally {
@@ -151,29 +91,24 @@ export default function DailyPracticePage() {
   const q: PracticeQuestion | undefined = data?.questions[idx];
 
   // 切到新题时自动朗读（拼音/英语），不点也能听到。
-  // 但已完成时不要朗读（避免在"已完成"弹窗后面偷偷播放语音）
+  // 但已完成时不要朗读，避免在「已完成」页面后面偷偷播放语音。
   useEffect(() => {
     if (q && !data?.completed && !result) autoPlay(q);
   }, [q, data?.completed, result]);
 
-  // 🚀 TTS 批量预取（2026-10-18 B4 升级 B1 的逐条预取）
-  // 静态内容（汉字/单词/诗句）已被第 0 层本地文件接管（零延迟），
-  // 这里只服务**动态文本**——与 autoPlay 的朗读分支同口径，只预取
-  // 会读出来的东西。一次 /api/tts/batch 把整轮全部打包，替代逐条
-  // /api/tts 的 N 次往返（HTTP/1.1 并发上限 6 会排队）。
-  // data 变化才重跑（一轮一次性触发），idx 变化不再逐条追预取。
+  // TTS 批量预取：只覆盖与 autoPlay 同口径、会被朗读的动态文本。
   useEffect(() => {
     if (!data || data.completed || result) return;
     const items: Array<{ text: string; lang: 'zh' | 'en'; rate?: string }> = [];
-    for (const q of data.questions) {
-      if (q.kind === 'pinyin' && q.audioText)
-        items.push({ text: q.audioText, lang: 'zh', rate: toEdgeRate(0.6) });
-      else if (q.kind === 'english' && q.word)
-        items.push({ text: q.word, lang: 'en', rate: '+0%' });
-      else if (q.kind === 'dictation' && q.han)
-        items.push({ text: q.han, lang: 'zh', rate: toEdgeRate(0.6) });
-      else if (q.kind === 'mistake' && q.speakText)
-        items.push({ text: q.speakText, lang: 'zh', rate: toEdgeRate(0.7) });
+    for (const question of data.questions) {
+      if (question.kind === 'pinyin' && question.audioText)
+        items.push({ text: question.audioText, lang: 'zh', rate: toEdgeRate(0.6) });
+      else if (question.kind === 'english' && question.word)
+        items.push({ text: question.word, lang: 'en', rate: '+0%' });
+      else if (question.kind === 'dictation' && question.han)
+        items.push({ text: question.han, lang: 'zh', rate: toEdgeRate(0.6) });
+      else if (question.kind === 'mistake' && question.speakText)
+        items.push({ text: question.speakText, lang: 'zh', rate: toEdgeRate(0.7) });
     }
     prefetchTtsBatch(items);
   }, [data, result]);
@@ -182,17 +117,19 @@ export default function DailyPracticePage() {
   useEffect(() => {
     (async () => {
       try {
-        const r = await fetch('/api/castle/state');
-        const j = await r.json();
-        setHasTimeGlass(Number(j.inventory?.timeglass ?? 0) > 0);
+        const response = await fetch('/api/castle/state');
+        const payload = await response.json();
+        setHasTimeGlass(Number(payload.inventory?.timeglass ?? 0) > 0);
       } catch {
-        /* */
+        /* 城堡状态不可用时不影响每日一练主流程 */
       }
     })();
   }, []);
 
   const allAnswered =
-    !!data && selected.length === data.questions.length && selected.every((s) => s !== -1);
+    !!data &&
+    selected.length === data.questions.length &&
+    selected.every((answer) => answer !== -1);
 
   const choose = useCallback(
     (optionIndex: number) => {
@@ -204,14 +141,8 @@ export default function DailyPracticePage() {
         next[idx] = optionIndex;
         return next;
       });
-      // 🧸 镇守萌可出口头禅：文案先取，横幅与语音用同一句（听到的=看到的）。
-      // 语音用 void 不阻塞 UI；playTtsEnd 是「读完再停」语义，但这里不 await——
-      // 答错重选是高频交互，卡住等语音会打断手感。
-      // 错题救护叙事：mistake 题答对 = 镇守萌可把捣蛋鬼送回家，答错 = 捣蛋鬼又溜回来。
-      const subject =
-        q.kind === 'mistake' && q.subject
-          ? q.subject
-          : (KIND_META[q.kind] ?? FALLBACK_META).subject;
+      // 文案先取，横幅与语音用同一句（听到的=看到的）。
+      const subject = getQuestionSubject(q);
       const ok = optionIndex === q.answer;
       const text =
         q.kind === 'mistake'
@@ -220,9 +151,7 @@ export default function DailyPracticePage() {
             : '哎呀，捣蛋萌可又溜回来了！再想一想，把它捉住！'
           : pickMokoLine(subject, ok);
       setPraise({ ok, text });
-      // 🚀 B2 叠音治理：答题瞬间 SFX 先响（<50ms 的即时听觉反馈），萌可
-      // 台词延迟 350ms 再上——避免「叮咚 + 说话」糊成一团。错题重选时
-      // SFX 尤其重要（孩子要立刻知道错了），台词晚一拍反而是节奏感。
+      // 答题瞬间 SFX 先响；萌可台词稍后再说，避免两路音频叠在一起。
       try {
         if (ok) sfxCorrect();
         else sfxWrong();
@@ -243,12 +172,14 @@ export default function DailyPracticePage() {
 
   const retry = useCallback(() => {
     if (!data || !result) return;
-    setPraise(null); // 重练清掉上一轮的萌可气泡
-    // 已完成的科自动填对答案（锁定），只清空没过、需要重练的科
+    setPraise(null);
+    // 已完成的科自动填对答案（锁定），只清空没过、需要重练的科。
     setSelected(
-      data.questions.map((qq) => {
-        const st = result.subjects.find((x) => x.subject === qq.subject)?.status;
-        return st === 'failed' ? -1 : qq.answer;
+      data.questions.map((question) => {
+        const status = result.subjects.find(
+          (subject) => subject.subject === question.subject
+        )?.status;
+        return status === 'failed' ? -1 : question.answer;
       })
     );
     setResult(null);
@@ -258,340 +189,76 @@ export default function DailyPracticePage() {
     if (!allAnswered) return;
     setSubmitting(true);
     try {
-      const r = await fetch('/api/daily-practice', {
+      const response = await fetch('/api/daily-practice', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ answers: selected }),
       });
-      const j = await r.json();
-      setResult(j);
-      // 🔊 音效：三科全完成 → 欢快庆祝；有未通过科目 → 温和提示
+      const payload = await response.json();
+      setResult(payload);
       try {
-        if (j?.completed) sfxComplete();
+        if (payload?.completed) sfxComplete();
         else sfxWrong();
       } catch {
         /* 忽略音效异常 */
       }
     } catch {
       // 离线/网络异常 → 本地暂存打卡。服务端提交是幂等的，联网后 OfflineSync 重放不会重复发奖。
-      useOfflineStore.getState().addAction({ type: 'checkin', payload: { answers: selected } });
+      useOfflineStore.getState().addAction({
+        type: 'checkin',
+        payload: { answers: selected },
+      });
       setOfflineQueued(true);
     } finally {
       setSubmitting(false);
     }
   }, [allAnswered, selected]);
 
-  if (loading) {
-    return (
-      <div className="max-w-2xl mx-auto p-10 flex flex-col items-center gap-3 text-moko-violet font-bold">
-        <span className="moko-loader">
-          <span></span>
-          <span></span>
-          <span></span>
-        </span>
-        <span>萌可正在准备今天的练习…</span>
-      </div>
-    );
-  }
+  const resetWithTimeGlass = useCallback(async () => {
+    const response = await fetch('/api/daily-practice/reset', { method: 'POST' });
+    const payload = await response.json();
+    if (!payload.ok) {
+      alert(payload.message || '操作失败');
+      return;
+    }
 
-  // ⚠️ 必须排在「今天没有练习」空状态**之前**：否则接口出错会伪装成「今天本来就没题」，
-  // 孩子以为不用练、家长看不出异常，e2e 也只得到「找不到元素」这种看不出真因的失败。
+    setLoading(true);
+    const refreshed = await fetch('/api/daily-practice');
+    const nextData = await refreshed.json();
+    setData(nextData);
+    setSelected(new Array(nextData.questions?.length ?? 0).fill(-1));
+    setLoading(false);
+    setHasTimeGlass(false);
+  }, []);
+
+  if (loading) return <PracticeLoading />;
+
   if (loadError) {
-    return (
-      <div className="max-w-2xl mx-auto p-10">
-        <EmptyState emoji="😵" title="题目没能加载出来" desc={loadError} />
-        <div className="text-center mt-6">
-          <button
-            onClick={() => void load()}
-            className="px-6 py-3 rounded-full bg-moko-pink text-white font-bold clay-btn clay-theme clay-pink transition"
-          >
-            🔄 重试
-          </button>
-        </div>
-      </div>
-    );
+    return <PracticeLoadError message={loadError} onRetry={() => void load()} />;
   }
 
-  // 离线暂存：打卡已安全保存，联网后自动提交
-  if (offlineQueued) {
-    return (
-      <div className="max-w-2xl mx-auto p-6">
-        <ClayCard
-          theme="gradient-violet-purple"
-          className="text-center p-8 bg-gradient-to-br from-moko-violet to-moko-purple text-white"
-        >
-          <div className="text-6xl mb-3">📡</div>
-          <h2 className="text-3xl font-black mb-2">打卡已离线保存</h2>
-          <p className="text-lg opacity-90">
-            现在是离线状态，你的打卡已安全保存在本机，联网后会自动提交、不影响连续天数～
-          </p>
-          <div className="flex gap-3 justify-center mt-6">
-            <Link
-              href="/home"
-              className="px-6 py-3 rounded-full bg-white text-moko-violet font-black"
-            >
-              返回首页
-            </Link>
-          </div>
-        </ClayCard>
-      </div>
-    );
-  }
-
-  // 已完成（当天）
+  if (offlineQueued) return <PracticeOfflineQueued />;
 
   if (data?.completed && !result) {
     return (
-      <div className="max-w-2xl mx-auto p-6">
-        <ClayCard
-          theme="gradient-gold-yellow"
-          className="text-center p-8 bg-gradient-to-br from-moko-gold to-moko-yellow text-white"
-        >
-          <div className="text-6xl mb-3">🌟</div>
-          <h2 className="text-3xl font-black mb-2">今天的一练完成啦！</h2>
-          <p className="text-lg opacity-90">三科打卡已自动完成，萌可们超开心～</p>
-          <p className="mt-4 text-sm">
-            已连续完成 <b className="text-xl">{data.practiceStreak}</b> 天 · 再坚持{' '}
-            <b>{data.nextMilestone}</b> 天解锁新萌可 🧸
-          </p>
-          <div className="flex gap-3 justify-center mt-6">
-            <Link
-              href="/home"
-              className="px-6 py-3 rounded-full bg-white text-moko-violet font-black"
-            >
-              返回首页
-            </Link>
-            <Link
-              href="/castle"
-              className="px-6 py-3 rounded-full bg-moko-rose text-white font-black"
-            >
-              去看城堡
-            </Link>
-          </div>
-        </ClayCard>
-        {/* 使用时光沙漏再做一次 */}
-        {hasTimeGlass && (
-          <div className="mt-4 rounded-2xl p-4 bg-white shadow-lg border-2 border-moko-violet/20 text-center">
-            <div className="text-4xl mb-2">⏳</div>
-            <p className="text-sm text-gray-600 mb-3">
-              你有时光沙漏！可以用它再做一次今天的每日一练（不影响已得的奖励）
-            </p>
-            <button
-              onClick={async () => {
-                const r = await fetch('/api/daily-practice/reset', { method: 'POST' });
-                const j = await r.json();
-                if (j.ok) {
-                  // 重新拉取每日一练数据
-                  setLoading(true);
-                  const r2 = await fetch('/api/daily-practice');
-                  const d = await r2.json();
-                  setData(d);
-                  setSelected(new Array(d.questions?.length ?? 0).fill(-1));
-                  setLoading(false);
-                  setHasTimeGlass(false);
-                } else {
-                  alert(j.message || '操作失败');
-                }
-              }}
-              className="px-6 py-2.5 rounded-full bg-gradient-to-r from-moko-violet to-moko-purple text-white font-black text-sm clay-btn clay-theme clay-violet transition"
-            >
-              ⏳ 使用时光沙漏再做一次
-            </button>
-          </div>
-        )}
-        <div className="mt-4 text-center">
-          <GuideModal
-            trigger={
-              <span className="inline-block px-4 py-2 rounded-full bg-white shadow text-moko-violet font-bold cursor-pointer">
-                📖 查看攻略说明
-              </span>
-            }
-          />
-        </div>
-      </div>
+      <PracticeCompleted
+        data={data}
+        hasTimeGlass={hasTimeGlass}
+        onUseTimeGlass={resetWithTimeGlass}
+      />
     );
   }
 
-  // 提交结果弹窗
-  if (result) {
-    // 三科全部完成 → 庆祝
-    if (result.completed) {
-      const rw = result.rewards;
-      const today = new Date();
-      const dateLabel = `${today.getMonth() + 1}月${today.getDate()}日`;
-      return (
-        <div className="max-w-2xl mx-auto p-6">
-          {/* 🎓 今日一练报告卡 */}
-          <ClayCard theme="violet" className="overflow-hidden">
-            {/* 头部渐变 */}
-            <div className="bg-gradient-to-r from-moko-pink via-moko-rose to-moko-purple p-6 text-white text-center">
-              <div className="text-5xl mb-2">🎓</div>
-              <h2 className="text-3xl font-black">今日一练报告卡</h2>
-              <p className="text-sm opacity-80 mt-1">{dateLabel} · 全部完成</p>
-            </div>
-            {/* 各科成绩 */}
-            <div className="p-5">
-              <div className="space-y-3">
-                {result.subjects.map((s) => (
-                  <div key={s.subject} className="flex items-center gap-3">
-                    <span className="w-16 text-sm font-bold text-gray-700">{s.subject}</span>
-                    <div className="flex-1 h-5 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className={
-                          'h-full rounded-full transition-all ' +
-                          (s.status === 'passed' || s.status === 'already'
-                            ? 'bg-moko-mint'
-                            : 'bg-moko-yellow')
-                        }
-                        style={{
-                          width: ((s.correct ?? s.total) / Math.max(1, s.total)) * 100 + '%',
-                        }}
-                      />
-                    </div>
-                    <span className="w-20 text-right text-sm font-bold">
-                      {s.status === 'passed' || s.status === 'already'
-                        ? '✅ 通过'
-                        : `${s.correct ?? 0}/${s.total}`}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              {/* 奖励总结 */}
-              <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-                {rw && (
-                  <>
-                    <div className="bg-moko-yellow/10 rounded-2xl p-3">
-                      <div className="text-2xl">☀️</div>
-                      <div className="text-sm font-bold text-moko-gold">+{rw.sunlight}</div>
-                      <div className="text-[11px] text-gray-400">阳光能量</div>
-                    </div>
-                    <div className="bg-moko-pink/10 rounded-2xl p-3">
-                      <div className="text-2xl">🧸</div>
-                      <div className="text-sm font-bold text-moko-rose">+{rw.mokos.length}</div>
-                      <div className="text-[11px] text-gray-400">召唤萌可</div>
-                    </div>
-                    <div className="bg-moko-violet/10 rounded-2xl p-3">
-                      <div className="text-2xl">🔥</div>
-                      <div className="text-sm font-bold text-moko-violet">
-                        {result.practiceStreak}天
-                      </div>
-                      <div className="text-[11px] text-gray-400">连续打卡</div>
-                    </div>
-                  </>
-                )}
-              </div>
-              {rw?.mokos && rw.mokos.length > 0 && (
-                <div className="mt-3 bg-moko-pink/10 rounded-2xl p-3 text-center">
-                  <span className="text-sm text-gray-600">🧸 今日召唤：</span>
-                  <span className="text-sm font-bold text-moko-rose">{rw.mokos.join('、')}</span>
-                </div>
-              )}
-              {(result.tickets ?? 0) > 0 && (
-                <div className="mt-2 bg-moko-mint/10 rounded-2xl p-3 text-center">
-                  <span className="text-sm">
-                    🎟️ 捕捉券 +{result.tickets}（去「萌可闯关」捉萌可吧！）
-                  </span>
-                </div>
-              )}
-              {result.milestone && (
-                <div className="mt-3 bg-moko-gold/20 rounded-2xl p-4 text-center">
-                  <div className="text-2xl font-black text-moko-gold">
-                    🌟 连续 {result.practiceStreak} 天达成！
-                  </div>
-                  <div className="text-sm mt-1">
-                    解锁新萌可「{result.milestone.mokoName}」+ 10 ⭐ 星星币
-                  </div>
-                </div>
-              )}
-            </div>
-          </ClayCard>
-          <div className="flex gap-3 justify-center mt-5">
-            <Link
-              href="/home"
-              className="px-6 py-3 rounded-full bg-white text-moko-rose font-black shadow border-2 border-moko-rose/20"
-            >
-              返回首页
-            </Link>
-            <Link
-              href="/castle"
-              className="px-6 py-3 rounded-full bg-moko-gold text-white font-black shadow"
-            >
-              去看城堡
-            </Link>
-          </div>
-        </div>
-      );
-    }
-    // 部分完成 → 按科展示 + 继续练习
-    return (
-      <div className="max-w-2xl mx-auto p-6">
-        <ClayCard
-          theme="gradient-gold-yellow"
-          className="text-center p-8 bg-gradient-to-br from-moko-gold to-moko-yellow text-white"
-        >
-          <div className="text-6xl mb-3">💪</div>
-          <h2 className="text-3xl font-black mb-2">这一科完成啦，继续加油！</h2>
-          <p className="text-lg opacity-90">每做对一科，就解锁一只萌可～把没过的也补上吧！</p>
-          <div className="mt-5 space-y-2 text-left bg-white/20 rounded-2xl p-4">
-            {result.subjects.map((s) => (
-              <div key={s.subject} className="flex items-center justify-between">
-                <span className="font-bold">{s.subject}</span>
-                <span>
-                  {s.status === 'passed' || s.status === 'already'
-                    ? '✅ 已完成'
-                    : `❌ ${s.correct}/${s.total} 再练一次`}
-                </span>
-              </div>
-            ))}
-          </div>
-          {result.rewards && (
-            <div className="mt-3 text-left bg-white/20 rounded-2xl p-4 space-y-1">
-              <div>☀️ 阳光能量 +{result.rewards.sunlight}</div>
-              <div>🧸 召唤 {result.rewards.mokos.join('、')}</div>
-            </div>
-          )}
-          {(result.tickets ?? 0) > 0 && (
-            <div className="mt-3 text-left bg-white/20 rounded-2xl p-4 space-y-1">
-              <div>🎟️ 捕捉券 +{result.tickets}（去「萌可闯关」读故事、捉萌可吧！）</div>
-            </div>
-          )}
-          <button
-            onClick={retry}
-            className="mt-6 px-8 py-3 rounded-full bg-white text-moko-rose font-black hover:scale-105 active:scale-95 transition"
-          >
-            继续练习没完成的科目
-          </button>
-          <div className="mt-3">
-            <Link href="/home" className="text-sm font-bold text-white/90 underline">
-              先回首页逛逛 ›
-            </Link>
-          </div>
-        </ClayCard>
-      </div>
-    );
-  }
+  if (result) return <PracticeResult result={result} onRetry={retry} />;
 
-  if (!q) {
-    return (
-      <div className="max-w-2xl mx-auto p-10">
-        <EmptyState
-          emoji="🌙"
-          title="今天暂时没有练习哦～"
-          desc="去「萌可剧情」读个故事，或到城堡看看萌可吧！"
-        />
-      </div>
-    );
-  }
+  if (!q) return <PracticeEmpty />;
 
-  const meta = KIND_META[q.kind] ?? FALLBACK_META;
-  const isCorrect = selected[idx] === q.answer;
-  const isWrong = selected[idx] !== -1 && selected[idx] !== q.answer;
-  // 错题重练的选项可能是整句话，太长就改成一行一个、字号调小
-  const longOpts = q.options.some((o) => o.length > 6);
+  const meta = getQuestionMeta(q);
+  const total = data?.questions.length ?? 1;
+  const currentAnswered = selected[idx] !== undefined && selected[idx] !== -1;
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      {/* 头部 */}
       <div className="flex items-center justify-between mb-4">
         <Link href="/home" className="text-sm text-gray-500">
           ‹ 返回
@@ -603,224 +270,40 @@ export default function DailyPracticePage() {
         />
       </div>
 
-      {/* 进度 */}
-      <div className="mb-3">
-        <div className="flex justify-between text-sm text-gray-500 mb-1">
-          <span className={`font-bold bg-gradient-to-r ${meta.grad} bg-clip-text text-transparent`}>
-            {meta.icon} {meta.label}
-          </span>
-          <span>
-            第 {idx + 1} / {data?.questions.length} 题
-          </span>
-        </div>
-        <div className="h-3 rounded-full bg-gray-100 overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-moko-pink to-moko-rose transition-all"
-            style={{ width: `${((idx + 1) / (data?.questions.length ?? 1)) * 100}%` }}
-          />
-        </div>
-        {/* 通过门槛提示 */}
-        <p className="text-xs text-gray-400 mt-1 text-center">
-          💡 答对 80% 以上就算通过（允许错 1~2 题），做错可以重选哦～
-        </p>
-      </div>
+      <PracticeProgress meta={meta} index={idx} total={total} />
 
-      {data && 'textbookHint' in data && data.textbookHint && (
+      {data?.textbookHint && (
         <div className="mb-3 rounded-2xl bg-gradient-to-r from-moko-yellow/10 to-moko-orange/10 border border-moko-yellow/20 px-4 py-2 text-sm text-gray-600 text-center">
           {data.textbookHint}
         </div>
       )}
 
-      {/* 题目卡片 */}
       <ClayCard className={`p-6 bg-gradient-to-br ${meta.grad} text-white`}>
-        <div className="text-center mb-4">
-          {q.kind === 'pinyin' && (
-            <>
-              <div className="text-6xl font-black mb-2">{q.han}</div>
-              <button
-                onClick={() => playTts(q.audioText, 'zh', { wsRate: 0.6, pauseMs: 300 })}
-                className="text-sm bg-white/30 rounded-full px-3 py-1"
-              >
-                🔊 听一听
-              </button>
-            </>
-          )}
-          {q.kind === 'dictation' && (
-            <>
-              <div className="text-6xl font-black mb-2">✍️</div>
-              <button
-                onClick={() => playTts(q.han, 'zh', { wsRate: 0.6, pauseMs: 300 })}
-                className="text-sm bg-white/30 rounded-full px-4 py-1.5"
-              >
-                🔊 听写 · 再听一遍
-              </button>
-            </>
-          )}
-          {/* 识字 / 反义词 / 谚语 / 谜语：题干就是问题本身，头部只放图标；
-              刻意**不放朗读按钮**，因为这几类的 han 是答案或无需朗读。 */}
-          {(q.kind === 'chinese-quiz' ||
-            q.kind === 'antonym' ||
-            q.kind === 'proverb' ||
-            q.kind === 'riddle') && (
-            <div className="text-6xl font-black mb-2">
-              {q.kind === 'chinese-quiz'
-                ? '💡'
-                : q.kind === 'antonym'
-                  ? '🔄'
-                  : q.kind === 'proverb'
-                    ? '📜'
-                    : '🧩'}
-            </div>
-          )}
-          {q.kind === 'math' && (
-            <>
-              {q.clockHour !== undefined && (
-                <ClockFace hour={q.clockHour} half={q.clockHalf ?? false} />
-              )}
-              {/* 序数题：显示 emoji 行（不加序号，让孩子自己数） */}
-              {q.emojiRow && (
-                <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-                  {q.emojiRow.map((e, i) => (
-                    <span
-                      key={i}
-                      className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white/20 text-3xl shadow-sm"
-                    >
-                      {e}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <div className="text-5xl font-black">{q.prompt}</div>
-            </>
-          )}
-          {q.kind === 'poem' && (
-            <div className="text-2xl font-black leading-relaxed">{q.prompt}</div>
-          )}
-          {q.kind === 'english' && (
-            <>
-              <div className="text-6xl mb-2">{q.emoji}</div>
-              {q.subtype !== 'initial' && q.cn && (
-                <div className="text-sm opacity-80 mb-1">{q.cn}</div>
-              )}
-              <div className="flex gap-2 justify-center">
-                <button
-                  onClick={() => playTts(q.word, 'en')}
-                  className="text-sm bg-white/30 rounded-full px-3 py-1"
-                >
-                  🔊 听一听
-                </button>
-                <button
-                  onClick={() => playTts(q.word, 'en')}
-                  className="text-sm bg-moko-pink/30 rounded-full px-3 py-1"
-                >
-                  🎙️ 跟读
-                </button>
-              </div>
-            </>
-          )}
-          {q.kind === 'mistake' && (
-            <>
-              <div className="text-4xl mb-2">😈</div>
-              <div className="inline-block text-xs bg-white/25 px-3 py-1 rounded-full mb-2">
-                {q.origin} · 捣蛋萌可把这个知识点弄乱了，把它送回家！
-              </div>
-              <div className="text-2xl font-black leading-snug">{q.prompt}</div>
-              {q.speakText && (
-                <button
-                  onClick={() => playTts(q.speakText as string, 'zh', { wsRate: 0.7 })}
-                  className="mt-2 text-sm bg-white/30 rounded-full px-3 py-1"
-                >
-                  🔊 听一听
-                </button>
-              )}
-            </>
-          )}
-          {q.kind !== 'mistake' && <p className="text-sm opacity-90 mt-3">{q.prompt}</p>}
-        </div>
-
-        {/* 选项 */}
-        <div className={`grid ${longOpts ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
-          {q.options.map((opt, i) => {
-            const correct = i === q.answer;
-            const picked = selected[idx] === i;
-            let cls = 'bg-white/90 text-moko-violet hover:scale-105';
-            if (picked && correct)
-              cls = 'bg-white text-green-600 font-black scale-105 ring-4 ring-green-300';
-            else if (picked && !correct)
-              cls = 'bg-red-100 text-red-600 font-black ring-4 ring-red-300';
-            else if (isCorrect && correct)
-              cls = 'bg-white text-green-600 font-black ring-4 ring-green-300';
-            return (
-              <button
-                key={i}
-                onClick={() => choose(i)}
-                disabled={isCorrect}
-                className={`py-4 px-3 rounded-2xl clay-card ${longOpts ? 'text-base leading-snug' : 'text-2xl'} font-black transition transform ${cls}`}
-              >
-                {opt}
-              </button>
-            );
-          })}
-        </div>
-
-        {isWrong && (
-          <p className="text-center text-sm mt-3 bg-moko-yellow/80 text-moko-violet rounded-full py-1">
-            没关系，再想想，点一下正确的选项吧～答错可以重选哦！
-          </p>
-        )}
-        {isCorrect && (
-          <p className="text-center text-sm mt-3 bg-green-500/80 rounded-full py-1">
-            答对啦！{q.explain}
-          </p>
-        )}
-
-        {/* 🧸 镇守萌可的口头禅反馈：与上面两句互补——上面是规则提示/解析，这里是伙伴情绪 */}
-        {praise && (
-          <MokoPraiseBanner
-            subject={
-              q.kind === 'mistake' && q.subject
-                ? q.subject
-                : (KIND_META[q.kind] ?? FALLBACK_META).subject
-            }
-            ok={praise.ok}
-            text={praise.text}
-          />
-        )}
+        <QuestionPrompt question={q} />
+        <AnswerOptions
+          question={q}
+          selectedIndex={selected[idx]}
+          praise={praise}
+          onChoose={choose}
+        />
       </ClayCard>
 
-      {/* 导航 */}
-      <div className="flex justify-between mt-5">
-        <button
-          onClick={() => {
-            setPraise(null); // 切题清掉上一题的萌可气泡
-            setIdx((i) => Math.max(0, i - 1));
-          }}
-          disabled={idx === 0}
-          className="px-5 py-3 rounded-full bg-white shadow text-moko-violet font-bold disabled:opacity-30"
-        >
-          ‹ 上一题
-        </button>
-        {idx < (data?.questions.length ?? 1) - 1 ? (
-          <button
-            onClick={() => {
-              setPraise(null);
-              setIdx((i) => i + 1);
-            }}
-            disabled={selected[idx] === -1}
-            className="px-6 py-3 rounded-full bg-gradient-to-r from-moko-pink to-moko-rose text-white font-black disabled:opacity-40"
-          >
-            下一题 ›
-          </button>
-        ) : (
-          <button
-            onClick={submit}
-            disabled={!allAnswered || submitting}
-            className="px-6 py-3 rounded-full bg-gradient-to-r from-moko-gold to-moko-yellow text-white font-black disabled:opacity-40"
-          >
-            {submitting ? '提交中…' : '✅ 完成今日一练'}
-          </button>
-        )}
-      </div>
+      <CheckInSubmit
+        index={idx}
+        total={total}
+        currentAnswered={currentAnswered}
+        allAnswered={allAnswered}
+        submitting={submitting}
+        onPrevious={() => {
+          setPraise(null);
+          setIdx((current) => Math.max(0, current - 1));
+        }}
+        onNext={() => {
+          setPraise(null);
+          setIdx((current) => current + 1);
+        }}
+        onSubmit={() => void submit()}
+      />
     </div>
   );
 }
