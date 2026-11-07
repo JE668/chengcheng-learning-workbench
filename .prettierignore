@@ -14,6 +14,12 @@ playwright-report
 test-results
 node_modules
 
+# Next 自己生成并随时重写（文件头就写着 "This file should not be edited"）。
+# Next 16 写的是双引号，而 .prettierrc 是 singleQuote: true —— 两者会互相打架：
+# prettier 改成单引号 → next dev/build 又改回双引号，工作区永远脏一个文件。
+# 生成文件的「规范写手」是 Next，交给它。
+next-env.d.ts
+
 # 由生成器产出，规范由生成器决定
 public/hanzi
 src/lib/moko-collection
