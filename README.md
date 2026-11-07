@@ -116,7 +116,7 @@
 | 认证     | 自定义 session cookie（bcrypt 哈希，家长/孩子双角色，7天过期）                                                                                                                                        |
 | 状态管理 | Zustand（含离线打卡：断网时排队，重连后自动同步）                                                                                                                                                     |
 | TTS      | 四层策略：**预生成本地 MP3（零延迟）** → Web Speech 严格 → Web Speech 宽松 → Python edge-tts 持久化进程；1481 条静态内容（汉字/单词/古诗/故事全文）离线内置，动态文本批量预取 + localStorage 持久缓存 |
-| 测试     | Vitest（1112 用例 / 137 个测试文件）+ Playwright E2E（5 spec / 36 用例，已纳入 CI 门禁）+ axe-core 无障碍；ESLint 0 警告，TypeScript strict 0 错误                                                    |
+| 测试     | Vitest（1115 用例 / 138 个测试文件）+ Playwright E2E（5 spec / 36 用例，已纳入 CI 门禁）+ axe-core 无障碍；ESLint 0 警告，TypeScript strict 0 错误                                                    |
 | 部署     | GitHub Actions → Docker 多阶段构建（~550MB）→ GHCR；面向飞牛 NAS 等自托管环境                                                                                                                         |
 
 ## ✨ 特色功能
@@ -134,6 +134,7 @@
 | 🔢 **难度递增**        | 每日一练数学题随连续天数逐步提升难度（口算→两位数→乘法表→三位数混合运算）                          |
 | ➗ **等质题型**        | 每日一练排除除法（一年级未学），补入乘法口诀表、三个两位数混合加减（结果恒为正）、钟表/比大小/序数 |
 | 🎯 **掌握度画像**      | 记录首次作答与响应时间，按知识点聚合最近 30 天掌握度，首页自动推荐最该补的 3 分钟练习              |
+| 📋 **家长解释报告**    | 家长报告页输出「做得好 / 需要关注 / 今天可陪练」三条结论，优先使用最近 30 天掌握度证据             |
 | 📖 **课本同步**        | 每日一练与《语文》《数学》课本单元进度联动，给出"当前学到哪单元"的提示                             |
 | 📡 **离线打卡**        | 断网也能做题打卡，重连后自动把离线数据同步到服务器                                                 |
 | 🔊 **TTS 语音**        | 四层兜底：预生成 MP3 零延迟优先，edge-tts 7.3.1 神经嗓音兜底；错题/台词/故事全文全部预制离线可播   |
@@ -195,7 +196,7 @@ docker run -d -p 3000:3000 \
 | `pnpm lint`          | ESLint 检查                                                             |
 | `pnpm format`        | Prettier 格式化全仓                                                     |
 | `pnpm verify`        | 一键自检：`typecheck + lint + test`（新机器先跑这条确认环境正常）       |
-| `pnpm test`          | 运行单元测试（Vitest，1112 用例）                                       |
+| `pnpm test`          | 运行单元测试（Vitest，1115 用例）                                       |
 | `pnpm test:coverage` | 运行单元测试并输出覆盖率（阈值不达标会失败）                            |
 | `pnpm check:perf`    | 读取 webpack 路由清单检查首屏 JS 预算（先执行 `pnpm build`）            |
 | `pnpm e2e`           | 运行 Playwright E2E（36 个用例；macOS 13 见下方说明）                   |

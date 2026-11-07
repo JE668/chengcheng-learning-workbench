@@ -7,6 +7,8 @@ import PrintButton from '@/components/PrintButton';
 import Certificate from '@/components/Certificate';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
 import { ClayCard } from '@/components/design-system';
+import { getWeakestKnowledgePoint } from '@/lib/mastery-store';
+import { buildParentReportInsights } from '@/lib/parent-report-insights';
 
 // 解析 users.cert_pref（JSON 字符串），非法/为空时返回 null
 function parsePref(raw: unknown): { mokoKey: string; theme: string } | null {
@@ -45,7 +47,7 @@ export default async function ReportsPage() {
 
   // 四个聚合查询相互无依赖——并行（此前串行 4 个往返，报表页
   // 首屏在 NAS 本地库上也要多吃 3 拍）。有孩子才查；旧表缺失按空集。
-  const [dailyRes, checkinRes, studyRes, resolvedRes] = c
+  const [dailyRes, checkinRes, practiceRes, studyRes, resolvedRes, weakestMastery] = c
     ? await Promise.all([
         db.execute({
           sql: `SELECT ${LOCAL_DAY_COL} as day, SUM(c.points) as total
@@ -55,6 +57,10 @@ export default async function ReportsPage() {
         }),
         db.execute({
           sql: `SELECT day, COUNT(*) as n FROM daily_checkins WHERE child_id = ? AND day BETWEEN ? AND ? AND status = 'confirmed' GROUP BY day`,
+          args: [childId, ws, we],
+        }),
+        db.execute({
+          sql: `SELECT day, completed FROM daily_practice WHERE child_id = ? AND day BETWEEN ? AND ? ORDER BY day DESC`,
           args: [childId, ws, we],
         }),
         // 本周学习时长（2026-10-17 心跳统计）：分钟/天。旧库无表时为 0，不阻塞报告页。
@@ -68,22 +74,27 @@ export default async function ReportsPage() {
           sql: 'SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND resolved = 1',
           args: [childId],
         }),
+        getWeakestKnowledgePoint(childId).catch(() => null),
       ])
     : [
         { rows: [] },
         { rows: [] },
+        { rows: [] },
         { rows: [] as { day: unknown; minutes: unknown }[] },
         { rows: [{ n: 0 }] },
+        null,
       ];
 
   const daily = dailyRes;
   const checkinRows = checkinRes;
+  const practiceRows = practiceRes;
   const studyTime = studyRes;
   const resolved = resolvedRes;
 
   const pointsWeek = daily.rows.reduce((s: number, r) => s + Number(r.total ?? 0), 0);
   const fullDays = checkinRows.rows.filter((r) => Number(r.n) === 3).length;
   const activeDays = checkinRows.rows.length;
+  const practiceDays = practiceRows.rows.filter((r) => Number(r.completed) === 1).length;
   const minutesWeek = studyTime.rows.reduce((s: number, r) => s + Number(r.minutes ?? 0), 0);
   const resolvedCount = Number(resolved.rows[0]?.n ?? 0);
 
@@ -124,6 +135,17 @@ export default async function ReportsPage() {
   const badges = c ? await getBadges(childId) : [];
   const earnedBadges = badges.filter((b) => b.earned);
 
+  const insights = buildParentReportInsights({
+    fullDays,
+    activeDays,
+    practiceDays,
+    pointsWeek,
+    minutesWeek,
+    resolvedMistakes: resolvedCount,
+    unsolvedMistakes: weakness.reduce((sum, item) => sum + item.unsolved, 0),
+    weakestMastery,
+  });
+
   const weekLabel = `${ws} ~ ${we}`;
 
   return (
@@ -158,6 +180,24 @@ export default async function ReportsPage() {
             </div>
           ))}
         </div>
+
+        <ClayCard theme="pink" className="mb-6 p-4 bg-white">
+          <h2 className="text-xl font-bold text-moko-rose mb-3">📌 本周结论与陪练建议</h2>
+          <div className="space-y-3 text-sm">
+            <div className="rounded-2xl bg-moko-mint/10 p-3">
+              <p className="font-bold text-emerald-600 mb-1">做得好</p>
+              <p className="text-gray-700">{insights.doingWell}</p>
+            </div>
+            <div className="rounded-2xl bg-moko-rose/10 p-3">
+              <p className="font-bold text-moko-rose mb-1">需要关注</p>
+              <p className="text-gray-700">{insights.needsAttention}</p>
+            </div>
+            <div className="rounded-2xl bg-moko-blue/10 p-3">
+              <p className="font-bold text-moko-blue mb-1">今天可以陪练什么</p>
+              <p className="text-gray-700">{insights.practiceToday}</p>
+            </div>
+          </div>
+        </ClayCard>
 
         <ClayCard theme="purple" className="mb-6 p-4">
           <h2 className="text-xl font-bold text-moko-violet mb-3">

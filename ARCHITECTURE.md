@@ -25,6 +25,7 @@ src/
 │   ├── castle*.ts          # 城堡/经济/惩罚领域
 │   ├── daily-practice/     # 每日一练出题（math/chinese/english 生成器）
 │   ├── mastery*.ts         # 知识点掌握度画像 + 最近 30 天薄弱点推荐
+│   ├── parent-report-insights.ts # 家长报告的三条解释性结论（纯函数）
 │   ├── stores/             # Zustand 状态管理
 │   ├── tts/                # TTS 三层降级（engines + orchestrator）
 │   └── …                   # moko/story/mistakes/sm2/media/… 领域模块
@@ -137,7 +138,7 @@ src/
 
 | 层级      | 工具                                | 说明                                                                                  |
 | --------- | ----------------------------------- | ------------------------------------------------------------------------------------- |
-| 单元/集成 | Vitest（1112 用例，137 个测试文件） | 领域逻辑、算法、Store、迁移（`file::memory:` 隔离，不碰真实 DB）                      |
+| 单元/集成 | Vitest（1115 用例，138 个测试文件） | 领域逻辑、算法、Store、迁移（`file::memory:` 隔离，不碰真实 DB）                      |
 | E2E       | Playwright                          | 关键用户流程（tests/e2e/，5 个 spec）。前置条件不满足的用例**显式 skip** 而非静默通过 |
 | 可访问性  | axe-core                            | `atomic/a11y.test.tsx` + `test-axe.mjs`                                               |
 
@@ -146,7 +147,7 @@ src/
 chunk 任一缺失，或任一核心路由超预算，都会 fail-closed，不再只看所有 chunk 的总和。
 
 <!-- 上面这些数字（用例数 / 测试文件数 / API 路由数 / 页面数）是会过期的。
-     重新统计（2026-11-08 校准：1112 用例、137 个测试文件、58 条 API 路由、43 个页面）：
+     重新统计（2026-11-08 校准：1115 用例、138 个测试文件、58 条 API 路由、43 个页面）：
        pnpm vitest run                        # 末行即用例总数
        find src scripts -type f \( -name '*.test.ts' -o -name '*.test.tsx' -o -name '*.test.mjs' \) | wc -l
        find src/app/api -name route.ts | wc -l
