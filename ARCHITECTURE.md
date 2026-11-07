@@ -11,7 +11,7 @@ src/
 ├── app/                    # Next.js App Router 页面 + API 路由
 │   ├── (child)/           # 孩子端页面组（home/castle/daily-practice/study/games/story/…）
 │   ├── (parent)/          # 家长端页面组（dashboard/tasks/settings/…）
-│   ├── api/               # ~45 条 API 路由（每路由 = 一个领域动作）
+│   ├── api/               # 58 条 API 路由（每路由 = 一个领域动作）
 │   ├── login/             # 登录页
 │   └── layout.tsx          # 根布局：ensureSchema() 初始化 + ErrorBoundary + 全局壳
 ├── components/
@@ -132,13 +132,21 @@ src/
 
 ## 测试策略
 
-| 层级      | 工具                              | 说明                                                                                  |
-| --------- | --------------------------------- | ------------------------------------------------------------------------------------- |
-| 单元/集成 | Vitest（381 用例，38 个测试文件） | 领域逻辑、算法、Store、迁移（`file::memory:` 隔离，不碰真实 DB）                      |
-| E2E       | Playwright                        | 关键用户流程（tests/e2e/，5 个 spec）。前置条件不满足的用例**显式 skip** 而非静默通过 |
-| 可访问性  | axe-core                          | `atomic/a11y.test.tsx` + `test-axe.mjs`                                               |
+| 层级      | 工具                                | 说明                                                                                  |
+| --------- | ----------------------------------- | ------------------------------------------------------------------------------------- |
+| 单元/集成 | Vitest（1081 用例，129 个测试文件） | 领域逻辑、算法、Store、迁移（`file::memory:` 隔离，不碰真实 DB）                      |
+| E2E       | Playwright                          | 关键用户流程（tests/e2e/，5 个 spec）。前置条件不满足的用例**显式 skip** 而非静默通过 |
+| 可访问性  | axe-core                            | `atomic/a11y.test.tsx` + `test-axe.mjs`                                               |
 
 命令：`pnpm test` / `pnpm test:coverage` / `pnpm e2e`。
+
+<!-- 上面这些数字（用例数 / 测试文件数 / API 路由数 / 页面数）是会过期的。
+     重新统计（2026-11-07 校准：1081 用例、129 个测试文件、58 条 API 路由、43 个页面）：
+       pnpm vitest run                        # 末行即用例总数
+       find src -name '*.test.ts*' | wc -l    # 测试文件数
+       find src/app/api -name route.ts | wc -l
+       find src/app -name page.tsx | wc -l
+     改动测试或路由时顺手更新，别攒到"文档同步周"。 -->
 
 ---
 

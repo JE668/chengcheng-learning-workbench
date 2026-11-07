@@ -109,15 +109,15 @@
 
 ## 🏗️ 技术栈
 
-| 层面     | 技术                                                                                                                                               |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 前端     | Next.js 15.5.24 (App Router) + React 18 + TypeScript (strict) + Tailwind CSS + 自研 Atomic 组件库                                                  |
-| 数据库   | Turso (LibSQL) / 本地 SQLite（首次启动自动建库，WAL 模式；原生 SQL + 版本化迁移 `schema_migrations`）                                              |
-| 认证     | 自定义 session cookie（bcrypt 哈希，家长/孩子双角色，7天过期）                                                                                     |
-| 状态管理 | Zustand（含离线打卡：断网时排队，重连后自动同步）                                                                                                  |
+| 层面     | 技术                                                                                                                                                                                                  |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 前端     | Next.js 16.4.4 (App Router) + React 19 + TypeScript 5.9 (strict) + Tailwind CSS + 自研 Atomic 组件库                                                                                                  |
+| 数据库   | Turso (LibSQL) / 本地 SQLite（首次启动自动建库，WAL 模式；原生 SQL + 版本化迁移 `schema_migrations`）                                                                                                 |
+| 认证     | 自定义 session cookie（bcrypt 哈希，家长/孩子双角色，7天过期）                                                                                                                                        |
+| 状态管理 | Zustand（含离线打卡：断网时排队，重连后自动同步）                                                                                                                                                     |
 | TTS      | 四层策略：**预生成本地 MP3（零延迟）** → Web Speech 严格 → Web Speech 宽松 → Python edge-tts 持久化进程；1481 条静态内容（汉字/单词/古诗/故事全文）离线内置，动态文本批量预取 + localStorage 持久缓存 |
-| 测试     | Vitest（900+ 用例）+ Playwright E2E（5 spec / 36 用例，已纳入 CI 门禁）+ axe-core 无障碍；ESLint 0 警告，TypeScript strict 0 错误（具体用例数以 CI badge 为准，不在此手动同步） |
-| 部署     | GitHub Actions → Docker 多阶段构建（~550MB）→ GHCR；面向飞牛 NAS 等自托管环境                                                                      |
+| 测试     | Vitest（1081 用例 / 129 个测试文件）+ Playwright E2E（5 spec / 36 用例，已纳入 CI 门禁）+ axe-core 无障碍；ESLint 0 警告，TypeScript strict 0 错误                                                    |
+| 部署     | GitHub Actions → Docker 多阶段构建（~550MB）→ GHCR；面向飞牛 NAS 等自托管环境                                                                                                                         |
 
 ## ✨ 特色功能
 
@@ -136,9 +136,9 @@
 | 📖 **课本同步**        | 每日一练与《语文》《数学》课本单元进度联动，给出"当前学到哪单元"的提示                             |
 | 📡 **离线打卡**        | 断网也能做题打卡，重连后自动把离线数据同步到服务器                                                 |
 | 🔊 **TTS 语音**        | 四层兜底：预生成 MP3 零延迟优先，edge-tts 7.3.1 神经嗓音兜底；错题/台词/故事全文全部预制离线可播   |
-| 🍭 **Claymorphism UI** | 黏土拟态设计语言：全站三重阴影软糖质感、按压回弹、奶油粉底色；侧栏深色黏土两态导航                |
-| 🍬 **糖果房间**        | 模块页按学科注入主题色环境光（语文粉/数学蓝/英语金），不识字的孩子靠颜色认房间                    |
-| 🚀 **TTS 诊断页**      | `/tts-diag`：无控制台设备自助定位——L0 本地文件直测 + L3 服务端端到端测试，日志可直接截图反馈      |
+| 🍭 **Claymorphism UI** | 黏土拟态设计语言：全站三重阴影软糖质感、按压回弹、奶油粉底色；侧栏深色黏土两态导航                 |
+| 🍬 **糖果房间**        | 模块页按学科注入主题色环境光（语文粉/数学蓝/英语金），不识字的孩子靠颜色认房间                     |
+| 🚀 **TTS 诊断页**      | `/tts-diag`：无控制台设备自助定位——L0 本地文件直测 + L3 服务端端到端测试，日志可直接截图反馈       |
 | 📊 **CSV 导出**        | 家长可下载学习数据在 Excel 中分析                                                                  |
 | 🛡️ **Error Boundary**  | 子页面崩溃时显示友好提示，不白屏                                                                   |
 
@@ -194,7 +194,7 @@ docker run -d -p 3000:3000 \
 | `pnpm lint`          | ESLint 检查                                                             |
 | `pnpm format`        | Prettier 格式化全仓                                                     |
 | `pnpm verify`        | 一键自检：`typecheck + lint + test`（新机器先跑这条确认环境正常）       |
-| `pnpm test`          | 运行单元测试（Vitest，900+ 用例）                                        |
+| `pnpm test`          | 运行单元测试（Vitest，1081 用例）                                       |
 | `pnpm test:coverage` | 运行单元测试并输出覆盖率（阈值不达标会失败）                            |
 | `pnpm e2e`           | 运行 Playwright E2E（36 个用例；macOS 13 见下方说明）                   |
 | `pnpm seed`          | **写入**默认账号（parent / 12345678、cara / 0000）并补齐缺失的表        |
@@ -224,7 +224,7 @@ src/
 │   │   ├── dashboard/    # 看板（多娃对比 + 趋势）
 │   │   ├── tasks/        # 任务管理
 │   │   └── settings/     # 设置（备份/恢复/密码/CSV导出）
-│   ├── api/              # 52 条 API 路由
+│   ├── api/              # 58 条 API 路由
 │   └── login/            # 登录页
 ├── components/           # UI 组件
 │   ├── MokoCarousel.tsx  # 萌可旋转木马
