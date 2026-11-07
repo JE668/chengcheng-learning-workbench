@@ -55,7 +55,9 @@ test.describe('核心业务流程', () => {
       await expect(page.getByText(/第 \d+ \/ \d+ 题/)).toBeVisible();
 
       // 4. 验证题目卡片渲染
-      await expect(page.locator('.card-moko').first()).toBeVisible();
+      // `card-moko` 是旧设计系统的类名，ClayCard 迁移后源码里已 0 处使用
+      // （只剩 globals.css 的白名单）。ClayCard 的基类是 `clay-card`。
+      await expect(page.locator('.clay-card').first()).toBeVisible();
     });
 
     test('每日一练 - 错题复习模式', async ({ page }) => {
@@ -94,19 +96,22 @@ test.describe('核心业务流程', () => {
       //
       // 改法：前置条件不满足就 **显式 skip**（在报告里可见为 skipped，
       // 而非伪装成 passed），满足时断言「点击后出现的、点击前不存在的东西」。
-      const harvestBtn = page
-        .locator('button:has-text("收获")')
-        .or(page.locator('button:has-text("收割")'))
-        .or(page.locator('button:has-text("收取")'));
-      test.skip((await harvestBtn.count()) === 0, '当前无可收获萌可（需先成为好朋友且今天未收获）');
+      const harvestSummary = page.getByText(/只萌可好友可以收获，共 \d+ 颗星星币！/);
+      const harvestButton = page.getByRole('button', { name: /收获 \d+ 颗星星币/ });
 
-      // 点击前先确认「已收获」提示尚不存在，避免用永真断言糊弄过去
-      const alreadyHarvested = page.locator('text=今天还没有可收获');
-      await expect(alreadyHarvested).toBeVisible({ timeout: 5000 });
+      // 先证明城堡状态区确实渲染成功，再区分「没有可收获好友」和「数据没加载」。
+      // 无好友、今日已收完都只能显式 skip，不能把空转包装成 passed。
+      const emptyState = page
+        .getByText('还没有萌可好友，快去培养萌可成为「好朋友」阶段吧！')
+        .or(page.getByText(/今天已全部收完/));
+      await expect(harvestSummary.or(emptyState)).toBeVisible({ timeout: 10000 });
+      test.skip(
+        (await harvestSummary.count()) === 0,
+        '当前无可收获萌可（需先成为好朋友且今天未收获）'
+      );
 
-      await harvestBtn.first().click();
-      // 收获后该提示应消失（这才是可观测的状态变化）
-      await expect(alreadyHarvested).toBeHidden({ timeout: 10000 });
+      await harvestButton.click();
+      await expect(page.getByText(/收获 \d+ 星星币！/)).toBeVisible({ timeout: 10000 });
     });
 
     test('城堡 - 查看萌可详情', async ({ page }) => {
@@ -176,10 +181,12 @@ test.describe('核心业务流程', () => {
       await page.locator('button:has-text("发布任务")').first().click();
       await page.waitForTimeout(500);
 
-      // 填写表单（input 无 name 属性，通过相邻 label 定位）
-      await page.locator('label:has-text("任务名称") + input').fill('E2E测试任务：朗读课文');
+      // 填写表单（input 无 name 属性，用 label 关联定位）
+      // ⚠️ 不能用 `label + input`：ClayInput 把 input 包在 `<div className="relative">`
+      // 里（为了放左右图标与清除按钮），label 的相邻兄弟是 div 而不是 input。
+      await page.getByLabel('任务名称').fill('E2E测试任务：朗读课文');
       await page.locator('label:has-text("学科") + select').selectOption('语文');
-      await page.locator('label:has-text("积分奖励") + input').fill('5');
+      await page.getByLabel('积分奖励').fill('5');
 
       // 提交表单（表单内的"发布任务"按钮）
       await page.locator('form button:has-text("发布任务")').click();

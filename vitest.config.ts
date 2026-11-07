@@ -47,8 +47,8 @@ export default defineConfig({
       ],
       /**
        * 阈值贴近当前真实覆盖率，下调若干留出余量。
-       * 2026-11-07 实测：statements 75.48 / branches 65.08 /
-       * functions 62.54 / lines 80.87（补齐 auth / backup / cert /
+       * 2026-11-08 实测：statements 75.46 / branches 65.08 /
+       * functions 62.42 / lines 80.84（补齐 auth / backup / cert /
        * daily-practice/gen-math / speak 的关键路径后整体上了 7~8 个点）。
        *
        * ## 为什么数字比 Vitest 3 时代低

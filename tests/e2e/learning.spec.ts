@@ -22,10 +22,11 @@ test.describe('学习核心流程', () => {
   test('今日一练 - 进入并开始练习', async ({ page }) => {
     await page.goto('/home');
 
-    // ⚠️ 按钮文案在 e086d843「全站统一设计语言」那次提交里已从「开始今日一练」
-    // 改为「做今日一练」（home 页实测），旧选择器长期匹配不到。
-    // 这个 spec 此前从未在 CI 里执行过，所以一直没暴露。
-    await page.click('a:has-text("做今日一练")');
+    // 首页入口同时受「今日是否已完成」状态影响，文案会变化；按目标路由定位，
+    // 不把测试绑在某一句展示文案上。
+    const practiceEntry = page.locator('main a[href="/daily-practice"]').first();
+    await expect(practiceEntry).toBeVisible();
+    await practiceEntry.click();
     await expect(page).toHaveURL(/\/daily-practice/);
 
     // 验证答题界面加载完成。
@@ -55,7 +56,9 @@ test.describe('学习核心流程', () => {
 
     // ⚠️ 该游戏在 moko.ts 里的 title 是「十格阵魔法屋」，只有 level tag 提到凑十法；
     // 旧的 page.click('text=凑十法') 匹配到的是描述文案而非可点击标题，点不动。
-    await page.click('a:has-text("十格阵魔法屋")');
+    const gameEntry = page.locator('main a[href="/games/make-ten"]');
+    await expect(gameEntry).toBeVisible();
+    await gameEntry.click();
     await expect(page).toHaveURL(/\/games\/make-ten/);
 
     // 验证游戏界面
@@ -92,7 +95,9 @@ test.describe('学习核心流程', () => {
 
     // 3. 游戏
     await page.goto('/games');
-    await page.click('text=拼音消消乐');
+    const gameEntry = page.locator('main a[href="/games/pinyin-eliminate"]');
+    await expect(gameEntry).toBeVisible();
+    await gameEntry.click();
     await expect(page).toHaveURL(/\/games\/pinyin-eliminate/);
 
     // 4. 城堡

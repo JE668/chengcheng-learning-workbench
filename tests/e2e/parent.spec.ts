@@ -87,7 +87,7 @@ test.describe('家长管理流程', () => {
     // 毒数据留在库里。实测已发生过一次：连续两轮 e2e 之后 cara/0000 全部 401，
     // 一轮里 11 个看似无关的用例集体变红。
     // 这里改用 page.request —— 复用同一 context 的登录态，不依赖页面能否渲染。
-    const CARD = 'div.card-moko';
+    const CARD = 'div.clay-card';
     const ORIGINAL_PW = '0000';
     const CHILD_USERNAME = 'cara';
 
