@@ -99,7 +99,6 @@ export default [
       'src/lib/mistakes.ts', // currentEasiness / currentReps / currentInterval
       'src/lib/daily-practice/gen-english.ts', // answer
       'src/lib/daily-practice/gen-math.ts', // answer
-      'src/lib/castle.ts', // row
       'src/components/study/Idiom.tsx', // displayIdiom
       'src/app/(child)/study/page.tsx', // Rec（旧结构，已被 STUDY_MODULES 取代）
       // ④ 测试文件里刻意「执行但不留变量」的写法：靠 await/调用的副作用就是要的。
