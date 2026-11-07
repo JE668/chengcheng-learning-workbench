@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ClayCard } from '@/components/design-system';
 import { GuideModal } from '@/components/GuideModal';
@@ -11,6 +11,7 @@ import type {
   PracticeSubmitResult,
 } from '@/lib/daily-practice';
 import { sfxComplete, sfxCorrect, sfxWrong } from '@/lib/sfx';
+import { MAX_PRACTICE_RESPONSE_MS } from '@/lib/mastery';
 import { playTts, prefetchTtsBatch, toEdgeRate } from '@/lib/speak';
 import { useOfflineStore } from '@/lib/stores';
 import { AnswerOptions, type Praise } from './components/AnswerOptions';
@@ -58,6 +59,11 @@ export default function DailyPracticePage() {
    * 文案与语音取自同一句（pickMokoLine），保证「听到的=看到的」。
    */
   const [praise, setPraise] = useState<Praise | null>(null);
+  /** 每题第一次点击的选项；答错后的重选只影响通关，不污染掌握度。 */
+  const firstAnswersRef = useRef<number[]>([]);
+  /** 每题从进入页面到第一次点击的耗时，供服务端聚合掌握度。 */
+  const responseMsRef = useRef<number[]>([]);
+  const questionStartedAtRef = useRef(Date.now());
 
   /**
    * 拉取今日练习。
@@ -77,6 +83,9 @@ export default function DailyPracticePage() {
       }
       setData(payload);
       setSelected(new Array(payload.questions.length).fill(-1));
+      firstAnswersRef.current = new Array(payload.questions.length).fill(-1);
+      responseMsRef.current = new Array(payload.questions.length).fill(0);
+      questionStartedAtRef.current = Date.now();
     } catch {
       setLoadError('网络好像走神了，请稍后再试');
     } finally {
@@ -89,6 +98,11 @@ export default function DailyPracticePage() {
   }, [load]);
 
   const q: PracticeQuestion | undefined = data?.questions[idx];
+
+  // 切题即重新计时；上报的是第一次点击前的思考时间，不包含后续重选。
+  useEffect(() => {
+    questionStartedAtRef.current = Date.now();
+  }, [idx, data]);
 
   // 切到新题时自动朗读（拼音/英语），不点也能听到。
   // 但已完成时不要朗读，避免在「已完成」页面后面偷偷播放语音。
@@ -136,6 +150,13 @@ export default function DailyPracticePage() {
       if (!q) return;
       // 已答对的本题锁死，不再重复触发萌可反馈
       if (selected[idx] === q.answer) return;
+      if ((firstAnswersRef.current[idx] ?? -1) === -1) {
+        firstAnswersRef.current[idx] = optionIndex;
+        responseMsRef.current[idx] = Math.max(
+          0,
+          Math.min(MAX_PRACTICE_RESPONSE_MS, Date.now() - questionStartedAtRef.current)
+        );
+      }
       setSelected((prev) => {
         const next = [...prev];
         next[idx] = optionIndex;
@@ -182,6 +203,22 @@ export default function DailyPracticePage() {
         return status === 'failed' ? -1 : question.answer;
       })
     );
+    firstAnswersRef.current = data.questions.map((question, index) => {
+      const status = result.subjects.find(
+        (subject) => subject.subject === question.subject
+      )?.status;
+      const previous = firstAnswersRef.current[index];
+      if (status === 'failed') return -1;
+      return previous >= 0 ? previous : question.answer;
+    });
+    responseMsRef.current = data.questions.map((question, index) => {
+      const status = result.subjects.find(
+        (subject) => subject.subject === question.subject
+      )?.status;
+      return status === 'failed' ? 0 : (responseMsRef.current[index] ?? 0);
+    });
+    questionStartedAtRef.current = Date.now();
+    setIdx(0);
     setResult(null);
   }, [data, result]);
 
@@ -192,7 +229,11 @@ export default function DailyPracticePage() {
       const response = await fetch('/api/daily-practice', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ answers: selected }),
+        body: JSON.stringify({
+          answers: selected,
+          firstAnswers: firstAnswersRef.current,
+          responseMs: responseMsRef.current,
+        }),
       });
       const payload = await response.json();
       setResult(payload);
@@ -206,7 +247,11 @@ export default function DailyPracticePage() {
       // 离线/网络异常 → 本地暂存打卡。服务端提交是幂等的，联网后 OfflineSync 重放不会重复发奖。
       useOfflineStore.getState().addAction({
         type: 'checkin',
-        payload: { answers: selected },
+        payload: {
+          answers: selected,
+          firstAnswers: firstAnswersRef.current,
+          responseMs: responseMsRef.current,
+        },
       });
       setOfflineQueued(true);
     } finally {
@@ -227,6 +272,9 @@ export default function DailyPracticePage() {
     const nextData = await refreshed.json();
     setData(nextData);
     setSelected(new Array(nextData.questions?.length ?? 0).fill(-1));
+    firstAnswersRef.current = new Array(nextData.questions?.length ?? 0).fill(-1);
+    responseMsRef.current = new Array(nextData.questions?.length ?? 0).fill(0);
+    questionStartedAtRef.current = Date.now();
     setLoading(false);
     setHasTimeGlass(false);
   }, []);

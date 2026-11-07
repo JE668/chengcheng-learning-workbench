@@ -77,7 +77,14 @@ export function buildOfflineRequest(action: {
 
   switch (action.type) {
     case 'checkin':
-      return { url: '/api/daily-practice', init: json({ answers: P.answers }) };
+      return {
+        url: '/api/daily-practice',
+        init: json({
+          answers: P.answers,
+          firstAnswers: P.firstAnswers,
+          responseMs: P.responseMs,
+        }),
+      };
     case 'mistake':
       return { url: '/api/mistakes', init: json(P) };
     case 'harvest':

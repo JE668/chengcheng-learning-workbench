@@ -24,6 +24,7 @@ src/
 │   ├── auth.ts             # 会话认证（cookie + bcrypt）
 │   ├── castle*.ts          # 城堡/经济/惩罚领域
 │   ├── daily-practice/     # 每日一练出题（math/chinese/english 生成器）
+│   ├── mastery*.ts         # 知识点掌握度画像 + 最近 30 天薄弱点推荐
 │   ├── stores/             # Zustand 状态管理
 │   ├── tts/                # TTS 三层降级（engines + orchestrator）
 │   └── …                   # moko/story/mistakes/sm2/media/… 领域模块
@@ -49,6 +50,8 @@ src/
   3. 全新库账号种子（`cara` / `parent`，受 `_schema_meta` 守卫限制）。
 - 所有**增量表 / 增量列 / 历史数据回填**统一放在 `migrations.ts` 的版本化 `MIGRATIONS` 数组（`runMigrations` 只执行未应用的版本，天然幂等）。
 - **约定：改 schema 只加一条迁移，不要在 `ensureSchema` 里堆内联 `ALTER`。**
+- `mastery_daily`（v24）按 `(child_id, day, knowledge_point)` 固化首次作答证据；写入使用绝对值 upsert，
+  重复交卷不会虚增样本。首页只读取最近 30 天、至少 3 次作答且掌握度低于 90 的薄弱项。
 
 ### 关键实现决策
 
@@ -134,7 +137,7 @@ src/
 
 | 层级      | 工具                                | 说明                                                                                  |
 | --------- | ----------------------------------- | ------------------------------------------------------------------------------------- |
-| 单元/集成 | Vitest（1092 用例，132 个测试文件） | 领域逻辑、算法、Store、迁移（`file::memory:` 隔离，不碰真实 DB）                      |
+| 单元/集成 | Vitest（1112 用例，137 个测试文件） | 领域逻辑、算法、Store、迁移（`file::memory:` 隔离，不碰真实 DB）                      |
 | E2E       | Playwright                          | 关键用户流程（tests/e2e/，5 个 spec）。前置条件不满足的用例**显式 skip** 而非静默通过 |
 | 可访问性  | axe-core                            | `atomic/a11y.test.tsx` + `test-axe.mjs`                                               |
 
@@ -143,7 +146,7 @@ src/
 chunk 任一缺失，或任一核心路由超预算，都会 fail-closed，不再只看所有 chunk 的总和。
 
 <!-- 上面这些数字（用例数 / 测试文件数 / API 路由数 / 页面数）是会过期的。
-     重新统计（2026-11-08 校准：1092 用例、132 个测试文件、58 条 API 路由、43 个页面）：
+     重新统计（2026-11-08 校准：1112 用例、137 个测试文件、58 条 API 路由、43 个页面）：
        pnpm vitest run                        # 末行即用例总数
        find src scripts -type f \( -name '*.test.ts' -o -name '*.test.tsx' -o -name '*.test.mjs' \) | wc -l
        find src/app/api -name route.ts | wc -l

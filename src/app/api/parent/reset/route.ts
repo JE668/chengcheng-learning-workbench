@@ -57,6 +57,8 @@ const CHILD_TABLES = [
   //    护栏的价值就在这：新表漏进清单 CI 直接红，不再靠人肉发现。
   'study_sessions',
   'coop_challenge_progress',
+  // —— 第五次由护栏测试抓到：v24 的掌握度证据表。 ——
+  'mastery_daily',
 ];
 
 export async function POST(req: NextRequest) {

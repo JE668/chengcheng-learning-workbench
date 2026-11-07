@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { safeJson } from '@/lib/safe-json';
 import { getTodayPractice, submitPractice } from '@/lib/daily-practice';
+import { recordPracticeMastery } from '@/lib/mastery-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: '未登录' }, { status: 401 });
   const childId = await resolveChildId(user);
   if (!childId) return NextResponse.json({ error: '没有孩子账号' }, { status: 404 });
-  let body: { answers?: number[] };
+  let body: { answers?: number[]; firstAnswers?: unknown; responseMs?: unknown };
   try {
     body = await safeJson(req, {});
   } catch {
@@ -38,5 +39,12 @@ export async function POST(req: Request) {
   if (!Array.isArray(body.answers))
     return NextResponse.json({ error: '缺少答案' }, { status: 400 });
   const res = await submitPractice(childId, body.answers as number[]);
+  // 掌握度是后置学习证据：即使写入失败，也不能回滚已完成的打卡/奖励，
+  // 更不能把成功响应改成 500（客户端会误判并进入离线重放）。
+  try {
+    await recordPracticeMastery(childId, body.answers.length, body.firstAnswers, body.responseMs);
+  } catch (e) {
+    console.error('[api/daily-practice] 掌握度写入失败:', e instanceof Error ? e.message : e);
+  }
   return NextResponse.json(res);
 }

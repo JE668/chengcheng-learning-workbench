@@ -37,6 +37,7 @@ const EXPORT_TABLES = [
   'growth_events',
   'story_progress',
   'daily_practice',
+  'mastery_daily',
   'capture_tickets',
   'story_read',
   'story_quiz',

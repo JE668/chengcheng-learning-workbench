@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildPoints } from '@/lib/db';
 import { getCastleState } from '@/lib/castle';
 import { getTodayPractice } from '@/lib/daily-practice';
+import { getWeakestKnowledgePoint } from '@/lib/mastery-store';
 import { getModuleProgressAll } from '@/lib/progress-store';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -48,8 +49,11 @@ export default async function HomePage() {
         ' = ? AND source IS NOT NULL',
       args: [user.id, todayStr],
     }),
+    // 掌握度是增强推荐：旧库/迁移短暂失败时首页仍必须完整可用。
+    getWeakestKnowledgePoint(user.id).catch(() => null),
   ]);
-  const [points, castle, practice, taskRes, modProg, todayCheckins, todayGamesRes] = first;
+  const [points, castle, practice, taskRes, modProg, todayCheckins, todayGamesRes, weakestMastery] =
+    first;
   // 今日已学模块（last_played 是 epoch ms，取今天 00:00 以后的）
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -99,6 +103,17 @@ export default async function HomePage() {
 
   // 萌可灵动岛推荐：基于今日进度生成个性化推荐
   const islandItems: MokoIslandItem[] = [];
+
+  // 推荐 0：先接住最近 30 天最需要补的知识点，再展示日常进度提醒。
+  if (weakestMastery) {
+    const moko = MOKO_NAV_ENTRIES.find((e) => e.href === '/study')!;
+    islandItems.push({
+      href: weakestMastery.point.href,
+      label: '掌握度练习',
+      moko: moko.moko,
+      line: `${weakestMastery.point.label}掌握度 ${weakestMastery.mastery}%，用 3 分钟再练一练吧！`,
+    });
+  }
   // 推荐 1：今日一练未完成的学科
   if (!practiceDone) {
     const moko = MOKO_NAV_ENTRIES.find((e) => e.href === '/daily-practice')!;
@@ -145,12 +160,14 @@ export default async function HomePage() {
   // 推荐 5：如果已完成今日一练，推荐试试算法学院
   if (practiceDone) {
     const moko = MOKO_NAV_ENTRIES.find((e) => e.href === '/algorithm')!;
-    islandItems.push({
-      href: '/algorithm',
-      label: '萌可算法',
-      moko: moko.moko,
-      line: '想学「速算魔法」吗？让萌可教你巧算技巧！',
-    });
+    if (!islandItems.some((item) => item.href === '/algorithm')) {
+      islandItems.push({
+        href: '/algorithm',
+        label: '萌可算法',
+        moko: moko.moko,
+        line: '想学「速算魔法」吗？让萌可教你巧算技巧！',
+      });
+    }
   }
 
   return (

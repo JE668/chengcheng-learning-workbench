@@ -704,6 +704,36 @@ export const MIGRATIONS: Migration[] = [
       await db.execute({ sql: 'ALTER TABLE wishes DROP COLUMN client_ref', args: [] });
     },
   },
+  {
+    version: 24,
+    name: 'mastery_daily',
+    description: '每日一练掌握度证据：按孩子/日期/知识点聚合首次作答与响应时间',
+    up: async (db) => {
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS mastery_daily (
+          child_id INTEGER NOT NULL,
+          day TEXT NOT NULL,
+          knowledge_point TEXT NOT NULL,
+          subject TEXT NOT NULL,
+          attempts INTEGER NOT NULL DEFAULT 0,
+          correct INTEGER NOT NULL DEFAULT 0,
+          total_response_ms INTEGER NOT NULL DEFAULT 0,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (child_id, day, knowledge_point),
+          FOREIGN KEY(child_id) REFERENCES users(id)
+        )`,
+        args: [],
+      });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_mastery_daily_child_day ON mastery_daily(child_id, day)',
+        args: [],
+      });
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'DROP INDEX IF EXISTS idx_mastery_daily_child_day', args: [] });
+      await db.execute({ sql: 'DROP TABLE IF EXISTS mastery_daily', args: [] });
+    },
+  },
 ];
 
 export async function ensureMigrationTable(db: Client): Promise<void> {

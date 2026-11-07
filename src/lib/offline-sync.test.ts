@@ -11,7 +11,14 @@ describe('offline-sync flushOfflineQueue', () => {
 
   it('重放成功的 checkin 动作从队列移除并返回 { flushed, dropped }', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200 }) as any;
-    useOfflineStore.getState().addAction({ type: 'checkin', payload: { answers: [0, 1, 2] } });
+    useOfflineStore.getState().addAction({
+      type: 'checkin',
+      payload: {
+        answers: [0, 1, 2],
+        firstAnswers: [1, 1, 0],
+        responseMs: [1200, 3400, 5600],
+      },
+    });
 
     const r = await flushOfflineQueue();
 
@@ -21,6 +28,12 @@ describe('offline-sync flushOfflineQueue', () => {
       '/api/daily-practice',
       expect.objectContaining({ method: 'POST' })
     );
+    const init = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
+    expect(JSON.parse(String(init.body))).toEqual({
+      answers: [0, 1, 2],
+      firstAnswers: [1, 1, 0],
+      responseMs: [1200, 3400, 5600],
+    });
   });
 
   it('⚠️ mistake 动作会被重放到 /api/mistakes（此前队列里根本没人重放它）', async () => {
