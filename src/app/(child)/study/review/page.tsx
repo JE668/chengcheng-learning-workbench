@@ -223,7 +223,12 @@ export default function ReviewPage() {
                     onClick={() => {
                       const correct = pickedAns[it.id] === it.answer;
                       setRevealed((p) => ({ ...p, [it.id]: true }));
-                      if (correct) setDone((n) => n + 1);
+                      // 答对才结束本次复习；答错等孩子补选错误原因后再提交，
+                      // 避免一揭示就丢失「为什么会错」这个关键学习信号。
+                      if (correct) {
+                        setDone((n) => n + 1);
+                        void review(it.id, true);
+                      }
                       void playTts(
                         correct
                           ? TEACH_LINES_OK[Math.floor(Math.random() * TEACH_LINES_OK.length)]

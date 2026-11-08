@@ -24,9 +24,11 @@ test.describe('离线同步', () => {
     await page.context().setOffline(true);
     await expect(page.getByText('离线模式')).toBeVisible();
 
-    await page.getByRole('button', { name: 'B', exact: true }).click();
+    // 故意选错：复习闭环要求答错后先揭示解释，再补记错误原因。
+    await page.getByRole('button', { name: 'A', exact: true }).click();
     await page.getByRole('button', { name: /揭示正确答案/ }).click();
     await expect(page.getByText('正确答案：B')).toBeVisible();
+    await page.getByRole('button', { name: /还没听懂/ }).click();
 
     const picker = page.getByTestId('error-type-picker');
     await expect(picker).toBeVisible();
