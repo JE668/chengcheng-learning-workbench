@@ -16,6 +16,7 @@ export interface MistakeRow {
   reps: number;
   easiness_factor: number;
   resolved: number;
+  error_type: string | null;
 }
 
 /**
@@ -41,6 +42,7 @@ export function toMistakeRow(r: Record<string, unknown>): MistakeRow {
     reps: Number(r.reps ?? 0),
     easiness_factor: Number(r.easiness_factor ?? 2.5),
     resolved: Number(r.resolved ?? 0),
+    error_type: r.error_type == null ? null : String(r.error_type),
   };
 }
 
@@ -50,7 +52,10 @@ export function toMistakeRow(r: Record<string, unknown>): MistakeRow {
 export async function getDueMistakes(childId: number, limit = 2): Promise<MistakeRow[]> {
   const db = getDb();
   const res = await db.execute({
-    sql: 'SELECT id, child_id, subject, kind, prompt, answer, wrong, next_review, interval_days, reps, easiness_factor, resolved FROM mistakes WHERE child_id = ? AND resolved = 0 AND next_review <= ? ORDER BY next_review ASC, id ASC LIMIT ?',
+    // 连续同类错误优先：同一道题错得越多，越应该先进每日一练。
+    // 这里先用 reps 做最小可用权重，等错题原因记录一段时间后，再按
+    // subject + kind + error_type 聚合升级成真正的知识点画像。
+    sql: 'SELECT id, child_id, subject, kind, prompt, answer, wrong, next_review, interval_days, reps, easiness_factor, resolved, error_type FROM mistakes WHERE child_id = ? AND resolved = 0 AND next_review <= ? ORDER BY reps DESC, next_review ASC, id ASC LIMIT ?',
     args: [childId, localDate(), limit],
   });
   return res.rows.map(toMistakeRow);
@@ -77,7 +82,8 @@ export async function getDueMistakes(childId: number, limit = 2): Promise<Mistak
 export async function reviewMistake(
   childId: number,
   id: number,
-  correct: boolean
+  correct: boolean,
+  errorType?: string | null
 ): Promise<boolean> {
   const db = getDb();
   const res = await db.execute({
@@ -98,11 +104,12 @@ export async function reviewMistake(
   const quality = correct ? 4 : 1;
 
   if (quality < 3) {
-    // 失败：重置重复次数，间隔 1 天，easiness -0.2
+    // 失败：重置重复次数，间隔 1 天，easiness -0.2；若本轮给了结构化错误原因则保留。
+    // 答对不写 error_type：一次成功复习不能抹掉历史错误画像。
     const newEasiness = Math.max(1.3, Number(row.easiness_factor ?? 2.5) - 0.2);
     await db.execute({
-      sql: 'UPDATE mistakes SET reps = 0, interval_days = 1, easiness_factor = ?, next_review = ?, resolved = 0 WHERE id = ? AND child_id = ?',
-      args: [newEasiness, localDate(1), id, childId],
+      sql: 'UPDATE mistakes SET reps = 0, interval_days = 1, easiness_factor = ?, next_review = ?, resolved = 0, error_type = COALESCE(?, error_type) WHERE id = ? AND child_id = ?',
+      args: [newEasiness, localDate(1), errorType ?? null, id, childId],
     });
   } else {
     // 成功：交给 lib/sm2.ts 的标准实现计算，**不再在此重写一遍递推**。

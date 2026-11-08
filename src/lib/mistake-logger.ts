@@ -11,6 +11,7 @@ export interface MistakeInput {
   answer: string;
   wrong: string;
   chapter?: string;
+  errorType?: string;
 }
 
 /**
@@ -24,6 +25,6 @@ export function useMistakeLogger() {
     (m: MistakeInput) => {
       logMistake({ ...m, sourceModule: ctx?.moduleKey });
     },
-    [ctx?.moduleKey],
+    [ctx?.moduleKey]
   );
 }

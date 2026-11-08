@@ -79,7 +79,7 @@ async function addMistake(
 
 async function stateOf(id: number) {
   const r = await db().execute({
-    sql: 'SELECT reps, interval_days, easiness_factor, next_review, resolved FROM mistakes WHERE id = ?',
+    sql: 'SELECT reps, interval_days, easiness_factor, next_review, resolved, error_type FROM mistakes WHERE id = ?',
     args: [id],
   });
   const row = r.rows[0];
@@ -89,6 +89,7 @@ async function stateOf(id: number) {
     ef: Number(row.easiness_factor),
     nextReview: String(row.next_review),
     resolved: Number(row.resolved ?? 0),
+    errorType: row.error_type == null ? null : String(row.error_type),
   };
 }
 
@@ -172,5 +173,25 @@ describe('mistakes/review · SM-2 推进语义', () => {
     expect(s.reps).toBeGreaterThan(0);
     expect(s.resolved).toBe(1);
     expect(s.nextReview > TODAY, 'next_review 没有前进').toBe(true);
+  });
+
+  it('答错写入结构化错误原因；答对不覆盖历史错误画像', async () => {
+    const failed = await addMistake(ME);
+    await POST(req({ id: failed, correct: false, errorType: 'reading' }));
+    expect((await stateOf(failed)).errorType).toBe('reading');
+
+    // 同一天已推进的记录会被幂等挡住；先新造一条直接答对，历史原因必须保留。
+    const passed = await addMistake(ME, {
+      reps: 1,
+      interval: 2,
+      ef: 2.5,
+      nextReview: TODAY,
+    });
+    await db().execute({
+      sql: 'UPDATE mistakes SET error_type = ? WHERE id = ?',
+      args: ['careless', passed],
+    });
+    await POST(req({ id: passed, correct: true, errorType: 'concept' }));
+    expect((await stateOf(passed)).errorType).toBe('careless');
   });
 });

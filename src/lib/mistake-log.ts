@@ -10,6 +10,7 @@ export interface MistakePayload {
   wrong: string;
   sourceModule?: string;
   chapter?: string;
+  errorType?: string;
 }
 
 /**

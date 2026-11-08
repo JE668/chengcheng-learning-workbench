@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { playTts } from '@/lib/speak';
 import { useOfflineStore } from '@/lib/stores';
 import { ClayCard, ClayButton } from '@/components/design-system';
+import { MISTAKE_ERROR_TYPES, mistakeErrorTypeLabel } from '@/lib/mistake-error-types';
 
 /**
  * 🏫 小老师台词（2026-10-21 ②号内容升级）——固定文案，已进预生成
@@ -32,6 +33,7 @@ interface MistakeRow {
   source_module: string | null;
   interval_days: number;
   reps: number;
+  error_type: string | null;
 }
 
 const subjectEmoji: Record<string, string> = {
@@ -63,6 +65,7 @@ export default function ReviewPage() {
   const [revealed, setRevealed] = useState<Record<number, boolean>>({});
   const [done, setDone] = useState(0);
   const [pickedAns, setPickedAns] = useState<Record<number, string>>({});
+  const [errorType, setErrorType] = useState<Record<number, string>>({});
 
   async function load() {
     const r = await fetch('/api/mistakes');
@@ -75,16 +78,18 @@ export default function ReviewPage() {
     load();
   }, []);
 
-  async function review(id: number, correct: boolean) {
+  async function review(id: number, correct: boolean, type?: string) {
     try {
       await fetch('/api/mistakes/review', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ id, correct }),
+        body: JSON.stringify({ id, correct, errorType: type }),
       });
     } catch {
       // 网络错误：入离线队列，联网后由 OfflineSync 重放（服务端按 next_review 幂等）
-      useOfflineStore.getState().addAction({ type: 'mistake-review', payload: { id, correct } });
+      useOfflineStore
+        .getState()
+        .addAction({ type: 'mistake-review', payload: { id, correct, errorType: type } });
     }
     setItems((prev) => prev.filter((it) => it.id !== id));
     if (correct) setDone((n) => n + 1);
@@ -143,10 +148,15 @@ export default function ReviewPage() {
                     {pickedAns[it.id] && pickedAns[it.id] !== it.answer && (
                       <span className="text-red-500 ml-2">（这次选了：{pickedAns[it.id]}）</span>
                     )}
+                    {it.error_type && (
+                      <div className="mt-1 text-xs text-moko-violet">
+                        上次错误原因：{mistakeErrorTypeLabel(it.error_type)}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="mt-3 space-y-2">
-                    {/* 把答案和干扰项混在一起做选择题 */}
+                    {/* 先重做：只记录选项，不揭示答案；确认后才进入解释 */}
                     {(() => {
                       const opts = shuffleAns(
                         it.answer,
@@ -158,28 +168,10 @@ export default function ReviewPage() {
                       return opts.map((opt) => (
                         <button
                           key={opt}
-                          onClick={() => {
-                            setPickedAns((p) => ({ ...p, [it.id]: opt }));
-                            setRevealed((p) => ({ ...p, [it.id]: true }));
-                            if (opt === it.answer) {
-                              setDone((n) => n + 1);
-                              // 小老师教对了：萌可学会的反馈（静态台词秒响）
-                              const line =
-                                TEACH_LINES_OK[Math.floor(Math.random() * TEACH_LINES_OK.length)];
-                              void playTts(line, 'zh', { wsRate: 0.85, preferStatic: true });
-                            } else {
-                              const line =
-                                TEACH_LINES_RETRY[
-                                  Math.floor(Math.random() * TEACH_LINES_RETRY.length)
-                                ];
-                              void playTts(line, 'zh', { wsRate: 0.85, preferStatic: true });
-                            }
-                          }}
+                          onClick={() => setPickedAns((p) => ({ ...p, [it.id]: opt }))}
                           className={`w-full text-left px-3 py-2 rounded-xl font-bold text-sm transition ${
                             pickedAns[it.id] === opt
-                              ? opt === it.answer
-                                ? 'bg-green-100 text-green-700 border-2 border-green-500'
-                                : 'bg-red-100 text-red-600 border-2 border-red-500'
+                              ? 'bg-moko-purple/10 text-moko-violet border-2 border-moko-purple/40'
                               : 'bg-gray-50 text-gray-700 border-2 border-gray-200 hover:border-moko-purple/30'
                           }`}
                         >
@@ -189,23 +181,89 @@ export default function ReviewPage() {
                     })()}
                   </div>
                 )}
+                {pickedAns[it.id] && !revealed[it.id] && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    选好啦！现在确认一下，把正确答案讲给萌可听。
+                  </p>
+                )}
+                {!revealed[it.id] && errorType[it.id] && (
+                  <div className="mt-3 p-3 rounded-2xl bg-moko-purple/5 border border-moko-purple/10">
+                    <div className="text-xs font-bold text-moko-violet mb-2">
+                      这次是因为什么没听懂呀？
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {Object.entries(MISTAKE_ERROR_TYPES).map(([key, label]) => (
+                        <button
+                          key={key}
+                          onClick={() => {
+                            setErrorType((p) => ({ ...p, [it.id]: key }));
+                            void review(it.id, false, key);
+                          }}
+                          className={`px-2 py-2 rounded-xl text-xs font-bold transition ${
+                            errorType[it.id] === key
+                              ? 'bg-moko-violet text-white'
+                              : 'bg-white text-moko-violet border border-moko-purple/20 hover:bg-moko-purple/10'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="flex gap-2 mt-3">
                   <ClayButton
                     variant="mint"
                     size="sm"
                     fullWidth
-                    onClick={() => review(it.id, true)}
+                    disabled={!pickedAns[it.id]}
+                    onClick={() => {
+                      const correct = pickedAns[it.id] === it.answer;
+                      setRevealed((p) => ({ ...p, [it.id]: true }));
+                      if (correct) setDone((n) => n + 1);
+                      void playTts(
+                        correct
+                          ? TEACH_LINES_OK[Math.floor(Math.random() * TEACH_LINES_OK.length)]
+                          : TEACH_LINES_RETRY[Math.floor(Math.random() * TEACH_LINES_RETRY.length)],
+                        'zh',
+                        { wsRate: 0.85, preferStatic: true }
+                      );
+                    }}
                   >
-                    萌可学会了 ✅
+                    揭示正确答案 👀
                   </ClayButton>
-                  <ClayButton
-                    variant="ghost"
-                    size="sm"
-                    fullWidth
-                    onClick={() => review(it.id, false)}
-                  >
-                    萌可没听懂 💡
-                  </ClayButton>
+                  {revealed[it.id] ? (
+                    <>
+                      <ClayButton
+                        variant="ghost"
+                        size="sm"
+                        fullWidth
+                        onClick={() => review(it.id, false)}
+                      >
+                        还没听懂 💡
+                      </ClayButton>
+                      <ClayButton
+                        variant="mint"
+                        size="sm"
+                        fullWidth
+                        onClick={() => review(it.id, true)}
+                      >
+                        听懂啦 ✅
+                      </ClayButton>
+                    </>
+                  ) : (
+                    <ClayButton
+                      variant="ghost"
+                      size="sm"
+                      fullWidth
+                      onClick={() => {
+                        setErrorType((p) => ({ ...p, [it.id]: 'concept' }));
+                        void review(it.id, false, 'concept');
+                      }}
+                    >
+                      直接讲给我 💡
+                    </ClayButton>
+                  )}
                 </div>
                 {it.source_module && (
                   <Link

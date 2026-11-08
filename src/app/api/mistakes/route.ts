@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   if (!user || user.role !== 'child')
     return NextResponse.json({ error: '只有孩子可以记录' }, { status: 403 });
   const body = await safeJson(req, {});
-  const { subject, kind, prompt, answer, wrong, source_module, chapter } = body as {
+  const { subject, kind, prompt, answer, wrong, source_module, chapter, error_type } = body as {
     subject?: string;
     kind?: string;
     prompt?: string;
@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
     wrong?: string;
     source_module?: string;
     chapter?: string;
+    error_type?: string;
   };
   if (!subject || !prompt || answer === undefined) {
     return NextResponse.json({ error: '参数缺失' }, { status: 400 });
@@ -62,18 +63,19 @@ export async function POST(req: NextRequest) {
       });
       if (exist.rows.length) {
         await db.execute({
-          sql: 'UPDATE mistakes SET wrong = ?, next_review = ?, interval_days = 1, reps = 0, source_module = ?, chapter = ? WHERE id = ?',
+          sql: 'UPDATE mistakes SET wrong = ?, next_review = ?, interval_days = 1, reps = 0, source_module = ?, chapter = ?, error_type = COALESCE(?, error_type) WHERE id = ?',
           args: [
             wrong ?? null,
             addDays(dateStr(), 1),
             source_module ?? null,
             chapter ?? null,
+            error_type ?? null,
             Number(exist.rows[0].id),
           ],
         });
       } else {
         await db.execute({
-          sql: 'INSERT INTO mistakes (child_id, subject, kind, prompt, answer, wrong, source_module, chapter, next_review, interval_days) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
+          sql: 'INSERT INTO mistakes (child_id, subject, kind, prompt, answer, wrong, source_module, chapter, error_type, next_review, interval_days) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
           args: [
             user.id,
             subject,
@@ -83,6 +85,7 @@ export async function POST(req: NextRequest) {
             wrong ?? null,
             source_module ?? null,
             chapter ?? null,
+            error_type ?? null,
             addDays(dateStr(), 1),
           ],
         });

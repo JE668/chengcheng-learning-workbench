@@ -174,6 +174,7 @@ export async function ensureSchema() {
       reps INTEGER NOT NULL DEFAULT 0,
       easiness_factor REAL NOT NULL DEFAULT 2.5,
       resolved INTEGER NOT NULL DEFAULT 0,
+      error_type TEXT,
       FOREIGN KEY(child_id) REFERENCES users(id)
     );`,
 
