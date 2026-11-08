@@ -99,7 +99,10 @@ export function buildOfflineRequest(action: {
     case 'story-capture':
       return { url: '/api/story/capture', init: json({ chapterId: P.chapterId }) };
     case 'mistake-review':
-      return { url: '/api/mistakes/review', init: json({ id: P.id, correct: P.correct }) };
+      return {
+        url: '/api/mistakes/review',
+        init: json({ id: P.id, correct: P.correct, errorType: P.errorType }),
+      };
     case 'confirm':
       return { url: '/api/castle/confirm', init: json({ day: P.day, subject: P.subject }) };
     case 'wish':

@@ -187,7 +187,10 @@ export default function ReviewPage() {
                   </p>
                 )}
                 {!revealed[it.id] && errorType[it.id] && (
-                  <div className="mt-3 p-3 rounded-2xl bg-moko-purple/5 border border-moko-purple/10">
+                  <div
+                    className="mt-3 p-3 rounded-2xl bg-moko-purple/5 border border-moko-purple/10"
+                    data-testid="error-type-picker"
+                  >
                     <div className="text-xs font-bold text-moko-violet mb-2">
                       这次是因为什么没听懂呀？
                     </div>

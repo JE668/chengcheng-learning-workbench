@@ -1,8 +1,9 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { ClayCard, ClayButton, ClayInput } from '@/components/design-system';
 
 const USERS = [
@@ -76,8 +77,8 @@ export default function LoginPage() {
       }}
     >
       {/* 浮动萌可装饰 */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <Image
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <img
           src="/moko/heartping.webp"
           alt="爱心萌可装饰图"
           width={80}
@@ -85,7 +86,7 @@ export default function LoginPage() {
           className="absolute w-20 h-20 rounded-full opacity-10 float-moko"
           style={{ top: '8%', left: '6%', animationDelay: '0s' }}
         />
-        <Image
+        <img
           src="/moko/courageping.webp"
           alt="正正萌可装饰图"
           width={64}
@@ -93,7 +94,7 @@ export default function LoginPage() {
           className="absolute w-16 h-16 rounded-full opacity-10 float-moko"
           style={{ top: '12%', right: '8%', animationDelay: '1.5s' }}
         />
-        <Image
+        <img
           src="/moko/singping.webp"
           alt="唱唱萌可装饰图"
           width={72}
@@ -101,7 +102,7 @@ export default function LoginPage() {
           className="absolute w-18 h-18 rounded-full opacity-10 float-moko"
           style={{ bottom: '20%', left: '4%', animationDelay: '0.8s' }}
         />
-        <Image
+        <img
           src="/moko/gemsping.webp"
           alt="宝石萌可装饰图"
           width={56}
@@ -109,7 +110,7 @@ export default function LoginPage() {
           className="absolute w-14 h-14 rounded-full opacity-10 float-moko"
           style={{ bottom: '10%', right: '6%', animationDelay: '2.2s' }}
         />
-        <Image
+        <img
           src="/moko/lemei.webp"
           alt="乐美装饰图"
           width={96}
@@ -139,13 +140,13 @@ export default function LoginPage() {
         {/* 乐美欢迎头像 */}
         <div className="relative mx-auto mb-5 w-32 h-32">
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-moko-pink to-moko-purple opacity-20 animate-pulse" />
-          <Image
+          <img
             src="/moko/lemei.webp"
             alt="乐美"
-            fill
-            className="w-28 h-28 rounded-full border-4 border-moko-pink shadow-lg mx-auto object-cover relative z-10"
-            priority
-            sizes="112px"
+            width={112}
+            height={112}
+            className="absolute left-2 top-2 h-28 w-28 rounded-full border-4 border-moko-pink object-cover shadow-lg z-10"
+            decoding="async"
           />
           <span className="absolute -bottom-1 -right-1 text-3xl z-20">👑</span>
         </div>

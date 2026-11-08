@@ -182,3 +182,27 @@ describe('offline-sync flushOfflineQueue', () => {
     expect(r.dropped).toBe(1);
   });
 });
+
+describe('offline-sync mistake-review errorType', () => {
+  beforeEach(() => {
+    useOfflineStore.setState({ queue: [], lastSync: null });
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200 }) as any;
+  });
+
+  it('错题复习重放必须透传结构化错误原因，避免离线补记丢失错误画像', async () => {
+    useOfflineStore.getState().addAction({
+      type: 'mistake-review',
+      payload: { id: 11, correct: false, errorType: 'reading' },
+    });
+
+    const r = await flushOfflineQueue();
+
+    expect(r).toEqual({ flushed: 1, dropped: 0 });
+    const init = (global.fetch as any).mock.calls[0][1];
+    expect(JSON.parse(init.body)).toEqual({
+      id: 11,
+      correct: false,
+      errorType: 'reading',
+    });
+  });
+});

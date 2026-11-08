@@ -26,7 +26,8 @@
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "analyze": "ANALYZE=true next build",
-    "prepare": "husky install || true"
+    "prepare": "husky install || true",
+    "e2e:seed:offline": "node scripts/e2e-seed-offline.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.50",
