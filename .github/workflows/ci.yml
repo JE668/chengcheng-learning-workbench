@@ -358,6 +358,8 @@ jobs:
           pnpm e2e --project=chromium --timeout=180000
         env:
           E2E_BASE_URL: http://localhost:3000
+          # 种子脚本必须和服务端使用同一个测试库。
+          TURSO_URL: file:${{ github.workspace }}/.e2e-db/local.db
 
       - name: 上传 E2E 失败截图/视频
         if: failure()
