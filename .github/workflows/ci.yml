@@ -284,7 +284,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: 初始化测试数据库（seed 默认账号，local.db 被 gitignore 未入库）
-        run: pnpm seed
+        env:
+          # 和后续 standalone server / E2E seed 保持同一个测试库。
+          TURSO_URL: file:${{ github.workspace }}/.e2e-db/local.db
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/.e2e-db"
+          pnpm seed
 
       - name: 安装 Playwright 浏览器（chromium）
         # 单独设 timeout：浏览器下载受 CI 网络影响很大，曾把整个 job 拖到超时
