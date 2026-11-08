@@ -6,6 +6,17 @@ import { withSentryConfig } from '@sentry/nextjs';
 const nextConfig = {
   // 整站自托管（NAS / 轻量云）需要：产出 .next/standalone 精简运行包
   output: 'standalone',
+  // libsql 通过 require(`@libsql/${target}`) 动态加载平台原生模块。
+  // 若被打包进 server chunk，Next 的依赖追踪看不到这条动态 require，
+  // standalone 产物就会缺 @libsql/darwin-arm64 等 .node 绑定（启动即 500）。
+  serverExternalPackages: ['@libsql/client', 'libsql'],
+  outputFileTracingIncludes: {
+    '/**/*': [
+      './node_modules/@libsql/**/*',
+      './node_modules/.pnpm/@libsql+*/**/*',
+      './node_modules/.pnpm/libsql@*/node_modules/@libsql/**/*',
+    ],
+  },
   images: {
     // 整站自托管 + 代码里统一用带尺寸的原生 <img>，不启用 next/image 优化链路；
     // （注意：unoptimized 时 formats/remotePatterns 均为死配置，已删除避免误导）

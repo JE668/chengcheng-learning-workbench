@@ -1,7 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'node:path';
+
+const dbURL = process.env.TURSO_URL || `file:${path.resolve('.e2e-db/local.db')}`;
+process.env.TURSO_URL = dbURL;
 
 export default defineConfig({
   testDir: './tests/e2e',
+  globalSetup: './tests/e2e/global-setup.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -55,16 +60,22 @@ export default defineConfig({
   // reuseExistingServer 保留：本地迭代可先手动起服务复用。
   webServer: {
     command:
-      'pnpm build && node -e "const fs=require(\'fs\');fs.cpSync(\'.next/static\',\'.next/standalone/.next/static\',{recursive:true});fs.cpSync(\'public\',\'.next/standalone/public\',{recursive:true})" && node .next/standalone/server.js',
+      "node -e \"require('fs').mkdirSync('.e2e-db',{recursive:true})\" && pnpm build && node -e \"const fs=require('fs');fs.cpSync('.next/static','.next/standalone/.next/static',{recursive:true});fs.cpSync('public','.next/standalone/public',{recursive:true})\" && node .next/standalone/server.js",
     url: 'http://localhost:3000',
     reuseExistingServer: true,
     timeout: 300000,
     env: {
       // standalone 的 server.js 不读 .env（dev 模式以前自动加载），
       // 由 playwright 显式注入。DB 用一次性路径，跑完即弃。
+      // ⚠️ 必须绝对路径：standalone 的 server.js 启动时会 chdir 到自身目录。
       NODE_ENV: 'production',
-      TURSO_URL: 'file:./.e2e-db/local.db',
+      TURSO_URL: dbURL,
       CRON_SECRET: 'e2e-cron-secret',
+      // 与 CI 对齐：e2e 有几十次登录，默认 5 分钟 10 次会被限流。
+      LOGIN_RATE_LIMIT_WINDOW: '3600',
+      LOGIN_RATE_LIMIT_MAX: '100',
+      MAX_LOGIN_FAILS: '100',
+      LOGIN_LOCK_SECONDS: '0',
     },
   },
 });

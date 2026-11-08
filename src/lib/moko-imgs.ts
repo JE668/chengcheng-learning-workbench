@@ -1,154 +1,303 @@
 // 自动生成：由 moko-collection.ts 抽取 name->img 的精简子集，供客户端(story 页)使用，
 // 避免把全量萌可数据打进浏览器 JS。请勿手改，重新生成：node scripts/gen-moko-imgs.js
 export const mokoImgByName: Record<string, string> = {
-  "优雅萌可": "/moko/collection/01_皇室萌可/优雅萌可_render.webp",
-  "信信萌可": "/moko/collection/01_皇室萌可/信信萌可_render.webp",
-  "勇气萌可": "/moko/collection/01_皇室萌可/勇气萌可_render.webp",
-  "唱唱萌可": "/moko/collection/01_皇室萌可/唱唱萌可_render.webp",
-  "好好萌可": "/moko/collection/01_皇室萌可/好好萌可_render.webp",
-  "幸福萌可": "/moko/collection/01_皇室萌可/幸福萌可_render.webp",
-  "星光萌可": "/moko/collection/01_皇室萌可/星光萌可_render.webp",
-  "月光萌可": "/moko/collection/01_皇室萌可/月光萌可_render.webp",
-  "正正萌可": "/moko/collection/01_皇室萌可/正正萌可_render.webp",
-  "漂亮萌可": "/moko/collection/01_皇室萌可/漂亮萌可_render.webp",
-  "热情萌可": "/moko/collection/01_皇室萌可/热情萌可_render.webp",
-  "爱心萌可": "/moko/collection/01_皇室萌可/爱心萌可_render.webp",
-  "王子萌可": "/moko/collection/01_皇室萌可/王子萌可_render.webp",
-  "盼盼萌可": "/moko/collection/01_皇室萌可/盼盼萌可_render.webp",
-  "笑笑萌可": "/moko/collection/01_皇室萌可/笑笑萌可_render.webp",
-  "绵绵萌可": "/moko/collection/01_皇室萌可/绵绵萌可_render.webp",
-  "美丽萌可": "/moko/collection/01_皇室萌可/美丽萌可_render.webp",
-  "诚实萌可": "/moko/collection/01_皇室萌可/诚实萌可_render.webp",
-  "赞赞萌可": "/moko/collection/01_皇室萌可/赞赞萌可_render.webp",
-  "软软萌可": "/moko/collection/01_皇室萌可/软软萌可_render.webp",
-  "银光萌可": "/moko/collection/01_皇室萌可/银光萌可_render.webp",
-  "闪闪萌可": "/moko/collection/01_皇室萌可/闪闪萌可_render.webp",
-  "乖乖萌可": "/moko/collection/02_魔方萌可_第一二季/乖乖萌可_render.webp",
-  "仿仿萌可": "/moko/collection/02_魔方萌可_第一二季/仿仿萌可_render.webp",
-  "倒倒萌可": "/moko/collection/02_魔方萌可_第一二季/倒倒萌可_render.webp",
-  "八卦萌可": "/moko/collection/02_魔方萌可_第一二季/八卦萌可_render.webp",
-  "冰冰萌可": "/moko/collection/02_魔方萌可_第一二季/冰冰萌可_render.webp",
-  "冷冷萌可": "/moko/collection/02_魔方萌可_第一二季/冷冷萌可_render.webp",
-  "厌厌萌可": "/moko/collection/02_魔方萌可_第一二季/厌厌萌可_render.webp",
-  "变身萌可": "/moko/collection/02_魔方萌可_第一二季/变身萌可_render.webp",
-  "叹气萌可": "/moko/collection/02_魔方萌可_第一二季/叹气萌可_render.webp",
-  "否否萌可": "/moko/collection/02_魔方萌可_第一二季/否否萌可_render.webp",
-  "好奇萌可": "/moko/collection/02_魔方萌可_第一二季/好奇萌可_render.webp",
-  "妒妒萌可": "/moko/collection/02_魔方萌可_第一二季/妒妒萌可_render.webp",
-  "妖妖萌可": "/moko/collection/02_魔方萌可_第一二季/妖妖萌可_render.webp",
-  "娇娇萌可": "/moko/collection/02_魔方萌可_第一二季/娇娇萌可_render.webp",
-  "孤独萌可": "/moko/collection/02_魔方萌可_第一二季/孤独萌可_render.webp",
-  "宝宝萌可": "/moko/collection/02_魔方萌可_第一二季/宝宝萌可_render.webp",
-  "害羞萌可": "/moko/collection/02_魔方萌可_第一二季/害羞萌可_render.webp",
-  "幻幻萌可": "/moko/collection/02_魔方萌可_第一二季/幻幻萌可_render.webp",
-  "怒怒萌可": "/moko/collection/02_魔方萌可_第一二季/怒怒萌可_render.webp",
-  "怕怕萌可": "/moko/collection/02_魔方萌可_第一二季/怕怕萌可_render.webp",
-  "恋恋萌可": "/moko/collection/02_魔方萌可_第一二季/恋恋萌可_render.webp",
-  "泪泪萌可": "/moko/collection/02_魔方萌可_第一二季/泪泪萌可_render.webp",
-  "淘气萌可": "/moko/collection/02_魔方萌可_第一二季/淘气萌可_render.webp",
-  "玩具萌可": "/moko/collection/02_魔方萌可_第一二季/玩具萌可_render.webp",
-  "玩玩萌可": "/moko/collection/02_魔方萌可_第一二季/玩玩萌可_render.webp",
-  "玩玩萌可·乐乐萌可": "/moko/collection/02_魔方萌可_第一二季/玩玩萌可_乐乐萌可_render.webp",
-  "电电萌可": "/moko/collection/02_魔方萌可_第一二季/电电萌可_render.webp",
-  "画画萌可": "/moko/collection/02_魔方萌可_第一二季/画画萌可_render.webp",
-  "睡睡萌可": "/moko/collection/02_魔方萌可_第一二季/睡睡萌可_render.webp",
-  "美美萌可": "/moko/collection/02_魔方萌可_第一二季/美美萌可_render.webp",
-  "聪明萌可": "/moko/collection/02_魔方萌可_第一二季/聪明萌可_render.webp",
-  "花花萌可": "/moko/collection/02_魔方萌可_第一二季/花花萌可_render.webp",
-  "贪贪萌可": "/moko/collection/02_魔方萌可_第一二季/贪贪萌可_render.webp",
-  "赛赛萌可": "/moko/collection/02_魔方萌可_第一二季/赛赛萌可_render.webp",
-  "迷糊萌可": "/moko/collection/02_魔方萌可_第一二季/迷糊萌可_render.webp",
-  "速速萌可": "/moko/collection/02_魔方萌可_第一二季/速速萌可_render.webp",
-  "重重萌可": "/moko/collection/02_魔方萌可_第一二季/重重萌可_render.webp",
-  "黏黏萌可": "/moko/collection/02_魔方萌可_第一二季/黏黏萌可_render.webp",
-  "公主萌可": "/moko/collection/03_宝石萌可_第三季/公主萌可_render.webp",
-  "净净萌可": "/moko/collection/03_宝石萌可_第三季/净净萌可_render.webp",
-  "分享萌可": "/moko/collection/03_宝石萌可_第三季/分享萌可_render.webp",
-  "双双萌可": "/moko/collection/03_宝石萌可_第三季/双双萌可_render.webp",
-  "嘻嘻萌可": "/moko/collection/03_宝石萌可_第三季/嘻嘻萌可_render.webp",
-  "安慰萌可": "/moko/collection/03_宝石萌可_第三季/安慰萌可_render.webp",
-  "弱弱萌可": "/moko/collection/03_宝石萌可_第三季/弱弱萌可_render.webp",
-  "愿望萌可": "/moko/collection/03_宝石萌可_第三季/愿望萌可_render.webp",
-  "暖暖萌可": "/moko/collection/03_宝石萌可_第三季/暖暖萌可_render.webp",
-  "神奇萌可": "/moko/collection/03_宝石萌可_第三季/神奇萌可_render.webp",
-  "笔记萌可": "/moko/collection/03_宝石萌可_第三季/笔记萌可_render.webp",
-  "美味萌可": "/moko/collection/03_宝石萌可_第三季/美味萌可_render.webp",
-  "芭蕾萌可": "/moko/collection/03_宝石萌可_第三季/芭蕾萌可_render.webp",
-  "躲躲萌可": "/moko/collection/03_宝石萌可_第三季/躲躲萌可_render.webp",
-  "雕刻萌可": "/moko/collection/03_宝石萌可_第三季/雕刻萌可_render.webp",
-  "人鱼萌可": "/moko/collection/04_钥匙萌可_第四季/人鱼萌可_render.webp",
-  "修理萌可": "/moko/collection/04_钥匙萌可_第四季/修理萌可_render.webp",
-  "加油萌可": "/moko/collection/04_钥匙萌可_第四季/加油萌可_render.webp",
-  "医生萌可": "/moko/collection/04_钥匙萌可_第四季/医生萌可_render.webp",
-  "发明萌可": "/moko/collection/04_钥匙萌可_第四季/发明萌可_render.webp",
-  "吞吞萌可": "/moko/collection/04_钥匙萌可_第四季/吞吞萌可_render.webp",
-  "快快萌可": "/moko/collection/04_钥匙萌可_第四季/快快萌可_render.webp",
-  "时尚萌可": "/moko/collection/04_钥匙萌可_第四季/时尚萌可_render.webp",
-  "歌声萌可": "/moko/collection/04_钥匙萌可_第四季/歌声萌可_render.webp",
-  "气气萌可": "/moko/collection/04_钥匙萌可_第四季/气气萌可_render.webp",
-  "派对萌可": "/moko/collection/04_钥匙萌可_第四季/派对萌可_render.webp",
-  "滑冰萌可": "/moko/collection/04_钥匙萌可_第四季/滑冰萌可_render.webp",
-  "灭火萌可": "/moko/collection/04_钥匙萌可_第四季/灭火萌可_render.webp",
-  "美发萌可": "/moko/collection/04_钥匙萌可_第四季/美发萌可_render.webp",
-  "警察萌可": "/moko/collection/04_钥匙萌可_第四季/警察萌可_render.webp",
-  "冰沙萌可": "/moko/collection/05_甜心萌可_第五季/冰沙萌可_render.webp",
-  "华夫萌可": "/moko/collection/05_甜心萌可_第五季/华夫萌可_render.webp",
-  "夹心萌可": "/moko/collection/05_甜心萌可_第五季/夹心萌可_render.webp",
-  "奶油萌可": "/moko/collection/05_甜心萌可_第五季/奶油萌可_render.webp",
-  "巧克力萌可": "/moko/collection/05_甜心萌可_第五季/巧克力萌可_render.webp",
-  "布丁萌可": "/moko/collection/05_甜心萌可_第五季/布丁萌可_render.webp",
-  "松饼萌可": "/moko/collection/05_甜心萌可_第五季/松饼萌可_render.webp",
-  "棉花糖萌可": "/moko/collection/05_甜心萌可_第五季/棉花糖萌可_render.webp",
-  "棒棒糖萌可": "/moko/collection/05_甜心萌可_第五季/棒棒糖萌可_render.webp",
-  "泡泡萌可": "/moko/collection/05_甜心萌可_第五季/泡泡萌可_render.webp",
-  "甜甜圈萌可": "/moko/collection/05_甜心萌可_第五季/甜甜圈萌可_render.webp",
-  "糖糖萌可": "/moko/collection/05_甜心萌可_第五季/糖糖萌可_render.webp",
-  "蛋糕妹妹萌可": "/moko/collection/05_甜心萌可_第五季/蛋糕妹妹萌可_render.webp",
-  "蛋糕妹妹萌可·蛋糕弟弟萌可": "/moko/collection/05_甜心萌可_第五季/蛋糕妹妹萌可_蛋糕弟弟萌可_render.webp",
-  "蛋糕弟弟萌可": "/moko/collection/05_甜心萌可_第五季/蛋糕弟弟萌可_render.webp",
-  "酸奶萌可": "/moko/collection/05_甜心萌可_第五季/酸奶萌可_render.webp",
-  "马卡龙萌可": "/moko/collection/05_甜心萌可_第五季/马卡龙萌可_render.webp",
-  "乐美公主": "/moko/lemei.webp",
-  "亲亲萌可": "/moko/collection/06_星星萌可_第六季/亲亲萌可_render.webp",
-  "光明萌可": "/moko/collection/06_星星萌可_第六季/光明萌可_render.webp",
-  "兔兔萌可": "/moko/collection/06_星星萌可_第六季/兔兔萌可_render.webp",
-  "共共萌可": "/moko/collection/06_星星萌可_第六季/共共萌可_render.webp",
-  "动动萌可": "/moko/collection/06_星星萌可_第六季/动动萌可_render.webp",
-  "叮咚萌可": "/moko/collection/06_星星萌可_第六季/叮咚萌可_render.webp",
-  "呼啦萌可": "/moko/collection/06_星星萌可_第六季/呼啦萌可_render.webp",
-  "悄悄萌可": "/moko/collection/06_星星萌可_第六季/悄悄萌可_render.webp",
-  "歌谣萌可": "/moko/collection/06_星星萌可_第六季/歌谣萌可_render.webp",
-  "流浪萌可": "/moko/collection/06_星星萌可_第六季/流浪萌可_render.webp",
-  "熊熊萌可": "/moko/collection/06_星星萌可_第六季/熊熊萌可_render.webp",
-  "狐狐萌可": "/moko/collection/06_星星萌可_第六季/狐狐萌可_render.webp",
-  "纷纷萌可": "/moko/collection/06_星星萌可_第六季/纷纷萌可_render.webp",
-  "绵羊萌可": "/moko/collection/06_星星萌可_第六季/绵羊萌可_render.webp",
-  "缤缤萌可": "/moko/collection/06_星星萌可_第六季/缤缤萌可_render.webp",
-  "缤缤萌可·纷纷萌可": "/moko/collection/06_星星萌可_第六季/缤缤萌可_纷纷萌可_render.webp",
-  "贴贴萌可": "/moko/collection/06_星星萌可_第六季/贴贴萌可_render.webp",
-  "跳舞萌可": "/moko/collection/06_星星萌可_第六季/跳舞萌可_render.webp",
-  "透明萌可": "/moko/collection/06_星星萌可_第六季/透明萌可_render.webp",
-  "丘比特萌可": "/moko/collection/07_公主萌可_第七季/丘比特萌可_render.webp",
-  "丝绸萌可": "/moko/collection/07_公主萌可_第七季/丝绸萌可_render.webp",
-  "困困萌可": "/moko/collection/07_公主萌可_第七季/困困萌可_render.webp",
-  "洗洗萌可": "/moko/collection/07_公主萌可_第七季/洗洗萌可_render.webp",
-  "猫猫萌可": "/moko/collection/07_公主萌可_第七季/猫猫萌可_render.webp",
-  "玲珑萌可": "/moko/collection/07_公主萌可_第七季/玲珑萌可_render.webp",
-  "白雪萌可": "/moko/collection/07_公主萌可_第七季/白雪萌可_render.webp",
-  "蝴蝶萌可": "/moko/collection/07_公主萌可_第七季/蝴蝶萌可_render.webp",
-  "露水萌可": "/moko/collection/07_公主萌可_第七季/露水萌可_render.webp",
-  "鞋鞋萌可": "/moko/collection/07_公主萌可_第七季/鞋鞋萌可_render.webp",
-  "魅力萌可": "/moko/collection/07_公主萌可_第七季/魅力萌可_render.webp",
-  "查尔斯王子": "/moko/collection/08_王子萌可/查尔斯萌可_render.webp",
-  "演歌萌可": "/moko/collection/08_王子萌可/演歌萌可_render.webp",
-  "绅士萌可": "/moko/collection/08_王子萌可/绅士萌可_render.webp",
-  "青蛙萌可": "/moko/collection/08_王子萌可/青蛙萌可_render.webp",
-  "奉献萌可": "/moko/collection/09_反派及其他/奉献萌可_render.webp",
-  "闹闹萌可": "/moko/collection/09_反派及其他/闹闹萌可_render.webp",
-  "幸运萌可": "/moko/collection/10_传奇萌可/幸运萌可_render.webp",
-  "月神萌可": "/moko/collection/10_传奇萌可/月神萌可_render.webp",
-  "月食萌可": "/moko/collection/10_传奇萌可/月食萌可_render.webp",
-  "极光萌可": "/moko/collection/10_传奇萌可/极光萌可_render.webp",
-  "甜甜萌可": "/moko/collection/10_传奇萌可/甜甜萌可_render.webp",
-  "酸酸萌可": "/moko/collection/10_传奇萌可/酸酸萌可_render.webp"
+  优雅萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E4%BC%98%E9%9B%85%E8%90%8C%E5%8F%AF_render.webp',
+  信信萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E4%BF%A1%E4%BF%A1%E8%90%8C%E5%8F%AF_render.webp',
+  勇气萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E5%8B%87%E6%B0%94%E8%90%8C%E5%8F%AF_render.webp',
+  唱唱萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E5%94%B1%E5%94%B1%E8%90%8C%E5%8F%AF_render.webp',
+  好好萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E5%A5%BD%E5%A5%BD%E8%90%8C%E5%8F%AF_render.webp',
+  幸福萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E5%B9%B8%E7%A6%8F%E8%90%8C%E5%8F%AF_render.webp',
+  星光萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E6%98%9F%E5%85%89%E8%90%8C%E5%8F%AF_render.webp',
+  月光萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E6%9C%88%E5%85%89%E8%90%8C%E5%8F%AF_render.webp',
+  正正萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E6%AD%A3%E6%AD%A3%E8%90%8C%E5%8F%AF_render.webp',
+  漂亮萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E6%BC%82%E4%BA%AE%E8%90%8C%E5%8F%AF_render.webp',
+  热情萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E7%83%AD%E6%83%85%E8%90%8C%E5%8F%AF_render.webp',
+  爱心萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E7%88%B1%E5%BF%83%E8%90%8C%E5%8F%AF_render.webp',
+  王子萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E7%8E%8B%E5%AD%90%E8%90%8C%E5%8F%AF_render.webp',
+  盼盼萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E7%9B%BC%E7%9B%BC%E8%90%8C%E5%8F%AF_render.webp',
+  笑笑萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E7%AC%91%E7%AC%91%E8%90%8C%E5%8F%AF_render.webp',
+  绵绵萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E7%BB%B5%E7%BB%B5%E8%90%8C%E5%8F%AF_render.webp',
+  美丽萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E7%BE%8E%E4%B8%BD%E8%90%8C%E5%8F%AF_render.webp',
+  诚实萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E8%AF%9A%E5%AE%9E%E8%90%8C%E5%8F%AF_render.webp',
+  赞赞萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E8%B5%9E%E8%B5%9E%E8%90%8C%E5%8F%AF_render.webp',
+  软软萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E8%BD%AF%E8%BD%AF%E8%90%8C%E5%8F%AF_render.webp',
+  银光萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E9%93%B6%E5%85%89%E8%90%8C%E5%8F%AF_render.webp',
+  闪闪萌可:
+    '/moko/collection/01_%E7%9A%87%E5%AE%A4%E8%90%8C%E5%8F%AF/%E9%97%AA%E9%97%AA%E8%90%8C%E5%8F%AF_render.webp',
+  乖乖萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E4%B9%96%E4%B9%96%E8%90%8C%E5%8F%AF_render.webp',
+  仿仿萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E4%BB%BF%E4%BB%BF%E8%90%8C%E5%8F%AF_render.webp',
+  倒倒萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%80%92%E5%80%92%E8%90%8C%E5%8F%AF_render.webp',
+  八卦萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%85%AB%E5%8D%A6%E8%90%8C%E5%8F%AF_render.webp',
+  冰冰萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%86%B0%E5%86%B0%E8%90%8C%E5%8F%AF_render.webp',
+  冷冷萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%86%B7%E5%86%B7%E8%90%8C%E5%8F%AF_render.webp',
+  厌厌萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%8E%8C%E5%8E%8C%E8%90%8C%E5%8F%AF_render.webp',
+  变身萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%8F%98%E8%BA%AB%E8%90%8C%E5%8F%AF_render.webp',
+  叹气萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%8F%B9%E6%B0%94%E8%90%8C%E5%8F%AF_render.webp',
+  否否萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%90%A6%E5%90%A6%E8%90%8C%E5%8F%AF_render.webp',
+  好奇萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%A5%BD%E5%A5%87%E8%90%8C%E5%8F%AF_render.webp',
+  妒妒萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%A6%92%E5%A6%92%E8%90%8C%E5%8F%AF_render.webp',
+  妖妖萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%A6%96%E5%A6%96%E8%90%8C%E5%8F%AF_render.webp',
+  娇娇萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%A8%87%E5%A8%87%E8%90%8C%E5%8F%AF_render.webp',
+  孤独萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%AD%A4%E7%8B%AC%E8%90%8C%E5%8F%AF_render.webp',
+  宝宝萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%AE%9D%E5%AE%9D%E8%90%8C%E5%8F%AF_render.webp',
+  害羞萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%AE%B3%E7%BE%9E%E8%90%8C%E5%8F%AF_render.webp',
+  幻幻萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E5%B9%BB%E5%B9%BB%E8%90%8C%E5%8F%AF_render.webp',
+  怒怒萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E6%80%92%E6%80%92%E8%90%8C%E5%8F%AF_render.webp',
+  怕怕萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E6%80%95%E6%80%95%E8%90%8C%E5%8F%AF_render.webp',
+  恋恋萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E6%81%8B%E6%81%8B%E8%90%8C%E5%8F%AF_render.webp',
+  泪泪萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E6%B3%AA%E6%B3%AA%E8%90%8C%E5%8F%AF_render.webp',
+  淘气萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E6%B7%98%E6%B0%94%E8%90%8C%E5%8F%AF_render.webp',
+  玩具萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E7%8E%A9%E5%85%B7%E8%90%8C%E5%8F%AF_render.webp',
+  玩玩萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E7%8E%A9%E7%8E%A9%E8%90%8C%E5%8F%AF_render.webp',
+  '玩玩萌可·乐乐萌可':
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E7%8E%A9%E7%8E%A9%E8%90%8C%E5%8F%AF_%E4%B9%90%E4%B9%90%E8%90%8C%E5%8F%AF_render.webp',
+  电电萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E7%94%B5%E7%94%B5%E8%90%8C%E5%8F%AF_render.webp',
+  画画萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E7%94%BB%E7%94%BB%E8%90%8C%E5%8F%AF_render.webp',
+  睡睡萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E7%9D%A1%E7%9D%A1%E8%90%8C%E5%8F%AF_render.webp',
+  美美萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E7%BE%8E%E7%BE%8E%E8%90%8C%E5%8F%AF_render.webp',
+  聪明萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E8%81%AA%E6%98%8E%E8%90%8C%E5%8F%AF_render.webp',
+  花花萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E8%8A%B1%E8%8A%B1%E8%90%8C%E5%8F%AF_render.webp',
+  贪贪萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E8%B4%AA%E8%B4%AA%E8%90%8C%E5%8F%AF_render.webp',
+  赛赛萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E8%B5%9B%E8%B5%9B%E8%90%8C%E5%8F%AF_render.webp',
+  迷糊萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E8%BF%B7%E7%B3%8A%E8%90%8C%E5%8F%AF_render.webp',
+  速速萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E9%80%9F%E9%80%9F%E8%90%8C%E5%8F%AF_render.webp',
+  重重萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E9%87%8D%E9%87%8D%E8%90%8C%E5%8F%AF_render.webp',
+  黏黏萌可:
+    '/moko/collection/02_%E9%AD%94%E6%96%B9%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%80%E4%BA%8C%E5%AD%A3/%E9%BB%8F%E9%BB%8F%E8%90%8C%E5%8F%AF_render.webp',
+  公主萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E5%85%AC%E4%B8%BB%E8%90%8C%E5%8F%AF_render.webp',
+  净净萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E5%87%80%E5%87%80%E8%90%8C%E5%8F%AF_render.webp',
+  分享萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E5%88%86%E4%BA%AB%E8%90%8C%E5%8F%AF_render.webp',
+  双双萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E5%8F%8C%E5%8F%8C%E8%90%8C%E5%8F%AF_render.webp',
+  嘻嘻萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E5%98%BB%E5%98%BB%E8%90%8C%E5%8F%AF_render.webp',
+  安慰萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E5%AE%89%E6%85%B0%E8%90%8C%E5%8F%AF_render.webp',
+  弱弱萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E5%BC%B1%E5%BC%B1%E8%90%8C%E5%8F%AF_render.webp',
+  愿望萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E6%84%BF%E6%9C%9B%E8%90%8C%E5%8F%AF_render.webp',
+  暖暖萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E6%9A%96%E6%9A%96%E8%90%8C%E5%8F%AF_render.webp',
+  神奇萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E7%A5%9E%E5%A5%87%E8%90%8C%E5%8F%AF_render.webp',
+  笔记萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E7%AC%94%E8%AE%B0%E8%90%8C%E5%8F%AF_render.webp',
+  美味萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E7%BE%8E%E5%91%B3%E8%90%8C%E5%8F%AF_render.webp',
+  芭蕾萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E8%8A%AD%E8%95%BE%E8%90%8C%E5%8F%AF_render.webp',
+  躲躲萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E8%BA%B2%E8%BA%B2%E8%90%8C%E5%8F%AF_render.webp',
+  雕刻萌可:
+    '/moko/collection/03_%E5%AE%9D%E7%9F%B3%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%89%E5%AD%A3/%E9%9B%95%E5%88%BB%E8%90%8C%E5%8F%AF_render.webp',
+  人鱼萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E4%BA%BA%E9%B1%BC%E8%90%8C%E5%8F%AF_render.webp',
+  修理萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E4%BF%AE%E7%90%86%E8%90%8C%E5%8F%AF_render.webp',
+  加油萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E5%8A%A0%E6%B2%B9%E8%90%8C%E5%8F%AF_render.webp',
+  医生萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E5%8C%BB%E7%94%9F%E8%90%8C%E5%8F%AF_render.webp',
+  发明萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E5%8F%91%E6%98%8E%E8%90%8C%E5%8F%AF_render.webp',
+  吞吞萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E5%90%9E%E5%90%9E%E8%90%8C%E5%8F%AF_render.webp',
+  快快萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E5%BF%AB%E5%BF%AB%E8%90%8C%E5%8F%AF_render.webp',
+  时尚萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E6%97%B6%E5%B0%9A%E8%90%8C%E5%8F%AF_render.webp',
+  歌声萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E6%AD%8C%E5%A3%B0%E8%90%8C%E5%8F%AF_render.webp',
+  气气萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E6%B0%94%E6%B0%94%E8%90%8C%E5%8F%AF_render.webp',
+  派对萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E6%B4%BE%E5%AF%B9%E8%90%8C%E5%8F%AF_render.webp',
+  滑冰萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E6%BB%91%E5%86%B0%E8%90%8C%E5%8F%AF_render.webp',
+  灭火萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E7%81%AD%E7%81%AB%E8%90%8C%E5%8F%AF_render.webp',
+  美发萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E7%BE%8E%E5%8F%91%E8%90%8C%E5%8F%AF_render.webp',
+  警察萌可:
+    '/moko/collection/04_%E9%92%A5%E5%8C%99%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%9B%9B%E5%AD%A3/%E8%AD%A6%E5%AF%9F%E8%90%8C%E5%8F%AF_render.webp',
+  冰沙萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E5%86%B0%E6%B2%99%E8%90%8C%E5%8F%AF_render.webp',
+  华夫萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E5%8D%8E%E5%A4%AB%E8%90%8C%E5%8F%AF_render.webp',
+  夹心萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E5%A4%B9%E5%BF%83%E8%90%8C%E5%8F%AF_render.webp',
+  奶油萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E5%A5%B6%E6%B2%B9%E8%90%8C%E5%8F%AF_render.webp',
+  巧克力萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E5%B7%A7%E5%85%8B%E5%8A%9B%E8%90%8C%E5%8F%AF_render.webp',
+  布丁萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E5%B8%83%E4%B8%81%E8%90%8C%E5%8F%AF_render.webp',
+  松饼萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E6%9D%BE%E9%A5%BC%E8%90%8C%E5%8F%AF_render.webp',
+  棉花糖萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E6%A3%89%E8%8A%B1%E7%B3%96%E8%90%8C%E5%8F%AF_render.webp',
+  棒棒糖萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E6%A3%92%E6%A3%92%E7%B3%96%E8%90%8C%E5%8F%AF_render.webp',
+  泡泡萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E6%B3%A1%E6%B3%A1%E8%90%8C%E5%8F%AF_render.webp',
+  甜甜圈萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E7%94%9C%E7%94%9C%E5%9C%88%E8%90%8C%E5%8F%AF_render.webp',
+  糖糖萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E7%B3%96%E7%B3%96%E8%90%8C%E5%8F%AF_render.webp',
+  蛋糕妹妹萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E8%9B%8B%E7%B3%95%E5%A6%B9%E5%A6%B9%E8%90%8C%E5%8F%AF_render.webp',
+  '蛋糕妹妹萌可·蛋糕弟弟萌可':
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E8%9B%8B%E7%B3%95%E5%A6%B9%E5%A6%B9%E8%90%8C%E5%8F%AF_%E8%9B%8B%E7%B3%95%E5%BC%9F%E5%BC%9F%E8%90%8C%E5%8F%AF_render.webp',
+  蛋糕弟弟萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E8%9B%8B%E7%B3%95%E5%BC%9F%E5%BC%9F%E8%90%8C%E5%8F%AF_render.webp',
+  酸奶萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E9%85%B8%E5%A5%B6%E8%90%8C%E5%8F%AF_render.webp',
+  马卡龙萌可:
+    '/moko/collection/05_%E7%94%9C%E5%BF%83%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%BA%94%E5%AD%A3/%E9%A9%AC%E5%8D%A1%E9%BE%99%E8%90%8C%E5%8F%AF_render.webp',
+  乐美公主: '/moko/lemei.webp',
+  亲亲萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E4%BA%B2%E4%BA%B2%E8%90%8C%E5%8F%AF_render.webp',
+  光明萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E5%85%89%E6%98%8E%E8%90%8C%E5%8F%AF_render.webp',
+  兔兔萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E5%85%94%E5%85%94%E8%90%8C%E5%8F%AF_render.webp',
+  共共萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E5%85%B1%E5%85%B1%E8%90%8C%E5%8F%AF_render.webp',
+  动动萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E5%8A%A8%E5%8A%A8%E8%90%8C%E5%8F%AF_render.webp',
+  叮咚萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E5%8F%AE%E5%92%9A%E8%90%8C%E5%8F%AF_render.webp',
+  呼啦萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E5%91%BC%E5%95%A6%E8%90%8C%E5%8F%AF_render.webp',
+  悄悄萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E6%82%84%E6%82%84%E8%90%8C%E5%8F%AF_render.webp',
+  歌谣萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E6%AD%8C%E8%B0%A3%E8%90%8C%E5%8F%AF_render.webp',
+  流浪萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E6%B5%81%E6%B5%AA%E8%90%8C%E5%8F%AF_render.webp',
+  熊熊萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E7%86%8A%E7%86%8A%E8%90%8C%E5%8F%AF_render.webp',
+  狐狐萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E7%8B%90%E7%8B%90%E8%90%8C%E5%8F%AF_render.webp',
+  纷纷萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E7%BA%B7%E7%BA%B7%E8%90%8C%E5%8F%AF_render.webp',
+  绵羊萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E7%BB%B5%E7%BE%8A%E8%90%8C%E5%8F%AF_render.webp',
+  缤缤萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E7%BC%A4%E7%BC%A4%E8%90%8C%E5%8F%AF_render.webp',
+  '缤缤萌可·纷纷萌可':
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E7%BC%A4%E7%BC%A4%E8%90%8C%E5%8F%AF_%E7%BA%B7%E7%BA%B7%E8%90%8C%E5%8F%AF_render.webp',
+  贴贴萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E8%B4%B4%E8%B4%B4%E8%90%8C%E5%8F%AF_render.webp',
+  跳舞萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E8%B7%B3%E8%88%9E%E8%90%8C%E5%8F%AF_render.webp',
+  透明萌可:
+    '/moko/collection/06_%E6%98%9F%E6%98%9F%E8%90%8C%E5%8F%AF_%E7%AC%AC%E5%85%AD%E5%AD%A3/%E9%80%8F%E6%98%8E%E8%90%8C%E5%8F%AF_render.webp',
+  丘比特萌可:
+    '/moko/collection/07_%E5%85%AC%E4%B8%BB%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%83%E5%AD%A3/%E4%B8%98%E6%AF%94%E7%89%B9%E8%90%8C%E5%8F%AF_render.webp',
+  丝绸萌可:
+    '/moko/collection/07_%E5%85%AC%E4%B8%BB%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%83%E5%AD%A3/%E4%B8%9D%E7%BB%B8%E8%90%8C%E5%8F%AF_render.webp',
+  困困萌可:
+    '/moko/collection/07_%E5%85%AC%E4%B8%BB%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%83%E5%AD%A3/%E5%9B%B0%E5%9B%B0%E8%90%8C%E5%8F%AF_render.webp',
+  洗洗萌可:
+    '/moko/collection/07_%E5%85%AC%E4%B8%BB%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%83%E5%AD%A3/%E6%B4%97%E6%B4%97%E8%90%8C%E5%8F%AF_render.webp',
+  猫猫萌可:
+    '/moko/collection/07_%E5%85%AC%E4%B8%BB%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%83%E5%AD%A3/%E7%8C%AB%E7%8C%AB%E8%90%8C%E5%8F%AF_render.webp',
+  玲珑萌可:
+    '/moko/collection/07_%E5%85%AC%E4%B8%BB%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%83%E5%AD%A3/%E7%8E%B2%E7%8F%91%E8%90%8C%E5%8F%AF_render.webp',
+  白雪萌可:
+    '/moko/collection/07_%E5%85%AC%E4%B8%BB%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%83%E5%AD%A3/%E7%99%BD%E9%9B%AA%E8%90%8C%E5%8F%AF_render.webp',
+  蝴蝶萌可:
+    '/moko/collection/07_%E5%85%AC%E4%B8%BB%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%83%E5%AD%A3/%E8%9D%B4%E8%9D%B6%E8%90%8C%E5%8F%AF_render.webp',
+  露水萌可:
+    '/moko/collection/07_%E5%85%AC%E4%B8%BB%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%83%E5%AD%A3/%E9%9C%B2%E6%B0%B4%E8%90%8C%E5%8F%AF_render.webp',
+  鞋鞋萌可:
+    '/moko/collection/07_%E5%85%AC%E4%B8%BB%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%83%E5%AD%A3/%E9%9E%8B%E9%9E%8B%E8%90%8C%E5%8F%AF_render.webp',
+  魅力萌可:
+    '/moko/collection/07_%E5%85%AC%E4%B8%BB%E8%90%8C%E5%8F%AF_%E7%AC%AC%E4%B8%83%E5%AD%A3/%E9%AD%85%E5%8A%9B%E8%90%8C%E5%8F%AF_render.webp',
+  查尔斯王子:
+    '/moko/collection/08_%E7%8E%8B%E5%AD%90%E8%90%8C%E5%8F%AF/%E6%9F%A5%E5%B0%94%E6%96%AF%E8%90%8C%E5%8F%AF_render.webp',
+  演歌萌可:
+    '/moko/collection/08_%E7%8E%8B%E5%AD%90%E8%90%8C%E5%8F%AF/%E6%BC%94%E6%AD%8C%E8%90%8C%E5%8F%AF_render.webp',
+  绅士萌可:
+    '/moko/collection/08_%E7%8E%8B%E5%AD%90%E8%90%8C%E5%8F%AF/%E7%BB%85%E5%A3%AB%E8%90%8C%E5%8F%AF_render.webp',
+  青蛙萌可:
+    '/moko/collection/08_%E7%8E%8B%E5%AD%90%E8%90%8C%E5%8F%AF/%E9%9D%92%E8%9B%99%E8%90%8C%E5%8F%AF_render.webp',
+  奉献萌可:
+    '/moko/collection/09_%E5%8F%8D%E6%B4%BE%E5%8F%8A%E5%85%B6%E4%BB%96/%E5%A5%89%E7%8C%AE%E8%90%8C%E5%8F%AF_render.webp',
+  闹闹萌可:
+    '/moko/collection/09_%E5%8F%8D%E6%B4%BE%E5%8F%8A%E5%85%B6%E4%BB%96/%E9%97%B9%E9%97%B9%E8%90%8C%E5%8F%AF_render.webp',
+  幸运萌可:
+    '/moko/collection/10_%E4%BC%A0%E5%A5%87%E8%90%8C%E5%8F%AF/%E5%B9%B8%E8%BF%90%E8%90%8C%E5%8F%AF_render.webp',
+  月神萌可:
+    '/moko/collection/10_%E4%BC%A0%E5%A5%87%E8%90%8C%E5%8F%AF/%E6%9C%88%E7%A5%9E%E8%90%8C%E5%8F%AF_render.webp',
+  月食萌可:
+    '/moko/collection/10_%E4%BC%A0%E5%A5%87%E8%90%8C%E5%8F%AF/%E6%9C%88%E9%A3%9F%E8%90%8C%E5%8F%AF_render.webp',
+  极光萌可:
+    '/moko/collection/10_%E4%BC%A0%E5%A5%87%E8%90%8C%E5%8F%AF/%E6%9E%81%E5%85%89%E8%90%8C%E5%8F%AF_render.webp',
+  甜甜萌可:
+    '/moko/collection/10_%E4%BC%A0%E5%A5%87%E8%90%8C%E5%8F%AF/%E7%94%9C%E7%94%9C%E8%90%8C%E5%8F%AF_render.webp',
+  酸酸萌可:
+    '/moko/collection/10_%E4%BC%A0%E5%A5%87%E8%90%8C%E5%8F%AF/%E9%85%B8%E9%85%B8%E8%90%8C%E5%8F%AF_render.webp',
 };

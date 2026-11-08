@@ -346,7 +346,7 @@ for (const folder of folders) {
       name,
       category: CAT_OVERRIDE[name] || cat,
       season,
-      img: IMG_OVERRIDE[name] || `/moko/collection/${folder}/${f}`,
+      img: encodeURI(IMG_OVERRIDE[name] || `/moko/collection/${folder}/${f}`),
       emoji: EMOJI_OVERRIDE[name] || meta.emoji,
       color: meta.color,
       item: '✨ 魔法道具',

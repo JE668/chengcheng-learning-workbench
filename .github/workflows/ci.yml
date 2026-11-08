@@ -352,9 +352,8 @@ jobs:
         # 不再只点名 3 个文件：learning/parent 两个 spec 此前从未在 CI 里跑过。
         # --project=chromium 是因为 CI 只安装 chromium（playwright.config.ts 里另有
         # firefox/webkit/Mobile 项目，声明了但 CI 不执行）。
-        # 离线用例需要一条今天到期的错题；此时服务端已建全量 schema。
+        # 离线用例需要的「今天到期错题」由 tests/e2e/global-setup.ts 在服务就绪后写入。
         run: |
-          pnpm e2e:seed:offline
           pnpm e2e --project=chromium --timeout=180000
         env:
           E2E_BASE_URL: http://localhost:3000

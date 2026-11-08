@@ -24,12 +24,11 @@ test.describe('离线同步', () => {
     await page.context().setOffline(true);
     await expect(page.getByText('离线模式')).toBeVisible();
 
-    // 种子题只渲染一个选项；揭示后明确点「还没听懂」，把本次复习记为答错，
+    // 种子题的上次错误答案 A 会作为干扰项渲染；故意选错后揭示，
     // 再补选错误原因，确保 offline 重放能验证结构化 errorType。
-    await page.getByRole('button', { name: 'B', exact: true }).click();
+    await page.getByRole('button', { name: 'A', exact: true }).click();
     await page.getByRole('button', { name: /揭示正确答案/ }).click();
     await expect(page.getByText('正确答案：B')).toBeVisible();
-    await page.getByRole('button', { name: /还没听懂/ }).click();
 
     const picker = page.getByTestId('error-type-picker');
     await expect(picker).toBeVisible();
@@ -37,18 +36,21 @@ test.describe('离线同步', () => {
 
     await expect(page.getByText('e2e-offline-seed-prompt')).toBeHidden();
 
-    await page.context().setOffline(false);
-    await page.waitForEvent('response', {
-      predicate: (res) => res.url().includes('/api/mistakes/review'),
-      timeout: 15000,
+    const reviewBodies: Array<Record<string, unknown>> = [];
+    page.on('request', (req) => {
+      if (!req.url().includes('/api/mistakes/review')) return;
+      const body = req.postDataJSON();
+      if (body && typeof body === 'object') reviewBodies.push(body);
     });
 
-    const requests = [];
-    page.on('request', (req) => {
-      if (req.url().includes('/api/mistakes/review')) requests.push(req.postDataJSON());
-    });
-    await page.reload();
     await page.context().setOffline(false);
-    await expect(requests.some((body) => body.errorType === 'reading')).toBeTruthy();
+    await expect
+      .poll(() => reviewBodies.some((body) => body.errorType === 'reading'), {
+        timeout: 15000,
+      })
+      .toBeTruthy();
+
+    await page.reload();
+    await expect(page.getByText('e2e-offline-seed-prompt')).toBeHidden();
   });
 });

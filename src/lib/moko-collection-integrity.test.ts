@@ -23,6 +23,9 @@ import { storyChapters, HERO_CHAPTERS } from './story';
 
 const PUB = join(process.cwd(), 'public');
 
+/** 图片 URL 会进 HTTP 头（Next 16 的 preload Link），中文路径必须先编码。 */
+const publicFilePath = (url: string) => join(PUB, decodeURI(url));
+
 /** 手写核心萌可里没有 artwork 的 12 个 key（渲染走 lemei.jpg 兜底，moko.ts 对 lulu 有注释说明） */
 /**
  * 取证记录（2026-10，改不改名已查过）：
@@ -84,7 +87,7 @@ describe('图鉴收集闭环（总数 ↔ 可捕捉）', () => {
 describe('图片路径与生成表一致性', () => {
   it('⚠️ 图鉴全部图片路径必须真实存在', () => {
     const bad = mokoCollection
-      .filter((c) => !c.img || !existsSync(join(PUB, c.img)))
+      .filter((c) => !c.img || !existsSync(publicFilePath(c.img)))
       .map((c) => c.key);
     expect(bad, JSON.stringify(bad.slice(0, 5))).toEqual([]);
   });
@@ -94,7 +97,7 @@ describe('图片路径与生成表一致性', () => {
     const noImg: string[] = [];
     for (const c of Object.values(mokoChars)) {
       if (c.img) {
-        if (!existsSync(join(PUB, c.img))) broken.push(c.key);
+        if (!existsSync(publicFilePath(c.img))) broken.push(c.key);
       } else noImg.push(c.key);
     }
     expect(broken).toEqual([]);

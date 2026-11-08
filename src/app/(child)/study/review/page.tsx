@@ -48,9 +48,10 @@ const subjectKey: Record<string, string> = {
   英语: 'english',
 };
 
-/** 把正确答案和干扰项混在一起打乱 */
-function shuffleAns(answer: string, distractors: string[]): string[] {
-  const opts = [answer, ...distractors.filter((d) => d !== answer)];
+/** 把正确答案、上次错误答案和其它干扰项混在一起打乱 */
+function shuffleAns(answer: string, wrong: string | null, distractors: string[]): string[] {
+  const opts = [answer, ...(wrong ? [wrong] : []), ...distractors].filter((d) => d !== answer);
+  opts.unshift(answer);
   const uniq = [...new Set(opts)].slice(0, 4);
   for (let i = uniq.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -160,6 +161,7 @@ export default function ReviewPage() {
                     {(() => {
                       const opts = shuffleAns(
                         it.answer,
+                        it.wrong,
                         items
                           .filter((x) => x.id !== it.id && x.subject === it.subject)
                           .map((x) => x.answer)
@@ -186,7 +188,7 @@ export default function ReviewPage() {
                     选好啦！现在确认一下，把正确答案讲给萌可听。
                   </p>
                 )}
-                {!revealed[it.id] && errorType[it.id] && (
+                {revealed[it.id] && pickedAns[it.id] !== it.answer && (
                   <div
                     className="mt-3 p-3 rounded-2xl bg-moko-purple/5 border border-moko-purple/10"
                     data-testid="error-type-picker"
@@ -242,14 +244,6 @@ export default function ReviewPage() {
                   </ClayButton>
                   {revealed[it.id] ? (
                     <>
-                      <ClayButton
-                        variant="ghost"
-                        size="sm"
-                        fullWidth
-                        onClick={() => review(it.id, false)}
-                      >
-                        还没听懂 💡
-                      </ClayButton>
                       <ClayButton
                         variant="mint"
                         size="sm"

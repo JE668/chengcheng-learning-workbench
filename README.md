@@ -196,10 +196,10 @@ docker run -d -p 3000:3000 \
 | `pnpm lint`          | ESLint 检查                                                             |
 | `pnpm format`        | Prettier 格式化全仓                                                     |
 | `pnpm verify`        | 一键自检：`typecheck + lint + test`（新机器先跑这条确认环境正常）       |
-| `pnpm test`          | 运行单元测试（Vitest，1115 用例）                                       |
+| `pnpm test`          | 运行单元测试（Vitest，1120 用例）                                       |
 | `pnpm test:coverage` | 运行单元测试并输出覆盖率（阈值不达标会失败）                            |
 | `pnpm check:perf`    | 读取 webpack 路由清单检查首屏 JS 预算（先执行 `pnpm build`）            |
-| `pnpm e2e`           | 运行 Playwright E2E（36 个用例；macOS 13 见下方说明）                   |
+| `pnpm e2e`           | 运行 Playwright E2E（37 个用例；macOS 13 见下方说明）                   |
 | `pnpm seed`          | **写入**默认账号（parent / 12345678、cara / 0000）并补齐缺失的表        |
 
 > ⚠️ **`pnpm seed` 不会清空或重置已有数据。** 它只做 `CREATE TABLE IF NOT EXISTS` +
