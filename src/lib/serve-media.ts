@@ -126,11 +126,20 @@ export async function serveMedia(
   //    （/api/media 直接调用 serveMedia，没有二次鉴权）。
   //
   //    同源页面内的 <video>/<img>/fetch 放行：反代下 req host 与浏览器 Referer host
-  //    可能不一致（lucky 等），硬校验会导致安卓 Edge 黑屏；私有家庭部署下
-  //    「猜 URL 直取媒体」风险可忽略。
+  //    可能不一致（lucky 等），硬校验会导致安卓 Edge 黑屏。
+  //
+  //    ⚠️ 2026-11-10 第三轮审查：Referer 是请求方可控头——「带同源 Referer 即放行」
+  //    等于任何能构造请求的客户端（curl -H 'Referer: ...'）都能匿名直取全部课本
+  //    PDF 与 RAZ 视频。私有家庭内网部署下取舍可接受，但 NAS 443 映射公网时
+  //    这就是无鉴权媒体直出。因此改为**可配置开关**：
+  //      - MEDIA_REFERER_FALLBACK=true（默认，保持现状：跨设备/反代场景不黑屏）
+  //      - MEDIA_REFERER_FALLBACK=false（公网映射部署应设此项：严格会话校验）
+  //    完全关闭时若出现安卓 Edge 黑屏，正确解法是签名 URL（见 proxy.ts 媒体注释），
+  //    而不是重新放开 Referer。
   const session = getCookie(req, COOKIE_NAME);
   const referer = req.headers.get('referer');
   const host = req.headers.get('host');
+  const refererFallback = process.env.MEDIA_REFERER_FALLBACK !== 'false';
   // 校验函数自身抛错（DB 抖动/超时）时按「未登录」处理而非冒泡成 500 ——
   // 否则一次数据库抖动就会让全部课本与视频请求集体报错。
   let sessionValid = false;
@@ -145,7 +154,7 @@ export async function serveMedia(
       sessionValid = false;
     }
   }
-  if (!sessionValid && !isSameOriginReferer(referer, host)) {
+  if (!sessionValid && !(refererFallback && isSameOriginReferer(referer, host))) {
     return new Response(JSON.stringify({ error: '未登录或登录已过期' }), {
       status: 401,
       headers: { 'content-type': 'application/json; charset=utf-8' },

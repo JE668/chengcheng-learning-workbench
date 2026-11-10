@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildId, getChildPoints, getChildrenOfParent } from '@/lib/db';
-import { getCastleState } from '@/lib/castle';
 import { getTodayPractice } from '@/lib/daily-practice';
 import { dateStr } from '@/lib/date';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
@@ -118,13 +117,6 @@ export default async function DashboardPage() {
   }
 
   // 萌可收集进度（仅用于后续显示，已通过 getMokoProgress 获取）
-  try {
-    if (cId) {
-      await getCastleState(cId);
-    }
-  } catch {
-    /* 同上 */
-  }
 
   // 待审批时光沙漏申请
   let timeglassRequests: { id: number; text: string; createdAt: string }[] = [];

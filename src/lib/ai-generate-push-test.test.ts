@@ -80,7 +80,9 @@ const db = () => getDb();
 
 beforeEach(async () => {
   await ensureSchema();
-  h.user = { id: ME, role: 'child' };
+  // 2026-11-10 第三轮审查：ai/generate 收敛为 requireParent（孩子 4 位密码是全仓最弱凭据，
+  // 付费 LLM 成本面必须收敛到家长侧）。测试主体同步从 child 换成 parent。
+  h.user = { id: 9901, role: 'parent' };
   h.childId = ME;
   h.limit = { ok: true, retryAfter: 0 };
   h.configured = true;
@@ -104,6 +106,13 @@ describe('ai/generate · 鉴权与成本闸门', () => {
     h.user = null;
     const res = await genPost(req('/api/ai/generate', { kind: 'chinese' }) as never);
     expect(res.status).toBe(401);
+    expect(h.lastPrompt).toBe('');
+  });
+
+  it('⚠️ 孩子身份 → 403（付费 LLM 成本面只对家长开放）', async () => {
+    h.user = { id: ME, role: 'child' };
+    const res = await genPost(req('/api/ai/generate', { kind: 'chinese' }) as never);
+    expect(res.status).toBe(403);
     expect(h.lastPrompt).toBe('');
   });
 
@@ -156,7 +165,8 @@ describe('ai/generate · 鉴权与成本闸门', () => {
     h.generateThrows = true;
     const res = await genPost(req('/api/ai/generate', {}) as never);
     expect(res.status).toBe(500);
-    expect((await res.json()).error).toBe('AI 生成失败');
+    // 2026-11-10 第三轮审查：上游 error.message 不再回传客户端（可能泄露端点/配额细节）
+    expect((await res.json()).error).toBe('AI 生成失败，请稍后再试');
   });
 });
 
