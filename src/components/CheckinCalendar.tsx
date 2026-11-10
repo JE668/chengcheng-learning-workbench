@@ -37,10 +37,12 @@ export default function CheckinCalendar({ days }: CheckinCalendarProps) {
   // 下面 isBrokenDay 用它判断「这天已经过去、却没打满卡」→ 会标红提示补打卡。
   // 东八区每天 UTC 16:00 之后，UTC 日比本地日快一天，于是「今天」会被当成
   // 已经过去的日子而误标为漏打卡。全仓统一走 src/lib/date.ts 的 dateStr()。
-  const today = dateStr();
-
-  // 弹窗挂载到 body
+  // 挂载后再取「今天」（第四轮 D+E 审查 P3）：渲染期取值会让 SSR（服务器时区）
+  // 与设备时区不同的客户端在跨午夜边界判定不一致；首帧用空串表示「尚无今天」，
+  // 此时尚未判定任何一天为断签日，与挂载后的差异只在首帧。
+  const [today, setToday] = useState('');
   useEffect(() => {
+    setToday(dateStr());
     mounted.current = true;
     return () => {
       mounted.current = false;

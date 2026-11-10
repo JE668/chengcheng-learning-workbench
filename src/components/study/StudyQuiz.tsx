@@ -54,7 +54,8 @@ function shuffle<T>(arr: T[]): T[] {
 
 /** 等语音读完，但最多等 ms 毫秒（TTS 异常 / 慢时不卡住切题） */
 function waitSpeechEnd(p: Promise<void>, ms: number): Promise<void> {
-  return Promise.race([p, new Promise<void>((resolve) => setTimeout(resolve, ms))]);
+  // p 补 catch：TTS promise 若 reject 且晚于超时，未处理的 rejection 会在控制台报错
+  return Promise.race([p.catch(() => {}), new Promise<void>((resolve) => setTimeout(resolve, ms))]);
 }
 
 /**

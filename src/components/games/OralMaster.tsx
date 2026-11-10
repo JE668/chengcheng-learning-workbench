@@ -59,13 +59,23 @@ function genQ(level: number): OralQuestion {
 /** 数字键盘 0-9 + 退格。口算达人只输入非负整数答案。 */
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '退', '0', '✓'];
 
-export default function OralMaster({ onFinish, level = 0 }: { onFinish: (score: number) => void; level?: number }) {
+export default function OralMaster({
+  onFinish,
+  level = 0,
+}: {
+  onFinish: (score: number) => void;
+  level?: number;
+}) {
   const TOTAL_SECONDS = 60;
   const [phase, setPhase] = useState<'ready' | 'run' | 'over'>('ready');
   const [left, setLeft] = useState(TOTAL_SECONDS);
   const [q, setQ] = useState<OralQuestion | null>(null);
   const [input, setInput] = useState('');
   const [score, setScore] = useState(0);
+  // score 镜像 ref：finish 经 useCallback 依赖 score，答对一题 score 变 →
+  // finish 引用变 → 倒计时 effect（依赖 finish）销毁重建，累计可把 60s 时限
+  // 拖长最多 ~20s（第四轮 D+E 审查 P3）。改用 ref 读分，finish 依赖归零。
+  const scoreRef = useRef(0);
   const [combo, setCombo] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
@@ -80,8 +90,8 @@ export default function OralMaster({ onFinish, level = 0 }: { onFinish: (score: 
     if (finishedRef.current) return;
     finishedRef.current = true;
     setPhase('over');
-    onFinish(score);
-  }, [onFinish, score]);
+    onFinish(scoreRef.current);
+  }, [onFinish]);
 
   /** 倒计时（run 阶段才走） */
   useEffect(() => {
@@ -113,6 +123,7 @@ export default function OralMaster({ onFinish, level = 0 }: { onFinish: (score: 
     finishedRef.current = false;
     pendingRef.current = [];
     setScore(0);
+    scoreRef.current = 0;
     setCombo(0);
     setCorrectCount(0);
     setWrongCount(0);
@@ -129,6 +140,7 @@ export default function OralMaster({ onFinish, level = 0 }: { onFinish: (score: 
     if (val === q.answer) {
       const gained = 10 + Math.min(30, combo * 2);
       setScore((s) => s + gained);
+      scoreRef.current += gained;
       setCombo((c) => c + 1);
       setCorrectCount((c) => c + 1);
       setFlash('ok');
@@ -186,11 +198,18 @@ export default function OralMaster({ onFinish, level = 0 }: { onFinish: (score: 
           <h3 className="text-2xl font-black text-moko-violet mb-2">口算达人</h3>
           <p className="text-gray-600 mb-1">60 秒限时挑战，答得又快又准就是达人！</p>
           <p className="text-sm text-gray-400 mb-6">
-            {level === 0 ? '本档：10 以内加法' : level === 1 ? '本档：20 以内加减' : '本档：50 以内加减 + 乘法口诀'}
+            {level === 0
+              ? '本档：10 以内加法'
+              : level === 1
+                ? '本档：20 以内加减'
+                : '本档：50 以内加减 + 乘法口诀'}
             <br />
             连续答对有连击加分，答错的题会再回来找你哦～
           </p>
-          <button onClick={start} className="px-8 py-3 rounded-full bg-moko-blue text-white font-black text-lg clay-btn clay-theme clay-blue transition">
+          <button
+            onClick={start}
+            className="px-8 py-3 rounded-full bg-moko-blue text-white font-black text-lg clay-btn clay-theme clay-blue transition"
+          >
             ▶ 开始挑战
           </button>
         </div>
@@ -199,7 +218,9 @@ export default function OralMaster({ onFinish, level = 0 }: { onFinish: (score: 
       {phase === 'run' && (
         <>
           <div className="flex items-center gap-4 w-full max-w-md justify-between">
-            <div className={`font-black text-2xl tabular-nums ${left <= 10 ? 'text-red-500' : 'text-moko-violet'}`}>
+            <div
+              className={`font-black text-2xl tabular-nums ${left <= 10 ? 'text-red-500' : 'text-moko-violet'}`}
+            >
               ⏱ {left}s
             </div>
             <div className="font-black text-xl text-moko-gold">⭐ {score}</div>
@@ -251,9 +272,17 @@ export default function OralMaster({ onFinish, level = 0 }: { onFinish: (score: 
 
       {phase === 'over' && (
         <div className="text-center max-w-md">
-          <div className="text-6xl mb-2">{stars === 3 ? '🏆' : stars === 2 ? '🥈' : stars === 1 ? '🥉' : '💪'}</div>
+          <div className="text-6xl mb-2">
+            {stars === 3 ? '🏆' : stars === 2 ? '🥈' : stars === 1 ? '🥉' : '💪'}
+          </div>
           <h3 className="text-2xl font-black text-moko-violet mb-1">
-            {stars === 3 ? '口算大达人！' : stars === 2 ? '很棒的小达人！' : stars === 1 ? '继续加油！' : '多练就会更快！'}
+            {stars === 3
+              ? '口算大达人！'
+              : stars === 2
+                ? '很棒的小达人！'
+                : stars === 1
+                  ? '继续加油！'
+                  : '多练就会更快！'}
           </h3>
           <div className="text-4xl mb-3">{'⭐'.repeat(Math.max(stars, 0))}</div>
           <div className="flex justify-center gap-6 text-gray-600 font-bold mb-2">
@@ -262,7 +291,10 @@ export default function OralMaster({ onFinish, level = 0 }: { onFinish: (score: 
             <span>正确率 {total > 0 ? Math.round((correctCount / total) * 100) : 0}%</span>
           </div>
           <p className="text-sm text-gray-400 mb-6">积分已自动入账，明天再来刷新纪录吧～</p>
-          <button onClick={start} className="px-8 py-3 rounded-full bg-moko-blue text-white font-black text-lg clay-btn clay-theme clay-blue transition">
+          <button
+            onClick={start}
+            className="px-8 py-3 rounded-full bg-moko-blue text-white font-black text-lg clay-btn clay-theme clay-blue transition"
+          >
             🔄 再来一次
           </button>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { speakZh } from '@/lib/speak';
 import { MOKO_TASKS, type MokoTaskDef } from '@/lib/moko-tasks';
@@ -10,6 +10,19 @@ export default function MokoTasks() {
   const [unlocked, setUnlocked] = useState<Record<string, boolean>>({});
   const [celebrate, setCelebrate] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  // toast 定时器句柄：连续 toast 先清上一条，避免被提前清掉；卸载时清理
+  // （第四轮 D+E 审查 P3，与 ChildTaskList 同款）。
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showToast = (msg: string) => {
+    setToast(msg);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2600);
+  };
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     fetch('/api/child-tasks')
@@ -25,8 +38,7 @@ export default function MokoTasks() {
 
   async function markDone(t: MokoTaskDef) {
     if (!unlocked[t.key]) {
-      setToast(t.lockHint);
-      setTimeout(() => setToast(null), 2600);
+      showToast(t.lockHint);
       return;
     }
     setDone((prev) => ({ ...prev, [t.key]: true }));
@@ -43,8 +55,7 @@ export default function MokoTasks() {
         // 服务端判定未达成 → 回滚乐观更新
         const j = await r.json().catch(() => ({}));
         setDone((prev) => ({ ...prev, [t.key]: false }));
-        setToast(j.error || t.lockHint);
-        setTimeout(() => setToast(null), 2600);
+        showToast(j.error || t.lockHint);
       }
     } catch {
       /* 断网静默，下次进入会拉取最新 */
@@ -83,7 +94,9 @@ export default function MokoTasks() {
                 )}
               </div>
               {isDone ? (
-                <span className="text-green-600 font-black text-sm whitespace-nowrap">✅ 已完成</span>
+                <span className="text-green-600 font-black text-sm whitespace-nowrap">
+                  ✅ 已完成
+                </span>
               ) : (
                 <>
                   <Link

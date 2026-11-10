@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ClayCard } from '@/components/design-system';
 import type { Task, Subject } from '@/lib/types';
 import { speakZh, speakEn } from '@/lib/speak';
@@ -274,11 +274,25 @@ export default function ChildTaskList({
   const [list, setList] = useState<Task[]>(tasks);
   const [filter, setFilter] = useState<'全部' | Subject>('全部');
   const [points, setPoints] = useState(initialPoints);
-  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
-
   const shown = filter === '全部' ? list : list.filter((t) => t.subject === filter);
   const doneCount = list.filter((t) => t.completed).length;
   const total = list.length;
+
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  // toast 定时器句柄：连续两条 toast 时先清掉上一条，避免前一条的定时器
+  // 把新 toast 提前清掉；卸载时也清理（第四轮 D+E 审查 P3）。
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    };
+  }, []);
+
+  function showToast(msg: string, ok: boolean) {
+    setToast({ msg, ok });
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2600);
+  }
 
   async function complete(t: Task) {
     try {
@@ -287,14 +301,13 @@ export default function ChildTaskList({
       if (res.ok) {
         setList((prev) => prev.map((x) => (x.id === t.id ? { ...x, completed: true } : x)));
         setPoints((p) => p + t.points);
-        setToast({ msg: `完成「${t.title}」，获得 ${t.points} 积分！`, ok: true });
+        showToast(`完成「${t.title}」，获得 ${t.points} 积分！`, true);
       } else {
-        setToast({ msg: String(data.error || '出了点小问题，再试一次～'), ok: false });
+        showToast(String(data.error || '出了点小问题，再试一次～'), false);
       }
     } catch {
-      setToast({ msg: '网络开小差了，再试一次～', ok: false });
+      showToast('网络开小差了，再试一次～', false);
     }
-    setTimeout(() => setToast(null), 2600);
   }
 
   return (
