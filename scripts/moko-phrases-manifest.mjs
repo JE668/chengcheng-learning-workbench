@@ -66,26 +66,20 @@ export function extractMokoPhrases() {
     }
   }
 
-  // ⑤b 错题重练的捣蛋叙事（daily-practice 写死的两句——同样走
-  // 「萌可名说：」拼接模板，必须在 assembled 计算之前入列。
+  // ⑤b 错题重练的捣蛋叙事（daily-practice 写死的两句——裸句播放，
+  // 必须在 assembled 计算之前入列。
   // ⚠️ 首版把 push 写在 assembled 之后导致这两句没拼接进静态集——
   // check-audio 只校验清单本身，跨清单的组合缺口靠播放实测抓。）
   out.push('捣蛋萌可被送回家啦，这个知识点归你了！');
   out.push('哎呀，捣蛋萌可又溜回来了！再想一想，把它捉住！');
 
-  // ⑤ 播放侧拼接模板的产物（与 daily-practice/StudyQuiz 的实际播放
-  // 文本逐字一致——「萌可名说：台词 + 口头禅」）。预生成必须按
-  // 最终播放文本生成，否则 L0 永远 miss（与故事 autoChapters 同理：
-  // 生成物必须与播放物同源）。
-  const NAMES = ['爱心萌可', '正正萌可', '唱唱萌可'];
-  const SIGNS = { '爱心萌可': '啾～', '正正萌可': '哈哈！', '唱唱萌可': '啦啦啦～' };
+  // ⑤ 播放侧拼接模板的产物（2026-11-11 起**已停用**）：daily-practice 的
+  // 萌可反馈改为只播裸句（用户反馈「爱心萌可说：」前缀冗余），StudyQuiz
+  // 此前就是裸句。保留变量名便于回看历史；assembled 现为空集。
   const assembled = [];
-  for (const t of out) {
-    for (const n of NAMES) {
-      assembled.push(`${n}说：${t}`);
-      assembled.push(`${n}说：${t} ${SIGNS[n]}`);
-    }
-  }
+
+  // ⑨ 萌可反馈裸句的口头禅变体已随拼接模板一并停用；
+  // MokoPraise 的 correct/wrong 裸句由上面 ② 抽取，直接命中。
 
   // ⑦b 识字组词（③号内容升级 2026-10-21）：CharacterModule 的「读一读」
   // 播 `${char}，${w1}，${w2}`（组词版优先），词牌单独点击播单词。

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ClayCard } from '@/components/design-system';
 import { GuideModal } from '@/components/GuideModal';
-import { getMokoPraise, pickMokoLine } from '@/components/study/MokoPraise';
+import { pickMokoLine } from '@/components/study/MokoPraise';
 import type {
   PracticeDayRecord,
   PracticeQuestion,
@@ -180,9 +180,11 @@ export default function DailyPracticePage() {
         // 轻触觉反馈（安卓平板支持，iOS Safari 忽略）
         navigator.vibrate?.(ok ? 30 : [40, 40, 40]);
       } catch {}
-      const m = getMokoPraise(subject);
       setTimeout(() => {
-        void playTts(`${m.name}说：${text} ${ok ? m.sign : ''}`, 'zh', {
+        // TTS 只读反馈内容本身，不带「萌可名说：」前缀与口头禅收尾
+        //（2026-11-11 用户反馈：听到「爱心萌可说：」冗余）。文字横幅仍显示
+        // 萌可头像与名字，人格陪伴感在视觉侧保留。
+        void playTts(text, 'zh', {
           wsRate: 0.85,
           preferStatic: true,
         });
