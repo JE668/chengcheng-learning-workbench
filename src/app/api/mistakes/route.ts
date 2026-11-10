@@ -6,13 +6,23 @@ import { dateStr, addDays } from '@/lib/date';
 
 // 本地日统一走 lib/date.ts（此前这里手写 localDate 副本，正是历史时区 bug 的温床）。
 
-// 取当前孩子待复习 + 未解决总数
-export async function GET() {
+// 取当前孩子待复习 + 未解决总数。
+// ?count=1（2026-11-10 第三轮审查）：徽标等轻量消费方只需要「今天要复习几个」，
+// 完整响应会把全部 due 行（含 answer/wrong 等列）拉给客户端，孩子每天首屏
+// 白传几 KB～几十 KB JSON。count 模式只回 COUNT，两个数字一条 SQL。
+export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: '未登录' }, { status: 401 });
   const childId = user.role === 'child' ? user.id : await getChildId(user);
   if (!childId) return NextResponse.json({ error: '没有孩子账号' }, { status: 404 });
   const db = getDb();
+  if (req.nextUrl.searchParams.get('count')) {
+    const dueCount = await db.execute({
+      sql: 'SELECT COUNT(*) as n FROM mistakes WHERE child_id = ? AND resolved = 0 AND next_review <= ?',
+      args: [childId, dateStr()],
+    });
+    return NextResponse.json({ dueCount: Number(dueCount.rows[0]?.n ?? 0) });
+  }
   const due = await db.execute({
     sql: 'SELECT * FROM mistakes WHERE child_id = ? AND resolved = 0 AND next_review <= ? ORDER BY next_review',
     args: [childId, dateStr()],

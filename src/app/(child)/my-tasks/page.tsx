@@ -10,13 +10,16 @@ export default async function MyTasksPage() {
   const db = getDb();
   // 多娃归属过滤（与 /api/tasks GET 孩子分支同一口径）：
   // 只看「全家任务（assigned_to IS NULL）+ 指派给自己的」。
-  const tasksRes = await db.execute({
-    sql: 'SELECT * FROM tasks WHERE assigned_to IS NULL OR assigned_to = ? ORDER BY created_at DESC',
-    args: [user.id],
-  });
-  const compRes = await db.execute({ sql: 'SELECT task_id FROM completions WHERE child_id = ?', args: [user.id] });
+  // 三条查询互不依赖，Promise.all 并行（2026-11-10 第三轮审查：原本三连串行）。
+  const [tasksRes, compRes, points] = await Promise.all([
+    db.execute({
+      sql: 'SELECT * FROM tasks WHERE assigned_to IS NULL OR assigned_to = ? ORDER BY created_at DESC',
+      args: [user.id],
+    }),
+    db.execute({ sql: 'SELECT task_id FROM completions WHERE child_id = ?', args: [user.id] }),
+    getChildPoints(user.id),
+  ]);
   const done = new Set(compRes.rows.map((r) => Number(r.task_id)));
-  const points = await getChildPoints(user.id);
   const tasks: Task[] = tasksRes.rows.map((r) => ({
     id: Number(r.id),
     title: String(r.title),
@@ -32,7 +35,9 @@ export default async function MyTasksPage() {
   return (
     <div className="max-w-3xl mx-auto fade-up">
       <h1 className="page-title mb-2">我的任务 📝</h1>
-      <p className="text-gray-600 mb-4">爸爸妈妈布置的学习任务都在这里，做完一个点亮一个，积分叮咚进账！</p>
+      <p className="text-gray-600 mb-4">
+        爸爸妈妈布置的学习任务都在这里，做完一个点亮一个，积分叮咚进账！
+      </p>
       <MokoHelper
         subject="语文"
         tips={[

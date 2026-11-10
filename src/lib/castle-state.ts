@@ -212,29 +212,34 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
 
 export async function getBadges(childId: number): Promise<BadgeItem[]> {
   const db = getDb();
-  const row = await getRow(childId);
+  // 7 个指标互不依赖——并行取齐（此前纯串行 7 个往返，报表/城堡页徽章区
+  // 首屏多吃 6 拍）。
+  const [row, streak, moko, resolved, enResolved, pts, trouble] = await Promise.all([
+    getRow(childId),
+    computeStreak(childId, dateStr()),
+    getMokoProgress(childId),
+    db.execute({
+      sql: 'SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND resolved = 1',
+      args: [childId],
+    }),
+    db.execute({
+      sql: "SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND subject = '英语' AND resolved = 1",
+      args: [childId],
+    }),
+    db.execute({
+      sql: 'SELECT COALESCE(SUM(points),0) n FROM completions WHERE child_id = ?',
+      args: [childId],
+    }),
+    db.execute({
+      sql: 'SELECT COUNT(*) n FROM troublemakers WHERE child_id = ? AND resolved = 0',
+      args: [childId],
+    }),
+  ]);
   const prosperity = Number(row?.prosperity ?? 0);
-  const streak = await computeStreak(childId, dateStr());
-  const { owned: mokoCount } = await getMokoProgress(childId);
-  const resolved = await db.execute({
-    sql: 'SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND resolved = 1',
-    args: [childId],
-  });
+  const { owned: mokoCount } = moko;
   const resolvedCount = Number(resolved.rows[0]?.n ?? 0);
-  const enResolved = await db.execute({
-    sql: "SELECT COUNT(*) n FROM mistakes WHERE child_id = ? AND subject = '英语' AND resolved = 1",
-    args: [childId],
-  });
   const enCount = Number(enResolved.rows[0]?.n ?? 0);
-  const pts = await db.execute({
-    sql: 'SELECT COALESCE(SUM(points),0) n FROM completions WHERE child_id = ?',
-    args: [childId],
-  });
   const points = Number(pts.rows[0]?.n ?? 0);
-  const trouble = await db.execute({
-    sql: 'SELECT COUNT(*) n FROM troublemakers WHERE child_id = ? AND resolved = 0',
-    args: [childId],
-  });
   const troubleCount = Number(trouble.rows[0]?.n ?? 0);
 
   return [

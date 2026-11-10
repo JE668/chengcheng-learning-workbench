@@ -8,9 +8,10 @@ export default function ReviewBadge() {
   const [due, setDue] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch('/api/mistakes')
+    // ?count=1：徽标只要数字，不拉全部 due 行（见 /api/mistakes GET 注释）
+    fetch('/api/mistakes?count=1')
       .then((r) => r.json())
-      .then((d) => setDue(Array.isArray(d.due) ? d.due.length : 0))
+      .then((d) => setDue(typeof d.dueCount === 'number' ? d.dueCount : 0))
       .catch(() => setDue(0));
   }, []);
 

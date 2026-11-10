@@ -98,18 +98,24 @@ export default async function ReportsPage() {
   const minutesWeek = studyTime.rows.reduce((s: number, r) => s + Number(r.minutes ?? 0), 0);
   const resolvedCount = Number(resolved.rows[0]?.n ?? 0);
 
-  const mokoProgress = c ? await getMokoProgress(childId) : { owned: 0, total: 0, percent: 0 };
-  const mokoCount = mokoProgress.owned;
-
-  // 薄弱点：按学科 + 题型聚合错题（未掌握优先）
-  const weakRows = c
-    ? await db.execute({
-        sql: `SELECT subject, kind, COUNT(*) n,
+  // moko 进度 / 薄弱点聚合 / 徽章彼此无依赖——与上面同理并行（此前又串行 3 拍）。
+  const [mokoProgress, weakRows, badges] = c
+    ? await Promise.all([
+        getMokoProgress(childId),
+        db.execute({
+          sql: `SELECT subject, kind, COUNT(*) n,
                      SUM(CASE WHEN resolved = 0 THEN 1 ELSE 0 END) as unsolved
               FROM mistakes WHERE child_id = ? GROUP BY subject, kind ORDER BY unsolved DESC`,
-        args: [childId],
-      })
-    : { rows: [] };
+          args: [childId],
+        }),
+        getBadges(childId),
+      ])
+    : [
+        { owned: 0, total: 0, percent: 0 },
+        { rows: [] as Record<string, unknown>[] },
+        [] as Awaited<ReturnType<typeof getBadges>>,
+      ];
+  const mokoCount = mokoProgress.owned;
   const KIND_LABEL: Record<string, string> = {
     pinyin: '拼音',
     math: '数学',
@@ -132,7 +138,6 @@ export default async function ReportsPage() {
     }))
     .filter((w) => w.unsolved > 0);
 
-  const badges = c ? await getBadges(childId) : [];
   const earnedBadges = badges.filter((b) => b.earned);
 
   const insights = buildParentReportInsights({
