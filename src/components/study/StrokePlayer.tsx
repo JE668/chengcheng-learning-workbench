@@ -1,26 +1,23 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { STROKES_DATA } from '@/lib/study-data/strokes-data.generated';
 import type { CharacterJson } from 'hanzi-writer';
 
 /**
  * 🖌 笔顺动画（⑥号内容升级 2026-10-21）
  *
  * 一年级刚需：笔顺规范。识字卡上「笔顺」按钮 → 全屏遮罩逐画动画。
- * - 数据构建期内置（strokes-data.generated.ts，299 字，566KB 打进
- *   lazy chunk）——零网络请求，弱网/断网与 TTS 同级免疫
+ * - 笔顺数据放在 public/hanzi/*.json，按字按需加载，不进 JS bundle；
+ *   Service Worker 对 /hanzi/ 使用 Cache First，二次访问离线可用。
  * - hanzi-writer 渲染（MIT）：strokes SVG path + medians 引导线
  * - 字无数据时入口自动隐藏（数据覆盖 299/299，防御旧库新字）
  * - 许可合规：字型 APL/Arphic，见 docs/ARPHICPL.txt
  */
-export function hasStrokes(ch: string): boolean {
-  return Boolean(STROKES_DATA[ch]);
-}
-
 export default function StrokePlayer({ char, onClose }: { char: string; onClose: () => void }) {
   const elRef = useRef<HTMLDivElement>(null);
-  const [writerInst, setWriterInst] = useState<{ animateCharacter: (opts?: { onComplete?: () => void }) => void } | null>(null);
+  const [writerInst, setWriterInst] = useState<{
+    animateCharacter: (opts?: { onComplete?: () => void }) => void;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,9 +33,11 @@ export default function StrokePlayer({ char, onClose }: { char: string; onClose:
         strokeColor: '#d63384', // moko-rose 主调
         radicalColor: '#f7678f',
         showOutline: true,
-        charDataLoader: (_c: string, onLoad: (d: CharacterJson) => void) => {
-          onLoad(STROKES_DATA[char] as CharacterJson);
-        },
+        charDataLoader: () =>
+          fetch(`/hanzi/${encodeURIComponent(char)}.json`).then(async (response) => {
+            if (!response.ok) throw new Error(`no stroke data for ${char}`);
+            return (await response.json()) as CharacterJson;
+          }),
       });
       setWriterInst(writer);
       writer.animateCharacter();

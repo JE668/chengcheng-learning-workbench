@@ -8,8 +8,9 @@
 // v4：修复 install 失败（/offline 不存在）、不再缓存 /api、实现 CLEAR_CACHES。
 // v5：修复页面导航缓存里的 Response.clone() 时序错误（clone 必须在 return 之前同步完成，
 //     否则抛 "Response body is already used" 并导致页面缓存静默失效）。
+// v7：/hanzi/ 加入 Cache First——笔顺数据从 JS bundle 外置后必须同样支持离线。
+const CACHE_VERSION = 'ccwb-v7';
 // 版本号变化会让 activate 阶段的 cleanupOldCaches 清掉所有旧缓存。
-const CACHE_VERSION = 'ccwb-v6';
 const CACHE_NAME = `ccwb-${CACHE_VERSION}`;
 const OFFLINE_CACHE = `ccwb-offline-${CACHE_VERSION}`;
 const API_CACHE = `ccwb-api-${CACHE_VERSION}`;
@@ -51,7 +52,10 @@ async function limitCacheSize(cacheName, maxEntries) {
 async function addToCache(cacheName, request, response) {
   const cache = await caches.open(cacheName);
   await cache.put(request, response);
-  await limitCacheSize(cacheName, cacheName === API_CACHE ? MAX_API_CACHE_ENTRIES : MAX_CACHE_ENTRIES);
+  await limitCacheSize(
+    cacheName,
+    cacheName === API_CACHE ? MAX_API_CACHE_ENTRIES : MAX_CACHE_ENTRIES
+  );
 }
 
 // Install: 预缓存核心资源
@@ -63,7 +67,8 @@ self.addEventListener('install', (event) => {
       // 整个 install 失败。这里改成每条约独立容错，保证 SW 一定能装上。
       const settled = await Promise.allSettled(PRECACHE_URLS.map((u) => cache.add(u)));
       const failed = settled.filter((r) => r.status === 'rejected').length;
-      if (failed > 0) console.warn(`[sw] 预缓存有 ${failed}/${PRECACHE_URLS.length} 条失败（不影响安装）`);
+      if (failed > 0)
+        console.warn(`[sw] 预缓存有 ${failed}/${PRECACHE_URLS.length} 条失败（不影响安装）`);
       await self.skipWaiting();
     })()
   );
@@ -118,6 +123,7 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/_next/static') ||
     url.pathname.startsWith('/moko/') ||
     url.pathname.startsWith('/audio/') ||
+    url.pathname.startsWith('/hanzi/') ||
     /\.(?:png|jpg|jpeg|svg|webp|gif|ico|woff2?|css|js|map|mp3)$/.test(url.pathname);
   if (isStatic) {
     event.respondWith(cacheFirstThenNetwork(req, CACHE_NAME, event));
@@ -245,10 +251,10 @@ self.addEventListener('message', (event) => {
 // 推送通知处理
 self.addEventListener('push', (event) => {
   if (!event.data) return;
-  
+
   try {
     const data = event.data.json();
-    
+
     const options = {
       body: data.body || '您有新消息',
       icon: data.icon || '/icon-192.png',
@@ -261,10 +267,8 @@ self.addEventListener('push', (event) => {
       tag: data.tag || 'default',
       renotify: true,
     };
-    
-    event.waitUntil(
-      self.registration.showNotification(data.title || '程程学习工作台', options)
-    );
+
+    event.waitUntil(self.registration.showNotification(data.title || '程程学习工作台', options));
   } catch (error) {
     console.error('Push notification error:', error);
   }
@@ -273,19 +277,19 @@ self.addEventListener('push', (event) => {
 // 点击通知处理
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  
+
   const data = event.notification.data || {};
   const action = event.action;
-  
+
   // 处理动作按钮点击
   if (action) {
-    const actionData = event.notification.actions?.find(a => a.action === action);
+    const actionData = event.notification.actions?.find((a) => a.action === action);
     if (actionData?.url) {
       event.waitUntil(clients.openWindow(actionData.url));
       return;
     }
   }
-  
+
   // 默认打开应用
   const url = data.url || '/home';
   event.waitUntil(
@@ -321,4 +325,3 @@ self.addEventListener('pushsubscriptionchange', (event) => {
     })()
   );
 });
-

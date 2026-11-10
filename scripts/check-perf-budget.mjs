@@ -40,29 +40,23 @@ const CHUNKS_DIR = '.next/static/chunks';
 
 /**
  * 核心路由首屏预算（KB，uncompressed）。
- * 2026-11-08 webpack 构建实测值 + 约 5% 余量，向上取整：
- *   /                551
- *   /home            885
- *   /daily-practice  791
- *   /castle          896
- *   /login           562
- *   /mistakes       1518
+ * 2026-11-09 笔顺数据外置后重测 + 约 4% 余量，向上取整。
  */
 const ROUTE_BUDGET_KB = {
-  '/': 580,
-  '/home': 930,
-  '/daily-practice': 835,
-  '/castle': 945,
-  '/login': 595,
-  '/mistakes': 1595,
+  '/': 575,
+  '/home': 940,
+  '/daily-practice': 830,
+  '/castle': 950,
+  '/login': 585,
+  '/mistakes': 995,
 };
 
 /** 学习 Hub 与三科页共用同一套大体积模块（实测 1697~1703）。 */
-const STUDY_BUDGET_KB = 1790;
+const STUDY_BUDGET_KB = 1190;
 const STUDY_ROUTES = ['/study', '/study/chinese', '/study/math', '/study/english'];
 
-/** 所有 chunk 之和的兜底（2026-11-08 实测 5097KB）。 */
-const TOTAL_BUDGET_KB = 5300;
+/** 所有 chunk 之和的兜底（2026-11-09 外置后重测）。 */
+const TOTAL_BUDGET_KB = 4790;
 
 function fail(lines) {
   for (const line of lines) console.error(line);

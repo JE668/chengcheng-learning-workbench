@@ -49,7 +49,7 @@ function ReviewBadgeClient() {
   useEffect(() => {
     fetch('/api/mistakes')
       .then((r) => r.json())
-      .then((d) => setDue(d.total ?? 0))
+      .then((d) => setDue(Array.isArray(d.due) ? d.due.length : 0))
       .catch(() => setDue(0));
   }, []);
 

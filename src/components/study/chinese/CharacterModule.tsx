@@ -9,7 +9,7 @@ import { speakZh, playTts } from '@/lib/speak';
 import { CHARACTER_WORDS } from '@/lib/study-data/character-words';
 import { useModuleProgress } from '@/lib/module-progress';
 import dynamic from 'next/dynamic';
-import { hasStrokes } from '@/components/study/StrokePlayer';
+import { hasStrokes } from '@/components/study/stroke-availability';
 // 笔顺动画（hanzi-writer + 566KB 数据）动态加载，不进识字首屏
 const StrokePlayer = dynamic(() => import('@/components/study/StrokePlayer'), { ssr: false });
 
@@ -58,7 +58,10 @@ function CharacterCard({
           onClick={() => {
             const words = CHARACTER_WORDS[item.char];
             if (words && words.length) {
-              void playTts(`${item.char}，${words.join('，')}`, 'zh', { wsRate: 0.75, preferStatic: true });
+              void playTts(`${item.char}，${words.join('，')}`, 'zh', {
+                wsRate: 0.75,
+                preferStatic: true,
+              });
             } else {
               speakZh(`${item.char}，${item.meaning}。${item.phrase}`);
             }
@@ -85,9 +88,7 @@ function CharacterCard({
 
       {/* 🖌 笔顺动画遮罩（⑥号升级 2026-10-21）：修复原「看笔顺」死链
           （strokes-order 路由从未存在过）——改为本地逐画动画，299 字全覆盖 */}
-      {showStrokes && (
-        <StrokePlayer char={item.char} onClose={() => setShowStrokes(false)} />
-      )}
+      {showStrokes && <StrokePlayer char={item.char} onClose={() => setShowStrokes(false)} />}
     </div>
   );
 }
