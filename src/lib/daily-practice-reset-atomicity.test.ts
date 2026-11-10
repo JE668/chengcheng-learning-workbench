@@ -95,10 +95,18 @@ describe('POST /api/daily-practice/reset · 道具扣减原子性', () => {
     // 同一秒连点两次（或多标签页）会双双通过检查后各扣一次。
     // 串行调用抓不到这个 bug —— 第 2 次会被前置检查拦下；
     // 必须并发才复现。
+    //
+    // 计数口径（2026-11-10 第四轮审查修正）：「成功」= HTTP 200，不是 Promise
+    // fulfilled —— 修复后并发请求被 withWriteLock 正确串行化，后两次收到的是
+    // 干净的 400（Promise 依然 fulfilled）。旧口径靠并发下 BEGIN 抛异常
+    //（rejected）侥幸通过，反而把「串行化成功」误判为失败。
     const results = await Promise.allSettled([POST(), POST(), POST()]);
-    const okCount = results.filter((r) => r.status === 'fulfilled').length;
+    const okCount = results.filter(
+      (r) => r.status === 'fulfilled' && (r.value as Response).status === 200
+    ).length;
     const qty = await timeglassQty();
     expect(qty, `qty 被扣成 ${qty}，负数会让后续 qty>0 判断全部失效`).toBeGreaterThanOrEqual(0);
+    expect(qty, '只有 1 个沙漏，成功 1 次后应恰好扣完').toBe(0);
     expect(okCount, '只有 1 个沙漏，却有多个请求报告成功').toBeLessThanOrEqual(1);
   });
 

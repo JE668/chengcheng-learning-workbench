@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getDb } from '@/lib/db';
+import { getDb, withWriteLock } from '@/lib/db';
 import { generateQuestions } from '@/lib/daily-practice';
 import { dateStr } from '@/lib/date';
 
@@ -58,32 +58,44 @@ export async function POST() {
   // 顺序：先生成题目（最可能失败且无副作用），再开事务做扣减+重置。
   const qs = await generateQuestions(user.id);
 
-  await db.execute({ sql: 'BEGIN IMMEDIATE', args: [] });
-  try {
-    const deducted = await db.execute({
-      // AND qty > 0 是并发下的**最后一道闸门**：让扣减本身成为原子操作，
-      // 即使前面的检查已过时，也不会把 qty 扣成负数。
-      sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ? AND qty > 0',
-      args: [user.id, 'timeglass'],
-    });
-    if (Number(deducted.rowsAffected ?? 0) === 0) {
-      await db.execute({ sql: 'ROLLBACK', args: [] });
-      return NextResponse.json(
-        { ok: false, message: '没有时光沙漏，请爸爸妈妈在家长端送给你吧～' },
-        { status: 400 }
-      );
+  // ⚠️ 第四轮审查（2026-11-10）：手写 BEGIN/COMMIT 必须包 withWriteLock——
+  // 全仓其余 9 处手写事务（castle.confirm/buy/settle、gift-stars、redeem、
+  // mistakes、backup、parent-reset、story/capture、daily-practice 里程碑）都是
+  // 「锁 + 事务」，唯独这里裸奔：并发请求的语句会穿插进 BEGIN/COMMIT 之间
+  // （本地 sqlite3 单连接驱动，else 分支会报 cannot start a transaction within
+  //  a transaction → 500，或把别人的写卷进本事务）。补上锁，与其余路径同纪律。
+  const result = await withWriteLock(async () => {
+    await db.execute({ sql: 'BEGIN IMMEDIATE', args: [] });
+    try {
+      const deducted = await db.execute({
+        // AND qty > 0 是并发下的**最后一道闸门**：让扣减本身成为原子操作，
+        // 即使前面的检查已过时，也不会把 qty 扣成负数。
+        sql: 'UPDATE inventory SET qty = qty - 1 WHERE child_id = ? AND item_key = ? AND qty > 0',
+        args: [user.id, 'timeglass'],
+      });
+      if (Number(deducted.rowsAffected ?? 0) === 0) {
+        await db.execute({ sql: 'ROLLBACK', args: [] });
+        return NextResponse.json(
+          { ok: false, message: '没有时光沙漏，请爸爸妈妈在家长端送给你吧～' },
+          { status: 400 }
+        );
+      }
+
+      await db.execute({
+        sql: 'UPDATE daily_practice SET completed = 0, correct = 0, total = ?, questions = ? WHERE child_id = ? AND day = ?',
+        args: [qs.length, JSON.stringify(qs), user.id, today],
+      });
+      await db.execute({ sql: 'COMMIT', args: [] });
+      return NextResponse.json({
+        ok: true,
+        message: '⏳ 时光沙漏生效！今天可以再做一次每日一练啦～',
+      });
+    } catch (e) {
+      // 失败必须回滚，否则沙漏已扣但题目没重置 —— 孩子白损失道具
+      await db.execute({ sql: 'ROLLBACK', args: [] }).catch(() => {});
+      throw e;
     }
+  });
 
-    await db.execute({
-      sql: 'UPDATE daily_practice SET completed = 0, correct = 0, total = ?, questions = ? WHERE child_id = ? AND day = ?',
-      args: [qs.length, JSON.stringify(qs), user.id, today],
-    });
-    await db.execute({ sql: 'COMMIT', args: [] });
-  } catch (e) {
-    // 失败必须回滚，否则沙漏已扣但题目没重置 —— 孩子白损失道具
-    await db.execute({ sql: 'ROLLBACK', args: [] }).catch(() => {});
-    throw e;
-  }
-
-  return NextResponse.json({ ok: true, message: '⏳ 时光沙漏生效！今天可以再做一次每日一练啦～' });
+  return result;
 }
