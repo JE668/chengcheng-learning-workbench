@@ -40,6 +40,22 @@ export async function POST(req: NextRequest) {
   if (!childId) return NextResponse.json({ error: '没有孩子账号' }, { status: 404 });
   const db = getDb();
   let inserted = 0;
+  // pending 数量软上限（2026-11-10 第三轮审查）：clientRef 幂等只覆盖离线重放，
+  // 不带 ref 的裸 INSERT 可无限刷 pending 愿望、灌爆家长审批列表。
+  // 愿望是「家长逐条审批」的异步流程，积压超过 10 条毫无意义，直接拒绝并提示。
+  // 家长自己写入的不受此限（家长端是代登记，不是申请）。
+  if (user.role === 'child') {
+    const pending = await db.execute({
+      sql: "SELECT COUNT(*) AS n FROM wishes WHERE child_id = ? AND status = 'pending'",
+      args: [childId],
+    });
+    if (Number(pending.rows[0]?.n ?? 0) >= 10) {
+      return NextResponse.json(
+        { error: '你有太多愿望等着审批啦，等爸爸妈妈处理一下再许新愿望吧～' },
+        { status: 429 }
+      );
+    }
+  }
   if (clientRef) {
     // 带引用号：走部分唯一索引 (child_id, client_ref) 去重。
     // 冲突（重放撞上已落库的原请求）→ rowsAffected=0，静默当作幂等成功。

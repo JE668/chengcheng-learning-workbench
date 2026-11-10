@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getDb, withWriteLock } from '@/lib/db';
 import { safeJson } from '@/lib/safe-json';
 import { logGrowthEvent } from '@/lib/castle';
+import { ensureCastle } from '@/lib/castle-core';
 import { rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -24,16 +25,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '只有孩子可以赠送星星币' }, { status: 403 });
 
   const limit = rateLimit(`gift-stars:${user.id}`, { windowSeconds: 60, maxRequests: 6 });
-  if (!limit.ok)
-    return NextResponse.json({ error: '送得太快啦，休息一下再送～' }, { status: 429 });
+  if (!limit.ok) return NextResponse.json({ error: '送得太快啦，休息一下再送～' }, { status: 429 });
 
   const { toChildId, amount } = await safeJson(req, {});
   const to = Number(toChildId);
   const n = Number(amount);
   if (!Number.isInteger(to) || to <= 0)
     return NextResponse.json({ error: '请选择要送礼物的小朋友' }, { status: 400 });
-  if (to === user.id)
-    return NextResponse.json({ error: '不能送给自己哦～' }, { status: 400 });
+  if (to === user.id) return NextResponse.json({ error: '不能送给自己哦～' }, { status: 400 });
   if (!Number.isInteger(n) || n < 1 || n > MAX_GIFT)
     return NextResponse.json({ error: `一次只能送 1~${MAX_GIFT} 颗星星币` }, { status: 400 });
 
@@ -43,8 +42,7 @@ export async function POST(req: NextRequest) {
     sql: "SELECT id, display_name, parent_id FROM users WHERE id = ? AND role = 'child'",
     args: [to],
   });
-  if (!target.rows.length)
-    return NextResponse.json({ error: '找不到这个小朋友' }, { status: 404 });
+  if (!target.rows.length) return NextResponse.json({ error: '找不到这个小朋友' }, { status: 404 });
   const meRow = await db.execute({
     sql: 'SELECT parent_id FROM users WHERE id = ?',
     args: [user.id],
@@ -65,6 +63,12 @@ export async function POST(req: NextRequest) {
       if (Number(dec.rowsAffected ?? 0) === 0) {
         throw new Error('__insufficient');
       }
+      // 加款前确保收款方有 castle_state 行（2026-11-10 第三轮审查）：
+      // 新孩子从未触发 ensureCastle（children 路由不建 castle_state，只有城堡模块
+      // 首次使用时才 INSERT OR IGNORE）时，下面的普通 UPDATE rowsAffected=0，
+      // 事务照样 COMMIT——发送方扣了币、收款方没收到，转账凭空蒸发。
+      // ensureCastle 是 INSERT OR IGNORE（幂等），与 castle-core.ts:20-31 同一实现。
+      await ensureCastle(to);
       await db.execute({
         sql: 'UPDATE castle_state SET star_coins = star_coins + ? WHERE child_id = ?',
         args: [n, to],

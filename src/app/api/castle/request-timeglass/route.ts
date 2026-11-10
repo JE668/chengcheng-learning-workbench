@@ -21,18 +21,35 @@ export async function POST(req: Request) {
     if (body && typeof body.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.day)) {
       day = body.day;
     }
-  } catch { /* 忽略解析错误 */ }
+  } catch {
+    /* 忽略解析错误 */
+  }
 
   // 构建申请文本：带日期的更明确，家长能直接看到要补哪一天
-  const wishText = day ? `⏳ 申请时光沙漏（补 ${day.slice(5).replace('-', '月')}日）` : '⏳ 申请时光沙漏';
+  const wishText = day
+    ? `⏳ 申请时光沙漏（补 ${day.slice(5).replace('-', '月')}日）`
+    : '⏳ 申请时光沙漏';
 
-  // 检查是否已有待审批的沙漏申请（同一天避免重复）
+  // 检查是否已有待审批的沙漏申请（同一天避免重复）。
+  //
+  // ⚠️ 2026-11-10 第三轮审查：原来只按「完全相同的文本」去重——孩子可以对 30 个
+  // 不同日期各发一条 pending（每条文本都不同），把家长审批列表灌满。沙漏是
+  // 「家长逐条审批」的异步流程，同一孩子同时只应有一件待审批的沙漏申请，
+  // 所以改为按前缀查「任意 pending 沙漏申请」。
   const existing = await db.execute({
-    sql: "SELECT id FROM wishes WHERE child_id = ? AND text = ? AND status = 'pending'",
-    args: [user.id, wishText],
+    sql: "SELECT id, text FROM wishes WHERE child_id = ? AND text LIKE '⏳%' AND status = 'pending'",
+    args: [user.id],
   });
   if (existing.rows.length > 0) {
-    return NextResponse.json({ ok: true, message: day ? `这一天已经申请过了，等爸爸妈妈审批吧～` : '已经申请过了，等爸爸妈妈审批吧～' });
+    // 申请的日期与已有 pending 相同 → 视为重复；不同日期 → 请家长先处理完手头这条
+    const prevText = String(existing.rows[0].text);
+    const sameDay = day && prevText === wishText;
+    return NextResponse.json({
+      ok: true,
+      message: sameDay
+        ? `这一天已经申请过了，等爸爸妈妈审批吧～`
+        : '你已经有一条等待审批的沙漏申请啦，等爸爸妈妈处理完再申请新的吧～',
+    });
   }
 
   await db.execute({

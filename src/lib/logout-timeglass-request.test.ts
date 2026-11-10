@@ -166,10 +166,14 @@ describe('castle/request-timeglass · 申请与去重', () => {
     ]);
   });
 
-  it('不同日期可以各自申请一次', async () => {
+  it('⚠️ 已有 pending 沙漏申请时，换日期也拒绝（2026-11-10 第三轮审查：堵审批列表灌水面）', async () => {
     await tgPost(req({ day: '2026-09-25' }));
-    await tgPost(req({ day: '2026-09-26' }));
-    expect((await pendingTimeglass(ME)).length).toBe(2);
+    const second = await tgPost(req({ day: '2026-09-26' }));
+    const body = await second.json();
+    expect(body.ok).toBe(true);
+    expect(body.message).toContain('等待审批');
+    // 仍然只有第一条
+    expect((await pendingTimeglass(ME)).length).toBe(1);
   });
 
   it('家长 GET 只看当前选中孩子、只看到 ⏳ 且 pending 的', async () => {
