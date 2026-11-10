@@ -15,7 +15,8 @@ src/
 │   ├── login/             # 登录页
 │   └── layout.tsx          # 根布局：ensureSchema() 初始化 + ErrorBoundary + 全局壳
 ├── components/
-│   ├── atomic/            # 设计系统（唯一）：Button/Card/Modal/Select/Tabs/Toast/… + utils + a11y 测试
+│   ├── atomic/            # 旧设计系统残部（仅登录页 Button/Input 引用；新代码用 design-system）
+│   ├── design-system/     # clay（黏土拟物）设计系统：ClayButton/ClayCard/ClayInput + tokens
 │   └── *.tsx              # 业务组件（MokoCarousel/Castle/GrowthTree/games/…）
 ├── lib/                    # 领域逻辑（纯 TS，无 React）
 │   ├── db-core.ts          # getDb() 单例连接 + withWriteLock 写事务互斥
@@ -27,9 +28,10 @@ src/
 │   ├── mastery*.ts         # 知识点掌握度画像 + 最近 30 天薄弱点推荐
 │   ├── parent-report-insights.ts # 家长报告的三条解释性结论（纯函数）
 │   ├── stores/             # Zustand 状态管理
-│   ├── tts/                # TTS 三层降级（engines + orchestrator）
+│   ├── tts/                # TTS 四层降级（runtime 恢复链 + orchestrator 诊断适配）
 │   └── …                   # moko/story/mistakes/sm2/media/… 领域模块
-├── middleware.ts           # 路由级统一鉴权（软闸，只查 cookie 存在性）
+├── proxy.ts                # 路由级统一鉴权（软闸，只查 cookie 存在性）+ 全站 CSRF 防护
+                             #（Next 16 把 middleware.ts 更名为 proxy.ts，2026-11-03 随 Next 16.4.4 升级迁移）
 └── tasks-validation.ts     # 任务入参校验唯一出口（积分区间/标题）
 ```
 
@@ -70,7 +72,9 @@ src/
 - bcrypt 密码哈希；`httpOnly` + `sameSite=lax` + 按反代头决定 `secure`。
 - 家长/孩子双角色（`role: parent | child`）。
 - 登录：IP 级限流 + 账号级连续失败锁定（内存级，单实例适用，见 `rate-limit.ts`）。
-- `middleware.ts`：未带 cookie 的请求页面跳登录 / API 返 401（软闸），真值仍由各路由 `getCurrentUser()` 比对数据库决定。
+- `proxy.ts`（Next 16 前叫 `middleware.ts`）：CSRF 防护（Sec-Fetch-Site 优先 → Origin/Host，
+  详见文件内注释）+ 未带 cookie 的请求页面跳登录 / API 返 401（软闸），真值仍由各路由
+  `getCurrentUser()` 比对数据库决定。
 
 ---
 
@@ -105,11 +109,16 @@ src/
 
 ## UI 组件
 
-### 设计系统（`components/atomic/`）
+### 设计系统（`components/design-system/`）
 
-唯一设计系统，基于 class-variance-authority + Tailwind，当前仅有 Button / Input 两个组件，附带 `utils.ts`（cn helper）与 `a11y.test.tsx`。
+2026-10-18 起全站迁移到 **clay（黏土拟物）设计系统**：`ClayButton` / `ClayCard` / `ClayInput`
 
-> 现状提醒：原子组件**尚未推广**——只有 `Button` 与 `Input` 各被登录页引用 1 次，全站点 99% 的页面仍用顶层业务组件 + 页面内自建样式。历史上的 Card/Badge/Avatar/Modal/ConfirmDialog/Select/Tabs/Tooltip/DropdownMenu/Popover/Toast/Motion 等 12 个组件已因零引用被删除（见交接文档 3.19/3.20）。将设计系统铺开是独立的后续工程（见「路线图」）。
+- `design-tokens.ts` 的黏土阴影配方与学科主题色变量，现被 50+ 页面/组件引用
+  （`link-components.test.tsx` 守 RSC 链接边界、`rsc-boundary.test.ts` 守序列化 href）。
+
+> 历史遗留：`components/atomic/`（Button/Input，仅登录页引用）是旧系统残部，
+> 已被 clay 体系取代，保留仅为兼容登录页——新代码一律用 `components/design-system`。
+> 历史上的 Card/Badge/Avatar/Modal 等 12 个原子组件曾因零引用删除（见交接文档 3.19/3.20）。
 
 ### 业务组件
 
@@ -117,18 +126,25 @@ src/
 
 ---
 
-## TTS 系统（三层降级）
+## TTS 系统（四层降级）
 
-1. **Web Speech Strict** — 严格匹配 zh-CN / en-US
-2. **Web Speech Loose** — 宽松匹配任意 zh/en 嗓音
-3. **Edge TTS Server** — 服务端神经嗓音兜底（`/api/tts` + 常驻 Python worker）
+> 2026-10-18 起「三层」扩为「四层」：新增第 0 层预生成本地 MP3，动态文本另走批量预取。
 
-**唯一实现是 `lib/speak.ts`**（`playTts` / `playTtsWithResult`），全站 55+ 处调用。三层各自的关键处理都在这里：
+0. **预生成本地 MP3（第 0 层）** — `public/audio/` 下 2800+ 条静态内容（汉字/单词/古诗/故事全文/表扬语）
+   构建期由 `scripts/gen-audio.mjs` 预生成，`audio-manifest-client.generated.ts` 清单进客户端；
+   `preferStatic` 命中即零延迟本地播放，弱网/断网可用。
+1. **静态 MP3 → 批量预取** — 动态文本（错题题干/台词）先查内存 LRU + localStorage 持久缓存，
+   未命中走 `prefetchTtsBatch`（`/api/tts/batch`，一轮动态文本一次打包）。
+2. **Web Speech Strict → Loose** — 严格匹配 zh-CN / en-US，宽松降级到任意 zh/en 嗓音。
+3. **Edge TTS Server** — 服务端神经嗓音兜底（`/api/tts` + 常驻 Python worker）。
 
-- 长文本切句（`splitSpeechText`）绕开 Android Chrome/Edge 长 utterance 卡死的平台 bug；
-- Chrome keep-alive（每 8s pause/resume 踢醒引擎）；
-- 服务端音频 blob 缓存（命中秒回）；
-- 所有定时器统一登记并在朗读结束时清理。
+**唯一实现是 `lib/speak.ts`**（`playTts` / `playTtsWithResult`），全站 55+ 处调用。恢复链在
+`lib/tts/runtime/playback.ts`（本地音频 → 严格 → 宽松 → 服务端），并按职责拆分：
+
+- `browser-platform`（UA/语速/服务端 rate 等平台细节）、`voice-policy`（嗓音发现与严格/宽松选择）；
+- `audio-cache`（内存 LRU + localStorage 持久化 + 批量预取）、`audio-player`（静态 MP3 与服务端播放）；
+- `web-speech-player`：长文本切句（`splitSpeechText`）绕开 Android Chrome/Edge 长 utterance 卡死
+  的平台 bug、Chrome keep-alive（每 8s pause/resume 踢醒引擎）、定时器统一登记并在朗读结束时清理。
 
 `lib/tts/` 目录只保留**薄适配层**：`orchestrator.ts` 委托 `speak.ts` 执行朗读，仅额外提供指标统计与熔断状态，供 `/tts-diag` 诊断页使用。原先的 `lib/tts/engines/*`（第二套平行实现，缺少上面的关键处理）已删除——两套并存会导致重复维护与能力分叉。
 
@@ -185,7 +201,8 @@ chunk 任一缺失，或任一核心路由超预算，都会 fail-closed，不�
 
 - ~~**离线补打卡增强**~~：已完成（2026-10-31）——离线队列从「只重放每日一练交卷」扩展到 11 种写动作，
   并补齐幂等键 / 失败白名单 / 无副作用护栏三条纪律。
-- **设计系统推广**：将 `components/atomic` 组件逐步替换页面内自建样式，收敛重复 UI。
+- ~~**设计系统推广**~~：已完成（2026-10-18 ~ 11-02）——全站迁移到 clay 设计系统
+  （`components/design-system`），`components/atomic` 仅剩登录页残部待最终移除。
 - **多实例支持**：若未来上 Serverless/多副本，需把进程内限流/写锁/会话锁定替换为共享存储（Redis 等）。
 - **Feature 减法**：对非核心模块（部分小游戏等）做取舍，把维护成本集中到「每日一练 + 城堡 + 打卡」核心闭环。
 

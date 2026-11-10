@@ -10,8 +10,13 @@ Sentry.init({
   debug: process.env.NODE_ENV !== 'production',
 
   // Replay configuration
-  replaysOnErrorSampleRate: 1.0,
-  replaysSessionSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0.5,
+  //
+  // ⚠️ 2026-11-10 第三轮审查：Session Replay 关闭（0）。本项目是 NAS 自托管的家庭
+  // 应用，replay 集成会带来 ~50KB 级客户端开销与运行时 DOM 记录成本，家庭场景
+  // 里开发者自己就能看服务端日志，replay 的诊断价值撑不起这份成本。真需要时
+  // 再按需打开 replaysOnErrorSampleRate（错误现场录制，与 session 采样独立）。
+  replaysOnErrorSampleRate: 0,
+  replaysSessionSampleRate: 0,
 
   // Ignore specific errors
   ignoreErrors: [

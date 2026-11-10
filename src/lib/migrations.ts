@@ -705,17 +705,6 @@ export const MIGRATIONS: Migration[] = [
     },
   },
   {
-    version: 25,
-    name: 'mistakes_error_type',
-    description: '错题增加结构化错误原因：粗心 / 概念不清 / 审题错误',
-    up: async (db) => {
-      await addColumnIfMissing(db, 'mistakes', 'error_type TEXT');
-    },
-    down: async (db) => {
-      await db.execute({ sql: 'ALTER TABLE mistakes DROP COLUMN error_type', args: [] });
-    },
-  },
-  {
     version: 24,
     name: 'mastery_daily',
     description: '每日一练掌握度证据：按孩子/日期/知识点聚合首次作答与响应时间',
@@ -743,6 +732,17 @@ export const MIGRATIONS: Migration[] = [
     down: async (db) => {
       await db.execute({ sql: 'DROP INDEX IF EXISTS idx_mastery_daily_child_day', args: [] });
       await db.execute({ sql: 'DROP TABLE IF EXISTS mastery_daily', args: [] });
+    },
+  },
+  {
+    version: 25,
+    name: 'mistakes_error_type',
+    description: '错题增加结构化错误原因：粗心 / 概念不清 / 审题错误',
+    up: async (db) => {
+      await addColumnIfMissing(db, 'mistakes', 'error_type TEXT');
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'ALTER TABLE mistakes DROP COLUMN error_type', args: [] });
     },
   },
 ];

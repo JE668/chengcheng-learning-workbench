@@ -30,7 +30,7 @@ const nextConfig = {
   // 实验性功能
   experimental: {
     // 优化包导入
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    optimizePackageImports: [],
   },
   webpack: (config, { dev, isServer }) => {
     // 显式把 @ 别名指向 src 目录，使用 webpack 原生 resolve.alias

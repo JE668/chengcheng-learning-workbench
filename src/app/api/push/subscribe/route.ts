@@ -50,6 +50,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '无效的推送服务地址' }, { status: 400 });
     }
 
+    // keys 长度/格式校验（2026-11-10 第三轮审查）：此前只要 truthy 就原样入库，
+    // 可写任意长度字符串撑库，且后续 sendPushNotification 用它加密必然失败、
+    // 白白触发对真实推送网关的无效请求。Web Push 标准值：p256dh 为 65 字节
+    // 未压缩 EC 点的 base64url（约 88 字符），auth 为 16 字节的 base64url（约 22 字符）。
+    // 上限放宽到 2 倍余量，兼容个别网关的填充差异；base64url 字符集做硬校验。
+    const B64URL = /^[A-Za-z0-9_-]+$/;
+    const keyOk =
+      typeof keys.p256dh === 'string' &&
+      keys.p256dh.length <= 176 &&
+      B64URL.test(keys.p256dh) &&
+      typeof keys.auth === 'string' &&
+      keys.auth.length <= 44 &&
+      B64URL.test(keys.auth);
+    if (!keyOk) {
+      return NextResponse.json({ error: '无效的订阅密钥' }, { status: 400 });
+    }
+
     const db = getDb();
 
     // ⚠️ conflict target 必须与表上真实存在的唯一约束一致。

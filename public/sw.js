@@ -9,11 +9,18 @@
 // v5：修复页面导航缓存里的 Response.clone() 时序错误（clone 必须在 return 之前同步完成，
 //     否则抛 "Response body is already used" 并导致页面缓存静默失效）。
 // v7：/hanzi/ 加入 Cache First——笔顺数据从 JS bundle 外置后必须同样支持离线。
-const CACHE_VERSION = 'ccwb-v7';
-// 版本号变化会让 activate 阶段的 cleanupOldCaches 清掉所有旧缓存。
+// v8：内容寻址资产（/hanzi/ /audio/ /moko/）改入**独立缓存桶** IMMUTABLE_CACHE：
+//     这些文件内容永不变更（文件名=内容 hash 或文本），旧版本缓存可以跨版本沿用——
+//     此前它们与页面 JS 共用 CACHE_NAME，每次 CACHE_VERSION bump 都会把 4000+ 个
+//     已缓存 MP3/JSON 全清掉，离线设备的笔顺/TTS 静态层退化为「需联网重建」。
+const CACHE_VERSION = 'ccwb-v8';
 const CACHE_NAME = `ccwb-${CACHE_VERSION}`;
 const OFFLINE_CACHE = `ccwb-offline-${CACHE_VERSION}`;
 const API_CACHE = `ccwb-api-${CACHE_VERSION}`;
+// 内容寻址桶：不随 CACHE_VERSION 清空（cleanupOldCaches 只删名字里带版本的桶）。
+// 条目有 600 上限（超出最久未用先删），防止长期使用无界增长。
+const IMMUTABLE_CACHE = 'ccwb-immutable-v1';
+const MAX_IMMUTABLE_ENTRIES = 600;
 
 // 需要预缓存的核心资源
 const PRECACHE_URLS = [
@@ -36,7 +43,7 @@ async function cleanupOldCaches() {
   const keys = await caches.keys();
   await Promise.all(
     keys
-      .filter((k) => k.startsWith('ccwb-') && !k.includes(CACHE_VERSION))
+      .filter((k) => k.startsWith('ccwb-') && !k.includes(CACHE_VERSION) && k !== IMMUTABLE_CACHE)
       .map((k) => caches.delete(k))
   );
 }
@@ -119,13 +126,15 @@ self.addEventListener('fetch', (event) => {
   // 都先打网络再回退，弱网时 L0 变成「先等网络失败」，零延迟优势蒸发
   // （安卓平板无声问题被进一步放大）。MP3 是内容寻址（文件名=文本），
   // 内容永不变更，Cache First 语义完全安全。
-  const isStatic =
-    url.pathname.startsWith('/_next/static') ||
-    url.pathname.startsWith('/moko/') ||
-    url.pathname.startsWith('/audio/') ||
-    url.pathname.startsWith('/hanzi/') ||
-    /\.(?:png|jpg|jpeg|svg|webp|gif|ico|woff2?|css|js|map|mp3)$/.test(url.pathname);
+  const isStatic = isImmutableAsset(url.pathname);
   if (isStatic) {
+    event.respondWith(cacheFirstThenNetwork(req, IMMUTABLE_CACHE, event));
+    return;
+  }
+
+  // 其他静态资源（构建产物 JS/CSS/图片等，内容随每次部署变化）：
+  // Cache First + 网络回退，仍用带版本的 CACHE_NAME（bump 时清掉重建，避免读陈旧产物）。
+  if (/\.(?:png|jpg|jpeg|svg|webp|gif|ico|woff2?|css|js|map|mp3)$/.test(url.pathname)) {
     event.respondWith(cacheFirstThenNetwork(req, CACHE_NAME, event));
     return;
   }
@@ -135,6 +144,22 @@ self.addEventListener('fetch', (event) => {
 });
 
 // ===== 核心策略函数 =====
+
+/**
+ * 内容寻址资产（2026-11-10 v8）：文件内容永不变更，跨部署/跨版本可安全沿用缓存。
+ *   - /hanzi/*.json：hanzi-writer 字形数据（文件名=字）
+ *   - /audio/*.mp3：预生成 TTS（文件名=文本 hash）
+ *   - /moko/*：萌可图鉴静态图（文件名固定）
+ * 与之相对，/_next/static 与构建产物虽然 URL 带内容 hash，但会随部署整体换代，
+ * 保留在带版本的 CACHE_NAME 里随 bump 清理。
+ */
+function isImmutableAsset(pathname) {
+  return (
+    pathname.startsWith('/hanzi/') ||
+    pathname.startsWith('/audio/') ||
+    pathname.startsWith('/moko/')
+  );
+}
 
 // 页面导航：网络优先，失败显示离线页面
 async function navigateWithOfflineFallback(request, event) {
@@ -188,6 +213,11 @@ async function cacheFirstThenNetwork(request, cacheName, event) {
     if (response.ok) {
       const cache = await caches.open(cacheName);
       cache.put(request, response.clone());
+      // 内容寻址桶有条数上限（600 条足够覆盖孩子常用字的笔顺 + 当日预热音频），
+      // 超出按插入序删最旧的——防止长期使用无界增长（2026-11-10 第三轮审查）。
+      if (cacheName === IMMUTABLE_CACHE) {
+        await limitCacheSize(cacheName, MAX_IMMUTABLE_ENTRIES);
+      }
     }
     return response;
   } catch {
