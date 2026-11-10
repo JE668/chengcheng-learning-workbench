@@ -114,18 +114,22 @@ export function StudyQuiz({
 
   const options = useMemo(
     () => (shuffleOptions ? shuffle(item.options) : item.options),
-    // 每次换题 / 选项变化都重新打乱
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pos, shuffleOptions]
+    // ⚠️ 依赖必须是 [item, shuffleOptions] 而非 [pos, shuffleOptions]：
+    // 挂载 effect 会把 order[0] 从 0 换成随机下标（randomOrder 默认 true），
+    // pos 仍是 0 —— 若只依赖 pos，缓存里还是旧题（items[0]）的选项，
+    // 首题变成「题干是 A 题、选项是 B 题」，正确答案不在所列选项里，
+    // 孩子点哪个都算错（且答错不前进 pos，会永远卡在第一题）。
+    // 第四轮 D+E 审查实测发现。
+    [item, shuffleOptions]
   );
 
-  // 进入每题自动朗读
+  // 进入每题自动朗读（依赖 item 而非 pos：order 打乱后 pos=0 对应的题也换了）
   useEffect(() => {
     setPicked(null);
     if (autoSpeak === 'zh' && item.speak) speakZh(item.speak);
     else if (autoSpeak === 'en' && item.speakEn) speakEn(item.speakEn);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pos]);
+  }, [item]);
 
   function next() {
     setPicked(null);

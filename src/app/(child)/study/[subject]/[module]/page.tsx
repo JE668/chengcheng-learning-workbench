@@ -4,6 +4,7 @@ import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { getModuleProgress } from '@/lib/progress-store';
 import { STUDY_MODULES, SUBJECT_META, type StudySubject } from '@/lib/study-modules';
 import { StudyModuleProvider } from '@/lib/study-context';
+import ClientOnly from '@/components/ClientOnly';
 import { ModuleCover } from '@/components/study/ModuleCover';
 import { ModuleStars } from '@/components/study/ModuleStars';
 import { ModuleErrorBoundary } from '@/components/study/ModuleErrorBoundary';
@@ -74,7 +75,11 @@ export default async function StudyModulePage({
       >
         <StarBurstProvider>
           <ModuleErrorBoundary subject={subject} moduleKey={moduleKey}>
-            <C />
+            {/* 模块本体不参与 SSR：模块首帧大量用 Math.random 出题/洗牌，
+                挂载后再渲染可根治 hydration mismatch（见 ClientOnly 注释） */}
+            <ClientOnly>
+              <C />
+            </ClientOnly>
           </ModuleErrorBoundary>
         </StarBurstProvider>
       </StudyModuleProvider>

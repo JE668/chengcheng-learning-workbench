@@ -105,8 +105,11 @@ export async function logGrowthEvent(
 
 export async function getGrowthDiary(childId: number, limit = 24): Promise<GrowthEvent[]> {
   const db = getDb();
+  // created_at 是 SQLite CURRENT_TIMESTAMP（恒为 UTC），直接 slice 展示会比
+  // 北京时间早 8 小时（孩子 20:05 完成打卡，日记显示 12:05）。
+  // SQL 侧折算到服务器本地时间（与全仓 LOCAL_DAY_COL 同一思路）。
   const res = await db.execute({
-    sql: 'SELECT * FROM growth_events WHERE child_id = ? ORDER BY created_at DESC, id DESC LIMIT ?',
+    sql: "SELECT *, DATETIME(created_at, 'localtime') AS created_at_local FROM growth_events WHERE child_id = ? ORDER BY created_at DESC, id DESC LIMIT ?",
     args: [childId, limit],
   });
   return res.rows.map((r) => ({
@@ -116,7 +119,7 @@ export async function getGrowthDiary(childId: number, limit = 24): Promise<Growt
     emoji: String(r.emoji),
     title: String(r.title),
     desc: r.desc != null ? String(r.desc) : null,
-    created_at: String(r.created_at),
+    created_at: String(r.created_at_local ?? r.created_at),
   }));
 }
 

@@ -32,8 +32,9 @@ export default async function HomePage() {
             FROM tasks t
             LEFT JOIN completions c ON c.task_id = t.id AND c.child_id = ?
             WHERE c.task_id IS NULL
+              AND (t.assigned_to IS NULL OR t.assigned_to = ?)
             ORDER BY t.created_at DESC LIMIT 5`,
-      args: [user.id],
+      args: [user.id, user.id],
     }),
     getModuleProgressAll(user.id),
     // 下面两条统计同样只依赖 user.id / todayStr，与上面五组无先后关系，

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { ALL_EN_WORDS } from '@/lib/study-data-en';
 
@@ -35,6 +35,9 @@ export function EnSpellModule() {
   const [pos, setPos] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const [correct, setCorrect] = useState(0);
+  // 镜像 ref：判星发生在 setTimeout 回调里，直接读 correct 是**点击那帧的闭包值**
+  //（不含本题的对错）——8 题对 7 题会只得 2 星。与 StudyQuiz 的 attemptsRef 同一模式。
+  const correctRef = useRef(0);
   const [roundDone, setRoundDone] = useState(false);
 
   const item = SPELLABLE[order[pos % SPELLABLE.length]];
@@ -62,10 +65,15 @@ export function EnSpellModule() {
     if (picked) return;
     setPicked(c);
     const ok = c === item.word[blankIdx];
-    try { if (ok) sfxCorrect(); else sfxWrong(); navigator.vibrate?.(ok ? 30 : [40, 40, 40]); } catch {}
+    try {
+      if (ok) sfxCorrect();
+      else sfxWrong();
+      navigator.vibrate?.(ok ? 30 : [40, 40, 40]);
+    } catch {}
     if (ok) {
       praise();
       setCorrect((n) => n + 1);
+      correctRef.current += 1;
     } else {
       logM({
         subject: '英语',
@@ -79,7 +87,8 @@ export function EnSpellModule() {
       const n = done + 1;
       setDone(n);
       if (n >= 8) {
-        const stars = correct >= 7 ? 3 : correct >= 5 ? 2 : 1;
+        // 用 ref 累计值（含本题），而非过期闭包 correct
+        const stars = correctRef.current >= 7 ? 3 : correctRef.current >= 5 ? 2 : 1;
         record(stars);
         setRoundDone(true);
       } else {

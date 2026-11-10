@@ -6,7 +6,7 @@ import Link from 'next/link';
 import GrowthTree from '@/components/GrowthTree';
 import CheckinCalendar from '@/components/CheckinCalendar';
 import { EmptyState } from '@/components/EmptyState';
-import { dateStr } from '@/lib/date';
+import { dateStr, LOCAL_DAY_COL } from '@/lib/date';
 import { ClayCard, ClayButton } from '@/components/design-system';
 
 export default async function RecordPage() {
@@ -46,8 +46,8 @@ export default async function RecordPage() {
       getGrowthDiary(user.id, 20),
       resolveChildId(user),
       db.execute({
-        sql: `SELECT DATE(created_at, 'localtime') as day, COALESCE(SUM(points), 0) as pts
-            FROM completions WHERE child_id = ? AND created_at >= ? GROUP BY day ORDER BY day`,
+        sql: `SELECT ${LOCAL_DAY_COL} as day, COALESCE(SUM(points), 0) as pts
+            FROM completions WHERE child_id = ? AND ${LOCAL_DAY_COL} >= ? GROUP BY day ORDER BY day`,
         args: [user.id, weekStart],
       }),
       db.execute({

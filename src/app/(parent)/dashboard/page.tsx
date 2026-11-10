@@ -1,7 +1,7 @@
 import { getCurrentUser } from '@/lib/auth';
 import { getDb, getChildId, getChildPoints, getChildrenOfParent } from '@/lib/db';
 import { getTodayPractice } from '@/lib/daily-practice';
-import { dateStr } from '@/lib/date';
+import { dateStr, LOCAL_DAY_COL } from '@/lib/date';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
 import TimeGlassApproveList from '@/components/parent/TimeGlassApproveList';
 import { ClayCard } from '@/components/design-system';
@@ -146,8 +146,8 @@ export default async function DashboardPage() {
       // 避免 UTC 日界在本地时区（东八区等）午夜前后错一天。
       const weekStart = dateStr(weekAgo);
       const pts = await db.execute({
-        sql: `SELECT DATE(created_at, 'localtime') as day, COALESCE(SUM(points), 0) as pts
-              FROM completions WHERE child_id = ? AND DATE(created_at, 'localtime') >= ? GROUP BY day ORDER BY day`,
+        sql: `SELECT ${LOCAL_DAY_COL} as day, COALESCE(SUM(points), 0) as pts
+              FROM completions WHERE child_id = ? AND ${LOCAL_DAY_COL} >= ? GROUP BY day ORDER BY day`,
         args: [cId, weekStart],
       });
       // 补齐 7 天（含 0 分日）

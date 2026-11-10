@@ -33,7 +33,10 @@ export async function GET(req: Request) {
   const masteredFilter = url.searchParams.get('mastered'); // '0', '1', or 'all'
 
   const db = getDb();
-  let sql = `SELECT id, topic_id, level, question_id, wrong_count, last_wrong_at, is_mastered
+  // last_wrong_at 是 SQLite CURRENT_TIMESTAMP（UTC）：客户端直接 toLocaleDateString
+  // 会把 00:00–08:00 的记录显示成前一天（东八区）。SQL 侧折算到服务器本地时间。
+  let sql = `SELECT id, topic_id, level, question_id, wrong_count,
+                    DATETIME(last_wrong_at, 'localtime') AS last_wrong_at_local, is_mastered
              FROM algorithm_mistakes WHERE child_id = ?`;
   const args: (number | string | null)[] = [childId];
 
@@ -61,7 +64,7 @@ export async function GET(req: Request) {
     level: Number(row.level),
     questionId: String(row.question_id),
     wrongCount: Number(row.wrong_count),
-    lastWrongAt: String(row.last_wrong_at),
+    lastWrongAt: String(row.last_wrong_at_local ?? row.last_wrong_at),
     isMastered: Number(row.is_mastered) === 1,
   }));
 

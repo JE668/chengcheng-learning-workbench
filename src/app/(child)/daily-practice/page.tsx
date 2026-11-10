@@ -47,6 +47,7 @@ export default function DailyPracticePage() {
   const [selected, setSelected] = useState<number[]>([]);
   const [result, setResult] = useState<PracticeSubmitResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [resetting, setResetting] = useState(false);
   // 离线暂存：网络异常时本地保存打卡，联网后由 OfflineSync 自动重放
   const [offlineQueued, setOfflineQueued] = useState(false);
   // 时光沙漏：是否拥有（已完成态下显示「再做一次」按钮用）
@@ -235,7 +236,14 @@ export default function DailyPracticePage() {
           responseMs: responseMsRef.current,
         }),
       });
+      // ⚠️ 非 2xx / 缺 subjects 的响应（401 会话过期、500 服务端错误）不能进
+      // result 视图——result.subjects.map 会 TypeError 白屏（第四轮 D+E 审查）。
+      // 与 load() 的错误处理同口径：进 loadError 重试页。
       const payload = await response.json();
+      if (!response.ok || !payload?.subjects) {
+        setLoadError(payload?.error || `提交失败（HTTP ${response.status}）`);
+        return;
+      }
       setResult(payload);
       try {
         if (payload?.completed) sfxComplete();
@@ -260,24 +268,36 @@ export default function DailyPracticePage() {
   }, [allAnswered, selected]);
 
   const resetWithTimeGlass = useCallback(async () => {
-    const response = await fetch('/api/daily-practice/reset', { method: 'POST' });
-    const payload = await response.json();
-    if (!payload.ok) {
-      alert(payload.message || '操作失败');
-      return;
-    }
+    // ⚠️ 第四轮 D+E 审查：全流程包 try/catch/finally——原实现网络失败时
+    // rejection 未捕获、setLoading(false) 永不执行，页面永久卡在 Loading。
+    // 同时用 resetting 防双击（连点会重复调 /reset、白扣沙漏）。
+    if (resetting) return;
+    setResetting(true);
+    try {
+      const response = await fetch('/api/daily-practice/reset', { method: 'POST' });
+      const payload = await response.json();
+      if (!payload.ok) {
+        alert(payload.message || '操作失败');
+        return;
+      }
 
-    setLoading(true);
-    const refreshed = await fetch('/api/daily-practice');
-    const nextData = await refreshed.json();
-    setData(nextData);
-    setSelected(new Array(nextData.questions?.length ?? 0).fill(-1));
-    firstAnswersRef.current = new Array(nextData.questions?.length ?? 0).fill(-1);
-    responseMsRef.current = new Array(nextData.questions?.length ?? 0).fill(0);
-    questionStartedAtRef.current = Date.now();
-    setLoading(false);
-    setHasTimeGlass(false);
-  }, []);
+      setLoading(true);
+      const refreshed = await fetch('/api/daily-practice');
+      const nextData = await refreshed.json();
+      setData(nextData);
+      setSelected(new Array(nextData.questions?.length ?? 0).fill(-1));
+      firstAnswersRef.current = new Array(nextData.questions?.length ?? 0).fill(-1);
+      responseMsRef.current = new Array(nextData.questions?.length ?? 0).fill(0);
+      questionStartedAtRef.current = Date.now();
+      setLoading(false);
+      setHasTimeGlass(false);
+    } catch {
+      alert('网络好像走神了，请稍后再试');
+    } finally {
+      setResetting(false);
+      setLoading(false);
+    }
+  }, [resetting]);
 
   if (loading) return <PracticeLoading />;
 
