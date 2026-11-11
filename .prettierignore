@@ -24,6 +24,10 @@ next-env.d.ts
 public/hanzi
 src/lib/moko-collection
 
+# audio-manifest-client 生成器输出单行 JSON.stringify（CI 用 git diff 校验与生成器逐字一致），
+# prettier 重排成多行后必然与生成器不一致 —— 两边打架，交给生成器。
+src/lib/audio-manifest-client.generated.ts
+
 # 学科数据文件：手写排版是为可读性服务的 —— 把 '天','地','人' 挤在一行好核对生字表，
 # 让 prettier 按 printWidth=100 逐字换行会产生几百行伪 diff，掩盖真正的改动
 # （实测「清理死代码」那轮就踩过，已验证汉字序列前后完全一致）。
