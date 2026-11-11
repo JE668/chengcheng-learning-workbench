@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
 import { genPracticeSet } from '@/lib/algorithm/generators';
 import { getTopic } from '@/lib/algorithm/topics';
-import { AlgorithmQuiz } from '@/components/algorithm/AlgorithmQuiz';
+import { AlgorithmQuiz, speakableMath } from '@/components/algorithm/AlgorithmQuiz';
 import { sfxComplete } from '@/lib/sfx';
+import { prefetchTtsBatch } from '@/lib/speak';
 import { MokoGroupBg } from '@/components/moko-bg';
 
 /** 计算星级：3⭐ ≥90% | 2⭐ ≥70% | 1⭐ ≥50% | 0 <50% */
@@ -53,6 +54,14 @@ export default function PracticeLevelPage() {
   const [hintOpen, setHintOpen] = useState(false);
 
   const currentQuestion = questions[idx];
+
+  // 预取本关全部题目的读题音频（进页面即拉，等孩子点开第 N 题时多半已就绪）。
+  // 文本与 AlgorithmQuiz 的自动朗读同源（speakableMath 转换），保证命中同一缓存。
+  useEffect(() => {
+    if (!questions.length) return;
+    const items = questions.map((qq) => ({ text: speakableMath(qq.prompt), lang: 'zh' as const }));
+    prefetchTtsBatch(items);
+  }, [questions]);
 
   const handleComplete = useCallback(
     (correct: boolean) => {

@@ -6,6 +6,7 @@ import { VerticalCalculation } from './VerticalCalculation';
 import { MiniVisualAid } from './MiniVisualAid';
 import { sfxComplete, sfxWrong } from '@/lib/sfx';
 import { FadeIn, Shake } from './LazyMotion';
+import { playTts } from '@/lib/speak';
 
 interface AlgorithmQuizProps {
   question: AlgorithmQuestion;
@@ -17,11 +18,57 @@ interface AlgorithmQuizProps {
 }
 
 /**
+ * 把分步过程折算成孩子能听懂的读法：
+ *   「9 + 5 = ?」→「九 加 五 等于几」
+ *   「10 + 4 = ?」→「十 加 四 等于几」
+ * 读题的关键是把符号说成汉字——Web Speech / edge-tts 读「=」经常吞字或读成「equals」。
+ */
+export function speakableMath(text: string): string {
+  return text
+    .replace(/\+/g, ' 加 ')
+    .replace(/-/g, ' 减 ')
+    .replace(/×/g, ' 乘 ')
+    .replace(/÷/g, ' 除以 ')
+    .replace(/=/g, ' 等于 ')
+    .replace(/\?/g, ' 几')
+    .replace(/\(/g, '，')
+    .replace(/\)/g, '，')
+    .replace(/\s+/g, ' ')
+    .replace(/(\d+)/g, (_, n: string) => numToZh(Number(n)))
+    .trim();
+}
+
+function numToZh(n: number): string {
+  const DIGITS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+  if (n < 0) return `负${numToZh(-n)}`;
+  if (n < 10) return DIGITS[n];
+  if (n === 10) return '十';
+  if (n < 20) return `十${DIGITS[n % 10]}`;
+  if (n < 100) {
+    const t = Math.floor(n / 10);
+    const o = n % 10;
+    return `${DIGITS[t]}十${o ? DIGITS[o] : ''}`;
+  }
+  const h = Math.floor(n / 100);
+  const rest = n % 100;
+  if (rest === 0) return `${DIGITS[h]}百`;
+  if (rest < 10) return `${DIGITS[h]}百零${DIGITS[rest]}`;
+  return `${DIGITS[h]}百${numToZh(rest)}`;
+}
+
+/**
  * 算法题目分步填写组件
  * 展示：题目 → 原理 → 一步一步填写 → 最终答案
  * 使用 CSS 动画替代 framer-motion 以减小 bundle
  */
-export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = true, topicId, level = 1 }: AlgorithmQuizProps) {
+export function AlgorithmQuiz({
+  question,
+  onComplete,
+  onNext,
+  showPrinciple = true,
+  topicId,
+  level = 1,
+}: AlgorithmQuizProps) {
   // 当前步骤索引
   const [stepIdx, setStepIdx] = useState(0);
   // 每个输入框的答案
@@ -39,6 +86,10 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
 
   const currentStep: StepField = question.stepFields[stepIdx];
   const isLastStep = stepIdx === question.stepFields.length - 1;
+  // 进入每题自动朗读题目（第四轮后用户反馈：算法页语音读题基本没读出来）。
+  // 题目是纯算式（如「9 + 5 = ?」），转成汉字读法后走 L1 Web Speech / L3 服务端
+  // 都很稳；同时提供手动重听按钮。
+  const [muted, setMuted] = useState(false);
 
   // 初始化时重置所有答案
   useEffect(() => {
@@ -51,27 +102,43 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
     setShowAid(level <= 3);
   }, [question.id, level]);
 
+  // 自动朗读当前题目 / 当前步骤（muted 或 completed 时不读）
+  useEffect(() => {
+    if (muted) return;
+    const text = completed
+      ? `全部完成！最终答案是 ${numToZh(question.answer)}`
+      : `${speakableMath(question.prompt)}。${currentStep ? currentStep.title.replace(/^第\S+步[：:]/, '') : ''}，${currentStep ? speakableMath(currentStep.display) : ''}`;
+    const timer = setTimeout(() => {
+      void playTts(text, 'zh', { wsRate: 0.95, pitch: 1.1 });
+    }, 400);
+    return () => clearTimeout(timer);
+    // 步骤推进/题目切换/完成时都重读
+  }, [question.id, stepIdx, completed, muted, question.prompt, question.answer, currentStep]);
+
   /** 填写输入框 */
-  const handleInput = useCallback((inputId: string, value: string) => {
-    const num = value === '' ? '' : parseInt(value, 10);
-    setAnswers((prev) => ({ ...prev, [inputId]: num }));
-    // 清除错误状态
-    if (errorInputs.has(inputId)) {
-      setErrorInputs((prev) => {
-        const next = new Set(prev);
-        next.delete(inputId);
-        return next;
-      });
-    }
-    // 清除 hint
-    if (hintShown.has(inputId)) {
-      setHintShown((prev) => {
-        const next = new Set(prev);
-        next.delete(inputId);
-        return next;
-      });
-    }
-  }, [errorInputs, hintShown]);
+  const handleInput = useCallback(
+    (inputId: string, value: string) => {
+      const num = value === '' ? '' : parseInt(value, 10);
+      setAnswers((prev) => ({ ...prev, [inputId]: num }));
+      // 清除错误状态
+      if (errorInputs.has(inputId)) {
+        setErrorInputs((prev) => {
+          const next = new Set(prev);
+          next.delete(inputId);
+          return next;
+        });
+      }
+      // 清除 hint
+      if (hintShown.has(inputId)) {
+        setHintShown((prev) => {
+          const next = new Set(prev);
+          next.delete(inputId);
+          return next;
+        });
+      }
+    },
+    [errorInputs, hintShown]
+  );
 
   /** 提交当前步骤 */
   const handleSubmitStep = useCallback(() => {
@@ -137,11 +204,43 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
       {/* 迷你思维图 */}
       <MiniVisualAid topicId={topicId ?? ''} visible={showAid && !completed} />
 
+      {/* 步骤进度条：第几步 / 共几步 + 步骤点（完成的亮起，一眼看到全程） */}
+      {!completed && question.stepFields.length > 1 && (
+        <div className="flex items-center justify-center gap-2 mb-3">
+          {question.stepFields.map((s, i) => {
+            const done = i < stepIdx;
+            const active = i === stepIdx;
+            return (
+              <div
+                key={s.id}
+                className={`flex items-center gap-1 ${i < question.stepFields.length - 1 ? 'flex-1' : ''}`}
+              >
+                <span
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition ${
+                    done
+                      ? 'bg-green-400 text-white'
+                      : active
+                        ? 'bg-moko-blue text-white ring-4 ring-moko-blue/25'
+                        : 'bg-gray-200 text-gray-400'
+                  }`}
+                >
+                  {done ? '✓' : i + 1}
+                </span>
+                {i < question.stepFields.length - 1 && (
+                  <span
+                    className={`h-1 flex-1 rounded-full min-w-4 ${done ? 'bg-green-300' : 'bg-gray-200'}`}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* 题目区 */}
       <FadeIn duration={0.3}>
         <div className="bg-white rounded-3xl p-6 shadow-lg border-2 border-moko-purple/20">
           <div className="flex items-center justify-center gap-4 mb-4">
-            {/* 竖式显示 */}
             <VerticalCalculation
               a={question.digits[0]}
               b={question.digits[1]}
@@ -151,11 +250,17 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
             />
           </div>
 
-          {/* 大题目提示 */}
+          {/* 大题目提示 + 语音开关（自动朗读可静音） */}
           <div className="text-center">
             <div className="text-4xl sm:text-5xl font-black text-moko-violet mb-2">
               {question.prompt}
             </div>
+            <button
+              onClick={() => setMuted((v) => !v)}
+              className="text-xs font-bold text-moko-violet bg-moko-purple/10 px-3 py-1 rounded-full hover:bg-moko-purple/20 transition mt-1"
+            >
+              {muted ? '🔇 语音已关，点我打开' : '🔊 语音读题中，点我静音'}
+            </button>
           </div>
         </div>
       </FadeIn>
@@ -164,20 +269,37 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
       {!completed && (
         <FadeIn key={currentStep.id} duration={0.3}>
           <div className="bg-gradient-to-br from-moko-blue/10 to-moko-cyan/10 rounded-3xl p-5 border-2 border-moko-blue/25 shadow-lg">
-            {/* 步骤标题 */}
+            {/* 步骤标题 + 重听本步 */}
             <div className="flex items-center gap-2 mb-3">
-              <span className="w-8 h-8 rounded-full bg-moko-blue text-white flex items-center justify-center font-black text-sm">
+              <span className="w-8 h-8 rounded-full bg-moko-blue text-white flex items-center justify-center font-black text-sm flex-shrink-0">
                 {stepIdx + 1}
               </span>
-              <h3 className="text-lg font-black text-moko-blue">{currentStep.title}</h3>
+              <h3 className="text-lg font-black text-moko-blue flex-1">{currentStep.title}</h3>
+              <button
+                onClick={() =>
+                  void playTts(
+                    `${currentStep.title.replace(/^第\S+步[：:]/, '')}，${speakableMath(currentStep.display)}`,
+                    'zh',
+                    { wsRate: 0.95, pitch: 1.1 }
+                  )
+                }
+                className="text-xs font-bold text-moko-violet bg-white/70 px-2.5 py-1 rounded-full hover:bg-white transition flex-shrink-0"
+                aria-label="重听这一步"
+              >
+                🔊 重听
+              </button>
             </div>
 
             {/* 步骤描述 */}
-            <p className="text-sm text-gray-700 leading-relaxed mb-4 font-medium">{currentStep.description}</p>
+            {/* 为什么这样做：带 💭 标记的引导条，与步骤算式区在视觉上分层 */}
+            <p className="text-sm text-gray-700 leading-relaxed mb-4 font-medium bg-moko-blue/5 rounded-xl px-3 py-2 border border-moko-blue/10">
+              <span className="mr-1">💭</span>
+              {currentStep.description}
+            </p>
 
-            {/* 展示区域 */}
+            {/* 展示区域：本步算式，超大字居中——孩子跟着读「9 加 1 等于 10」 */}
             {currentStep.display && (
-              <div className="text-xl sm:text-2xl font-black text-center my-4 text-moko-violet bg-white/60 rounded-2xl py-3 px-4">
+              <div className="text-2xl sm:text-3xl font-black text-center my-4 text-moko-violet bg-gradient-to-b from-moko-purple/10 to-moko-blue/10 rounded-2xl py-4 px-4 border-2 border-moko-purple/15 tracking-wider">
                 {currentStep.display}
               </div>
             )}
@@ -193,11 +315,7 @@ export function AlgorithmQuiz({ question, onComplete, onNext, showPrinciple = tr
                   const hasError = errorInputs.has(input.id);
 
                   return (
-                    <FadeIn
-                      key={input.id}
-                      delay={idx * 0.1}
-                      duration={0.2}
-                    >
+                    <FadeIn key={input.id} delay={idx * 0.1} duration={0.2}>
                       <div className="flex items-center justify-center gap-2 flex-wrap">
                         {/* 前缀 */}
                         {input.prefix && (
