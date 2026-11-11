@@ -128,9 +128,19 @@ export async function applyPenalty(childId: number, day: string, consecutiveMiss
 
   // 增量写回：护盾扣减仅在真正挡下捣蛋时发生；藏币扣 stolen、记入 last_stolen。
   // 三条都只动自己的差量，不覆盖并发写入（见上面「藏星星币」处的说明）。
-  if (shieldUsed || stolen > 0) {
+  // ⚠️ 两条 UPDATE 拆开（第五轮审查 2026-11-12）：原来合成一条且条件是
+  // shieldUsed || stolen > 0 —— 无护盾 + 被藏币的孩子会执行
+  // shield_equipped - 1，护盾被扣成 -1；之后第一次买护盾（+1）只是填坑，
+  // 家长看来像「购买无效」。MAX(0, ...) 再兜一层防并发负值。
+  if (shieldUsed) {
     await db.execute({
-      sql: 'UPDATE castle_state SET shield_equipped = shield_equipped - 1, star_coins = star_coins - ?, last_stolen = last_stolen + ? WHERE child_id = ?',
+      sql: 'UPDATE castle_state SET shield_equipped = MAX(0, shield_equipped - 1) WHERE child_id = ?',
+      args: [childId],
+    });
+  }
+  if (stolen > 0) {
+    await db.execute({
+      sql: 'UPDATE castle_state SET star_coins = star_coins - ?, last_stolen = last_stolen + ? WHERE child_id = ?',
       args: [stolen, stolen, childId],
     });
   }

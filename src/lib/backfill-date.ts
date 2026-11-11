@@ -43,6 +43,14 @@ export function validateBackfillDay(
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dayStr)) {
     return { ok: false, reason: '请选择要补打卡的日期' };
   }
+  // 真实日历校验：'2026-02-30' 能过正则但不是存在的日期。放行会写入
+  // 「幽灵日」记录（streak 步进永远不会落在这天，数据成孤儿）。
+  // Date 构造按本地时区 round-trip 一致才算合法。
+  const [y, mo, d] = dayStr.split('-').map(Number);
+  const asDate = new Date(y, mo - 1, d);
+  if (asDate.getFullYear() !== y || asDate.getMonth() !== mo - 1 || asDate.getDate() !== d) {
+    return { ok: false, reason: '这个日期不存在，请重新选择' };
+  }
   const today = dateStr();
   // 允许 today 也不允许任何未来日期；文案按调用方角色区分：
   // 家长侧说「确认」（castle/confirm），孩子侧说「补」（castle/use-item）。
@@ -71,10 +79,17 @@ export function validateBackfillDay(
  * @returns 解析出的 YYYY-MM-DD，或 null（文案里没有日期）
  */
 export function parseBackfillDateFromWish(text: string, today: string = dateStr()): string | null {
+  // 新格式带年份：「补 2026年12月31日」；旧格式（历史 pending）仍是「补 12月31日」
+  const full = text.match(/补\s*(\d{4})年(\d{2})月(\d{2})日/);
+  if (full) return full[1] + '-' + full[2] + '-' + full[3];
   const m = text.match(/补\s*(\d{2})月(\d{2})日/);
   if (!m) return null;
   const year = today.slice(0, 4);
-  return year + '-' + m[1] + '-' + m[2];
+  const parsed = year + '-' + m[1] + '-' + m[2];
+  // 跨年兜底：12/31 申请、次年 1/1 审批时，按「今年」盖年会得到未来日期——
+  // 此时回退一年再交给调用方的 validateBackfillDay 判断
+  if (parsed > today) return String(Number(year) - 1) + '-' + m[1] + '-' + m[2];
+  return parsed;
 }
 
 /**

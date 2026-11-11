@@ -141,7 +141,7 @@ describe('castle/request-timeglass · 申请与去重', () => {
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.message).toContain('09月26日');
-    expect(await pendingTimeglass(ME)).toEqual(['⏳ 申请时光沙漏（补 09月26日）']);
+    expect(await pendingTimeglass(ME)).toEqual(['⏳ 申请时光沙漏（补 2026年09月26日）']);
   });
 
   it('日期格式不对 → 当作没传（不做范围校验，留给审批时）', async () => {
@@ -162,7 +162,7 @@ describe('castle/request-timeglass · 申请与去重', () => {
     expect(body.ok).toBe(true);
     expect(body.message).toContain('已经申请过了');
     expect(await pendingTimeglass(ME), '重复申请插了多行').toEqual([
-      '⏳ 申请时光沙漏（补 09月26日）',
+      '⏳ 申请时光沙漏（补 2026年09月26日）',
     ]);
   });
 
@@ -198,6 +198,6 @@ describe('castle/request-timeglass · 申请与去重', () => {
     h.childId = ME;
     const body = await (await tgGet()).json();
     const texts = body.requests.map((r: { text: string }) => r.text);
-    expect(texts).toEqual(['⏳ 申请时光沙漏（补 09月26日）']);
+    expect(texts).toEqual(['⏳ 申请时光沙漏（补 2026年09月26日）']);
   });
 });

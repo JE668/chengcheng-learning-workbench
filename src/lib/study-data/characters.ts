@@ -335,6 +335,8 @@ const RAW_CHARACTERS: CharacterItem[] = [
   { char: '放', pinyin: 'fàng', strokeCount: 8, meaning: '把东西搁下；也指不限制', phrase: '放开', category: '动作' },
   { char: '进', pinyin: 'jìn', strokeCount: 7, meaning: '从外面到里面', phrase: '进步', category: '动作' },
   { char: '住', pinyin: 'zhù', strokeCount: 7, meaning: '长期生活在某个地方；也表示停下来', phrase: '住房', category: '动作' },
+  { char: '王', pinyin: 'wáng', strokeCount: 4, meaning: '君主；姓氏', phrase: '国王', category: '人物' },
+  { char: '生', pinyin: 'shēng', strokeCount: 5, meaning: '出生；也指没有煮熟', phrase: '生日', category: '动作' },
   { char: '孩', pinyin: 'hái', strokeCount: 9, meaning: '小娃娃、幼童', phrase: '女孩', category: '家庭' },
   { char: '玩', pinyin: 'wán', strokeCount: 8, meaning: '做游戏、开心地活动', phrase: '玩耍', category: '动作' },
   { char: '吧', pinyin: 'ba', strokeCount: 7, meaning: '放在句尾表示商量、建议', phrase: '走吧', category: '动作' },

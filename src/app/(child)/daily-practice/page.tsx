@@ -83,6 +83,9 @@ export default function DailyPracticePage() {
         return;
       }
       setData(payload);
+      // 题组重置/重试后题量可能变化（时光沙漏重置会注入错题），不重置 idx
+      // 会指向越界下标 → 渲染「今天暂时没有练习哦～」的假空态卡死。
+      setIdx(0);
       setSelected(new Array(payload.questions.length).fill(-1));
       firstAnswersRef.current = new Array(payload.questions.length).fill(-1);
       responseMsRef.current = new Array(payload.questions.length).fill(0);
@@ -241,7 +244,9 @@ export default function DailyPracticePage() {
       // ⚠️ 非 2xx / 缺 subjects 的响应（401 会话过期、500 服务端错误）不能进
       // result 视图——result.subjects.map 会 TypeError 白屏（第四轮 D+E 审查）。
       // 与 load() 的错误处理同口径：进 loadError 重试页。
-      const payload = await response.json();
+      // json() 也要 catch：500 返回 HTML 错误页时 json() 抛错会被下面的
+      // catch 误判成「离线」入 OfflineSync 队列（网络实际是好的）。
+      const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.subjects) {
         setLoadError(payload?.error || `提交失败（HTTP ${response.status}）`);
         return;
@@ -277,17 +282,24 @@ export default function DailyPracticePage() {
     setResetting(true);
     try {
       const response = await fetch('/api/daily-practice/reset', { method: 'POST' });
-      const payload = await response.json();
-      if (!payload.ok) {
-        alert(payload.message || '操作失败');
+      const payload = await response.json().catch(() => null);
+      if (!payload?.ok) {
+        alert(payload?.message || '操作失败');
         return;
       }
 
       setLoading(true);
       const refreshed = await fetch('/api/daily-practice');
-      const nextData = await refreshed.json();
+      const nextData = await refreshed.json().catch(() => null);
+      if (!refreshed.ok || !nextData || !Array.isArray(nextData.questions)) {
+        // 新题组拉取失败：不拿残缺数据覆盖旧 state（会落假空态），
+        // 提示用户手动刷新即可——沙漏已在服务端扣掉，重进页面会加载新题组。
+        alert('重置成功，但刷新题目失败，请下拉重试');
+        return;
+      }
       setData(nextData);
-      setSelected(new Array(nextData.questions?.length ?? 0).fill(-1));
+      setIdx(0);
+      setSelected(new Array(nextData.questions.length).fill(-1));
       firstAnswersRef.current = new Array(nextData.questions?.length ?? 0).fill(-1);
       responseMsRef.current = new Array(nextData.questions?.length ?? 0).fill(0);
       questionStartedAtRef.current = Date.now();

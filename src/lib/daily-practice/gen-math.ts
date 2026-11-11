@@ -458,11 +458,15 @@ export function genAngleQ(): PracticeQuestion {
 /* 钟表题（整时） */
 export function genClockQ(): PracticeQuestion {
   const c = CLOCKS[Math.floor(Math.random() * CLOCKS.length)];
-  // 🔧 修复：干扰选项来自相邻时间点，而非完全随机（更贴近实际学习场景）
+  // 🔧 干扰选项来自相邻小时，且统一用「X时」格式——原来干扰项拼成
+  // 「X点」而正确项是 CLOCKS 的「X时」，孩子只挑带「时」字的选项就能得分。
   const allHours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-  const adjacent = allHours.filter((h) => h !== c.hour);
-  const opts = adjacent.map((h) => `${h}点`).slice(0, 3);
-  const shuffled = shuffle([c.label, ...opts.slice(0, 3)]);
+  const shuffled = shuffle([
+    c.label,
+    ...shuffle(allHours.filter((h) => h !== c.hour))
+      .slice(0, 3)
+      .map((h) => `${h}时`),
+  ]);
   const answer = shuffled.indexOf(c.label);
   return {
     id: `clock-${c.hour}`,

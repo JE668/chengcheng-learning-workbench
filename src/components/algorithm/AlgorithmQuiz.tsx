@@ -57,12 +57,18 @@ function numToZh(n: number): string {
 }
 
 /**
- * 把步骤算式转成链上的一环：提取 display 里的核心等式（去掉「把 X 拆成…」等描述前缀）。
- * 「15 - (6 - 3) = ?」这类带括号的走 speakableMath 只用于朗读；链上直接展示原式。
+ * 把步骤算式转成链上的一环：提取 display 里的「结论性等式」。
+ * 规则：从首个算术字符取到结尾，必须含「=」且不含「?」——
+ * 带 ? 的是进行中的拆数式/求值式（5 = 1 + ?、9 + 1 = ?），答案未定不能上链；
+ * 结论式（10 + 4 = 14、63 = 60 + 3、链式变形等式）整条上链。
+ * 纯变形无等号（52 - (27 - 3) → 52 - 27 + 3）和描述句返回 null（链上跳过）。
  */
-function chainLabel(display: string): string | null {
-  const m = display.match(/([\d+\-×÷() ]*[\d])\s*=\s*([\u4e00-\u9fa5\d?]+|\?)/);
-  return m ? m[0] : null;
+export function chainLabel(display: string): string | null {
+  const m = display.match(/[()0-9+\-×÷][()0-9+\-×÷ =]*$/);
+  if (!m) return null;
+  const s = m[0].trim();
+  if (!s.includes('=') || s.includes('?')) return null;
+  return s;
 }
 
 /**
@@ -117,14 +123,15 @@ export function AlgorithmQuiz({
   const currentStep: StepField = question.stepFields[stepIdx];
   const isLastStep = stepIdx === question.stepFields.length - 1;
 
-  // C 算式阶梯链：已完成步骤的核心等式（display 里带「=」的），逐环亮起
+  // C 算式阶梯链：已完成步骤的核心等式（display 里带「=」的），逐环亮起。
+  // completed 时含最后一步（slice 到 stepIdx+1）——得出最终答案的那一环也要上链。
   const chainLinks = useMemo(
     () =>
       question.stepFields
-        .slice(0, stepIdx)
+        .slice(0, completed ? stepIdx + 1 : stepIdx)
         .map((s) => chainLabel(s.display))
         .filter((x): x is string => x !== null),
-    [question.stepFields, stepIdx]
+    [question.stepFields, stepIdx, completed]
   );
 
   // A 竖式联动：本步该点亮哪一列
@@ -498,7 +505,8 @@ export function AlgorithmQuiz({
               <button
                 onClick={() => {
                   const script = [
-                    `${question.explain}`,
+                    // explain 含 +-= 和括号，必须同样过 speakableMath（读「=」吞字的老问题）
+                    speakableMath(question.explain),
                     ...question.stepFields
                       .map((s) => chainLabel(s.display))
                       .filter((x): x is string => x !== null)

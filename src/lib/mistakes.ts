@@ -93,8 +93,13 @@ export async function reviewMistake(
   if (!res.rows.length) return false;
   const row = res.rows[0];
 
-  // 幂等保护：同一天重复提交只按第一次的结果算
-  if (String(row.next_review ?? '') > localDate()) return false;
+  // 幂等保护：同一天重复提交只按第一次的结果算。
+  // ⚠️ 原为「SELECT 判断 + UPDATE 直写」：两个并发请求能同时通过 SELECT
+  // 检查、各自 UPDATE，reps/interval 跳级推进。改为每条 UPDATE 都带
+  // next_review <= today 的原子守卫，用 rowsAffected 判定是否本次生效；
+  // 输运但更新失败（另一个并发请求已推进）→ 视为重复提交返回 false。
+  const today = localDate();
+  if (String(row.next_review ?? '') > today) return false;
 
   const currentEasiness = Number(row.easiness_factor ?? 2.5);
   const currentReps = Number(row.reps ?? 0);
@@ -107,10 +112,11 @@ export async function reviewMistake(
     // 失败：重置重复次数，间隔 1 天，easiness -0.2；若本轮给了结构化错误原因则保留。
     // 答对不写 error_type：一次成功复习不能抹掉历史错误画像。
     const newEasiness = Math.max(1.3, Number(row.easiness_factor ?? 2.5) - 0.2);
-    await db.execute({
-      sql: 'UPDATE mistakes SET reps = 0, interval_days = 1, easiness_factor = ?, next_review = ?, resolved = 0, error_type = COALESCE(?, error_type) WHERE id = ? AND child_id = ?',
-      args: [newEasiness, localDate(1), errorType ?? null, id, childId],
+    const upd = await db.execute({
+      sql: 'UPDATE mistakes SET reps = 0, interval_days = 1, easiness_factor = ?, next_review = ?, resolved = 0, error_type = COALESCE(?, error_type) WHERE id = ? AND child_id = ? AND next_review <= ?',
+      args: [newEasiness, localDate(1), errorType ?? null, id, childId, today],
     });
+    if (Number(upd.rowsAffected ?? 0) === 0) return false; // 并发请求已先推进
   } else {
     // 成功：交给 lib/sm2.ts 的标准实现计算，**不再在此重写一遍递推**。
     //
@@ -135,8 +141,8 @@ export async function reviewMistake(
       localDate()
     );
 
-    await db.execute({
-      sql: 'UPDATE mistakes SET reps = ?, interval_days = ?, easiness_factor = ?, next_review = ?, resolved = ? WHERE id = ? AND child_id = ?',
+    const upd = await db.execute({
+      sql: 'UPDATE mistakes SET reps = ?, interval_days = ?, easiness_factor = ?, next_review = ?, resolved = ? WHERE id = ? AND child_id = ? AND next_review <= ?',
       args: [
         next.repetitions,
         next.interval,
@@ -145,8 +151,10 @@ export async function reviewMistake(
         correct ? 1 : 0,
         id,
         childId,
+        today,
       ],
     });
+    if (Number(upd.rowsAffected ?? 0) === 0) return false; // 并发请求已先推进
   }
   return true;
 }

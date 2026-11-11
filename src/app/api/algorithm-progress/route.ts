@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser, resolveChildId } from '@/lib/auth';
 import { safeJson } from '@/lib/safe-json';
-import { getDb } from '@/lib/db-core';
+import { getDb, withWriteLock } from '@/lib/db-core';
 import { ALGORITHM_GENERATORS, genPracticeSet } from '@/lib/algorithm/generators';
 
 /** 关卡取值范围：与 [topicId]/client.tsx 的「10 个关卡」一致。 */
@@ -32,13 +32,16 @@ export async function GET() {
   });
 
   // 按主题分组
-  const byTopic: Record<string, Array<{
-    level: number;
-    correctCount: number;
-    totalCount: number;
-    bestStars: number;
-    completedAt: string | null;
-  }>> = {};
+  const byTopic: Record<
+    string,
+    Array<{
+      level: number;
+      correctCount: number;
+      totalCount: number;
+      bestStars: number;
+      completedAt: string | null;
+    }>
+  > = {};
 
   for (const row of res.rows) {
     const topicId = String(row.topic_id);
@@ -102,9 +105,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: '无效的答对题数' }, { status: 400 });
   }
 
-  const mistakeIds = (
-    Array.isArray(mistakes) ? mistakes : []
-  ).filter(
+  const mistakeIds = (Array.isArray(mistakes) ? mistakes : []).filter(
     (m): m is string => typeof m === 'string' && m.length > 0 && m.length <= MAX_MISTAKE_ID_LEN
   );
   // 错题数不可能超过总题量；同时限制单次请求的写库条数，避免写放大。
@@ -123,53 +124,64 @@ export async function POST(req: Request) {
   const ratio = effectiveCorrect / expectedTotal;
   const stars = ratio >= 0.9 ? 3 : ratio >= 0.7 ? 2 : ratio >= 0.5 ? 1 : 0;
 
-  // 更新进度（UPSERT）
-  await db.execute({
-    sql: `INSERT INTO algorithm_progress (child_id, topic_id, level, correct_count, total_count, best_stars, completed_at)
+  // 三段写（进度 UPSERT + 错题 batch + 掌握标记）收进同一事务：
+  // 中断不至于「星星已记、错题丢失」（第五轮审查 2026-11-12）。
+  // 与全仓纪律一致：withWriteLock + 手动 BEGIN/COMMIT。
+  await withWriteLock(async () => {
+    await db.execute('BEGIN IMMEDIATE');
+    try {
+      // —— 更新进度（UPSERT）——
+      await db.execute({
+        sql: `INSERT INTO algorithm_progress (child_id, topic_id, level, correct_count, total_count, best_stars, completed_at)
           VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
           ON CONFLICT(child_id, topic_id, level) DO UPDATE SET
             correct_count = CASE WHEN excluded.correct_count > algorithm_progress.correct_count THEN excluded.correct_count ELSE algorithm_progress.correct_count END,
             best_stars = CASE WHEN excluded.best_stars > algorithm_progress.best_stars THEN excluded.best_stars ELSE algorithm_progress.best_stars END,
             completed_at = CURRENT_TIMESTAMP`,
-    args: [childId, topicId, lv, effectiveCorrect, expectedTotal, stars, stars],
-  });
+        args: [childId, topicId, lv, effectiveCorrect, expectedTotal, stars, stars],
+      });
 
-  // 记录错题（答错的题）。
-  // ⚠️ db.batch 一次往返原子提交——此前逐条 await 是 N+1（一关最多
-  // 10 错题 = 10 次往返，且每次都过 process 级写锁排队；这是孩子每
-  // 次做题都打的高频接口）。空数组 batch 会报错，先判空。
-  if (cappedMistakes.length > 0) {
-    await db.batch(
-      cappedMistakes.map((qid) => ({
-        sql: `INSERT INTO algorithm_mistakes (child_id, topic_id, level, question_id, wrong_count, last_wrong_at)
-              VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
-              ON CONFLICT(child_id, topic_id, level, question_id) DO UPDATE SET
-                wrong_count = wrong_count + 1,
-                last_wrong_at = CURRENT_TIMESTAMP,
-                is_mastered = 0`,
-        args: [childId, topicId, lv, qid],
-      }))
-    );
-  }
+      // 记录错题（答错的题）。
+      // ⚠️ 事务内**不能用 db.batch**：libsql 的 batch 自带 BEGIN/COMMIT，
+      // 在手动事务里调用会「cannot start a transaction within a transaction」
+      // 并把外层事务一并终止（实测复现）。batch 的 N+1 收益只在无外层事务时
+      // 存在；这里在事务内逐条 execute —— 同一事务、同一连接，无额外开销。
+      for (const qid of cappedMistakes) {
+        await db.execute({
+          sql: `INSERT INTO algorithm_mistakes (child_id, topic_id, level, question_id, wrong_count, last_wrong_at)
+                VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
+                ON CONFLICT(child_id, topic_id, level, question_id) DO UPDATE SET
+                  wrong_count = wrong_count + 1,
+                  last_wrong_at = CURRENT_TIMESTAMP,
+                  is_mastered = 0`,
+          args: [childId, topicId, lv, qid],
+        });
+      }
 
-  // 标记已掌握：本关中之前有错题记录、但这次答对的题
-  // 查询本关卡所有有错题记录的 question_id
-  const prevMistakes = await db.execute({
-    sql: `SELECT question_id FROM algorithm_mistakes WHERE child_id = ? AND topic_id = ? AND level = ?`,
-    args: [childId, topicId, lv],
-  });
-  const prevIds = prevMistakes.rows.map((r) => String(r.question_id));
-  // 找出不在这次 mistakes 中的（即答对的）
-  const nowCorrect = prevIds.filter((id) => !cappedMistakes.includes(id));
-  if (nowCorrect.length > 0) {
-    await db.execute({
-      sql: `UPDATE algorithm_mistakes
+      // 标记已掌握：本关中之前有错题记录、但这次答对的题
+      // 查询本关卡所有有错题记录的 question_id
+      const prevMistakes = await db.execute({
+        sql: `SELECT question_id FROM algorithm_mistakes WHERE child_id = ? AND topic_id = ? AND level = ?`,
+        args: [childId, topicId, lv],
+      });
+      const prevIds = prevMistakes.rows.map((r) => String(r.question_id));
+      // 找出不在这次 mistakes 中的（即答对的）
+      const nowCorrect = prevIds.filter((id) => !cappedMistakes.includes(id));
+      if (nowCorrect.length > 0) {
+        await db.execute({
+          sql: `UPDATE algorithm_mistakes
             SET is_mastered = 1, wrong_count = 0
             WHERE child_id = ? AND topic_id = ? AND level = ?
             AND question_id IN (${nowCorrect.map(() => '?').join(',')})`,
-      args: [childId, topicId, lv, ...nowCorrect],
-    });
-  }
+          args: [childId, topicId, lv, ...nowCorrect],
+        });
+      }
+      await db.execute('COMMIT');
+    } catch (e) {
+      await db.execute('ROLLBACK');
+      throw e;
+    }
+  });
 
   return NextResponse.json({ stars, correctCount: effectiveCorrect, totalCount: expectedTotal });
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
+import { safeJson } from '@/lib/safe-json';
 import { getChildId } from '@/lib/db';
 import { grantResource } from '@/lib/castle';
 import { rateLimit } from '@/lib/rate-limit';
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, message: '操作太频繁，请稍后再试' }, { status: 429 });
   }
 
-  const { resource, amount } = await req.json();
+  const { resource, amount } = await safeJson(req, {}); // 畸形 JSON → 400 而不是裸 500（与全仓 safeJson 口径一致）
   if (!['sunlight', 'starCoins', 'tickets'].includes(resource)) {
     return NextResponse.json({ error: '未知资源类型' }, { status: 400 });
   }

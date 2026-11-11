@@ -87,7 +87,10 @@ async function settleLocked(
           sql: "SELECT id, qty FROM inventory WHERE child_id = ? AND item_key = 'freeze' AND qty > 0",
           args: [childId],
         });
-        if (fr.rows.length > 0) {
+        // ⚠️ 只在连胜还在（streak > 0）时才消耗冰冻（第五轮审查 2026-11-12）：
+        // 连胜早已归零的孩子每个漏卡日都会白吃一枚冰冻，且 streak 从 0 被
+        // 无条件 +1——「保护连胜」的前提是连胜还存在。
+        if (fr.rows.length > 0 && streak > 0) {
           const freezeId = Number(fr.rows[0].id);
           await db.execute({
             sql: 'UPDATE inventory SET qty = qty - 1 WHERE id = ?',

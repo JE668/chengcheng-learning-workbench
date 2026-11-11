@@ -114,21 +114,23 @@ export async function confirm(childId: number, day: string, subject: Subject) {
   const today = dateStr();
   if (!day || day === 'undefined') day = today;
 
-  // 幂等检查：使用 INSERT ... ON CONFLICT DO NOTHING 的原子性
-  const insertResult = await db.execute({
-    sql: "INSERT INTO daily_checkins (child_id, day, subject, status, confirmed_at) VALUES (?, ?, ?, 'confirmed', CURRENT_TIMESTAMP) ON CONFLICT(child_id, day, subject) DO NOTHING",
-    args: [childId, day, subject],
-  });
-  const isNewConfirm = Number(insertResult.rowsAffected ?? 0) > 0;
-  if (!isNewConfirm) {
-    return { ok: false, message: '该科今天已确认' };
-  }
-
   // 新确认：奖励发放整体串行化（本地 sqlite3 是单连接同步驱动，
   // 手写 BEGIN/COMMIT 之间若被并发请求的 await 穿插会串事务，用互斥锁兜住）。
+  // ⚠️ 幂等插卡必须在锁内事务里做：原先放在锁外 autocommit，若进程在
+  // 「插卡已落库、奖励未发」之间崩溃，重试会因该行已存在被判「已确认」，
+  // 奖励永久丢失。移进事务后用 rowsAffected 判定，插卡与发奖同生共死。
   return withWriteLock(async () => {
     await db.execute('BEGIN IMMEDIATE');
     try {
+      const insertResult = await db.execute({
+        sql: "INSERT INTO daily_checkins (child_id, day, subject, status, confirmed_at) VALUES (?, ?, ?, 'confirmed', CURRENT_TIMESTAMP) ON CONFLICT(child_id, day, subject) DO NOTHING",
+        args: [childId, day, subject],
+      });
+      const isNewConfirm = Number(insertResult.rowsAffected ?? 0) > 0;
+      if (!isNewConfirm) {
+        await db.execute('COMMIT');
+        return { ok: false, message: '该科今天已确认' };
+      }
       const result = await confirmRewardsTx(db, childId, day, today, subject);
       await db.execute('COMMIT');
       return result;

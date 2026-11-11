@@ -104,8 +104,16 @@ export default function PoemFillPage() {
   }, [blankCount]);
 
   const gotoPoem = (i: number) => {
+    // 按目标诗的空格数重置——用当前 blankCount 是 stale state：
+    // POEMS 各诗空格数不同（8/12/14），从少切到多会提前判定完成、
+    // 从多切到少则永远凑不满、卡死无法得星。
+    const targetLines = buildLines(POEMS[i].lines);
+    const targetBlanks = targetLines
+      .flat()
+      .filter((t): t is Extract<Token, { kind: 'blank' }> => t.kind === 'blank')
+      .map((t) => t.expected);
     setPIdx(i);
-    setSlots(Array(blankCount).fill(null));
+    setSlots(Array(targetBlanks.length).fill(null));
     setConsumed(new Set());
     setWrongSlot(null);
     setSolved(false);

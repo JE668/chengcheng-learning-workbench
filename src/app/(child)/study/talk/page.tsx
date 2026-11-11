@@ -67,6 +67,7 @@ export default function TalkPage() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [micError, setMicError] = useState('');
   const mrRef = useRef<MediaRecorder | null>(null);
+  const recPendingRef = useRef(false);
   const chunksRef = useRef<Blob[]>([]);
 
   const scene = SCENES[idx];
@@ -106,7 +107,9 @@ export default function TalkPage() {
   const readExample = () => speakZh(scene.example);
 
   const startRec = async () => {
+    if (recPendingRef.current) return; // getUserMedia await 期间防双击：双击会开两个 MediaRecorder，第一个 stream 的 track 无人 stop，麦克风指示灯常亮
     setMicError('');
+    recPendingRef.current = true;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream);
@@ -126,6 +129,8 @@ export default function TalkPage() {
       setMicError(
         '没能打开麦克风（需要在 https 或 localhost 下访问，并已允许麦克风权限）。你可以先用文字把说的话记下来～'
       );
+    } finally {
+      recPendingRef.current = false;
     }
   };
   const stopRec = () => {

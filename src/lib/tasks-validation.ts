@@ -39,3 +39,14 @@ export function parseTaskTitle(raw: unknown): string | null {
   if (!t || t.length > MAX_TASK_TITLE) return null;
   return t;
 }
+
+/** 任务学科的合法取值：与打卡三科同口径（child 端按 subject 精确过滤，
+ *  脏值会让任务从所有筛选里消失）。 */
+export const TASK_SUBJECTS = ['语文', '数学', '英语'] as const;
+
+/** 校验并规范化任务学科；非法（空/非字符串/不在白名单）返回 null。 */
+export function parseTaskSubject(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const t = raw.trim();
+  return (TASK_SUBJECTS as readonly string[]).includes(t) ? t : null;
+}

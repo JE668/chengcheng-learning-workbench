@@ -108,9 +108,15 @@ export async function generateQuestions(childId: number): Promise<PracticeQuesti
     () => genProverbQ(), // 谚语配对（理解：句意）
     () => genRiddleQ(), // 谜语（推理）
   ];
-  // diffLevel=0 → 3 道理解题（池子天然包含）；每升一级再换入 ~1 道识别题
-  const zhHardCount = 3 + diffLevel;
-  const zhPool = [...zhHardPool, ...zhEasyPool.slice(0, 10 - zhHardCount)];
+  // diffLevel=0 → 3 道理解题（池子天然包含）；每升一级再换入 ~1 道识别题。
+  // ⚠️ 难题池只有 3 个生成器：zhHardCount 超过 3 时（diffLevel≥1），缺额用
+  // 池内生成器循环补齐——原来只把 easy 池截短（10 - zhHardCount），难题
+  // 数量并没有变多，反而把语文总题量压到 10 - diffLevel 道（diffLevel=4
+  // 时只有 6 道），违背「语文 10 题」契约。
+  const zhHardCount = Math.min(3 + diffLevel, 6);
+  const hardFns: (() => PracticeQuestion)[] = [];
+  for (let i = 0; i < zhHardCount; i++) hardFns.push(zhHardPool[i % zhHardPool.length]);
+  const zhPool = [...hardFns, ...zhEasyPool.slice(0, Math.max(0, 10 - zhHardCount))];
   const zhPick = shuffle(zhPool).slice(0, 10);
   for (const fn of zhPick) qs.push(fn());
 
@@ -294,7 +300,8 @@ export async function submitPractice(
     String(row.questions),
     []
   );
-  const total = questions.length;
+  // total 不再单独使用：落库与返回值的 total 均为 gradedTotal（与 correct
+  // 同口径、不含错题重练），见下方 subjects 循环里的累计注释。
 
   // 按学科归类题目
   const bySubject: Record<Subject, PracticeQuestion[]> = { 语文: [], 数学: [], 英语: [] };
@@ -323,11 +330,15 @@ export async function submitPractice(
   let sunlightGain = 0;
   let ticketGain = 0;
   let correctTotal = 0;
+  // total 与 correct 同口径：只数非错题（错题重练不计入通过判定，
+  // 原来	total = questions.length 含错题，导致 correct 永远比 total 少错题数）
+  let gradedTotal = 0;
 
   for (const s of ['语文', '数学', '英语'] as Subject[]) {
     // 只取非错题的本学科题目来算通过率（错题重练不计入通过判定）
     const qs = (bySubject[s] || []).filter((q) => q.kind !== 'mistake');
     const subTotal = qs.length;
+    gradedTotal += subTotal;
     let subCorrect = 0;
     for (const q of qs) {
       const i = questions.indexOf(q);
@@ -367,7 +378,7 @@ export async function submitPractice(
 
   await db.execute({
     sql: 'UPDATE daily_practice SET correct = ?, total = ?, completed = ? WHERE child_id = ? AND day = ?',
-    args: [correctTotal, total, allDone ? 1 : 0, childId, today],
+    args: [correctTotal, gradedTotal, allDone ? 1 : 0, childId, today],
   });
 
   let practiceStreak: number | undefined;
@@ -449,7 +460,7 @@ export async function submitPractice(
   return {
     ok: true,
     correct: correctTotal,
-    total,
+    total: gradedTotal, // 与 correct 同口径（非错题），见上方 gradedTotal 注释
     completed: allDone,
     subjects,
     practiceStreak,

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, verifyPassword } from '@/lib/auth';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getDb, withWriteLock } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -22,30 +25,24 @@ export const dynamic = 'force-dynamic';
  * ——备份是家长直接发到微信/网盘的东西，等同于把全家的登录态公开。
  * 现在导出与导入两侧都不含 sessions（见 IMPORT_TABLES 的说明），凭据一律不流动。
  */
-const EXPORT_TABLES = [
-  'users',
-  'tasks',
-  'completions',
-  'redemptions',
-  'wishes',
-  'castle_state',
-  'moko_owned',
-  'daily_checkins',
-  'inventory',
-  'troublemakers',
-  'mistakes',
-  'growth_events',
-  'story_progress',
-  'daily_practice',
-  'mastery_daily',
-  'capture_tickets',
-  'story_read',
-  'story_quiz',
-  'cert_requests',
-  'module_progress',
-  'child_tasks',
-  'textbook_progress',
-];
+// 孩子数据表清单：与 parent/reset 的 CHILD_TABLES 保持同一份口径。
+// 历史教训（第五轮审查 2026-11-12）：这里曾手工维护一份旧清单，漏掉了
+// algorithm_progress / algorithm_mistakes / learning_streak / speech_scores /
+// study_sessions / coop_challenge_progress / push_subscriptions ——
+// 结果「导出→还原出厂→导入」后打卡积分回来了，算法进度/学习时长/推送订阅
+// 却永久丢失，且导入侧不 DELETE 这些表，形成半新半旧的混合状态。
+// 从 reset 路由源码解析（同 reset-child-tables-guard.test.ts 的做法），
+// reset 那边补表时这边自动跟上，护栏测试再各守一侧。
+const CHILD_TABLES_SRC = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../parent/reset/route.ts'),
+  'utf8'
+);
+const childTables = (() => {
+  const arr = CHILD_TABLES_SRC.match(/const CHILD_TABLES = \[([\s\S]*?)\];/);
+  if (!arr) throw new Error('backup: 无法从 parent/reset/route.ts 解析 CHILD_TABLES');
+  return [...arr[1].matchAll(/'([a-zA-Z_][a-zA-Z0-9_]*)'/g)].map((m) => m[1]);
+})();
+const EXPORT_TABLES = ['users', 'tasks', ...childTables];
 const allowed = new Set(EXPORT_TABLES);
 
 /**
@@ -228,6 +225,8 @@ export async function POST(req: NextRequest) {
     try {
       // 事务内推迟外键检查；随 COMMIT 自动失效，无需手动恢复。
       await db.execute('PRAGMA defer_foreign_keys = ON');
+      // 恢复失败的表（触发整体回滚，见下方说明）
+      const failedTables: string[] = [];
       // 先清空所有表（按外键依赖顺序）；sessions 不在 IMPORT_TABLES 里
       for (const t of IMPORT_TABLES) {
         if (!allowed.has(t)) continue;
@@ -276,10 +275,24 @@ export async function POST(req: NextRequest) {
               args: values,
             });
           }
-        } catch {
-          // 单表恢复失败（如 schema 差异）跳过该表，不中断整体
-          continue;
+        } catch (err) {
+          // 单表恢复失败：不再静默吞掉。该表已被 DELETE 且前 k 行已插入，
+          // 继续提交会留下「清空且部分恢复」的残缺状态还谎报成功（第五轮
+          // 审查 2026-11-12）。记录失败表，走整体 ROLLBACK 回到导入前，
+          // 并在响应里明确告知失败明细。
+          failedTables.push(t + '：' + (err instanceof Error ? err.message : String(err)));
+          break;
         }
+      }
+      if (failedTables.length > 0) {
+        await db.execute('ROLLBACK');
+        return NextResponse.json(
+          {
+            ok: false,
+            error: '恢复失败，已回滚到导入前的状态。失败明细：' + failedTables.join('；'),
+          },
+          { status: 422 }
+        );
       }
       // COMMIT 时才真正做外键检查（defer_foreign_keys 的语义）：
       // 若恢复数据留下了孤儿行，这里会失败 → 走 ROLLBACK，不会写进残缺库。

@@ -84,10 +84,19 @@ export async function POST(req: Request) {
   });
   if (exist.rows.length) return NextResponse.json({ error: '用户名已存在' }, { status: 409 });
 
-  await db.execute({
-    sql: 'INSERT INTO users (username, password_hash, role, display_name, parent_id) VALUES (?, ?, ?, ?, ?)',
-    args: [username, bcrypt.hashSync(password, 10), 'child', displayName, user.id],
-  });
+  try {
+    await db.execute({
+      sql: 'INSERT INTO users (username, password_hash, role, display_name, parent_id) VALUES (?, ?, ?, ?, ?)',
+      args: [username, bcrypt.hashSync(password, 10), 'child', displayName, user.id],
+    });
+  } catch (e) {
+    // 查重与 INSERT 非原子：并发同名第二个请求会撞 UNIQUE 约束——
+    // 回 409「已存在」而不是裸 500。
+    if (e instanceof Error && /UNIQUE/i.test(e.message)) {
+      return NextResponse.json({ error: '用户名已存在' }, { status: 409 });
+    }
+    throw e;
+  }
   const children = await getChildrenOfParent(user.id);
   return NextResponse.json({
     ok: true,

@@ -27,7 +27,9 @@ export async function POST(req: Request) {
 
   // 构建申请文本：带日期的更明确，家长能直接看到要补哪一天
   const wishText = day
-    ? `⏳ 申请时光沙漏（补 ${day.slice(5).replace('-', '月')}日）`
+    ? // 带全年份：只存「MM月DD日」的话，跨年审批（12/31 申请、1/1 审批）
+      // 会按「今年」盖年成未来日期，被 validateBackfillDay 拒绝（第五轮审查）
+      `⏳ 申请时光沙漏（补 ${day.slice(0, 4)}年${day.slice(5).replace('-', '月')}日）`
     : '⏳ 申请时光沙漏';
 
   // 检查是否已有待审批的沙漏申请（同一天避免重复）。

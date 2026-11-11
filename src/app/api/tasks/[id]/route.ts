@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getDb, withWriteLock } from '@/lib/db';
 import { safeJson } from '@/lib/safe-json';
 import { getCurrentUser } from '@/lib/auth';
 import {
   parseTaskPoints,
+  parseTaskSubject,
   parseTaskTitle,
   MIN_TASK_POINTS,
   MAX_TASK_POINTS,
@@ -36,6 +37,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (parsedTitle === null) {
     return NextResponse.json({ error: '请输入任务名称' }, { status: 400 });
   }
+  const parsedSubject = parseTaskSubject(subject);
+  if (parsedSubject === null) {
+    return NextResponse.json({ error: '学科必须是语文/数学/英语' }, { status: 400 });
+  }
   // 指派校验：与 POST 同口径——只能指派给自己名下的孩子（防 IDOR）。
   let assigned: number | null = null;
   if (assignedTo !== undefined && assignedTo !== null && assignedTo !== '') {
@@ -54,7 +59,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
   await db.execute({
     sql: 'UPDATE tasks SET title = ?, subject = ?, description = ?, points = ?, assigned_to = ? WHERE id = ?',
-    args: [parsedTitle, subject, description || '', parsedPoints, assigned, id],
+    args: [parsedTitle, parsedSubject, description || '', parsedPoints, assigned, id],
   });
   return NextResponse.json({ ok: true });
 }
@@ -72,8 +77,18 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     args: [id, user.id],
   });
   if (!own.rows.length) return NextResponse.json({ error: '无权限' }, { status: 403 });
-  // 先清掉该任务的完成记录（外键无级联），再删任务本身
-  await db.execute({ sql: 'DELETE FROM completions WHERE task_id = ?', args: [id] });
-  await db.execute({ sql: 'DELETE FROM tasks WHERE id = ?', args: [id] });
+  // 先清掉该任务的完成记录（外键无级联），再删任务本身。
+  // 两条写收进一个事务：中途崩溃不至于「积分记录没了任务还在」。
+  await withWriteLock(async () => {
+    await db.execute('BEGIN IMMEDIATE');
+    try {
+      await db.execute({ sql: 'DELETE FROM completions WHERE task_id = ?', args: [id] });
+      await db.execute({ sql: 'DELETE FROM tasks WHERE id = ?', args: [id] });
+      await db.execute('COMMIT');
+    } catch (e) {
+      await db.execute('ROLLBACK');
+      throw e;
+    }
+  });
   return NextResponse.json({ ok: true });
 }

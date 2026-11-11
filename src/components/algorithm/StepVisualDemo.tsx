@@ -19,6 +19,7 @@ const STEP_DEMO_KF = `
   @keyframes sdPop { 0% {opacity:0; transform:scale(.2)} 60% {opacity:1; transform:scale(1.12)} 100% {opacity:1; transform:scale(1)} }
   @keyframes sdGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0) } 50% { box-shadow: 0 0 0 6px rgba(16,185,129,.2) } }
   @keyframes sdBlink { 0%,100% { opacity:.35 } 50% { opacity:1 } }
+  @keyframes exPop { 0% {opacity:0; transform:scale(.2)} 60% {opacity:1; transform:scale(1.12)} 100% {opacity:1; transform:scale(1)} }
 `;
 
 function pop(delay = 0): React.CSSProperties {
@@ -113,7 +114,7 @@ function MakingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: number 
   const b2 = b - need;
   const dot = 'w-4 h-4 rounded-full';
   const cell =
-    'w-6 h-6 rounded-md border border-moko-purple/20 bg-white flex items-center justify-center';
+    'relative w-6 h-6 rounded-md border border-moko-purple/20 bg-white flex items-center justify-center';
 
   return (
     <div
@@ -232,7 +233,7 @@ function BreakingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: numbe
   const sub1 = 10 - b;
   const dot = 'w-4 h-4 rounded-full';
   const cell =
-    'w-6 h-6 rounded-md border border-moko-purple/20 bg-white flex items-center justify-center';
+    'relative w-6 h-6 rounded-md border border-moko-purple/20 bg-white flex items-center justify-center';
 
   return (
     <div
@@ -313,7 +314,7 @@ function LevelingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: numbe
   const b2 = b - ones;
   const dot = 'w-4 h-4 rounded-full';
   const cell =
-    'w-6 h-6 rounded-md border border-moko-purple/20 bg-white flex items-center justify-center';
+    'relative w-6 h-6 rounded-md border border-moko-purple/20 bg-white flex items-center justify-center';
 
   return (
     <div
@@ -330,7 +331,9 @@ function LevelingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: numbe
             <Chip text="10" tone="orange" delay={0.2} />
           </>
         )}
-        {reveal >= 2 && (
+        {/* 第二跳与答案要到第三步（reveal>=3）才揭晓——提前亮出会把最终答案
+            泄露给正要做「10 − b2 = ?」的孩子 */}
+        {reveal >= 3 && (
           <>
             <span className="text-moko-violet font-black">−{b2}→</span>
             <Chip text={`${a - b}`} tone="green" delay={0.2} />
@@ -352,7 +355,8 @@ function LevelingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: numbe
           </span>
         )}
         <span className="text-gray-400">+</span>
-        {reveal >= 2 ? (
+        {/* b2 是第三步的减数（10 − b2），第三步（reveal>=3）才揭晓 */}
+        {reveal >= 3 ? (
           <Chip text={`${b2}`} tone="blue" delay={0.3} />
         ) : (
           <span

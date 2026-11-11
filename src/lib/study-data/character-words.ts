@@ -312,4 +312,6 @@ export const CHARACTER_WORDS: Record<string, string[]> = {
   小: ['小心', '大小'],
   高: ['高兴', '高大'],
   旁: ['旁边', '身旁'],
+  王: ['国王', '王子'],
+  生: ['生日', '花生'],
 };

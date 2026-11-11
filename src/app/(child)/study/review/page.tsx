@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { playTts } from '@/lib/speak';
 import { useOfflineStore } from '@/lib/stores';
@@ -67,16 +67,46 @@ export default function ReviewPage() {
   const [done, setDone] = useState(0);
   const [pickedAns, setPickedAns] = useState<Record<number, string>>({});
   const [errorType, setErrorType] = useState<Record<number, string>>({});
+  // 每题选项在题目加载后固定下来（useMemo 以 items 为源）。原来在 JSX 内联
+  // 洗牌，任何 state 变化（本卡/他卡 pickedAns、revealed、done…）都会让
+  // 全部未揭示卡的选项重排——孩子正要点的按钮在点击后跳位，极易误点。
+  const optionsById = useMemo(() => {
+    const m = new Map<number, string[]>();
+    for (const it of items) {
+      m.set(
+        it.id,
+        shuffleAns(
+          it.answer,
+          it.wrong,
+          items
+            .filter((x) => x.id !== it.id && x.subject === it.subject)
+            .map((x) => x.answer)
+            .slice(0, 3)
+        )
+      );
+    }
+    return m;
+  }, [items]);
+
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   async function load() {
-    const r = await fetch('/api/mistakes');
-    const d = await r.json();
-    setItems(d.due || []);
-    setLoading(false);
+    try {
+      const r = await fetch('/api/mistakes');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      setItems(Array.isArray(d?.due) ? d.due : []);
+      setLoadError(null);
+    } catch {
+      // 断网/服务端错误：给出明确错误态 + 重试入口，而不是永久卡骨架屏
+      setLoadError('错题本加载失败，请检查网络后重试');
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
-    load();
+    void load();
   }, []);
 
   async function review(id: number, correct: boolean, type?: string) {
@@ -93,7 +123,8 @@ export default function ReviewPage() {
         .addAction({ type: 'mistake-review', payload: { id, correct, errorType: type } });
     }
     setItems((prev) => prev.filter((it) => it.id !== id));
-    if (correct) setDone((n) => n + 1);
+    // done 的增量只在「揭示答案答对」按钮处计一次（review() 也被
+    // 「听懂啦 ✅」复用，原来两边都 +1 会让计数虚高）
   }
 
   return (
@@ -118,6 +149,20 @@ export default function ReviewPage() {
           </span>
           萌可正在翻找你的错题本…
         </div>
+      ) : loadError ? (
+        <ClayCard theme="violet" className="p-10 text-center">
+          <div className="text-5xl mb-3">📡</div>
+          <div className="text-lg font-black text-moko-violet mb-4">{loadError}</div>
+          <ClayButton
+            variant="mint"
+            onClick={() => {
+              setLoading(true);
+              void load();
+            }}
+          >
+            重试 🔄
+          </ClayButton>
+        </ClayCard>
       ) : items.length === 0 ? (
         <ClayCard theme="violet" className="p-10 text-center">
           <div className="text-6xl mb-3">🎉</div>
@@ -159,14 +204,7 @@ export default function ReviewPage() {
                   <div className="mt-3 space-y-2">
                     {/* 先重做：只记录选项，不揭示答案；确认后才进入解释 */}
                     {(() => {
-                      const opts = shuffleAns(
-                        it.answer,
-                        it.wrong,
-                        items
-                          .filter((x) => x.id !== it.id && x.subject === it.subject)
-                          .map((x) => x.answer)
-                          .slice(0, 3)
-                      );
+                      const opts = optionsById.get(it.id) ?? [it.answer];
                       return opts.map((opt) => (
                         <button
                           key={opt}

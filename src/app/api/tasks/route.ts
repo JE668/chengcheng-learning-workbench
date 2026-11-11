@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 import {
   parseTaskPoints,
   parseTaskTitle,
+  parseTaskSubject,
   MIN_TASK_POINTS,
   MAX_TASK_POINTS,
 } from '@/lib/tasks-validation';
@@ -79,6 +80,10 @@ export async function POST(req: NextRequest) {
   if (parsedTitle === null) {
     return NextResponse.json({ error: '请输入任务名称' }, { status: 400 });
   }
+  const parsedSubject = parseTaskSubject(subject);
+  if (parsedSubject === null) {
+    return NextResponse.json({ error: '学科必须是语文/数学/英语' }, { status: 400 });
+  }
   const db = getDb();
   // 指派校验：assignedTo 必须是**自己名下的孩子**，不接受任意 id（防越权指派/IDOR）。
   let assigned: number | null = null;
@@ -98,7 +103,7 @@ export async function POST(req: NextRequest) {
   }
   await db.execute({
     sql: 'INSERT INTO tasks (title, subject, description, points, created_by, assigned_to) VALUES (?, ?, ?, ?, ?, ?)',
-    args: [parsedTitle, subject, description || '', parsedPoints, user.id, assigned],
+    args: [parsedTitle, parsedSubject, description || '', parsedPoints, user.id, assigned],
   });
   return NextResponse.json({ ok: true });
 }

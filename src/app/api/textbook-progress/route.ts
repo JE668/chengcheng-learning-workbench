@@ -28,6 +28,12 @@ export async function POST(req: Request) {
   }
   if (!body.bookKey) return NextResponse.json({ error: '缺少 bookKey' }, { status: 400 });
 
-  await setTextbookProgress(childId, body.bookKey, Number(body.chapterIdx ?? 0));
+  const chapterIdx = Number(body.chapterIdx ?? 0);
+  // NaN/负数/非整数直接拒绝：透传给 SQL 参数会抛 RangeError → 裸 500
+  if (!Number.isInteger(chapterIdx) || chapterIdx < 0) {
+    return NextResponse.json({ error: 'chapterIdx 无效' }, { status: 400 });
+  }
+
+  await setTextbookProgress(childId, body.bookKey, chapterIdx);
   return NextResponse.json({ ok: true });
 }

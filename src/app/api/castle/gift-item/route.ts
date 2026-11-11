@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
+import { safeJson } from '@/lib/safe-json';
 import { getChildId } from '@/lib/db';
 import { getDb } from '@/lib/db-core';
 import { logGrowthEvent } from '@/lib/castle';
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, message: '操作太频繁，请稍后再试' }, { status: 429 });
   }
 
-  const { itemKey } = await req.json();
+  const { itemKey } = await safeJson(req, {}); // 畸形 JSON → 400 而不是裸 500（与全仓 safeJson 口径一致）
   if (itemKey !== 'timeglass') {
     return NextResponse.json({ error: '暂不支持该道具' }, { status: 400 });
   }

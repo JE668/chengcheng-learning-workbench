@@ -67,11 +67,17 @@ export async function POST(req: Request) {
       const result = await withWriteLock(async () => {
         await db.execute('BEGIN IMMEDIATE');
         try {
-          const r = await restoreDay(childId, day);
-          await db.execute({
-            sql: "UPDATE wishes SET status = 'fulfilled' WHERE id = ?",
+          // 原子占位：并发第二次批准在这里 rowsAffected=0 直接退出
+          // （restoreDay 自身幂等，但占位提前能在发通知前拦住重复响应）
+          const upd = await db.execute({
+            sql: "UPDATE wishes SET status = 'fulfilled' WHERE id = ? AND status = 'pending'",
             args: [wishId],
           });
+          if (Number(upd.rowsAffected ?? 0) === 0) {
+            await db.execute('COMMIT');
+            return { ok: false as const, message: '该申请已被处理过了', duplicate: true };
+          }
+          const r = await restoreDay(childId, day);
           await db.execute('COMMIT');
           return r;
         } catch (e) {
@@ -79,6 +85,9 @@ export async function POST(req: Request) {
           throw e;
         }
       });
+      if ('duplicate' in result && result.duplicate) {
+        return NextResponse.json({ error: '该申请已被处理过了' }, { status: 400 });
+      }
       if (!result.ok) {
         return NextResponse.json({ ok: false, message: result.message }, { status: 400 });
       }
@@ -101,18 +110,39 @@ export async function POST(req: Request) {
       });
     } else {
       // 旧逻辑：发给 1 个时光沙漏
-      await db.execute({
-        sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1',
-        args: [childId, 'timeglass'],
+      // （第五轮审查 2026-11-12：原为三条独立写且 pending 检查在锁外——
+      //   家长双击「批准」会各发 1 个沙漏。改成锁内事务 + 原子状态守卫，
+      //   与上方带日期分支同一纪律。）
+      const claim = await withWriteLock(async () => {
+        await db.execute('BEGIN IMMEDIATE');
+        try {
+          // 原子占位：只有仍处 pending 的申请能通过（rowsAffected=0 即已被并发处理）
+          const upd = await db.execute({
+            sql: "UPDATE wishes SET status = 'fulfilled' WHERE id = ? AND status = 'pending'",
+            args: [wishId],
+          });
+          if (Number(upd.rowsAffected ?? 0) === 0) {
+            await db.execute('COMMIT');
+            return false;
+          }
+          await db.execute({
+            sql: 'INSERT INTO inventory (child_id, item_key, qty) VALUES (?, ?, 1) ON CONFLICT(child_id, item_key) DO UPDATE SET qty = qty + 1',
+            args: [childId, 'timeglass'],
+          });
+          await db.execute({
+            sql: "INSERT INTO growth_events (child_id, day, type, emoji, title, desc) VALUES (?, date('now','localtime'), 'gift', '⏳', '爸爸妈妈批准了时光沙漏申请', '收到 1 个时光沙漏，快去补打卡吧！')",
+            args: [childId],
+          });
+          await db.execute('COMMIT');
+          return true;
+        } catch (e) {
+          await db.execute('ROLLBACK');
+          throw e;
+        }
       });
-      await db.execute({
-        sql: "UPDATE wishes SET status = 'fulfilled' WHERE id = ?",
-        args: [wishId],
-      });
-      await db.execute({
-        sql: "INSERT INTO growth_events (child_id, day, type, emoji, title, desc) VALUES (?, date('now','localtime'), 'gift', '⏳', '爸爸妈妈批准了时光沙漏申请', '收到 1 个时光沙漏，快去补打卡吧！')",
-        args: [childId],
-      });
+      if (!claim) {
+        return NextResponse.json({ error: '该申请已被处理过了' }, { status: 400 });
+      }
       // 审批结果推送（2026-10-17 推送补全）：孩子申请后曾无任何通知通道
       import('@/lib/push-notifications').then(({ notifyChildSubscribers }) =>
         notifyChildSubscribers(childId, {
@@ -124,11 +154,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, message: '已批准，时光沙漏已发放到孩子背包 ✅' });
     }
   } else {
-    // 拒绝
-    await db.execute({
-      sql: "UPDATE wishes SET status = 'rejected' WHERE id = ?",
+    // 拒绝（原子守卫：并发双击只生效一次）
+    const rej = await db.execute({
+      sql: "UPDATE wishes SET status = 'rejected' WHERE id = ? AND status = 'pending'",
       args: [wishId],
     });
+    if (Number(rej.rowsAffected ?? 0) === 0) {
+      return NextResponse.json({ error: '该申请已被处理过了' }, { status: 400 });
+    }
     import('@/lib/push-notifications').then(({ notifyChildSubscribers }) =>
       notifyChildSubscribers(childId, {
         title: '⏳ 沙漏申请未通过',

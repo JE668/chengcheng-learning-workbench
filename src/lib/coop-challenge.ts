@@ -1,6 +1,6 @@
 import { getDb } from './db';
 import { dateStr } from './date';
-import { logGrowthEvent } from './castle-core';
+import { logGrowthEvent, ensureCastle } from './castle-core';
 
 /**
  * 🤝 每日组队挑战（2026-10-17，迁移 v22）：
@@ -55,6 +55,9 @@ export async function recordCoopProgress(childId: number, moduleKey: string): Pr
   const label = String(row.module_label ?? moduleKey);
   for (const s of siblings.rows) {
     const sid = Number(s.id);
+    // 加币前确保 castle_state 行存在：孩子从未进过城堡时 UPDATE
+    // rowsAffected=0，组队奖励静默蒸发（gift-stars 2026-11-10 修过同一坑）
+    await ensureCastle(sid);
     await db.execute({
       sql: 'UPDATE castle_state SET star_coins = star_coins + ? WHERE child_id = ?',
       args: [COOP_REWARD_STARS, sid],
