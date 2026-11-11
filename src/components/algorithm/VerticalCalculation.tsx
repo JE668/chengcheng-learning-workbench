@@ -19,6 +19,12 @@ interface VerticalCalculationProps {
   intermediateValue?: number;
   /** 紧凑模式（用于小尺寸） */
   compact?: boolean;
+  /**
+   * 分步联动高亮：'ones' 点亮个位列（本步在算个位），'tens' 点亮十位列。
+   * 用于练习分步填写时，让孩子看到「这一步发生在竖式的哪一位」。
+   * 'carry-landing' 额外把进位小 1 标记行放大呼吸闪烁（凑十/进位关键步）。
+   */
+  activeColumn?: 'ones' | 'tens' | 'carry-landing' | null;
 }
 
 /**
@@ -45,6 +51,7 @@ export function VerticalCalculation({
   showIntermediate = false,
   intermediateValue,
   compact = false,
+  activeColumn = null,
 }: VerticalCalculationProps) {
   const aTens = Math.floor(a / 10) % 10;
   const aOnes = a % 10;
@@ -67,6 +74,14 @@ export function VerticalCalculation({
   const cell = `${digitCls} font-black w-9 sm:w-10 text-center`;
   const opCls = compact ? 'text-xl' : 'text-2xl sm:text-3xl';
 
+  // 分步联动：激活列的底色 + 呼吸光圈，告诉孩子「现在算的是这一位」
+  const onesActive = activeColumn === 'ones' || activeColumn === 'carry-landing';
+  const tensActive = activeColumn === 'tens' || activeColumn === 'carry-landing';
+  const colActiveCls = (active: boolean) =>
+    active
+      ? 'relative after:absolute after:-inset-0.5 after:rounded-xl after:bg-moko-blue/15 after:-z-10 after:animate-pulse rounded-xl'
+      : '';
+
   return (
     <div className="inline-block font-mono bg-white/90 rounded-3xl px-6 py-4 shadow-lg border-2 border-moko-purple/20">
       {/* 进位/退位标记行（与下方数位严格同网格） */}
@@ -78,7 +93,13 @@ export function VerticalCalculation({
           {/* 十位上方：进位小 1 / 退位后的新十位 */}
           <span className={`${digitCls} font-black w-9 sm:w-10 text-center relative`}>
             {carryIn > 0 && (
-              <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-sm text-orange-500 bg-orange-100 rounded-full w-5 h-5 flex items-center justify-center border border-orange-300">
+              <span
+                className={`absolute -top-4 left-1/2 -translate-x-1/2 text-sm text-orange-500 bg-orange-100 rounded-full w-5 h-5 flex items-center justify-center border border-orange-300 ${
+                  activeColumn === 'carry-landing'
+                    ? 'scale-125 ring-4 ring-orange-300/60 animate-pulse'
+                    : ''
+                }`}
+              >
                 1
               </span>
             )}
@@ -89,13 +110,19 @@ export function VerticalCalculation({
 
       {/* 被加数/被减数 */}
       <div className="flex justify-end items-center">
-        <span className={`${opCls} font-black w-7 sm:w-8 text-center text-transparent select-none`} aria-hidden>
+        <span
+          className={`${opCls} font-black w-7 sm:w-8 text-center text-transparent select-none`}
+          aria-hidden
+        >
           +
         </span>
         {needHundreds && (
           <span className={`${cell} text-gray-700`}>{aHundreds > 0 ? aHundreds : ''}</span>
         )}
-        <span className={`${cell} text-gray-700 relative`} aria-label={`${aTens}个十`}>
+        <span
+          className={`${cell} text-gray-700 relative ${colActiveCls(tensActive)}`}
+          aria-label={`${aTens}个十`}
+        >
           {borrow && showCarry ? (
             <>
               {/* 退位：原十位划掉，右上角写新的十位值 */}
@@ -109,17 +136,22 @@ export function VerticalCalculation({
                 {aTens - 1 < 0 ? 9 : aTens - 1}
               </span>
             </>
+          ) : aTens > 0 ? (
+            aTens
           ) : (
-            aTens > 0 ? aTens : ''
+            ''
           )}
         </span>
         <span
-          className={`${cell} relative ${borrow && showCarry ? 'text-red-500' : 'text-gray-700'}`}
+          className={`${cell} relative ${colActiveCls(onesActive)} ${borrow && showCarry ? 'text-red-500' : 'text-gray-700'}`}
           aria-label={`${aOnes}个一`}
         >
           {aOnes}
           {borrow && showCarry && (
-            <span className="absolute -top-3 -right-1 text-xs text-red-500 font-black bg-red-50 rounded-full w-4 h-4 flex items-center justify-center border border-red-200" title="向十位借 1 当 10">
+            <span
+              className="absolute -top-3 -right-1 text-xs text-red-500 font-black bg-red-50 rounded-full w-4 h-4 flex items-center justify-center border border-red-200"
+              title="向十位借 1 当 10"
+            >
               10
             </span>
           )}
@@ -128,12 +160,16 @@ export function VerticalCalculation({
 
       {/* 加数/减数（带运算符列） */}
       <div className="flex justify-end items-center mt-1">
-        <span className={`${opCls} font-black w-7 sm:w-8 text-center text-moko-purple`}>{operator}</span>
+        <span className={`${opCls} font-black w-7 sm:w-8 text-center text-moko-purple`}>
+          {operator}
+        </span>
         {needHundreds && (
           <span className={`${cell} text-gray-700`}>{bHundreds > 0 ? bHundreds : ''}</span>
         )}
-        <span className={`${cell} text-gray-700`}>{bTens > 0 ? bTens : ''}</span>
-        <span className={`${cell} text-gray-700`}>{bOnes}</span>
+        <span className={`${cell} text-gray-700 ${colActiveCls(tensActive)}`}>
+          {bTens > 0 ? bTens : ''}
+        </span>
+        <span className={`${cell} text-gray-700 ${colActiveCls(onesActive)}`}>{bOnes}</span>
       </div>
 
       {/* 横线 */}
@@ -142,17 +178,20 @@ export function VerticalCalculation({
       {/* 答案：逐位列出，个位必显示，十位/百位按需 */}
       {answer !== null && (
         <div className="flex justify-end items-center">
-          <span className={`${opCls} font-black w-7 sm:w-8 text-center text-transparent select-none`} aria-hidden>
+          <span
+            className={`${opCls} font-black w-7 sm:w-8 text-center text-transparent select-none`}
+            aria-hidden
+          >
             =
           </span>
           {needHundreds && (
             <span className={`${cell} text-moko-rose`}>{ansHundreds! > 0 ? ansHundreds : ''}</span>
           )}
           {/* 十位：答案 >=10 或需要补位时显示 */}
-          <span className={`${cell} text-moko-rose`}>
+          <span className={`${cell} text-moko-rose ${colActiveCls(tensActive)}`}>
             {(answer ?? 0) >= 10 || carryIn === 1 ? ansTens : ''}
           </span>
-          <span className={`${cell} text-moko-rose relative`}>
+          <span className={`${cell} text-moko-rose relative ${colActiveCls(onesActive)}`}>
             {ansOnes}
             {carryIn > 0 && showCarry && (
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] text-orange-400 font-black whitespace-nowrap">
@@ -167,7 +206,9 @@ export function VerticalCalculation({
       {showIntermediate && intermediateValue !== undefined && (
         <div className="mt-2 pt-2 border-t border-dashed border-moko-purple/30">
           <div className="text-sm text-gray-500 font-bold">第一步结果：</div>
-          <div className="text-2xl font-black text-moko-violet text-center mt-1">{intermediateValue}</div>
+          <div className="text-2xl font-black text-moko-violet text-center mt-1">
+            {intermediateValue}
+          </div>
         </div>
       )}
     </div>

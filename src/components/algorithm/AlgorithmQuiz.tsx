@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { AlgorithmQuestion, StepField, StepInput } from '@/lib/algorithm/types';
 import { VerticalCalculation } from './VerticalCalculation';
-import { MiniVisualAid } from './MiniVisualAid';
+import { StepVisualDemo } from './StepVisualDemo';
 import { sfxComplete, sfxWrong } from '@/lib/sfx';
 import { FadeIn, Shake } from './LazyMotion';
 import { playTts } from '@/lib/speak';
@@ -57,6 +57,37 @@ function numToZh(n: number): string {
 }
 
 /**
+ * 把步骤算式转成链上的一环：提取 display 里的核心等式（去掉「把 X 拆成…」等描述前缀）。
+ * 「15 - (6 - 3) = ?」这类带括号的走 speakableMath 只用于朗读；链上直接展示原式。
+ */
+function chainLabel(display: string): string | null {
+  const m = display.match(/([\d+\-×÷() ]*[\d])\s*=\s*([\u4e00-\u9fa5\d?]+|\?)/);
+  return m ? m[0] : null;
+}
+
+/**
+ * 主题 + 步骤序号 → 竖式联动高亮列。
+ * - 凑十法第二步（a + b1 = 10）在算个位并产生进位 → 'carry-landing'
+ * - 一般加/减中间步（两位数 ± 两位数）→ 'ones'（一年级口算从个位起算）
+ * - 最后一两步是整十 ± 一位数 → 'tens'
+ * 其余主题（三数连算、去括号）竖式只有两个操作数，不高亮。
+ */
+function stepActiveColumn(
+  topicId: string,
+  stepIdx: number,
+  stepCount: number
+): 'ones' | 'tens' | 'carry-landing' | null {
+  if (topicId === 'making-ten') return stepIdx === 1 ? 'carry-landing' : null;
+  if (topicId === 'breaking-ten') return stepIdx === 1 ? 'ones' : null;
+  if (topicId === 'leveling-ten') return stepIdx === 1 ? 'ones' : null;
+  if (topicId === 'rounding') {
+    if (stepCount === 4) return stepIdx === 1 ? 'tens' : stepIdx === 2 ? 'ones' : null;
+    return null;
+  }
+  return null;
+}
+
+/**
  * 算法题目分步填写组件
  * 展示：题目 → 原理 → 一步一步填写 → 最终答案
  * 使用 CSS 动画替代 framer-motion 以减小 bundle
@@ -82,10 +113,24 @@ export function AlgorithmQuiz({
   // 答错的输入框（用于 shake 动画）
   const [errorInputs, setErrorInputs] = useState<Set<string>>(new Set());
   // 是否显示迷你思维图（前3关默认显示，4-7关可切换，8-10关默认隐藏）
-  const [showAid, setShowAid] = useState(level <= 3);
 
   const currentStep: StepField = question.stepFields[stepIdx];
   const isLastStep = stepIdx === question.stepFields.length - 1;
+
+  // C 算式阶梯链：已完成步骤的核心等式（display 里带「=」的），逐环亮起
+  const chainLinks = useMemo(
+    () =>
+      question.stepFields
+        .slice(0, stepIdx)
+        .map((s) => chainLabel(s.display))
+        .filter((x): x is string => x !== null),
+    [question.stepFields, stepIdx]
+  );
+
+  // A 竖式联动：本步该点亮哪一列
+  const activeColumn = completed
+    ? null
+    : stepActiveColumn(question.topicId, stepIdx, question.stepFields.length);
   // 进入每题自动朗读题目（第四轮后用户反馈：算法页语音读题基本没读出来）。
   // 题目是纯算式（如「9 + 5 = ?」），转成汉字读法后走 L1 Web Speech / L3 服务端
   // 都很稳；同时提供手动重听按钮。
@@ -99,7 +144,6 @@ export function AlgorithmQuiz({
     setCompleted(false);
     setHintShown(new Set());
     setErrorInputs(new Set());
-    setShowAid(level <= 3);
   }, [question.id, level]);
 
   // 自动朗读当前题目 / 当前步骤（muted 或 completed 时不读）
@@ -189,20 +233,8 @@ export function AlgorithmQuiz({
 
   return (
     <div className="space-y-4">
-      {/* 迷你思维图切换按钮 */}
-      {topicId && !completed && (
-        <div className="flex justify-end">
-          <button
-            onClick={() => setShowAid(!showAid)}
-            className="text-xs font-bold text-moko-violet bg-moko-purple/10 px-3 py-1.5 rounded-full hover:bg-moko-purple/20 transition"
-          >
-            {showAid ? '🙈 隐藏思维图' : '👀 显示思维图'}
-          </button>
-        </div>
-      )}
-
-      {/* 迷你思维图 */}
-      <MiniVisualAid topicId={topicId ?? ''} visible={showAid && !completed} />
+      {/* （旧的写死示例 MiniVisualAid 已由题目区内的 StepVisualDemo 取代——
+          那个图永远显示 5+6 的示例数字，和当前题对不上，反而造成困惑） */}
 
       {/* 步骤进度条：第几步 / 共几步 + 步骤点（完成的亮起，一眼看到全程） */}
       {!completed && question.stepFields.length > 1 && (
@@ -237,6 +269,31 @@ export function AlgorithmQuiz({
         </div>
       )}
 
+      {/* C 算式阶梯链：已完成的步骤逐环挂上，孩子能指着链子复述算理 */}
+      {chainLinks.length > 0 && (
+        <FadeIn duration={0.3}>
+          <div className="bg-white/80 rounded-2xl px-4 py-3 border-2 border-emerald-200 shadow-sm">
+            <div className="text-xs font-black text-emerald-600 mb-2 text-center">
+              🪜 我走过的步骤
+            </div>
+            <div className="flex items-center justify-center gap-1.5 flex-wrap">
+              {chainLinks.map((link, i) => (
+                <span key={`${link}-${i}`} className="flex items-center gap-1.5">
+                  {i > 0 && <span className="text-emerald-400 font-black">→</span>}
+                  <span
+                    className="inline-block rounded-xl border-2 border-emerald-300 bg-emerald-50 text-emerald-700 px-2.5 py-1 text-sm sm:text-base font-black"
+                    style={{ animation: 'exPop .5s cubic-bezier(.34,1.56,.64,1) both' }}
+                  >
+                    {link}
+                  </span>
+                </span>
+              ))}
+              {!completed && <span className="text-emerald-400 font-black animate-pulse">→ ?</span>}
+            </div>
+          </div>
+        </FadeIn>
+      )}
+
       {/* 题目区 */}
       <FadeIn duration={0.3}>
         <div className="bg-white rounded-3xl p-6 shadow-lg border-2 border-moko-purple/20">
@@ -247,6 +304,7 @@ export function AlgorithmQuiz({
               operator={question.operator}
               answer={completed ? question.answer : null}
               showCarry
+              activeColumn={activeColumn}
             />
           </div>
 
@@ -262,6 +320,15 @@ export function AlgorithmQuiz({
               {muted ? '🔇 语音已关，点我打开' : '🔊 语音读题中，点我静音'}
             </button>
           </div>
+
+          {/* B：当前题真实数字的迷你演示（十格阵 / 点点图 / 拆数树），随步骤揭晓 */}
+          {!completed && (
+            <StepVisualDemo
+              question={question}
+              stepIdx={stepIdx}
+              solved={currentStep?.inputs.every((i) => stepCorrect[i.id]) ?? false}
+            />
+          )}
         </div>
       </FadeIn>
 
@@ -416,6 +483,35 @@ export function AlgorithmQuiz({
                 </div>
               </div>
               <p className="text-sm opacity-90 font-bold">{question.explain}</p>
+
+              {/* E 听萌可讲一遍：按步骤顺序朗读 + 整条算式链回放 */}
+              <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                {chainLinks.map((link, i) => (
+                  <span key={`${link}-${i}`} className="flex items-center gap-1">
+                    {i > 0 && <span className="text-white/70 font-black">→</span>}
+                    <span className="inline-block rounded-lg bg-white/20 border border-white/30 px-2 py-0.5 text-sm font-black">
+                      {link}
+                    </span>
+                  </span>
+                ))}
+              </div>
+              <button
+                onClick={() => {
+                  const script = [
+                    `${question.explain}`,
+                    ...question.stepFields
+                      .map((s) => chainLabel(s.display))
+                      .filter((x): x is string => x !== null)
+                      .map(speakableMath),
+                    `所以 ${speakableMath(question.prompt).replace(/等于 几$/, '')}等于 ${numToZh(question.answer)}`,
+                  ].join('。');
+                  void playTts(script, 'zh', { wsRate: 0.85, pitch: 1.1 });
+                }}
+                className="mt-3 px-5 py-2 rounded-full bg-white/25 border-2 border-white/40 text-white font-black text-sm hover:bg-white/40 transition"
+                aria-label="听萌可把这道题完整讲一遍"
+              >
+                🔊 听萌可讲一遍
+              </button>
 
               {/* 下一题按钮 */}
               <button
