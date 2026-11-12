@@ -228,8 +228,16 @@ export function AlgorithmQuiz({
     }
   }, [currentStep, stepIdx, answers, stepCorrect, isLastStep, onComplete]);
 
-  /** 跳到下一步（如果当前步骤全部正确） */
-  const canGoNext = currentStep?.inputs.every((input) => stepCorrect[input.id]) ?? false;
+  /** 提交按钮可见性：当前步所有输入框都已填写（对错由提交时校验）。
+      ⚠️ 旧实现写成 `inputs.every(i => stepCorrect[i.id])`——stepCorrect 只有
+      提交之后才会被设置，等于要求「已经答对才能看到提交按钮」，按钮成了
+      死代码，所有步骤都只能靠键盘回车推进（onEnter）。平板软键盘的回车
+      不可靠，孩子会卡死。e2e 算法 spec（algorithm.spec.ts）首次覆盖完整
+      流程时发现。 */
+  const canGoNext =
+    currentStep?.inputs.every(
+      (input) => answers[input.id] !== '' && answers[input.id] !== undefined
+    ) ?? false;
 
   /** 查看提示 */
   const showHint = (inputId: string) => {
@@ -466,8 +474,11 @@ export function AlgorithmQuiz({
         </FadeIn>
       )}
 
-      {/* 提交按钮（如果需要输入才能继续） */}
-      {!completed && currentStep.inputs.length > 0 && canGoNext && !isLastStep && (
+      {/* 提交按钮（当前步填完即可提交，对错由 handleSubmitStep 校验）。
+          两个历史 bug 都会让按钮永远不出现：canGoNext 旧语义（见上）与
+          !isLastStep 排除（最后一步只剩回车）——均由 e2e 算法 spec
+          （algorithm.spec.ts）首次覆盖完整流程时发现并修复。 */}
+      {!completed && currentStep.inputs.length > 0 && canGoNext && (
         <button
           onClick={handleSubmitStep}
           className="w-full py-3 rounded-full bg-gradient-to-r from-moko-blue to-moko-cyan text-white font-black text-lg shadow-lg hover:scale-102 active:scale-98 transition"
