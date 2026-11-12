@@ -3,7 +3,7 @@
 import { getDb } from './db';
 import { dateStr } from './date';
 import { mokoCollection } from './moko-collection';
-import { mokoChars, STAR_PER_FRIEND, SHIELD_STREAK_REQ } from './moko';
+import { mokoChars, STAR_PER_FRIEND, SHIELD_STREAK_REQ, GROWTH_MIN } from './moko';
 import type { Subject } from './types';
 import {
   type MokoStage,
@@ -108,7 +108,14 @@ export async function getCastleState(childId: number): Promise<CastleStateView> 
       let nextStage: MokoStage | null = null;
       if (stage !== 'friend') {
         const stageAt = new Date(String(r.stage_at)).getTime();
-        const total = (stage === 'obtained' ? 5 : stage === 'settled' ? 10 : 15) * 60000;
+        // 分母与 refreshStages 的 durMinForStage/GROWTH_MIN 同源（10/30/60 分钟）：
+        // 原写死 5/10/15 让进度条提前到 100% 后长时间「卡住」才升级，孩子困惑。
+        const total =
+          (stage === 'obtained'
+            ? GROWTH_MIN.settled
+            : stage === 'settled'
+              ? GROWTH_MIN.playing
+              : GROWTH_MIN.friend) * 60000;
         progress = Math.max(0, Math.min(1, (now - stageAt) / total));
         nextStage = STAGE_ORDER[STAGE_ORDER.indexOf(stage) + 1];
       }

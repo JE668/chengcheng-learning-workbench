@@ -24,10 +24,13 @@ export async function GET(req: NextRequest) {
   const db = getDb();
   const subject = req.nextUrl.searchParams.get('subject');
   if (user.role === 'child') {
-    // 归属过滤：全家任务（assigned_to IS NULL）+ 指派给自己的。
-    // assigned_to 列由迁移 v19 保证存在；旧库未跑迁移时 ensureSchema 会补。
-    let sql = `SELECT ${TASK_COLS} FROM tasks WHERE (assigned_to IS NULL OR assigned_to = ?)`;
-    const args: (string | number)[] = [user.id];
+    // 归属过滤：**本家庭**的全家任务 + 指派给自己的。
+    // 家庭维度 = created_by（任务一律由家长创建，created_by 即家长 id）；
+    // 原实现缺这一层时，assigned_to IS NULL 的任务对所有家庭的孩子可见、
+    // 可完成、可领分（第五轮审查 2026-11-12 记录在案，本轮补上）。
+    const myParent = user.familyRoot ?? user.id;
+    let sql = `SELECT ${TASK_COLS} FROM tasks WHERE (assigned_to IS NULL OR assigned_to = ?) AND created_by = ?`;
+    const args: (string | number)[] = [user.id, myParent];
     if (subject) {
       sql += ' AND subject = ?';
       args.push(subject);
@@ -52,9 +55,10 @@ export async function GET(req: NextRequest) {
     }));
     return NextResponse.json({ tasks });
   }
+  // 家长只列自己名下的任务（同家庭收敛，与 child GET 同口径）
   const all = await db.execute({
-    sql: `SELECT ${TASK_COLS} FROM tasks ORDER BY created_at DESC`,
-    args: [],
+    sql: `SELECT ${TASK_COLS} FROM tasks WHERE created_by = ? ORDER BY created_at DESC`,
+    args: [user.id],
   });
   const tasks = all.rows.map((r) => ({
     ...r,

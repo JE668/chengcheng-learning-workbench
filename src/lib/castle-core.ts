@@ -31,23 +31,37 @@ export async function ensureCastle(childId: number) {
   });
 }
 
-/* 连续打卡天数（截至昨天） */
+/* 连续打卡天数（截至昨天）。
+ * 豁免日（holiday_exemptions）视为「不存在」：与结算口径一致——豁免日不计入
+ * 连胜也不打断连胜。原实现不感知豁免，豁免日无 3 条打卡即被当断点，
+ * 页面 streak（结算值）与护盾门槛（本函数）显示不一致。 */
 export async function computeStreak(childId: number, today: string): Promise<number> {
   const db = getDb();
   const yesterday = addDays(today, -1);
   const start = addDays(today, -60);
-  const res = await db.execute({
-    sql: `SELECT day, COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND status = 'confirmed' AND day >= ? AND day <= ? GROUP BY day`,
-    args: [childId, start, yesterday],
-  });
+  const [res, ex] = await Promise.all([
+    db.execute({
+      sql: `SELECT day, COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND status = 'confirmed' AND day >= ? AND day <= ? GROUP BY day`,
+      args: [childId, start, yesterday],
+    }),
+    // 豁免表可能不存在（旧库），失败时按「无豁免」处理
+    db
+      .execute({
+        sql: 'SELECT day FROM holiday_exemptions WHERE day >= ? AND day <= ?',
+        args: [start, yesterday],
+      })
+      .catch(() => ({ rows: [] as unknown[] })),
+  ]);
   const fullDays = new Set<string>();
   for (const r of res.rows) {
     if (Number(r.n) === 3) fullDays.add(String(r.day));
   }
+  const exempt = new Set<string>((ex.rows as Array<{ day?: unknown }>).map((r) => String(r.day)));
   let streak = 0;
   let d = yesterday;
-  while (fullDays.has(d)) {
-    streak++;
+  while (fullDays.has(d) || exempt.has(d)) {
+    // 豁免日直接跨过：既不加也不打断
+    if (!exempt.has(d)) streak++;
     d = addDays(d, -1);
   }
   return streak;

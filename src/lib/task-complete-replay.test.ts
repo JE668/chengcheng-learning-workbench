@@ -28,6 +28,7 @@ vi.mock('@/lib/auth', () => ({
     username: 'replay-child',
     role: 'child',
     displayName: '测试娃',
+    familyRoot: PARENT_ID,
   })),
   verifyPassword: vi.fn(() => true),
   resolveChildId: vi.fn(async () => CHILD_ID),

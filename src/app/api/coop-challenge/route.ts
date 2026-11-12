@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   // 一日一条：已存在直接拒绝
   const existing = await db.execute({
     sql: 'SELECT 1 FROM coop_challenges WHERE day = ?',
-    args: [day],
+    args: [day, user.id],
   });
   if (existing.rows.length) {
     return NextResponse.json({ error: '今天的挑战已经发过啦，明天再来新的～' }, { status: 409 });

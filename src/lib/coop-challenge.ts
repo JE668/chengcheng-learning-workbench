@@ -14,10 +14,12 @@ export const COOP_REWARD_STARS = 5;
 export async function recordCoopProgress(childId: number, moduleKey: string): Promise<void> {
   const db = getDb();
   const day = dateStr();
-  // 今日挑战存在且模块匹配？
+  // 今日挑战存在且模块匹配？——按家庭查（created_by = 本家家长），
+  // 别家的挑战与本孩子无关（v26 起 PK 为 (day, created_by)，可能同日多条）。
   const ch = await db.execute({
-    sql: 'SELECT module_key, module_label, rewarded FROM coop_challenges WHERE day = ?',
-    args: [day],
+    sql: `SELECT module_key, module_label, rewarded FROM coop_challenges
+          WHERE day = ? AND created_by = (SELECT COALESCE(parent_id, id) FROM users WHERE id = ?)`,
+    args: [day, childId],
   });
   if (!ch.rows.length) return;
   const row = ch.rows[0];
@@ -30,7 +32,7 @@ export async function recordCoopProgress(childId: number, moduleKey: string): Pr
     args: [day, childId],
   });
 
-  // 全员完成了吗？= 家长名下所有孩子都有进度
+  // 全员完成了吗？= 本家所有孩子都有进度
   const siblings = await db.execute({
     sql: 'SELECT id FROM users WHERE role = ? AND parent_id = (SELECT parent_id FROM users WHERE id = ?)',
     args: ['child', childId],
@@ -38,17 +40,22 @@ export async function recordCoopProgress(childId: number, moduleKey: string): Pr
   const total = siblings.rows.length;
   if (total < 2) return; // 单娃家庭：组队挑战无意义，不结算
 
+  // 完成数同样按本家 scope（v26 前 progress 表已按 child_id 区分，但
+  // 显式按本家孩子集合计数可杜绝别家孩子进度混入计数）
+  const ids = siblings.rows.map((r) => Number(r.id));
+  const ph = ids.map(() => '?').join(',');
   const done = await db.execute({
-    sql: 'SELECT COUNT(*) n FROM coop_challenge_progress WHERE day = ?',
-    args: [day],
+    sql: `SELECT COUNT(*) n FROM coop_challenge_progress WHERE day = ? AND child_id IN (${ph})`,
+    args: [day, ...ids],
   });
   if (Number(done.rows[0]?.n ?? 0) < total) return;
 
   // 全员完成 → 结算。rewarded=1 的置位必须先于发奖（原子 UPDATE 抢锁），
   // 并发到达时只有一个请求 rowsAffected=1，杜绝双发。
   const claim = await db.execute({
-    sql: 'UPDATE coop_challenges SET rewarded = 1 WHERE day = ? AND rewarded = 0',
-    args: [day],
+    sql: `UPDATE coop_challenges SET rewarded = 1
+          WHERE day = ? AND rewarded = 0 AND created_by = (SELECT COALESCE(parent_id, id) FROM users WHERE id = ?)`,
+    args: [day, childId],
   });
   if (Number(claim.rowsAffected ?? 0) === 0) return;
 
@@ -85,7 +92,7 @@ export async function getTodayChallengeView(parentId: number) {
   const db = getDb();
   const day = dateStr();
   const ch = await db.execute({
-    sql: 'SELECT day, module_key, module_label, rewarded FROM coop_challenges WHERE day = ?',
+    sql: 'SELECT day, module_key, module_label, rewarded FROM coop_challenges WHERE day = ? AND created_by = ?',
     args: [day],
   });
   if (!ch.rows.length) return null;

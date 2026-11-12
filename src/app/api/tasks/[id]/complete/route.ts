@@ -21,10 +21,16 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   if (!task.rows.length) return NextResponse.json({ error: '任务不存在' }, { status: 404 });
 
   // 多娃归属校验（迁移 v19）：指派给别的孩子的任务不能领分。
-  // assigned_to 为 NULL 是全家任务，谁都可做（兼容存量语义）。
+  // assigned_to 为 NULL 是全家任务，但仅限**本家庭**的全家任务——
+  // 家庭维度 = created_by（任务一律由家长创建，created_by 即家长 id）。
+  // 原实现缺这层校验时，别家家长创建的全家任务（assigned_to=NULL）
+  // 任何孩子都能完成并领分（第五轮审查 2026-11-12 记录在案）。
   const assignedTo = task.rows[0].assigned_to;
   if (assignedTo != null && Number(assignedTo) !== user.id) {
     return NextResponse.json({ error: '这个任务不是指派给你的哦' }, { status: 403 });
+  }
+  if (Number(task.rows[0].created_by) !== (user.familyRoot ?? user.id)) {
+    return NextResponse.json({ error: '这个任务不属于你的家庭' }, { status: 403 });
   }
 
   const points = Number(task.rows[0].points);

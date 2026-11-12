@@ -306,10 +306,23 @@ export async function restoreDay(
     });
   }
 
-  // 恢复连胜天数：往前找连续全勤天数（只统计到 `day` 为止）
+  // 恢复连胜天数：往前找连续全勤天数（只统计到 `day` 为止）。
+  // 豁免日跨过（既不加也不打断），与 settleCastle/computeStreak 口径一致；
+  // 原实现不感知豁免，豁免日无 3 条打卡即被当断点，补卡恢复的连胜被低估。
+  const exemptRows = await db
+    .execute({ sql: 'SELECT day FROM holiday_exemptions', args: [] })
+    .catch(() => ({ rows: [] as unknown[] }));
+  const exempt = new Set<string>(
+    (exemptRows.rows as Array<{ day?: unknown }>).map((r) => String(r.day))
+  );
   let newStreak = 1; // 至少恢复 1 天
   let checkCursor = addDays(day, -1);
   while (true) {
+    if (exempt.has(checkCursor)) {
+      // 豁免日：跨过，不计入连胜
+      checkCursor = addDays(checkCursor, -1);
+      continue;
+    }
     const count = await db.execute({
       sql: "SELECT COUNT(*) AS n FROM daily_checkins WHERE child_id = ? AND day = ? AND status = 'confirmed'",
       args: [childId, checkCursor],

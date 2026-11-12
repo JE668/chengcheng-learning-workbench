@@ -114,7 +114,8 @@ export async function getCurrentUser(): Promise<User | null> {
   const res = await db.execute({
     // 必须校验会话年龄：清理只在登录/cron 时发生，若不在这里判断，
     // 被盗 token 会在 cookie 过期后依然长期有效。
-    sql: `SELECT u.id, u.username, u.role, u.display_name
+    sql: `SELECT u.id, u.username, u.role, u.display_name,
+          COALESCE(u.parent_id, u.id) AS family_root
           FROM sessions s JOIN users u ON s.user_id = u.id
           WHERE s.token = ?
             AND s.created_at > datetime('now', '-' || ? || ' days')`,
@@ -127,6 +128,9 @@ export async function getCurrentUser(): Promise<User | null> {
     username: String(r.username),
     role: r.role as 'parent' | 'child',
     displayName: String(r.display_name),
+    // 家庭根 id：孩子 → 其 parent_id；家长 → 自己（COALESCE）。
+    // 用于 tasks/coop 等「本家庭」维度收敛，避免每处再查一遍 users。
+    familyRoot: Number(r.family_root ?? r.id),
   };
 }
 

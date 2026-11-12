@@ -238,7 +238,7 @@ describe('会话生命周期', () => {
     expect(await getCurrentUser()).toBeNull();
   });
 
-  it('getCurrentUser 只返回 4 个字段，不外泄 password_hash', async () => {
+  it('getCurrentUser 只返回白名单字段（含 familyRoot），不外泄 password_hash', async () => {
     await exec('UPDATE users SET password_hash = ? WHERE id = ?', [
       hashPassword('super-secret'),
       PARENT,
@@ -246,7 +246,8 @@ describe('会话生命周期', () => {
     const token = await createSession(PARENT);
     jar.cookies.set('session', token);
     const u = await getCurrentUser();
-    expect(Object.keys(u!).sort()).toEqual(['displayName', 'id', 'role', 'username']);
+    // familyRoot 是第五轮后新增的家庭根 id（家长=自己），用于 tasks/coop 家庭收敛
+    expect(Object.keys(u!).sort()).toEqual(['displayName', 'familyRoot', 'id', 'role', 'username']);
     expect(JSON.stringify(u)).not.toContain('$2');
   });
 

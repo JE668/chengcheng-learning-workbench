@@ -745,6 +745,64 @@ export const MIGRATIONS: Migration[] = [
       await db.execute({ sql: 'ALTER TABLE mistakes DROP COLUMN error_type', args: [] });
     },
   },
+  {
+    version: 26,
+    name: 'coop_challenges_family',
+    description: '组队挑战按家庭收敛：day 唯一键改为 (family, day)，跨家庭互不可见/不可刷',
+    up: async (db) => {
+      // created_by 已存在（发起家长 id），直接作为家庭维度使用。
+      // 原表 day TEXT PRIMARY KEY 使挑战按「天」全局唯一：A 家发起后 B 家孩子
+      // 也能看到、完成后领星星币；B 家家长再发起则被 409（第五轮审查）。
+      // SQLite 不支持 DROP PRIMARY KEY 约束，重建表迁移数据。
+      await db.execute({
+        sql: `CREATE TABLE coop_challenges_new (
+          day TEXT NOT NULL,
+          created_by INTEGER NOT NULL,
+          module_key TEXT NOT NULL,
+          module_label TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          rewarded INTEGER DEFAULT 0,
+          PRIMARY KEY (day, created_by)
+        )`,
+        args: [],
+      });
+      await db.execute({
+        sql: `INSERT INTO coop_challenges_new (day, created_by, module_key, module_label, created_at, rewarded)
+              SELECT day, created_by, module_key, module_label, created_at, rewarded FROM coop_challenges`,
+        args: [],
+      });
+      await db.execute({ sql: 'DROP TABLE coop_challenges', args: [] });
+      await db.execute({
+        sql: 'ALTER TABLE coop_challenges_new RENAME TO coop_challenges',
+        args: [],
+      });
+    },
+    down: async (db) => {
+      // 回滚到全局 day 唯一：同日多条家庭挑战只保留每家最新一条里的第一天……
+      // 简化：保留 created_by 最小（最早家庭）的那条
+      await db.execute({
+        sql: `CREATE TABLE coop_challenges_old (
+          day TEXT PRIMARY KEY,
+          module_key TEXT NOT NULL,
+          module_label TEXT,
+          created_by INTEGER NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          rewarded INTEGER DEFAULT 0
+        )`,
+        args: [],
+      });
+      await db.execute({
+        sql: `INSERT OR IGNORE INTO coop_challenges_old (day, created_by, module_key, module_label, created_at, rewarded)
+              SELECT day, created_by, module_key, module_label, created_at, rewarded FROM coop_challenges ORDER BY created_at`,
+        args: [],
+      });
+      await db.execute({ sql: 'DROP TABLE coop_challenges', args: [] });
+      await db.execute({
+        sql: 'ALTER TABLE coop_challenges_old RENAME TO coop_challenges',
+        args: [],
+      });
+    },
+  },
 ];
 
 export async function ensureMigrationTable(db: Client): Promise<void> {
