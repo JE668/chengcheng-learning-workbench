@@ -746,6 +746,34 @@ export const MIGRATIONS: Migration[] = [
     },
   },
   {
+    version: 27,
+    name: 'app_error_log',
+    description:
+      '应用错误轻量落库：客户端/服务端异常计数，周报附带健康摘要（Sentry 之外的本地回路）',
+    up: async (db) => {
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS app_error_log (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          day TEXT NOT NULL,
+          source TEXT NOT NULL,
+          message TEXT NOT NULL,
+          count INTEGER NOT NULL DEFAULT 1,
+          first_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
+          last_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE (day, source, message)
+        )`,
+        args: [],
+      });
+      await db.execute({
+        sql: 'CREATE INDEX IF NOT EXISTS idx_app_error_log_day ON app_error_log (day)',
+        args: [],
+      });
+    },
+    down: async (db) => {
+      await db.execute({ sql: 'DROP TABLE IF EXISTS app_error_log', args: [] });
+    },
+  },
+  {
     version: 26,
     name: 'coop_challenges_family',
     description: '组队挑战按家庭收敛：day 唯一键改为 (family, day)，跨家庭互不可见/不可刷',

@@ -7,6 +7,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import DatabaseErrorFallback from '@/components/DatabaseErrorFallback';
 import * as Sentry from '@sentry/nextjs';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
+import { ClientErrorReporter } from '@/lib/client-error-reporter';
 import { PageTransition } from '@/components/PageTransition';
 
 export const dynamic = 'force-dynamic';
@@ -72,6 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           )}
         >
           <ErrorBoundary>
+            <ClientErrorReporter />
             <PageTransition>{children}</PageTransition>
           </ErrorBoundary>
         </Sentry.ErrorBoundary>

@@ -62,6 +62,23 @@ export async function POST(req: Request) {
     args: [],
   });
 
+  // ⑤ 应用健康：本地错误聚合（Sentry 之外的家长可见回路）
+  let healthNote = '';
+  try {
+    const errs = await db.execute({
+      sql: `SELECT COUNT(*) AS n, COALESCE(SUM(count), 0) AS total
+            FROM app_error_log WHERE day BETWEEN ? AND ?`,
+      args: [weekAgo, today],
+    });
+    const errKinds = Number(errs.rows[0]?.n ?? 0);
+    const errTotal = Number(errs.rows[0]?.total ?? 0);
+    if (errTotal > 0) {
+      healthNote = `（应用健康：本周出现 ${errTotal} 次异常、${errKinds} 类问题，已自动记录，持续出现请联系开发者）`;
+    }
+  } catch {
+    /* 旧库未迁移到 v27 时跳过健康行，不影响周报主流程 */
+  }
+
   let pushed = 0;
   const details: string[] = [];
 
@@ -112,7 +129,7 @@ export async function POST(req: Request) {
 
     const body =
       `📊 ${name} 的本周周报：全勤 ${perfectDays}/7 天，学习 ${minutes} 分钟，` +
-      `新萌可 +${mokos}，错题清零 ${fixedMistakes} 道。${tip}`;
+      `新萌可 +${mokos}，错题清零 ${fixedMistakes} 道。${tip}${healthNote}`;
 
     const { success } = await notifyChildSubscribers(childId, {
       title: `📊 ${name} 的一周学习报告`,
@@ -120,7 +137,9 @@ export async function POST(req: Request) {
       icon: '/icons/icon-192.png',
     });
     pushed += success;
-    details.push(`${name}: 全勤${perfectDays}/7 · ${minutes}min · +${mokos}萌可 · 推送${success ? '✓' : '✗'}`);
+    details.push(
+      `${name}: 全勤${perfectDays}/7 · ${minutes}min · +${mokos}萌可 · 推送${success ? '✓' : '✗'}`
+    );
   }
 
   // 幂等标记（无论有没有订阅者成功——"发过"以调用为准，无订阅者重试无意义）
