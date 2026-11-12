@@ -200,6 +200,19 @@ export default async function ReportsPage() {
             <div className="rounded-2xl bg-moko-blue/10 p-3">
               <p className="font-bold text-moko-blue mb-1">今天可以陪练什么</p>
               <p className="text-gray-700">{insights.practiceToday}</p>
+              {insights.actions.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {insights.actions.map((action) => (
+                    <a
+                      key={action.href + action.label}
+                      href={action.href}
+                      className="inline-flex items-center gap-1 rounded-full bg-moko-blue px-4 py-1.5 text-sm font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
+                    >
+                      {action.label} →
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </ClayCard>
