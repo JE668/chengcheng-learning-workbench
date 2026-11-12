@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { AlgorithmQuestion } from '@/lib/algorithm/types';
+import { VISUAL_KEYFRAMES, Ghost, CELL_CLS, DOT_CLS } from './visual-kit';
 
 /**
  * 练习页「当前题真实数字」的迷你思维演示 —— 替代写死示例的 MiniVisualAid。
@@ -14,16 +15,12 @@ import type { AlgorithmQuestion } from '@/lib/algorithm/types';
  * 练习页不含例题时用本组件内嵌的兜底 keyframes）。
  */
 
-// ── 兜底 keyframes：例题页已全局注入 ExampleVisualStyle，这里保证单独使用也不缺 ──
-const STEP_DEMO_KF = `
-  @keyframes sdPop { 0% {opacity:0; transform:scale(.2)} 60% {opacity:1; transform:scale(1.12)} 100% {opacity:1; transform:scale(1)} }
-  @keyframes sdGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0) } 50% { box-shadow: 0 0 0 6px rgba(16,185,129,.2) } }
-  @keyframes sdBlink { 0%,100% { opacity:.35 } 50% { opacity:1 } }
-  @keyframes exPop { 0% {opacity:0; transform:scale(.2)} 60% {opacity:1; transform:scale(1.12)} 100% {opacity:1; transform:scale(1)} }
-`;
+// ── keyframes / 原语：统一走 visual-kit（例题页与练习页共用一套，
+//    不再各自维护 sdPop/sdGlow/sdBlink 重复定义）──
+const STEP_DEMO_KF = VISUAL_KEYFRAMES;
 
 function pop(delay = 0): React.CSSProperties {
-  return { animation: 'sdPop .5s cubic-bezier(.34,1.56,.64,1) both', animationDelay: `${delay}s` };
+  return { animation: 'exPop .5s cubic-bezier(.34,1.56,.64,1) both', animationDelay: `${delay}s` };
 }
 
 export function StepVisualDemo({
@@ -112,9 +109,6 @@ function DemoShell({
 function MakingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: number }) {
   const need = 10 - a;
   const b2 = b - need;
-  const dot = 'w-4 h-4 rounded-full';
-  const cell =
-    'relative w-6 h-6 rounded-md border border-moko-purple/20 bg-white flex items-center justify-center';
 
   return (
     <div
@@ -130,21 +124,21 @@ function MakingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: number 
                 ? 'border-emerald-400 bg-emerald-50'
                 : 'border-moko-purple/30 bg-moko-purple/5'
             }`}
-            style={reveal >= 1 ? { animation: 'sdGlow 1.6s ease-in-out infinite' } : {}}
+            style={reveal >= 1 ? { animation: 'exGlowRing 1.6s ease-in-out infinite' } : {}}
           >
             {Array.from({ length: 10 }, (_, i) => {
               const filled = i < a;
               const movedIn = reveal >= 1 && i >= a && i < a + need;
               return (
-                <div key={i} className={cell}>
-                  {filled && <span className={`${dot} bg-pink-400`} />}
+                <div key={i} className={CELL_CLS}>
+                  {filled && <span className={`${DOT_CLS} bg-pink-400`} />}
                   {movedIn && (
-                    <span className={`${dot} bg-sky-400`} style={pop(0.15 + (i - a) * 0.12)} />
+                    <span className={`${DOT_CLS} bg-sky-400`} style={pop(0.15 + (i - a) * 0.12)} />
                   )}
                   {!filled && !movedIn && (
                     <span
                       className="w-4 h-4 rounded-full border-2 border-dashed border-orange-300"
-                      style={{ animation: 'sdBlink 1.4s ease-in-out infinite' }}
+                      style={{ animation: 'exPulseSoft 1.4s ease-in-out infinite' }}
                     />
                   )}
                 </div>
@@ -196,10 +190,10 @@ function MakingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: number 
               const has = i < b;
               const movedOut = reveal >= 1 && i < need;
               return (
-                <div key={i} className={cell}>
+                <div key={i} className={CELL_CLS}>
                   {has && (
                     <span
-                      className={`${dot} ${movedOut ? 'border-2 border-dashed border-sky-300 bg-transparent' : 'bg-sky-400'}`}
+                      className={`${DOT_CLS} ${movedOut ? 'border-2 border-dashed border-sky-300 bg-transparent' : 'bg-sky-400'}`}
                       style={movedOut ? { transition: 'all .4s ease .3s' } : {}}
                     />
                   )}
@@ -231,9 +225,6 @@ function MakingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: number 
 function BreakingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: number }) {
   const ones = a % 10;
   const sub1 = 10 - b;
-  const dot = 'w-4 h-4 rounded-full';
-  const cell =
-    'relative w-6 h-6 rounded-md border border-moko-purple/20 bg-white flex items-center justify-center';
 
   return (
     <div
@@ -252,12 +243,7 @@ function BreakingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: numbe
             <Chip text={`${ones}`} tone="blue" delay={0.3} />
           </>
         ) : (
-          <span
-            className="w-9 h-9 rounded-xl border-2 border-dashed border-orange-300 bg-orange-50 text-orange-400 font-black flex items-center justify-center"
-            style={{ animation: 'sdBlink 1.6s ease-in-out infinite' }}
-          >
-            ?
-          </span>
+          <Ghost size="sm" />
         )}
       </div>
 
@@ -267,9 +253,9 @@ function BreakingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: numbe
           {Array.from({ length: 10 }, (_, i) => {
             const crossed = reveal >= 2 && i < b;
             return (
-              <span key={i} className={`${cell} ${crossed ? 'opacity-60' : ''}`}>
+              <span key={i} className={`${CELL_CLS} ${crossed ? 'opacity-60' : ''}`}>
                 <span
-                  className={`${dot} ${crossed ? 'bg-gray-300' : reveal >= 1 ? 'bg-emerald-400' : 'bg-moko-purple/60'}`}
+                  className={`${DOT_CLS} ${crossed ? 'bg-gray-300' : reveal >= 1 ? 'bg-emerald-400' : 'bg-moko-purple/60'}`}
                   style={crossed ? { transition: 'all .3s ease' } : {}}
                 />
                 {crossed && (
@@ -312,9 +298,6 @@ function BreakingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: numbe
 function LevelingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: number }) {
   const ones = a % 10;
   const b2 = b - ones;
-  const dot = 'w-4 h-4 rounded-full';
-  const cell =
-    'relative w-6 h-6 rounded-md border border-moko-purple/20 bg-white flex items-center justify-center';
 
   return (
     <div
@@ -344,28 +327,10 @@ function LevelingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: numbe
       {/* b 拆两段 */}
       <div className="flex items-center gap-2 text-sm font-black">
         <span className="text-gray-500">{b} 拆成</span>
-        {reveal >= 1 ? (
-          <Chip text={`${ones}`} tone="orange" delay={0.3} />
-        ) : (
-          <span
-            className="w-8 h-8 rounded-lg border-2 border-dashed border-orange-300 bg-orange-50 text-orange-400 flex items-center justify-center"
-            style={{ animation: 'sdBlink 1.6s ease-in-out infinite' }}
-          >
-            ?
-          </span>
-        )}
+        {reveal >= 1 ? <Chip text={`${ones}`} tone="orange" delay={0.3} /> : <Ghost size="sm" />}
         <span className="text-gray-400">+</span>
         {/* b2 是第三步的减数（10 − b2），第三步（reveal>=3）才揭晓 */}
-        {reveal >= 3 ? (
-          <Chip text={`${b2}`} tone="blue" delay={0.3} />
-        ) : (
-          <span
-            className="w-8 h-8 rounded-lg border-2 border-dashed border-orange-300 bg-orange-50 text-orange-400 flex items-center justify-center"
-            style={{ animation: 'sdBlink 1.6s ease-in-out infinite' }}
-          >
-            ?
-          </span>
-        )}
+        {reveal >= 3 ? <Chip text={`${b2}`} tone="blue" delay={0.3} /> : <Ghost size="sm" />}
       </div>
 
       {/* 豆子排：a 颗里划掉 ones 颗到 10 */}
@@ -373,9 +338,9 @@ function LevelingTenDemo({ a, b, reveal }: { a: number; b: number; reveal: numbe
         {Array.from({ length: a }, (_, i) => {
           const crossedFirst = reveal >= 1 && i < ones;
           return (
-            <span key={i} className={`${cell} scale-90`}>
+            <span key={i} className={`${CELL_CLS} scale-90`}>
               <span
-                className={`${dot} ${crossedFirst ? 'bg-gray-300' : i % 10 === 9 ? 'bg-emerald-400' : 'bg-moko-purple/50'}`}
+                className={`${DOT_CLS} ${crossedFirst ? 'bg-gray-300' : i % 10 === 9 ? 'bg-emerald-400' : 'bg-moko-purple/50'}`}
               />
               {crossedFirst && (
                 <span className="absolute text-rose-500 font-black select-none">✕</span>
