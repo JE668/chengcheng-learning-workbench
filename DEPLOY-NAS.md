@@ -81,6 +81,7 @@ cloudflared tunnel --url http://localhost:3000
 
 - `./data:/data` → 容器里的 `local.db`（账号/城堡/打卡/错题）落在 NAS 卷，**重建容器不丢**。
 - 媒体走挂卷，也不进镜像。
+- 镜像里 public 只剩 ~60MB（audio 43 + moko 11 + hanzi 3，2026-11 实测；.dockerignore 已排除 raz 419MB + textbooks 94MB），镜像整体约 250MB 级别。TTS 是四层降级（本地 MP3 → Web Speech → edge-tts），audio 层不会随功能增长失控。
 - 切勿把 `./data` 指向会随容器删除的位置。
 
 ### 每日自动备份（推荐）

@@ -91,3 +91,22 @@ Key optimizations preserved:
 ## Conclusion
 
 The evaluation confirms our conservative path was correct. The custom webpack config with `splitChunks.cacheGroups` provides measurable bundle size benefits that Turbopack cannot currently replicate. We will continue using `next build --webpack` until Turbopack offers equivalent chunk control.
+
+---
+
+## Re-evaluation #2 (2026-11-12, Next.js 16.4.4)
+
+**Verdict: unchanged — stay with webpack.** The gap narrowed but Turbopack still loses on every dimension that matters to us.
+
+| Metric                 | Webpack (baseline) | Turbopack (2024 eval) | Turbopack (now, 16.4.4) |
+| ---------------------- | ------------------ | --------------------- | ----------------------- |
+| Total gzip             | **1,533 KB**       | 1,975 KB              | 1,754.9 KB              |
+| Chunk count            | 200                | 139                   | 141                     |
+| Vendor chunk (25.6 KB) | ✅                 | ❌                    | ❌ still missing        |
+| Algorithm chunks       | ✅ multiple        | ❌                    | ❌ still missing        |
+| Semantic chunk names   | ✅                 | ❌ hashed             | ❌ hashed (flat dir)    |
+
+- Turbopack improved ~11% vs the 2024 measurement (1,975 → 1,755 KB gzip), but is still **+14.5%** over webpack.
+- `turbopackChunking` / cacheGroup-equivalent control: still not available in stable Next 16.4.4; `@next/bundle-analyzer` still webpack-only.
+- Re-measured with `npx next build --turbopack` (exit 0), chunks gzipped individually from `.next/static`.
+- Next re-check trigger: a stable Turbopack chunking config API, or a Turbopack-compatible bundle analyzer.
